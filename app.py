@@ -20,7 +20,7 @@ os.makedirs(_config_dir, exist_ok=True)
 with open(_config_file, "w", encoding="utf-8") as f:
     f.write('[theme]\nbase="light"\n[server]\nmaxUploadSize = 200\n')
 
-# API Keys & Supabase Credentials loaded strictly from Streamlit Secrets
+# API Keys & Supabase Credentials
 DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
 
@@ -37,8 +37,7 @@ def init_supabase() -> Client:
         return None
     try:
         return create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        st.error(f"Supabase connection initialization failed: {e}")
+    except Exception:
         return None
 
 def fetch_meeting_archives_from_supabase(limit: int = 100):
@@ -49,12 +48,14 @@ def fetch_meeting_archives_from_supabase(limit: int = 100):
         resp = client.table("meeting_archives").select("*").order("meeting_date", desc=True).limit(limit).execute()
         return resp.data if resp and resp.data else []
     except Exception as e:
-        st.warning(f"Could not retrieve meeting archives from Supabase: {e}")
+        st.warning(f"Could not retrieve meeting archives: {e}")
         return []
 
 # ========== GLOBAL SESSION STATE ==========
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
+if "selected_meeting_id" not in st.session_state:
+    st.session_state["selected_meeting_id"] = None
 
 # ========== CUSTOM CSS ==========
 CUSTOM_CSS = """
@@ -77,10 +78,10 @@ html, body, [class*="css"] {
 
 .stApp > header { display: none !important; }
 
-/* Main content offset so it doesn't overlap the fixed icon rail */
+/* Main content offset for fixed topbar and icon sidebar */
 .block-container { 
     padding-top: 5.5rem !important;
-    padding-left: 5.5rem !important;
+    padding-left: 5.8rem !important;
     padding-right: 2rem !important;
 }
 
@@ -110,9 +111,9 @@ h3 {
 /* Persistent Fixed Icon-Only Rail Sidebar */
 section[data-testid="stSidebar"] {
     position: fixed !important;
-    width: 72px !important;
-    min-width: 72px !important;
-    max-width: 72px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
     background-color: #161616 !important;
     border-right: 1px solid #2B2B2B !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
@@ -123,21 +124,19 @@ section[data-testid="stSidebar"] {
     visibility: visible !important;
 }
 
-/* Hide default collapse toggle button */
 button[data-testid="stSidebarCollapseButton"] {
     display: none !important;
 }
 
-/* Sidebar Container Content */
-section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-    padding: 1.5rem 0.5rem !important;
-    gap: 1rem !important;
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    padding: 1.2rem 0 !important;
+    gap: 1.1rem !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
 }
 
-/* Page Link Navigation Icons Styling */
+/* Page Link Navigation Icons */
 section[data-testid="stSidebar"] a {
     width: 44px !important;
     height: 44px !important;
@@ -199,7 +198,7 @@ section[data-testid="stSidebar"] a:hover span[data-testid="stIconMaterial"] {
     margin: 0;
 }
 
-/* Main Dashboard Containers with Depth Shadow */
+/* Containers with Depth & Shadow */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
@@ -207,6 +206,38 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
+}
+
+/* Gallery Item Card */
+.gallery-card {
+    background-color: #FAFAFA;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 1.1rem;
+    margin-bottom: 0.85rem;
+    transition: all 0.2s ease;
+}
+.gallery-card:hover {
+    border-color: #D4AF37;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.12);
+    transform: translateY(-2px);
+}
+.gallery-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: #1A2B4C;
+    margin: 0 0 0.25rem 0;
+}
+.gallery-sub {
+    font-size: 0.82rem;
+    color: #666;
+    margin-bottom: 0.4rem;
+}
+.gallery-desc {
+    font-size: 0.86rem;
+    color: #2D2D2D;
+    line-height: 1.4;
 }
 
 /* Uniform Pill Buttons */
@@ -318,63 +349,94 @@ with st.sidebar:
     elif os.path.exists("pages/1_MoM_Generator.py"):
         st.page_link("pages/1_MoM_Generator.py", icon=":material/edit_document:", help="MoM Generator")
         
+    if os.path.exists("pages/meeting_details.py"):
+        st.page_link("pages/meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
+        
     if os.path.exists("pages/2_Ask_Echo.py"):
         st.page_link("pages/2_Ask_Echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
     elif os.path.exists("pages/ask_echo.py"):
         st.page_link("pages/ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
 
-# ========== MAIN DASHBOARD VIEW ==========
-# 1. High-Level KPI Metric Cards
-total_meetings = len(supabase_records)
-total_action_items = sum(len(m.get("table_items", [])) for m in supabase_records if isinstance(m.get("table_items"), list))
-unique_clients = len(set(m.get("client_name") for m in supabase_records if m.get("client_name")))
+# ========== METRICS COMPUTATION ==========
+now = datetime.datetime.now()
+current_month_name = now.strftime("%B")
+current_year = now.year
+current_month = now.month
 
+total_month_meetings = 0
+total_team_meetings = len(supabase_records)
+total_internal_meetings = 0
+total_external_meetings = 0
+
+for m in supabase_records:
+    # Check date for dynamic current month
+    m_date_raw = str(m.get("meeting_date", ""))
+    try:
+        parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d")
+        if parsed_d.year == current_year and parsed_d.month == current_month:
+            total_month_meetings += 1
+    except:
+        pass
+
+    # Check Internal vs External
+    client_name_str = str(m.get("client_name", "")).strip().lower()
+    raw_payload = m.get("raw_payload", {}) or {}
+    meeting_details_dict = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
+    external_atts = meeting_details_dict.get("external_attendees", [])
+    
+    if "internal" in client_name_str or "prime" in client_name_str or (not external_atts and not client_name_str):
+        total_internal_meetings += 1
+    else:
+        total_external_meetings += 1
+
+# ========== MAIN DASHBOARD VIEW ==========
+# 1. Four Big KPI Number Cards in Requested Order
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Meetings</div><div class="kpi-value">{total_meetings}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Meetings ({current_month_name})</div><div class="kpi-value">{total_month_meetings}</div></div>', unsafe_allow_html=True)
 with kpi2:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Action Items Tracked</div><div class="kpi-value">{total_action_items}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Team Meetings</div><div class="kpi-value">{total_team_meetings}</div></div>', unsafe_allow_html=True)
 with kpi3:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Corporate Clients</div><div class="kpi-value">{unique_clients}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Internal Meetings</div><div class="kpi-value">{total_internal_meetings}</div></div>', unsafe_allow_html=True)
 with kpi4:
-    db_status = "Connected" if SUPABASE_URL and SUPABASE_KEY else "Missing Keys"
-    status_color = "#2E7D32" if db_status == "Connected" else "#C62828"
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Supabase Cloud</div><div class="kpi-value" style="color:{status_color}; font-size:1.6rem;">{db_status}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total External Meetings</div><div class="kpi-value">{total_external_meetings}</div></div>', unsafe_allow_html=True)
 
 st.write("")
 
-# 2. Main Symmetrical Split: Deliverables Matrix (Left) & Ask Echo Global (Right)
+# 2. Main Symmetrical Split: Meeting Gallery (Left) & Ask Echo Global (Right)
 col_left, col_right = st.columns(2)
 
 with col_left:
     with st.container(height=580, border=True):
-        st.markdown('<h3>Cross-Meeting Deliverables Matrix</h3>', unsafe_allow_html=True)
-        st.caption("Active action items and deliverables aggregated from Supabase.")
+        st.markdown('<h3>Meeting Gallery</h3>', unsafe_allow_html=True)
+        st.caption("Browse all archived meetings. Click any entry to inspect full details, transcript, and edit minutes.")
         
-        all_tasks = []
-        for m in supabase_records:
-            client = m.get("client_name", "Client")
-            table_data = m.get("table_items", [])
-            if isinstance(table_data, list):
-                for item in table_data:
-                    if isinstance(item, dict):
-                        all_tasks.append({
-                            "Client / Account": client,
-                            "Action Plan / Deliverable": item.get("Action Plan") or item.get("task", ""),
-                            "Person-in-Charge": item.get("Person-in-charge") or item.get("pic", "Unassigned"),
-                            "Target Date": item.get("Indicative Delivery Date") or item.get("due", "TBD")
-                        })
-        
-        if all_tasks:
-            task_df = pd.DataFrame(all_tasks)
-            st.dataframe(
-                task_df,
-                use_container_width=True,
-                height=450,
-                hide_index=True
-            )
+        if supabase_records:
+            # Scrollable gallery container
+            for idx, m in enumerate(supabase_records):
+                m_id = m.get("meeting_id") or f"MOM-{idx}"
+                client = m.get("client_name") or "Meeting Record"
+                m_date = str(m.get("meeting_date", "N/A"))[:10]
+                location = m.get("location") or "Location N/A"
+                prep = m.get("prepared_by") or "CRD Team"
+                summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+                if not summary:
+                    summary = "Minutes generated and stored in Supabase archive."
+                
+                # Render clean card
+                with st.container(border=True):
+                    gc1, gc2 = st.columns([7.5, 2.5])
+                    with gc1:
+                        st.markdown(f"<p class='gallery-title'>{client}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='gallery-sub'>Date: {m_date} &bull; {location} &bull; Prepared by: {prep}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='gallery-desc'>{summary[:160]}...</p>", unsafe_allow_html=True)
+                    with gc2:
+                        st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+                        if st.button("View Meeting", key=f"btn_view_{m_id}_{idx}"):
+                            st.session_state["selected_meeting_id"] = m_id
+                            st.switch_page("pages/meeting_details.py")
         else:
-            st.info("No active tasks found in the Supabase archive.")
+            st.info("No meeting archives found in Supabase.")
 
 with col_right:
     with st.container(height=580, border=True):
