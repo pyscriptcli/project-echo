@@ -434,7 +434,7 @@ with col_left:
                         st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
                         if st.button("View Meeting", key=f"btn_view_{m_id}_{idx}"):
                             st.session_state["selected_meeting_id"] = m_id
-                            st.switch_page("pages/meeting_details.py")
+                            st.switch_page("pages/2_meeting_details.py")
         else:
             st.info("No meeting archives found in Supabase.")
 
