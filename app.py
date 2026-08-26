@@ -5,10 +5,12 @@ import pandas as pd
 import requests
 import streamlit as st
 from supabase import create_client, Client
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) if "pages" in __file__ else os.path.abspath("."))
 from navigation import render_global_navbar
 
 st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
-render_global_navbar()
+render_global_navbar("Project Echo &mdash; Executive Hub")
 
 # ========== CONFIG ==========
 st.set_page_config(
