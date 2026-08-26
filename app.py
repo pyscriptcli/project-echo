@@ -76,9 +76,12 @@ html, body, [class*="css"] {
 }
 
 .stApp > header { display: none !important; }
+
+/* Adjust main content padding to account for fixed topbar and icon sidebar */
 .block-container { 
     padding-top: 5.5rem !important;
-    padding-left: 5rem !important; 
+    padding-left: 5.5rem !important;
+    padding-right: 2rem !important;
 }
 
 /* Fixed Topbar */
@@ -104,56 +107,67 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
-/* Persistent Collapsible Sidebar */
+/* Persistent Fixed Icon-Only Rail Sidebar */
 section[data-testid="stSidebar"] {
-    width: 68px !important;
-    min-width: 68px !important;
-    max-width: 68px !important;
-    background-color: #1B1B1B !important;
-    border-right: 1px solid #333333 !important;
-    box-shadow: 6px 0 20px rgba(0,0,0,0.15) !important;
-    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow-x: hidden !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+    background-color: #161616 !important;
+    border-right: 1px solid #2B2B2B !important;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
+    overflow: hidden !important;
     z-index: 999995 !important;
     top: 60px !important;
     height: calc(100vh - 60px) !important;
 }
 
-section[data-testid="stSidebar"]:hover {
-    width: 300px !important;
-    min-width: 300px !important;
-    max-width: 300px !important;
-}
-
+/* Hide Streamlit default collapse/expand toggle */
 button[data-testid="stSidebarCollapseButton"] {
     display: none !important;
 }
 
+/* Sidebar Vertical Block: Center-aligned icon column */
 section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    padding: 1rem 0.5rem !important;
-    gap: 0.8rem !important;
+    padding: 1.2rem 0 !important;
+    gap: 1.2rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
 }
 
-section[data-testid="stSidebar"] h3, 
-section[data-testid="stSidebar"] p, 
-section[data-testid="stSidebar"] span,
-section[data-testid="stSidebar"] label {
-    color: #ECE9DF !important;
-}
-
+/* Hide labels and preserve purely centered icons */
 section[data-testid="stSidebar"] a {
-    background-color: #242424 !important;
-    border: 1px solid #383838 !important;
-    border-radius: 8px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    background-color: #222222 !important;
+    border: 1px solid #333333 !important;
     color: #ECE9DF !important;
-    padding: 0.6rem 0.8rem !important;
     transition: all 0.2s ease !important;
+}
+
+section[data-testid="stSidebar"] a span[data-testid="stPageLink-Text"] {
+    display: none !important;
+}
+
+section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"] {
+    font-size: 1.35rem !important;
+    margin: 0 !important;
+    color: #C5A059 !important;
 }
 
 section[data-testid="stSidebar"] a:hover {
     background-color: #D4AF37 !important;
-    color: #161616 !important;
     border-color: #D4AF37 !important;
+}
+
+section[data-testid="stSidebar"] a:hover span[data-testid="stIconMaterial"] {
+    color: #161616 !important;
 }
 
 /* Metric KPI Cards */
@@ -191,18 +205,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
-}
-
-/* Inputs styling */
-.stTextInput input {
-    background-color: #FAFAFA !important;
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    border-radius: 8px !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
-}
-.stTextInput input:focus {
-    border-color: #D4AF37 !important;
-    background-color: #FFFFFF !important;
 }
 
 /* Uniform Pill Buttons */
@@ -305,37 +307,18 @@ st.markdown("""
 # Fetch current live data from Supabase
 supabase_records = fetch_meeting_archives_from_supabase()
 
-# ========== CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
+# ========== PERSISTENT ICON-ONLY SIDEBAR ==========
 with st.sidebar:
-    st.markdown("<h3 style='color:#FFFFFF !important; font-size:1.1rem !important;'>Navigation</h3>", unsafe_allow_html=True)
+    st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
     
     if os.path.exists("pages/mom_generator.py"):
-        st.page_link("pages/mom_generator.py", label="MoM Generator", icon=":material/edit_document:")
+        st.page_link("pages/mom_generator.py", icon=":material/edit_document:", help="MoM Generator")
     elif os.path.exists("pages/1_MoM_Generator.py"):
-        st.page_link("pages/1_MoM_Generator.py", label="MoM Generator", icon=":material/edit_document:")
+        st.page_link("pages/1_MoM_Generator.py", icon=":material/edit_document:", help="MoM Generator")
         
-    st.markdown("---")
-    st.markdown("<p style='font-size:0.85rem; font-weight:600; color:#D4AF37;'>SUPABASE ARCHIVES</p>", unsafe_allow_html=True)
-    
-    search_query = st.text_input("Search archives", placeholder="Search client or topic...", label_visibility="collapsed")
-    
-    filtered_meetings = supabase_records
-    if search_query:
-        q = search_query.lower()
-        filtered_meetings = [
-            m for m in supabase_records 
-            if q in str(m.get("client_name", "")).lower() or q in str(m.get("summary_md", "")).lower() or q in str(m.get("prepared_by", "")).lower()
-        ]
-        
-    st.caption(f"{len(filtered_meetings)} of {len(supabase_records)} logs loaded")
-    for m in filtered_meetings[:5]:
-        m_title = m.get('client_name') or 'Meeting'
-        m_date = str(m.get('meeting_date', ''))
-        with st.expander(f"{m_title} ({m_date[:10]})"):
-            st.caption(f"Location: {m.get('location', 'N/A')}")
-            st.caption(f"Prepared by: {m.get('prepared_by', 'N/A')}")
-            summary_preview = m.get('summary_md', '') or 'No summary logged.'
-            st.write(f"**Focus:** {summary_preview[:120]}...")
+    if os.path.exists("pages/2_Ask_Echo.py") or os.path.exists("pages/ask_echo.py"):
+        target_echo = "pages/2_Ask_Echo.py" if os.path.exists("pages/2_Ask_Echo.py") else "pages/ask_echo.py"
+        st.page_link(target_echo, icon=":material/smart_toy:", help="Ask Echo AI")
 
 # ========== MAIN DASHBOARD VIEW ==========
 # 1. High-Level KPI Metric Cards
