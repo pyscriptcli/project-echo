@@ -211,18 +211,12 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar Navigation
+# ========== PERSISTENT ICON-ONLY SIDEBAR ==========
 with st.sidebar:
     st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
-    if os.path.exists("pages/mom_generator.py"):
-        st.page_link("pages/mom_generator.py", icon=":material/edit_document:", help="MoM Generator")
-    elif os.path.exists("pages/1_MoM_Generator.py"):
-        st.page_link("pages/1_MoM_Generator.py", icon=":material/edit_document:", help="MoM Generator")
-    st.page_link("pages/meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
-    if os.path.exists("pages/2_Ask_Echo.py"):
-        st.page_link("pages/2_Ask_Echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
-    elif os.path.exists("pages/ask_echo.py"):
-        st.page_link("pages/ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
+    st.page_link("pages/1_minutes_of_the_meeting.py", icon=":material/edit_document:", help="MoM Generator")
+    st.page_link("pages/2_meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
+    st.page_link("pages/5_ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
 
 meetings = get_all_meetings()
 
