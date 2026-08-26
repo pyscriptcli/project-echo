@@ -1,7 +1,8 @@
 import streamlit as st
 
 def render_global_navbar(page_title="Project Echo"):
-    nav_html = f"""
+    # 1. Inject Topbar Header & Global CSS
+    custom_css = f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
@@ -21,14 +22,7 @@ def render_global_navbar(page_title="Project Echo"):
 
     .stApp > header {{ display: none !important; }}
 
-    /* Completely suppress native sidebar elements */
-    section[data-testid="stSidebar"],
-    button[data-testid="stSidebarCollapseButton"],
-    div[data-testid="stSidebarNav"] {{
-        display: none !important;
-    }}
-
-    /* Viewport spacing for fixed navigation rail */
+    /* Layout Spacing */
     .block-container {{ 
         padding-top: 5.5rem !important; 
         padding-left: 6.2rem !important;
@@ -83,59 +77,69 @@ def render_global_navbar(page_title="Project Echo"):
         display: block;
     }}
 
-    /* Permanent Viewport Left Icon Rail */
-    .echo-nav-rail {{
-        position: fixed;
-        top: 60px;
-        left: 0;
-        bottom: 0;
-        width: 68px;
-        background-color: #161616;
-        border-right: 1px solid #2B2B2B;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
-        z-index: 999980;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1.25rem 0;
-        gap: 1.25rem;
+    /* Streamlit Sidebar Configured as Permanent Left Icon Rail */
+    section[data-testid="stSidebar"] {{
+        position: fixed !important;
+        top: 60px !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 68px !important;
+        min-width: 68px !important;
+        max-width: 68px !important;
+        background-color: #161616 !important;
+        border-right: 1px solid #2B2B2B !important;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
+        z-index: 999980 !important;
+        transform: none !important;
+        margin-left: 0 !important;
+        visibility: visible !important;
+        display: block !important;
     }}
 
-    .echo-nav-item {{
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        background-color: #222222;
-        border: 1px solid #333333;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
+    button[data-testid="stSidebarCollapseButton"],
+    div[data-testid="stSidebarHeader"],
+    div[data-testid="stSidebarNav"] {{
+        display: none !important;
     }}
 
-    .echo-nav-item svg {{
-        width: 22px;
-        height: 22px;
-        stroke: #C5A059;
-        fill: none;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        transition: all 0.2s ease;
+    section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {{
+        padding: 1.25rem 0.6rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
     }}
 
-    .echo-nav-item:hover {{
-        background-color: #D4AF37;
-        border-color: #D4AF37;
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {{
+        gap: 1rem !important;
+        align-items: center !important;
+    }}
+
+    /* Left Icon Buttons */
+    section[data-testid="stSidebar"] .stButton > button {{
+        width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        background-color: #222222 !important;
+        border: 1px solid #333333 !important;
+        color: #C5A059 !important;
+        font-size: 1.3rem !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+
+    section[data-testid="stSidebar"] .stButton > button:hover {{
+        background-color: #D4AF37 !important;
+        color: #161616 !important;
+        border-color: #D4AF37 !important;
         transform: translateY(-1px);
     }}
 
-    .echo-nav-item:hover svg {{
-        stroke: #161616;
-    }}
-
+    /* Main Content Cards & Containers */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         background-color: #FFFFFF !important; 
         border-radius: 12px !important;
@@ -145,6 +149,7 @@ def render_global_navbar(page_title="Project Echo"):
         margin-bottom: 1.25rem !important;
     }}
 
+    /* Inputs */
     .stTextArea textarea, .stTextInput input, div[data-baseweb="select"] > div {{
         background-color: #FAFAFA !important;
         border: 1px solid rgba(0,0,0,0.08) !important;
@@ -158,7 +163,8 @@ def render_global_navbar(page_title="Project Echo"):
         border-color: #D4AF37 !important;
     }}
 
-    .stButton > button, .stDownloadButton > button {{
+    /* Action Buttons */
+    .block-container .stButton > button, .block-container .stDownloadButton > button {{
         background-color: #222222 !important; 
         color: #FFFFFF !important;
         border: none !important; 
@@ -174,7 +180,7 @@ def render_global_navbar(page_title="Project Echo"):
         width: 100% !important;
     }}
 
-    .stButton > button:hover, .stDownloadButton > button:hover {{
+    .block-container .stButton > button:hover, .block-container .stDownloadButton > button:hover {{
         background-color: #D4AF37 !important;
         color: #161616 !important;
         transform: translateY(-1px);
@@ -192,6 +198,7 @@ def render_global_navbar(page_title="Project Echo"):
         border-color: #B23A3A !important;
     }}
 
+    /* Minimalist Chat */
     .chat-container {{ display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }}
     .chat-ai {{
         align-self: flex-start;
@@ -213,25 +220,22 @@ def render_global_navbar(page_title="Project Echo"):
     }}
     </style>
 
-    <!-- Topbar -->
     <div class="echo-topbar-wrapper">
         <h1 class="echo-title">{page_title}</h1>
     </div>
-
-    <!-- Left Rail -->
-    <div class="echo-nav-rail">
-        <a href="./" target="_self" class="echo-nav-item" title="Executive Dashboard">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        </a>
-        <a href="./minutes_of_the_meeting" target="_self" class="echo-nav-item" title="MoM Generator">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        </a>
-        <a href="./meeting_details" target="_self" class="echo-nav-item" title="Meeting Browser">
-            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        </a>
-        <a href="./ask_echo" target="_self" class="echo-nav-item" title="Ask Echo AI">
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>
-        </a>
-    </div>
     """
-    st.markdown(nav_html, unsafe_allow_html=True)
+    st.markdown(custom_css, unsafe_allow_html=True)
+
+    # 2. Native Multi-page Navigation via st.switch_page (Prevents 404 reloads)
+    with st.sidebar:
+        if st.button("🎛️", key="nav_btn_home", help="Executive Dashboard"):
+            st.switch_page("app.py")
+
+        if st.button("📝", key="nav_btn_mom", help="MoM Generator"):
+            st.switch_page("pages/1_minutes_of_the_meeting.py")
+
+        if st.button("📖", key="nav_btn_details", help="Meeting Browser"):
+            st.switch_page("pages/2_meeting_details.py")
+
+        if st.button("🤖", key="nav_btn_echo", help="Ask Echo AI"):
+            st.switch_page("pages/5_ask_echo.py")
