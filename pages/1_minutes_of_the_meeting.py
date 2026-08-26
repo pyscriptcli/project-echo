@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Project Echo - MoM Generator",
     page_icon="📝",
     layout="wide",
-    initial_sidebar_state="Expanded"
+    initial_sidebar_state="expanded"
 )
 
 # 3. Global Navbar / Header
