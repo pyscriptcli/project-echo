@@ -1,6 +1,43 @@
 import streamlit as st
+import base64
 
 def render_global_navbar(page_title="Project Echo"):
+    # SVG icons (stroke="currentColor" so they inherit the button's color)
+    svg_home = '''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12l9-9 9 9"/>
+        <path d="M5 10v10a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V10"/>
+    </svg>
+    '''
+    svg_document = '''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    '''
+    svg_book = '''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+    '''
+    svg_chat = '''
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    '''
+
+    # Encode SVGs to base64 for use in CSS data URIs
+    def b64(svg):
+        return base64.b64encode(svg.encode()).decode()
+
+    b64_home = b64(svg_home)
+    b64_doc = b64(svg_document)
+    b64_book = b64(svg_book)
+    b64_chat = b64(svg_chat)
+
     # 1. Inject Topbar Header & Global CSS
     custom_css = f"""
     <style>
@@ -139,6 +176,43 @@ def render_global_navbar(page_title="Project Echo"):
         transform: translateY(-1px);
     }}
 
+    /* ----- SVG Icon Overrides for Navigation Buttons ----- */
+    #nav_btn_home, #nav_btn_mom, #nav_btn_details, #nav_btn_echo {{
+        font-size: 0 !important;           /* hide the label text */
+        color: #C5A059 !important;         /* inherit this color for the SVG (stroke="currentColor") */
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+
+    #nav_btn_home::before,
+    #nav_btn_mom::before,
+    #nav_btn_details::before,
+    #nav_btn_echo::before {{
+        content: "";
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        flex-shrink: 0;
+    }}
+
+    #nav_btn_home::before {{
+        background-image: url('data:image/svg+xml;base64,{b64_home}');
+    }}
+    #nav_btn_mom::before {{
+        background-image: url('data:image/svg+xml;base64,{b64_doc}');
+    }}
+    #nav_btn_details::before {{
+        background-image: url('data:image/svg+xml;base64,{b64_book}');
+    }}
+    #nav_btn_echo::before {{
+        background-image: url('data:image/svg+xml;base64,{b64_chat}');
+    }}
+
     /* Main Content Cards & Containers */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         background-color: #FFFFFF !important; 
@@ -227,15 +301,16 @@ def render_global_navbar(page_title="Project Echo"):
     st.markdown(custom_css, unsafe_allow_html=True)
 
     # 2. Native Multi-page Navigation via st.switch_page (Prevents 404 reloads)
+    #    Each button now uses an empty label; the icon is provided by the CSS ::before.
     with st.sidebar:
-        if st.button("🎛️", key="nav_btn_home", help="Executive Dashboard"):
+        if st.button("", key="nav_btn_home", help="Executive Dashboard"):
             st.switch_page("app.py")
 
-        if st.button("📝", key="nav_btn_mom", help="MoM Generator"):
+        if st.button("", key="nav_btn_mom", help="MoM Generator"):
             st.switch_page("pages/1_minutes_of_the_meeting.py")
 
-        if st.button("📖", key="nav_btn_details", help="Meeting Browser"):
+        if st.button("", key="nav_btn_details", help="Meeting Browser"):
             st.switch_page("pages/2_meeting_details.py")
 
-        if st.button("🤖", key="nav_btn_echo", help="Ask Echo AI"):
+        if st.button("", key="nav_btn_echo", help="Ask Echo AI"):
             st.switch_page("pages/5_ask_echo.py")
