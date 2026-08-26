@@ -3,10 +3,7 @@ import datetime
 import pandas as pd
 import streamlit as st
 from supabase import create_client, Client
-from navigation import render_global_navbar
-
-st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
-render_global_navbar()
+from components.navigation import render_global_navigation
 
 # ========== CONFIG ==========
 st.set_page_config(
@@ -15,7 +12,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Supabase Credentials
+# Render Global Navigation
+render_global_navigation()
+
+# ========== SUPABASE SETUP ==========
 SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
 if SUPABASE_URL.endswith("/rest/v1"):
     SUPABASE_URL = SUPABASE_URL[:-8]
@@ -72,9 +72,10 @@ html, body, [class*="css"] {
 }
 
 .stApp > header { display: none !important; }
+
+/* Let Streamlit handle left padding dynamically to prevent overlap/gaps */
 .block-container { 
     padding-top: 5.5rem !important;
-    padding-left: 5.8rem !important;
     padding-right: 2rem !important;
 }
 
@@ -109,23 +110,52 @@ h3 {
     display: block;
 }
 
-/* Persistent Icon Rail */
+/* ========== ROBUST SIDEBAR STYLING ========== */
 section[data-testid="stSidebar"] {
-    position: fixed !important;
-    width: 68px !important;
-    min-width: 68px !important;
-    max-width: 68px !important;
     background-color: #161616 !important;
     border-right: 1px solid #2B2B2B !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
     z-index: 999995 !important;
-    top: 60px !important;
-    height: calc(100vh - 60px) !important;
-    display: block !important;
-    visibility: visible !important;
+    /* Removed position: fixed to prevent Streamlit layout breakage */
 }
 
-button[data-testid="stSidebarCollapseButton"] { display: none !important; }
+/* CRITICAL: Make the collapse/expand button ALWAYS visible and styled */
+button[data-testid="stSidebarCollapseButton"] {
+    display: flex !important; 
+    position: absolute !important;
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    background-color: #222222 !important;
+    border: 1px solid #333333 !important;
+    border-radius: 50% !important;
+    color: #C5A059 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    z-index: 999999 !important;
+}
+
+button[data-testid="stSidebarCollapseButton"]:hover {
+    background-color: #D4AF37 !important;
+    border-color: #D4AF37 !important;
+    color: #161616 !important;
+}
+
+button[data-testid="stSidebarCollapseButton"] svg {
+    color: #C5A059 !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+button[data-testid="stSidebarCollapseButton"]:hover svg {
+    color: #161616 !important;
+}
 
 section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     padding: 1.2rem 0 !important;
@@ -215,13 +245,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ========== PERSISTENT ICON-ONLY SIDEBAR ==========
-with st.sidebar:
-    st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
-    st.page_link("pages/1_minutes_of_the_meeting.py", icon=":material/edit_document:", help="MoM Generator")
-    st.page_link("pages/2_meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
-    st.page_link("pages/5_ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
-
+# ========== MEETING SELECTION ==========
 meetings = get_all_meetings()
 
 if not meetings:
@@ -230,11 +254,13 @@ if not meetings:
 
 # Build dropdown mapping
 meeting_map = {f"{m.get('client_name', 'Client')} ({str(m.get('meeting_date', ''))[:10]}) - {m.get('meeting_id')}": m for m in meetings}
-default_idx = 0
 
-if st.session_state.get("selected_meeting_id"):
+# Auto-select based on session state (from Dashboard gallery click)
+default_idx = 0
+selected_id = st.session_state.get("selected_meeting_id")
+if selected_id:
     for idx, (label, m) in enumerate(meeting_map.items()):
-        if m.get("meeting_id") == st.session_state["selected_meeting_id"]:
+        if str(m.get("meeting_id")) == str(selected_id):
             default_idx = idx
             break
 
@@ -242,7 +268,7 @@ sel_label = st.selectbox("Select Meeting to Inspect", options=list(meeting_map.k
 selected_meeting = meeting_map[sel_label]
 m_id = selected_meeting.get("meeting_id")
 
-# Top Meeting Details Card
+# ========== MEETING DETAILS CARD ==========
 with st.container(border=True):
     st.markdown("<h3>Meeting Details</h3>", unsafe_allow_html=True)
     d1, d2, d3 = st.columns(3)
@@ -256,28 +282,41 @@ with st.container(border=True):
         st.write(f"**Confirmed by:** {selected_meeting.get('confirmed_by', 'N/A')}")
         st.write(f"**Meeting ID:** `{m_id}`")
 
-# Full Transcript Collapsible Expander
+# ========== FULL TRANSCRIPT ==========
 raw_transcript = selected_meeting.get("transcript_md", "No transcript stored.")
-with st.expander("Full Transcript (Click to Expand)"):
-    st.text_area("Full Transcript", value=raw_transcript.replace("### Transcript", "").strip(), height=260, disabled=True)
+with st.expander("Full Transcript (Click to Expand)", expanded=False):
+    st.text_area(
+        "Full Transcript", 
+        value=raw_transcript.replace("### Transcript", "").strip(), 
+        height=260, 
+        disabled=True,
+        label_visibility="collapsed"
+    )
 
-# Minutes of Meeting Interactive Editor
+# ========== MINUTES OF MEETING INTERACTIVE EDITOR ==========
 with st.container(border=True):
     st.markdown("<h3>Minutes of Meeting Editor</h3>", unsafe_allow_html=True)
+    st.caption("Edit action items and discussion points inline. Changes are saved to Supabase when you click 'Save All Changes'.")
     
-    # Load and normalize table items
-    raw_items = selected_meeting.get("table_items", [])
-    if isinstance(raw_items, list) and len(raw_items) > 0:
-        df = pd.DataFrame(raw_items)
-    else:
-        df = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
-        
+    # Initialize session state for this specific meeting's editor
+    editor_key = f"editor_df_{m_id}"
+    if editor_key not in st.session_state:
+        raw_items = selected_meeting.get("table_items", [])
+        if isinstance(raw_items, list) and len(raw_items) > 0:
+            st.session_state[editor_key] = pd.DataFrame(raw_items)
+        else:
+            st.session_state[editor_key] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
+    
+    df = st.session_state[editor_key].copy().reset_index(drop=True)
+    
+    # Ensure all required columns exist
     for col in ["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]:
         if col not in df.columns:
             df[col] = ""
 
-    # Row iteration for editor
     row_to_delete = None
+    
+    # Render rows
     for idx in range(len(df)):
         with st.container(border=True):
             c_disc, c_act, c_date, c_pic, c_del = st.columns([3.2, 3.2, 1.8, 1.8, 0.6])
@@ -295,16 +334,16 @@ with st.container(border=True):
                 st.text_area("PIC", value=str(df.at[idx, "Person-in-charge"]), key=f"md_pic_{idx}", height=75, label_visibility="collapsed")
             with c_del:
                 st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                if st.button("Delete", key=f"del_md_{idx}"):
+                if st.button("🗑️", key=f"del_md_{idx}", help="Delete Row"):
                     row_to_delete = idx
 
+    # Handle Deletion
     if row_to_delete is not None:
         df = df.drop(index=row_to_delete).reset_index(drop=True)
-        updated_items = df.to_dict(orient="records")
-        update_meeting_archive(m_id, updated_items, selected_meeting.get("summary_md", ""))
+        st.session_state[editor_key] = df
         st.rerun()
 
-    # Collect values
+    # Collect updated values from session state
     rows_data = []
     for idx in range(len(df)):
         rows_data.append({
@@ -314,28 +353,41 @@ with st.container(border=True):
             "Person-in-charge": st.session_state.get(f"md_pic_{idx}", df.at[idx, "Person-in-charge"])
         })
 
+    # Add Item Button
     add_c1, _ = st.columns([2, 8])
     with add_c1:
         if st.button("+ Add Item", key="btn_add_item_md"):
-            rows_data.append({"Discussion Points": "", "Action Plan": "", "Indicative Delivery Date": "", "Person-in-charge": ""})
-            update_meeting_archive(m_id, rows_data, selected_meeting.get("summary_md", ""))
+            rows_data.append({
+                "Discussion Points": "", 
+                "Action Plan": "", 
+                "Indicative Delivery Date": "", 
+                "Person-in-charge": ""
+            })
+            st.session_state[editor_key] = pd.DataFrame(rows_data)
             st.rerun()
 
+    # Summary / Other Discussions
     st.markdown('<span class="playfair-label" style="margin-top:0.75rem;">Summary & Other Discussions</span>', unsafe_allow_html=True)
+    current_summary = str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip current_summary = str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip()
     summary_val = st.text_area(
         "Summary Content",
-        value=str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip(),
+        value=current_summary,
         height=100,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        key=f"summary_{m_id}"
     )
 
-    # Save Updates at Bottom Right
+    # Save Updates
     st.write("")
     sv_col1, sv_col2 = st.columns([8, 2])
     with sv_col2:
-        if st.button("Update Meeting Record", key="btn_save_updates"):
-            ok, msg = update_meeting_archive(m_id, rows_data, f"### Summary\n{summary_val}")
-            if ok:
-                st.success(msg)
-            else:
-                st.error(f"Update failed: {msg}")
+        if st.button("💾 Save All Changes", key="btn_save_updates", type="primary"):
+            with st.spinner("Saving to Supabase..."):
+                ok, msg = update_meeting_archive(m_id, rows_data, f"### Summary\n{summary_val}")
+                if ok:
+                    st.success(msg)
+                    # Clear editor state to force reload of fresh data on next interaction
+                    if editor_key in st.session_state:
+                        del st.session_state[editor_key]
+                else:
+                    st.error(f"Update failed: {msg}")
