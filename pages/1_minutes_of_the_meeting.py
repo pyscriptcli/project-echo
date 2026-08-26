@@ -22,11 +22,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 import streamlit.components.v1 as components
 from supabase import create_client, Client
-from navigation import render_global_navbar
 
 # ========== CONFIG ==========
-st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="expanded")
-render_global_navbar()
+st.set_page_config(page_title="Project Echo - MoM Generator", layout="wide", initial_sidebar_state="collapsed")
 
 # --- PROGRAMMATIC LIGHT MODE & 200MB LIMIT ---
 _config_dir = ".streamlit"
@@ -108,8 +106,8 @@ if "meeting_conf_name" not in st.session_state:
 if "meeting_conf_desig" not in st.session_state:
     st.session_state["meeting_conf_desig"] = ""
 
-# ========== CUSTOM CSS ==========
-CUSTOM_CSS = """
+# ========== COMPLETE SELF-CONTAINED CSS & FLOATING NAVBAR ==========
+CUSTOM_LAYOUT_HTML = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
@@ -117,7 +115,7 @@ html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Crisp Grid Background */
+/* Crisp Technical Background */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -129,11 +127,19 @@ html, body, [class*="css"] {
 
 .stApp > header { display: none !important; }
 
-/* Main content padding adjusted for icon sidebar rail */
+/* Remove native sidebar elements */
+section[data-testid="stSidebar"],
+button[data-testid="stSidebarCollapseButton"],
+div[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Main content spacing adjusted for icon sidebar rail */
 .block-container { 
     padding-top: 5.5rem !important; 
-    padding-left: 5.8rem !important;
+    padding-left: 6.2rem !important;
     padding-right: 2rem !important;
+    max-width: 98% !important;
 }
 
 /* Fixed Topbar */
@@ -177,53 +183,58 @@ button[data-baseweb="tab"] p {
     font-size: 1.05rem !important;
 }
 
-/* Persistent Fixed Icon-Only Rail Sidebar */
-section[data-testid="stSidebar"] {
-    position: fixed !important;
-    width: 68px !important;
-    min-width: 68px !important;
-    max-width: 68px !important;
-    background-color: #161616 !important;
-    border-right: 1px solid #2B2B2B !important;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
-    z-index: 999995 !important;
-    top: 60px !important;
-    height: calc(100vh - 60px) !important;
-    display: block !important;
-    visibility: visible !important;
+/* Permanent Viewport Left Icon Rail */
+.echo-nav-rail {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: 68px;
+    background-color: #161616;
+    border-right: 1px solid #2B2B2B;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+    z-index: 999980;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0;
+    gap: 1.25rem;
 }
 
-button[data-testid="stSidebarCollapseButton"] { display: none !important; }
-
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    padding: 1.2rem 0 !important;
-    gap: 1.1rem !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
+.echo-nav-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background-color: #222222;
+    border: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-/* Page Link Navigation Icons */
-section[data-testid="stSidebar"] a {
-    width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 10px !important;
-    background-color: #222222 !important;
-    border: 1px solid #333333 !important;
-    color: #ECE9DF !important;
-    transition: all 0.2s ease !important;
+.echo-nav-item svg {
+    width: 22px;
+    height: 22px;
+    stroke: #C5A059;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 0.2s ease;
 }
 
-section[data-testid="stSidebar"] a span[data-testid="stPageLink-Text"] { display: none !important; }
-section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"] { font-size: 1.4rem !important; color: #C5A059 !important; }
+.echo-nav-item:hover {
+    background-color: #D4AF37;
+    border-color: #D4AF37;
+    transform: translateY(-1px);
+}
 
-section[data-testid="stSidebar"] a:hover { background-color: #D4AF37 !important; border-color: #D4AF37 !important; }
-section[data-testid="stSidebar"] a:hover span[data-testid="stIconMaterial"] { color: #161616 !important; }
+.echo-nav-item:hover svg {
+    stroke: #161616;
+}
 
 /* Base Cards: Pure White with Depth & Shadow */
 div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -336,7 +347,29 @@ button[key="card_settings_btn"]::before {
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 </style>
+
+<!-- Topbar -->
+<div class="echo-topbar-wrapper">
+    <h1 class="echo-title">Project <span>Echo</span> &mdash; MoM Generator</h1>
+</div>
+
+<!-- Left Rail with Exact Matched Routes -->
+<div class="echo-nav-rail">
+    <a href="/" target="_self" class="echo-nav-item" title="Executive Dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+    </a>
+    <a href="/1_minutes_of_the_meeting" target="_self" class="echo-nav-item" title="MoM Generator">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+    </a>
+    <a href="/2_meeting_details" target="_self" class="echo-nav-item" title="Meeting Browser">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+    </a>
+    <a href="/5_ask_echo" target="_self" class="echo-nav-item" title="Ask Echo AI">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>
+    </a>
+</div>
 """
+st.markdown(CUSTOM_LAYOUT_HTML, unsafe_allow_html=True)
 
 # ========== SVG ICONS ==========
 SVG_ALERT = """<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>"""
@@ -371,7 +404,7 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
         if meeting_details.get("date"):
             try:
                 meeting_date_str = datetime.datetime.strptime(meeting_details.get("date"), "%B %d, %Y").strftime("%Y-%m-%d")
-            except:
+            except Exception:
                 pass
         
         payload = {
@@ -435,7 +468,7 @@ def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
         if resp.status_code == 200:
             return resp.json().get("text", "")
         return None
-    except:
+    except Exception:
         return None
 
 def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, status_placeholder):
@@ -498,7 +531,7 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
                 full_transcript.append(t)
             time.sleep(0.2)
             try: os.remove(seg)
-            except: pass
+            except Exception: pass
 
         progress_bar.progress(100, text="Transcription completed successfully (100%)!")
         time.sleep(0.3)
@@ -510,10 +543,10 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
     finally:
         if os.path.exists(src_path):
             try: os.remove(src_path)
-            except: pass
+            except Exception: pass
         if os.path.exists(compressed_mp3):
             try: os.remove(compressed_mp3)
-            except: pass
+            except Exception: pass
 
 def normalize_llm_json_to_df(data):
     items = None
@@ -1149,23 +1182,6 @@ def export_to_pdf(df, meeting_details, other_discussions):
     doc.build(story)
     buffer.seek(0)
     return buffer
-
-# ========== STREAMLIT UI SETUP ==========
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-
-# Top Bar Fixed Header
-st.markdown("""
-<div class="echo-topbar-wrapper">
- <h1 class="echo-title">Project <span>Echo</span></h1>
-</div>
-""", unsafe_allow_html=True)
-
-# ========== GLOBAL SIDEBAR NAVIGATION ==========
-with st.sidebar:
-    st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
-    st.page_link("pages/1_minutes_of_the_meeting.py", icon=":material/edit_document:", help="MoM Generator")
-    st.page_link("pages/2_meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
-    st.page_link("pages/5_ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
 
 # ---- TOP ROW: Symmetrical Fixed Containers ----
 col_upload, col_details = st.columns(2)
