@@ -12,7 +12,7 @@ render_global_navbar()
 
 # ========== CONFIG ==========
 st.set_page_config(
-    page_title="Project Echo - Executive Hub",
+    page_title="Project Echo - Dashboard",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
