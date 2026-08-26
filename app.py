@@ -7,18 +7,19 @@ import requests
 import streamlit as st
 from supabase import create_client, Client
 
-# Ensure root directory is on Python path for imports
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) if "pages" in __file__ else os.path.abspath("."))
-from navigation import render_global_navbar
-st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
-render_global_navbar("Project Echo &mdash; Executive Hub")
-
-# ========== CONFIG ==========
+# ========== CONFIG (Must be called first) ==========
 st.set_page_config(
-    page_title="Project Echo - Dashboard",
+    page_title="Project Echo - Executive Hub",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Ensure root directory is on Python path for navbar import
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) if "pages" in __file__ else os.path.abspath("."))
+from navigation import render_global_navbar
+
+# Render Topbar & Left Rail
+render_global_navbar("Project Echo &mdash; Executive Hub")
 
 # --- PROGRAMMATIC LIGHT MODE & 200MB LIMIT ---
 _config_dir = ".streamlit"
