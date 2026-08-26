@@ -24,7 +24,7 @@ import streamlit.components.v1 as components
 from supabase import create_client, Client
 
 # ========== CONFIG ==========
-st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="expanded")
 
 # --- PROGRAMMATIC LIGHT MODE & 200MB LIMIT ---
 _config_dir = ".streamlit"
@@ -126,7 +126,13 @@ html, body, [class*="css"] {
 }
 
 .stApp > header { display: none !important; }
-.block-container { padding-top: 5.5rem !important; }
+
+/* Main content padding adjusted for icon sidebar rail */
+.block-container { 
+    padding-top: 5.5rem !important; 
+    padding-left: 5.8rem !important;
+    padding-right: 2rem !important;
+}
 
 /* Fixed Topbar */
 .echo-topbar-wrapper {
@@ -168,6 +174,54 @@ button[data-baseweb="tab"] p {
     color: #1A2B4C !important;
     font-size: 1.05rem !important;
 }
+
+/* Persistent Fixed Icon-Only Rail Sidebar */
+section[data-testid="stSidebar"] {
+    position: fixed !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    background-color: #161616 !important;
+    border-right: 1px solid #2B2B2B !important;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
+    z-index: 999995 !important;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+button[data-testid="stSidebarCollapseButton"] { display: none !important; }
+
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    padding: 1.2rem 0 !important;
+    gap: 1.1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+/* Page Link Navigation Icons */
+section[data-testid="stSidebar"] a {
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    background-color: #222222 !important;
+    border: 1px solid #333333 !important;
+    color: #ECE9DF !important;
+    transition: all 0.2s ease !important;
+}
+
+section[data-testid="stSidebar"] a span[data-testid="stPageLink-Text"] { display: none !important; }
+section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"] { font-size: 1.4rem !important; color: #C5A059 !important; }
+
+section[data-testid="stSidebar"] a:hover { background-color: #D4AF37 !important; border-color: #D4AF37 !important; }
+section[data-testid="stSidebar"] a:hover span[data-testid="stIconMaterial"] { color: #161616 !important; }
 
 /* Base Cards: Pure White with Depth & Shadow */
 div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -1103,6 +1157,13 @@ st.markdown("""
  <h1 class="echo-title">Project <span>Echo</span></h1>
 </div>
 """, unsafe_allow_html=True)
+
+# ========== GLOBAL SIDEBAR NAVIGATION ==========
+with st.sidebar:
+    st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
+    st.page_link("pages/1_minutes_of_the_meeting.py", icon=":material/edit_document:", help="MoM Generator")
+    st.page_link("pages/2_meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
+    st.page_link("pages/5_ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
 
 # ---- TOP ROW: Symmetrical Fixed Containers ----
 col_upload, col_details = st.columns(2)
