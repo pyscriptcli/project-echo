@@ -4,10 +4,11 @@ import datetime
 import pandas as pd
 import requests
 import streamlit as st
+from supabase import create_client, Client
 
 # ========== CONFIG ==========
 st.set_page_config(
-    page_title="Project Echo",
+    page_title="Project Echo - Executive Hub",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -19,80 +20,43 @@ os.makedirs(_config_dir, exist_ok=True)
 with open(_config_file, "w", encoding="utf-8") as f:
     f.write('[theme]\nbase="light"\n[server]\nmaxUploadSize = 200\n')
 
-# API Keys loaded strictly from Streamlit Cloud Secrets
+# API Keys & Supabase Credentials loaded strictly from Streamlit Secrets
 DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
 
-# Global Archive JSON Storage
-ARCHIVE_DB_FILE = ".echo_archive.json"
+SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
+if SUPABASE_URL.endswith("/rest/v1"):
+    SUPABASE_URL = SUPABASE_URL[:-8]
 
-def load_archive_db():
-    if os.path.exists(ARCHIVE_DB_FILE):
-        try:
-            with open(ARCHIVE_DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+SUPABASE_KEY = str(st.secrets.get("SUPABASE_KEY", "")).strip()
 
-def save_archive_db(data):
+# ========== SUPABASE CLIENT & DATA HELPERS ==========
+@st.cache_resource
+def init_supabase() -> Client:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
     try:
-        with open(ARCHIVE_DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    except Exception:
-        pass
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        st.error(f"Supabase connection initialization failed: {e}")
+        return None
 
-# Seed sample data if database is fresh
-if not os.path.exists(ARCHIVE_DB_FILE):
-    sample_records = [
-        {
-            "id": "MOM-20260825-01",
-            "date": "August 25, 2026",
-            "client_name": "Regis Properties Inc.",
-            "location": "GreatWork Mega Tower 32F - Board Room",
-            "prepared_by": "Cedtrix Rena",
-            "confirmed_by": "Mr. Raymond Santos",
-            "summary": "Action plan alignment for the Bida project and commercial franchisee expansion.",
-            "action_items": [
-                {"task": "Communicate deliverables with franchisees", "pic": "Cedrics, Melissa, Carlo, Dyx", "due": "August 31, 2026"},
-                {"task": "Deliver data analytics support deck", "pic": "Dave Policarpio, Irish Rima", "due": "September 05, 2026"}
-            ],
-            "transcript_sample": "Our meeting today is to discuss the action plan for the Bida project. Cedrics, Melissa, Carlo, and Dykes will handle accounts."
-        }
-    ]
-    save_archive_db(sample_records)
+def fetch_meeting_archives_from_supabase(limit: int = 100):
+    client = init_supabase()
+    if not client:
+        return []
+    try:
+        resp = client.table("meeting_archives").select("*").order("meeting_date", desc=True).limit(limit).execute()
+        return resp.data if resp and resp.data else []
+    except Exception as e:
+        st.warning(f"Could not retrieve meeting archives from Supabase: {e}")
+        return []
 
 # ========== GLOBAL SESSION STATE ==========
-if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 
-# ========== CENTRAL PASSWORD GATE ==========
-if not st.session_state["authenticated"]:
-    st.markdown("""
-    <div style="text-align: center; margin-top: 5rem; margin-bottom: 2rem;">
-        <h1 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 2.2rem; color: #161616;">
-            Project <span style="color: #D4AF37;">Echo</span>
-        </h1>
-        <p style="font-size: 0.95rem; color: #666;">PRIME Philippines Enterprise Intelligence Hub</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    _, auth_col, _ = st.columns([1.5, 1.2, 1.5])
-    with auth_col:
-        with st.container(border=True):
-            pw_input = st.text_input("Enter Team Access Key:", type="password")
-            if st.button("Log In", use_container_width=True):
-                configured_password = str(st.secrets.get("APP_PASSWORD", "crd3ch0")).strip()
-                if pw_input == configured_password:
-                    st.session_state["authenticated"] = True
-                    st.rerun()
-                else:
-                    st.error("Invalid access key. Contact the administrator.")
-    st.stop()
-
-# ========== CUSTOM CSS: CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
+# ========== CUSTOM CSS ==========
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -101,7 +65,7 @@ html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Technical Grid Background */
+/* Crisp Technical Large Gridlines Background */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -140,7 +104,7 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
-/* ClickUp-Style Persistent Floating Collapsible Sidebar */
+/* Persistent Collapsible Sidebar */
 section[data-testid="stSidebar"] {
     width: 68px !important;
     min-width: 68px !important;
@@ -155,19 +119,16 @@ section[data-testid="stSidebar"] {
     height: calc(100vh - 60px) !important;
 }
 
-/* Expand on Hover */
 section[data-testid="stSidebar"]:hover {
-    width: 290px !important;
-    min-width: 290px !important;
-    max-width: 290px !important;
+    width: 300px !important;
+    min-width: 300px !important;
+    max-width: 300px !important;
 }
 
-/* Hide default collapse toggle button */
 button[data-testid="stSidebarCollapseButton"] {
     display: none !important;
 }
 
-/* Sidebar Elements Formatting */
 section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
     padding: 1rem 0.5rem !important;
     gap: 0.8rem !important;
@@ -222,7 +183,7 @@ section[data-testid="stSidebar"] a:hover {
     margin: 0;
 }
 
-/* Main Dashboard Containers */
+/* Main Dashboard Containers with Depth Shadow */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
@@ -230,6 +191,18 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
+}
+
+/* Inputs styling */
+.stTextInput input {
+    background-color: #FAFAFA !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    border-radius: 8px !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+}
+.stTextInput input:focus {
+    border-color: #D4AF37 !important;
+    background-color: #FFFFFF !important;
 }
 
 /* Uniform Pill Buttons */
@@ -297,13 +270,12 @@ def query_global_team_archive(question, archive_records, chat_history):
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "You have direct access to the entire company meeting database, archives, deliverables, and transcripts. "
-        "Answer questions accurately, cross-synthesize topics, highlight specific deadlines, budgets, "
-        "and name responsible persons-in-charge. "
+        "You have direct access to the team's Supabase meeting archives, deliverables, summaries, and transcripts. "
+        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
         "Format responses in concise, professional corporate English with clean markdown bullet points."
     )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nCompany Meeting Archives:\n{archive_context[:28000]}"}]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nCompany Supabase Meeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": question})
@@ -330,43 +302,46 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ========== CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
-archive_data = load_archive_db()
+# Fetch current live data from Supabase
+supabase_records = fetch_meeting_archives_from_supabase()
 
+# ========== CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
 with st.sidebar:
     st.markdown("<h3 style='color:#FFFFFF !important; font-size:1.1rem !important;'>Navigation</h3>", unsafe_allow_html=True)
     
-    # Page Switcher
     if os.path.exists("pages/mom_generator.py"):
         st.page_link("pages/mom_generator.py", label="MoM Generator", icon=":material/edit_document:")
     elif os.path.exists("pages/1_MoM_Generator.py"):
         st.page_link("pages/1_MoM_Generator.py", label="MoM Generator", icon=":material/edit_document:")
         
     st.markdown("---")
-    st.markdown("<p style='font-size:0.85rem; font-weight:600; color:#D4AF37;'>ARCHIVE EXPLORER</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; font-weight:600; color:#D4AF37;'>SUPABASE ARCHIVES</p>", unsafe_allow_html=True)
     
     search_query = st.text_input("Search archives", placeholder="Search client or topic...", label_visibility="collapsed")
     
-    filtered_meetings = archive_data
+    filtered_meetings = supabase_records
     if search_query:
         q = search_query.lower()
         filtered_meetings = [
-            m for m in archive_data 
-            if q in m.get("client_name", "").lower() or q in m.get("summary", "").lower() or q in m.get("prepared_by", "").lower()
+            m for m in supabase_records 
+            if q in str(m.get("client_name", "")).lower() or q in str(m.get("summary_md", "")).lower() or q in str(m.get("prepared_by", "")).lower()
         ]
         
-    st.caption(f"{len(filtered_meetings)} of {len(archive_data)} logs")
+    st.caption(f"{len(filtered_meetings)} of {len(supabase_records)} logs loaded")
     for m in filtered_meetings[:5]:
-        with st.expander(f"{m.get('client_name', 'Client')} ({m.get('date', 'Date')[:6]})"):
+        m_title = m.get('client_name') or 'Meeting'
+        m_date = str(m.get('meeting_date', ''))
+        with st.expander(f"{m_title} ({m_date[:10]})"):
             st.caption(f"Location: {m.get('location', 'N/A')}")
             st.caption(f"Prepared by: {m.get('prepared_by', 'N/A')}")
-            st.write(f"**Focus:** {m.get('summary', 'No summary logged.')}")
+            summary_preview = m.get('summary_md', '') or 'No summary logged.'
+            st.write(f"**Focus:** {summary_preview[:120]}...")
 
 # ========== MAIN DASHBOARD VIEW ==========
 # 1. High-Level KPI Metric Cards
-total_meetings = len(archive_data)
-total_action_items = sum(len(m.get("action_items", [])) for m in archive_data)
-unique_clients = len(set(m.get("client_name") for m in archive_data if m.get("client_name")))
+total_meetings = len(supabase_records)
+total_action_items = sum(len(m.get("table_items", [])) for m in supabase_records if isinstance(m.get("table_items"), list))
+unique_clients = len(set(m.get("client_name") for m in supabase_records if m.get("client_name")))
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
@@ -376,7 +351,9 @@ with kpi2:
 with kpi3:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Corporate Clients</div><div class="kpi-value">{unique_clients}</div></div>', unsafe_allow_html=True)
 with kpi4:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Hub Status</div><div class="kpi-value" style="color:#2E7D32; font-size:1.6rem;">Operational</div></div>', unsafe_allow_html=True)
+    db_status = "Connected" if SUPABASE_URL and SUPABASE_KEY else "Missing Keys"
+    status_color = "#2E7D32" if db_status == "Connected" else "#C62828"
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Supabase Cloud</div><div class="kpi-value" style="color:{status_color}; font-size:1.6rem;">{db_status}</div></div>', unsafe_allow_html=True)
 
 st.write("")
 
@@ -386,18 +363,21 @@ col_left, col_right = st.columns(2)
 with col_left:
     with st.container(height=580, border=True):
         st.markdown('<h3>Cross-Meeting Deliverables Matrix</h3>', unsafe_allow_html=True)
-        st.caption("Active action items aggregated across company meetings.")
+        st.caption("Active action items and deliverables aggregated from Supabase.")
         
         all_tasks = []
-        for m in archive_data:
+        for m in supabase_records:
             client = m.get("client_name", "Client")
-            for item in m.get("action_items", []):
-                all_tasks.append({
-                    "Client / Account": client,
-                    "Action Plan / Deliverable": item.get("task", ""),
-                    "Person-in-Charge": item.get("pic", "Unassigned"),
-                    "Target Date": item.get("due", "TBD")
-                })
+            table_data = m.get("table_items", [])
+            if isinstance(table_data, list):
+                for item in table_data:
+                    if isinstance(item, dict):
+                        all_tasks.append({
+                            "Client / Account": client,
+                            "Action Plan / Deliverable": item.get("Action Plan") or item.get("task", ""),
+                            "Person-in-Charge": item.get("Person-in-charge") or item.get("pic", "Unassigned"),
+                            "Target Date": item.get("Indicative Delivery Date") or item.get("due", "TBD")
+                        })
         
         if all_tasks:
             task_df = pd.DataFrame(all_tasks)
@@ -408,17 +388,17 @@ with col_left:
                 hide_index=True
             )
         else:
-            st.info("No active tasks found in the archive database.")
+            st.info("No active tasks found in the Supabase archive.")
 
 with col_right:
     with st.container(height=580, border=True):
         st.markdown('<h3>Ask Echo &mdash; Global Intelligence</h3>', unsafe_allow_html=True)
-        st.caption("Query all past transcripts, commitments, deadlines, and client remarks.")
+        st.caption("Query all stored meeting transcripts, action items, and client records.")
 
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         if not st.session_state["global_chat_history"]:
             st.markdown(
-                '<div class="chat-ai">Hello. I am Echo Global. Ask me any question across your team\'s archived meeting records and deliverables.</div>',
+                '<div class="chat-ai">Hello. I am Echo Global. Ask me any question across your Supabase meeting archive.</div>',
                 unsafe_allow_html=True
             )
         else:
@@ -430,9 +410,9 @@ with col_right:
                     st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        if global_query := st.chat_input("Query whole company archive (e.g. 'What are the deadlines for Regis?')"):
+        if global_query := st.chat_input("Query whole company archive (e.g. 'What are the deliverables for Regis?')"):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
-            with st.spinner("Analyzing team archives..."):
-                ans = query_global_team_archive(global_query, archive_data, st.session_state["global_chat_history"])
+            with st.spinner("Analyzing Supabase archives..."):
+                ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
             st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
             st.rerun()
