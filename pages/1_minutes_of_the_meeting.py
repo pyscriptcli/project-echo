@@ -22,9 +22,11 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 import streamlit.components.v1 as components
 from supabase import create_client, Client
+from navigation import render_global_navbar
 
 # ========== CONFIG ==========
-st.set_page_config(page_title="Project Echo - MoM Generator", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Project Echo - Minutes of the Meeting", layout="wide", initial_sidebar_state="collapsed")
+render_global_navbar()
 
 # --- PROGRAMMATIC LIGHT MODE & 200MB LIMIT ---
 _config_dir = ".streamlit"
