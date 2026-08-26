@@ -5,6 +5,10 @@ import pandas as pd
 import requests
 import streamlit as st
 from supabase import create_client, Client
+from navigation import render_global_navbar
+
+st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
+render_global_navbar()
 
 # ========== CONFIG ==========
 st.set_page_config(
