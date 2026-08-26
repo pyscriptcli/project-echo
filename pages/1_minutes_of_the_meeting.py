@@ -21,6 +21,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 import streamlit.components.v1 as components
+from supabase import create_client, Client
 
 # ========== CONFIG ==========
 st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
@@ -32,7 +33,7 @@ os.makedirs(_config_dir, exist_ok=True)
 with open(_config_file, "w", encoding="utf-8") as f:
     f.write('[theme]\nbase="light"\n[server]\nmaxUploadSize = 200\n')
 
-# API Keys
+# API Keys & Supabase Credentials
 DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
 
@@ -41,6 +42,11 @@ GROQ_AUDIO_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 OPENAI_API_KEY = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
 OPENAI_AUDIO_URL = "https://api.openai.com/v1/audio/transcriptions"
+
+SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
+if SUPABASE_URL.endswith("/rest/v1"):
+    SUPABASE_URL = SUPABASE_URL[:-8]
+SUPABASE_KEY = "".join(str(st.secrets.get("SUPABASE_KEY", "")).split())
 
 CRD_MEMBERS = [
     "Sondi Tuazon",
@@ -211,6 +217,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #D4AF37 !important;
+    color: #161616 !important;
     box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2), 0 2px 4px rgba(212, 175, 55, 0.15) !important;
     transform: translateY(-1px);
 }
@@ -279,6 +286,59 @@ button[key="card_settings_btn"]::before {
 SVG_ALERT = """<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>"""
 
 # ========== CORE LOGIC ==========
+@st.cache_resource
+def init_supabase() -> Client:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception:
+        return None
+
+def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
+    client = init_supabase()
+    if not client:
+        return False, "Supabase client uninitialized."
+    try:
+        table_items = []
+        for _, row in df.iterrows():
+            table_items.append({
+                "Discussion Points": str(row.get("Discussion Points", "")),
+                "Action Plan": str(row.get("Action Plan", "")),
+                "Indicative Delivery Date": str(row.get("Indicative Delivery Date", "")),
+                "Person-in-charge": str(row.get("Person-in-charge", ""))
+            })
+            
+        meeting_id = f"MOM-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        client_name = meeting_details.get("company_name", "Unknown Client")
+        meeting_date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+        if meeting_details.get("date"):
+            try:
+                meeting_date_str = datetime.datetime.strptime(meeting_details.get("date"), "%B %d, %Y").strftime("%Y-%m-%d")
+            except:
+                pass
+        
+        payload = {
+            "meeting_id": meeting_id,
+            "client_name": client_name,
+            "meeting_date": meeting_date_str,
+            "location": meeting_details.get("location", ""),
+            "prepared_by": meeting_details.get("prep_name", ""),
+            "confirmed_by": meeting_details.get("conf_name", ""),
+            "summary_md": f"### Summary\n{other_discussions}",
+            "transcript_md": f"### Transcript\n{transcript[:5000]}",
+            "table_items": table_items,
+            "raw_payload": {
+                "meeting_details": meeting_details,
+                "other_discussions": other_discussions
+            }
+        }
+        
+        client.table("meeting_archives").upsert(payload, on_conflict="meeting_id").execute()
+        return True, "Successfully saved meeting to Supabase!"
+    except Exception as e:
+        return False, str(e)
+
 def extract_text_from_file(uploaded_file):
     try:
         if uploaded_file.name.endswith('.txt'):
@@ -1500,3 +1560,19 @@ if not st.session_state["df"].empty:
                 mime="application/pdf",
                 key="btn_download_pdf"
             )
+
+        # Dedicated Save Meeting to Supabase Button at the bottom right corner
+        st.write("")
+        save_col1, save_col2 = st.columns([8, 2])
+        with save_col2:
+            if st.button("Save Meeting", key="btn_save_supabase_bottom"):
+                success, msg = save_meeting_to_supabase(
+                    meeting_details, 
+                    st.session_state["df"], 
+                    st.session_state["other_discussions"], 
+                    st.session_state["transcript"]
+                )
+                if success:
+                    st.success(msg)
+                else:
+                    st.error(f"Save failed: {msg}")
