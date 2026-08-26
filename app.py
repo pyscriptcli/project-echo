@@ -5,16 +5,12 @@ import pandas as pd
 import requests
 import streamlit as st
 from supabase import create_client, Client
-from navigation import render_global_navbar
-
-st.set_page_config(page_title="Project Echo", layout="wide", initial_sidebar_state="collapsed")
-render_global_navbar()
 
 # ========== CONFIG ==========
 st.set_page_config(
     page_title="Project Echo - Executive Hub",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # --- PROGRAMMATIC LIGHT MODE & 200MB LIMIT ---
@@ -61,8 +57,8 @@ if "global_chat_history" not in st.session_state:
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
-# ========== CUSTOM CSS ==========
-CUSTOM_CSS = """
+# ========== COMPLETE SELF-CONTAINED CSS & FLOATING NAVBAR ==========
+CUSTOM_LAYOUT_HTML = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
@@ -70,7 +66,7 @@ html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Technical Gridlines Background */
+/* Crisp Technical Background */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -82,11 +78,19 @@ html, body, [class*="css"] {
 
 .stApp > header { display: none !important; }
 
-/* Main Content Spacing */
+/* Remove native sidebar elements */
+section[data-testid="stSidebar"],
+button[data-testid="stSidebarCollapseButton"],
+div[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Main content spacing */
 .block-container { 
     padding-top: 5.5rem !important;
-    padding-left: 2rem !important;
+    padding-left: 6.2rem !important;
     padding-right: 2rem !important;
+    max-width: 98% !important;
 }
 
 /* Fixed Topbar */
@@ -112,70 +116,57 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
-/* --- Streamlit Native Persistent Icon Rail --- */
-section[data-testid="stSidebar"] {
-    min-width: 72px !important;
-    max-width: 72px !important;
-    width: 72px !important;
-    background-color: #161616 !important;
-    border-right: 1px solid #2B2B2B !important;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
+/* Permanent Viewport Left Icon Rail */
+.echo-nav-rail {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: 68px;
+    background-color: #161616;
+    border-right: 1px solid #2B2B2B;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+    z-index: 999980;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0;
+    gap: 1.25rem;
 }
 
-/* Hide default toggle and navigation dropdowns */
-button[data-testid="stSidebarCollapseButton"], 
-div[data-testid="stSidebarHeader"],
-div[data-testid="stSidebarNav"] {
-    display: none !important;
+.echo-nav-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background-color: #222222;
+    border: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-/* Center-align sidebar elements */
-section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
-    padding-top: 4.5rem !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
+.echo-nav-item svg {
+    width: 22px;
+    height: 22px;
+    stroke: #C5A059;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 0.2s ease;
 }
 
-section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-    gap: 1rem !important;
-    align-items: center !important;
+.echo-nav-item:hover {
+    background-color: #D4AF37;
+    border-color: #D4AF37;
+    transform: translateY(-1px);
 }
 
-/* Tile styling for st.page_link */
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] a {
-    width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 10px !important;
-    background-color: #222222 !important;
-    border: 1px solid #333333 !important;
-    transition: all 0.2s ease !important;
-    text-decoration: none !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] p,
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] {
-    display: none !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
-    font-size: 1.4rem !important;
-    margin: 0 !important;
-    color: #C5A059 !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] a:hover {
-    background-color: #D4AF37 !important;
-    border-color: #D4AF37 !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stPageLink"] a:hover span[data-testid="stIconMaterial"] {
-    color: #161616 !important;
+.echo-nav-item:hover svg {
+    stroke: #161616;
 }
 
 /* Metric KPI Cards */
@@ -205,7 +196,7 @@ section[data-testid="stSidebar"] div[data-testid="stPageLink"] a:hover span[data
     margin: 0;
 }
 
-/* Containers with Depth & Shadow */
+/* Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
@@ -215,7 +206,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     margin-bottom: 1.25rem !important;
 }
 
-/* Gallery Item Styling */
 .gallery-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
@@ -234,7 +224,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     line-height: 1.4;
 }
 
-/* Buttons */
 .stButton > button {
     background-color: #222222 !important; 
     color: #FFFFFF !important;
@@ -257,7 +246,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transform: translateY(-1px);
 }
 
-/* Minimalist Chat */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }
 .chat-ai {
     align-self: flex-start;
@@ -278,24 +266,31 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     line-height: 1.45;
 }
 </style>
-"""
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# Top Bar Header
-st.markdown("""
+<!-- Topbar -->
 <div class="echo-topbar-wrapper">
- <h1 class="echo-title">Project <span>Echo</span> &mdash; Executive Hub</h1>
+    <h1 class="echo-title">Project <span>Echo</span> &mdash; Executive Hub</h1>
 </div>
-""", unsafe_allow_html=True)
 
-# ========== GLOBAL SIDEBAR NAVIGATION ==========
-with st.sidebar:
-    st.page_link("app.py", icon=":material/dashboard:", help="Executive Dashboard")
-    st.page_link("pages/1_minutes_of_the_meeting.py", icon=":material/edit_document:", help="MoM Generator")
-    st.page_link("pages/2_meeting_details.py", icon=":material/menu_book:", help="Meeting Browser")
-    st.page_link("pages/5_ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
+<!-- Left Rail with Exact Matched Routes -->
+<div class="echo-nav-rail">
+    <a href="/" target="_self" class="echo-nav-item" title="Executive Dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+    </a>
+    <a href="/1_minutes_of_the_meeting" target="_self" class="echo-nav-item" title="MoM Generator">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+    </a>
+    <a href="/2_meeting_details" target="_self" class="echo-nav-item" title="Meeting Browser">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+    </a>
+    <a href="/5_ask_echo" target="_self" class="echo-nav-item" title="Ask Echo AI">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>
+    </a>
+</div>
+"""
+st.markdown(CUSTOM_LAYOUT_HTML, unsafe_allow_html=True)
 
-# Fetch data from Supabase
+# Fetch Supabase Data
 supabase_records = fetch_meeting_archives_from_supabase()
 
 # ========== METRICS COMPUTATION ==========
@@ -315,7 +310,7 @@ for m in supabase_records:
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d")
         if parsed_d.year == current_year and parsed_d.month == current_month:
             total_month_meetings += 1
-    except:
+    except Exception:
         pass
 
     client_name_str = str(m.get("client_name", "")).strip().lower()
