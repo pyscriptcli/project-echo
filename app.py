@@ -78,10 +78,9 @@ html, body, [class*="css"] {
 
 .stApp > header { display: none !important; }
 
-/* Main content offset for fixed topbar and icon sidebar */
+/* Main content offset: Let Streamlit handle left padding dynamically, only force top for fixed header */
 .block-container { 
     padding-top: 5.5rem !important;
-    padding-left: 5.8rem !important;
     padding-right: 2rem !important;
 }
 
@@ -108,39 +107,67 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
-/* Persistent Fixed Icon-Only Rail Sidebar */
+/* ========== ROBUST SIDEBAR STYLING ========== */
 section[data-testid="stSidebar"] {
-    position: fixed !important;
-    width: 68px !important;
-    min-width: 68px !important;
-    max-width: 68px !important;
     background-color: #161616 !important;
     border-right: 1px solid #2B2B2B !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
     z-index: 999995 !important;
-    top: 60px !important;
-    height: calc(100vh - 60px) !important;
-    display: block !important;
-    visibility: visible !important;
+    /* Removed position: fixed to prevent Streamlit layout breakage and getting stuck */
 }
 
+/* CRITICAL: Make the collapse/expand button ALWAYS visible and styled */
 button[data-testid="stSidebarCollapseButton"] {
-    display: none !important;
+    display: flex !important; 
+    position: absolute !important;
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    background-color: #222222 !important;
+    border: 1px solid #333333 !important;
+    border-radius: 50% !important;
+    color: #C5A059 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    z-index: 999999 !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    padding: 1.2rem 0 !important;
-    gap: 1.1rem !important;
+button[data-testid="stSidebarCollapseButton"]:hover {
+    background-color: #D4AF37 !important;
+    border-color: #D4AF37 !important;
+    color: #161616 !important;
+}
+
+button[data-testid="stSidebarCollapseButton"] svg {
+    color: #C5A059 !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+button[data-testid="stSidebarCollapseButton"]:hover svg {
+    color: #161616 !important;
+}
+
+/* Sidebar Container Content */
+section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+    padding: 1.5rem 0.5rem !important;
+    gap: 1rem !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
+    align-items: center !important; /* Centers icons when collapsed */
 }
 
-/* Page Link Navigation Icons */
-section[data-testid="stSidebar"] a {
-    width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
+/* Page Link Navigation Icons Styling */
+section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
+    width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
@@ -150,24 +177,25 @@ section[data-testid="stSidebar"] a {
     border: 1px solid #333333 !important;
     color: #ECE9DF !important;
     transition: all 0.2s ease !important;
+    text-decoration: none !important;
 }
 
-section[data-testid="stSidebar"] a span[data-testid="stPageLink-Text"] {
-    display: none !important;
-}
-
-section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"] {
-    font-size: 1.4rem !important;
-    margin: 0 !important;
-    color: #C5A059 !important;
-}
-
-section[data-testid="stSidebar"] a:hover {
+section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
     background-color: #D4AF37 !important;
     border-color: #D4AF37 !important;
 }
 
-section[data-testid="stSidebar"] a:hover span[data-testid="stIconMaterial"] {
+section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] {
+    display: none !important; /* Hide text for clean icon-only look */
+}
+
+section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
+    font-size: 1.5rem !important;
+    margin: 0 !important;
+    color: #C5A059 !important;
+}
+
+section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover span[data-testid="stIconMaterial"] {
     color: #161616 !important;
 }
 
@@ -206,38 +234,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
-}
-
-/* Gallery Item Card */
-.gallery-card {
-    background-color: #FAFAFA;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px;
-    padding: 1.1rem;
-    margin-bottom: 0.85rem;
-    transition: all 0.2s ease;
-}
-.gallery-card:hover {
-    border-color: #D4AF37;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.12);
-    transform: translateY(-2px);
-}
-.gallery-title {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 1.15rem;
-    color: #1A2B4C;
-    margin: 0 0 0.25rem 0;
-}
-.gallery-sub {
-    font-size: 0.82rem;
-    color: #666;
-    margin-bottom: 0.4rem;
-}
-.gallery-desc {
-    font-size: 0.86rem;
-    color: #2D2D2D;
-    line-height: 1.4;
 }
 
 /* Uniform Pill Buttons */
@@ -365,7 +361,7 @@ for m in supabase_records:
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d")
         if parsed_d.year == current_year and parsed_d.month == current_month:
             total_month_meetings += 1
-    except:
+    except Exception:
         pass
 
     # Check Internal vs External
@@ -402,7 +398,6 @@ with col_left:
         st.caption("Browse all archived meetings. Click any entry to inspect full details, transcript, and edit minutes.")
         
         if supabase_records:
-            # Scrollable gallery container
             for idx, m in enumerate(supabase_records):
                 m_id = m.get("meeting_id") or f"MOM-{idx}"
                 client = m.get("client_name") or "Meeting Record"
@@ -413,7 +408,6 @@ with col_left:
                 if not summary:
                     summary = "Minutes generated and stored in Supabase archive."
                 
-                # Render clean card
                 with st.container(border=True):
                     gc1, gc2 = st.columns([7.5, 2.5])
                     with gc1:
