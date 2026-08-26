@@ -1,6 +1,6 @@
 import streamlit as st
 
-def global_nav_bar(page_title="Project Echo"):
+def render_global_navbar(page_title="Project Echo"):
     nav_html = f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -83,14 +83,6 @@ def global_nav_bar(page_title="Project Echo"):
         display: block;
     }}
 
-    button[data-baseweb="tab"] p {{
-        font-family: 'Playfair Display', serif !important;
-        font-style: italic !important;
-        font-weight: 400 !important;
-        color: #1A2B4C !important;
-        font-size: 1.05rem !important;
-    }}
-
     /* Permanent Viewport Left Icon Rail */
     .echo-nav-rail {{
         position: fixed;
@@ -144,7 +136,6 @@ def global_nav_bar(page_title="Project Echo"):
         stroke: #161616;
     }}
 
-    /* Card Panels & Containers */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         background-color: #FFFFFF !important; 
         border-radius: 12px !important;
@@ -154,7 +145,6 @@ def global_nav_bar(page_title="Project Echo"):
         margin-bottom: 1.25rem !important;
     }}
 
-    /* Form Fields */
     .stTextArea textarea, .stTextInput input, div[data-baseweb="select"] > div {{
         background-color: #FAFAFA !important;
         border: 1px solid rgba(0,0,0,0.08) !important;
@@ -168,7 +158,6 @@ def global_nav_bar(page_title="Project Echo"):
         border-color: #D4AF37 !important;
     }}
 
-    /* Pill Action Buttons */
     .stButton > button, .stDownloadButton > button {{
         background-color: #222222 !important; 
         color: #FFFFFF !important;
@@ -203,7 +192,6 @@ def global_nav_bar(page_title="Project Echo"):
         border-color: #B23A3A !important;
     }}
 
-    /* Minimalist Chat */
     .chat-container {{ display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }}
     .chat-ai {{
         align-self: flex-start;
@@ -230,7 +218,7 @@ def global_nav_bar(page_title="Project Echo"):
         <h1 class="echo-title">{page_title}</h1>
     </div>
 
-    <!-- Left Rail with Correct Relative Streamlit Slugs -->
+    <!-- Left Rail -->
     <div class="echo-nav-rail">
         <a href="./" target="_self" class="echo-nav-item" title="Executive Dashboard">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
