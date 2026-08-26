@@ -1,6 +1,6 @@
 import streamlit as st
 
-def render_global_navbar(page_title="Project Echo &mdash; Executive Hub"):
+def global_nav_bar(page_title="Project Echo"):
     nav_html = f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -230,18 +230,18 @@ def render_global_navbar(page_title="Project Echo &mdash; Executive Hub"):
         <h1 class="echo-title">{page_title}</h1>
     </div>
 
-    <!-- Left Rail -->
+    <!-- Left Rail with Correct Relative Streamlit Slugs -->
     <div class="echo-nav-rail">
-        <a href="/" target="_self" class="echo-nav-item" title="Executive Dashboard">
+        <a href="./" target="_self" class="echo-nav-item" title="Executive Dashboard">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </a>
-        <a href="/1_minutes_of_the_meeting" target="_self" class="echo-nav-item" title="MoM Generator">
+        <a href="./minutes_of_the_meeting" target="_self" class="echo-nav-item" title="MoM Generator">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         </a>
-        <a href="/2_meeting_details" target="_self" class="echo-nav-item" title="Meeting Browser">
+        <a href="./meeting_details" target="_self" class="echo-nav-item" title="Meeting Browser">
             <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
         </a>
-        <a href="/5_ask_echo" target="_self" class="echo-nav-item" title="Ask Echo AI">
+        <a href="./ask_echo" target="_self" class="echo-nav-item" title="Ask Echo AI">
             <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="16" y1="16" x2="16.01" y2="16"></line></svg>
         </a>
     </div>
