@@ -11,7 +11,7 @@ from supabase import create_client, Client
 st.set_page_config(
     page_title="Project Echo - Executive Hub",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Ensure root directory is on Python path for navbar import
