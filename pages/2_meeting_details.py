@@ -116,7 +116,6 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #2B2B2B !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
     z-index: 999995 !important;
-    /* Removed position: fixed to prevent Streamlit layout breakage */
 }
 
 /* CRITICAL: Make the collapse/expand button ALWAYS visible and styled */
@@ -212,10 +211,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: none !important; 
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important;
-    font-size: 0.82rem !important;
-    height: 36px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    font-weight: 500 !important; 
+    font-size: 0.82rem !important; 
+    height: 36px !important; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
@@ -289,7 +288,7 @@ with st.expander("Full Transcript (Click to Expand)", expanded=False):
         "Full Transcript", 
         value=raw_transcript.replace("### Transcript", "").strip(), 
         height=260, 
-        disabled=True,
+        disabled=True, 
         label_visibility="collapsed"
     )
 
@@ -368,7 +367,7 @@ with st.container(border=True):
 
     # Summary / Other Discussions
     st.markdown('<span class="playfair-label" style="margin-top:0.75rem;">Summary & Other Discussions</span>', unsafe_allow_html=True)
-    current_summary = str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip current_summary = str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip()
+    current_summary = str(selected_meeting.get("summary_md", "")).replace("### Summary", "").strip()
     summary_val = st.text_area(
         "Summary Content",
         value=current_summary,
