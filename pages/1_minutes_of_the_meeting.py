@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import subprocess
 import tempfile
@@ -22,6 +23,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 import streamlit.components.v1 as components
 from supabase import create_client, Client
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) if "pages" in __file__ else os.path.abspath("."))
 from navigation import render_global_navbar
 
 # ========== CONFIG ==========
