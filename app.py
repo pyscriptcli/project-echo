@@ -28,7 +28,6 @@ SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
 if SUPABASE_URL.endswith("/rest/v1"):
     SUPABASE_URL = SUPABASE_URL[:-8]
 
-# Strip all hidden whitespaces or newlines from JWT token to prevent 401 errors
 SUPABASE_KEY = "".join(str(st.secrets.get("SUPABASE_KEY", "")).split())
 
 # ========== SUPABASE CLIENT & DATA HELPERS ==========
@@ -78,7 +77,7 @@ html, body, [class*="css"] {
 
 .stApp > header { display: none !important; }
 
-/* Adjust main content padding to account for fixed topbar and icon sidebar */
+/* Main content offset so it doesn't overlap the fixed icon rail */
 .block-container { 
     padding-top: 5.5rem !important;
     padding-left: 5.5rem !important;
@@ -110,30 +109,35 @@ h3 {
 
 /* Persistent Fixed Icon-Only Rail Sidebar */
 section[data-testid="stSidebar"] {
-    width: 64px !important;
-    min-width: 64px !important;
-    max-width: 64px !important;
+    position: fixed !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
     background-color: #161616 !important;
     border-right: 1px solid #2B2B2B !important;
     box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
-    overflow: hidden !important;
     z-index: 999995 !important;
     top: 60px !important;
     height: calc(100vh - 60px) !important;
+    display: block !important;
+    visibility: visible !important;
 }
 
+/* Hide default collapse toggle button */
 button[data-testid="stSidebarCollapseButton"] {
     display: none !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    padding: 1.2rem 0 !important;
-    gap: 1.2rem !important;
+/* Sidebar Container Content */
+section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+    padding: 1.5rem 0.5rem !important;
+    gap: 1rem !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
 }
 
+/* Page Link Navigation Icons Styling */
 section[data-testid="stSidebar"] a {
     width: 44px !important;
     height: 44px !important;
@@ -154,7 +158,7 @@ section[data-testid="stSidebar"] a span[data-testid="stPageLink-Text"] {
 }
 
 section[data-testid="stSidebar"] a span[data-testid="stIconMaterial"] {
-    font-size: 1.35rem !important;
+    font-size: 1.4rem !important;
     margin: 0 !important;
     color: #C5A059 !important;
 }
@@ -314,9 +318,10 @@ with st.sidebar:
     elif os.path.exists("pages/1_MoM_Generator.py"):
         st.page_link("pages/1_MoM_Generator.py", icon=":material/edit_document:", help="MoM Generator")
         
-    if os.path.exists("pages/2_Ask_Echo.py") or os.path.exists("pages/ask_echo.py"):
-        target_echo = "pages/2_Ask_Echo.py" if os.path.exists("pages/2_Ask_Echo.py") else "pages/ask_echo.py"
-        st.page_link(target_echo, icon=":material/smart_toy:", help="Ask Echo AI")
+    if os.path.exists("pages/2_Ask_Echo.py"):
+        st.page_link("pages/2_Ask_Echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
+    elif os.path.exists("pages/ask_echo.py"):
+        st.page_link("pages/ask_echo.py", icon=":material/smart_toy:", help="Ask Echo AI")
 
 # ========== MAIN DASHBOARD VIEW ==========
 # 1. High-Level KPI Metric Cards
