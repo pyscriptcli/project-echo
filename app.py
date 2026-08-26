@@ -33,24 +33,20 @@ SUPABASE_KEY = str(st.secrets.get("SUPABASE_KEY", "")).strip()
 # ========== SUPABASE CLIENT & DATA HELPERS ==========
 @st.cache_resource
 def init_supabase() -> Client:
-    if not SUPABASE_URL or not SUPABASE_KEY:
+    raw_url = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
+    if raw_url.endswith("/rest/v1"):
+        raw_url = raw_url[:-8]
+        
+    # Strictly strip all invisible newlines/spaces
+    raw_key = "".join(str(st.secrets.get("SUPABASE_KEY", "")).split())
+
+    if not raw_url or not raw_key:
         return None
     try:
-        return create_client(SUPABASE_URL, SUPABASE_KEY)
+        return create_client(raw_url, raw_key)
     except Exception as e:
         st.error(f"Supabase connection initialization failed: {e}")
         return None
-
-def fetch_meeting_archives_from_supabase(limit: int = 100):
-    client = init_supabase()
-    if not client:
-        return []
-    try:
-        resp = client.table("meeting_archives").select("*").order("meeting_date", desc=True).limit(limit).execute()
-        return resp.data if resp and resp.data else []
-    except Exception as e:
-        st.warning(f"Could not retrieve meeting archives from Supabase: {e}")
-        return []
 
 # ========== GLOBAL SESSION STATE ==========
 if "global_chat_history" not in st.session_state:
