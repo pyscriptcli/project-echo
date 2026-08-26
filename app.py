@@ -7,7 +7,7 @@ import streamlit as st
 
 # ========== CONFIG ==========
 st.set_page_config(
-    page_title="Project Echo - Executive Hub",
+    page_title="Project Echo",
     layout="wide",
     initial_sidebar_state="expanded"
 )
