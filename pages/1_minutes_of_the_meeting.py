@@ -1,28 +1,50 @@
 import os
 import sys
-import time
+
+# 1. Path Resolution (Must be before custom imports)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+import streamlit as st
+from navigation import render_global_navbar
+
+# 2. Page Configuration (Must be the FIRST Streamlit command executed)
+st.set_page_config(
+    page_title="Project Echo - MoM Generator",
+    page_icon="📝",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# 3. Global Navbar / Header
+render_global_navbar("Project Echo &mdash; MoM Generator")
+
+# 4. Standard Library & Third-Party Imports
+import datetime
+import json
+import re
 import subprocess
 import tempfile
-import streamlit as st
-import requests
-import json
-import pandas as pd
-import datetime
-import re
+import time
 from io import BytesIO
-import PyPDF2
+
+import docx
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import parse_xml
-from reportlab.lib.pagesizes import letter
+from docx.shared import Inches, Pt, RGBColor
+import pandas as pd
+import PyPDF2
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+import requests
 import streamlit.components.v1 as components
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # Ensure root directory is on Python path for navbar import
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) if "pages" in __file__ else os.path.abspath("."))
