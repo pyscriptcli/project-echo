@@ -92,7 +92,7 @@ if not st.session_state["authenticated"]:
                     st.error("Invalid access key. Contact the administrator.")
     st.stop()
 
-# ========== CUSTOM CSS ==========
+# ========== CUSTOM CSS: CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -101,6 +101,7 @@ html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
+/* Technical Grid Background */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -111,7 +112,10 @@ html, body, [class*="css"] {
 }
 
 .stApp > header { display: none !important; }
-.block-container { padding-top: 5.5rem !important; }
+.block-container { 
+    padding-top: 5.5rem !important;
+    padding-left: 5rem !important; 
+}
 
 /* Fixed Topbar */
 .echo-topbar-wrapper {
@@ -119,7 +123,7 @@ html, body, [class*="css"] {
     background-color: #161616;
     border-bottom: 1px solid #333333;
     z-index: 999990; box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: flex-start;
     padding: 0 2rem;
 }
 
@@ -136,12 +140,67 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
+/* ClickUp-Style Persistent Floating Collapsible Sidebar */
+section[data-testid="stSidebar"] {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    background-color: #1B1B1B !important;
+    border-right: 1px solid #333333 !important;
+    box-shadow: 6px 0 20px rgba(0,0,0,0.15) !important;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow-x: hidden !important;
+    z-index: 999995 !important;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+}
+
+/* Expand on Hover */
+section[data-testid="stSidebar"]:hover {
+    width: 290px !important;
+    min-width: 290px !important;
+    max-width: 290px !important;
+}
+
+/* Hide default collapse toggle button */
+button[data-testid="stSidebarCollapseButton"] {
+    display: none !important;
+}
+
+/* Sidebar Elements Formatting */
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    padding: 1rem 0.5rem !important;
+    gap: 0.8rem !important;
+}
+
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] p, 
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] label {
+    color: #ECE9DF !important;
+}
+
+section[data-testid="stSidebar"] a {
+    background-color: #242424 !important;
+    border: 1px solid #383838 !important;
+    border-radius: 8px !important;
+    color: #ECE9DF !important;
+    padding: 0.6rem 0.8rem !important;
+    transition: all 0.2s ease !important;
+}
+
+section[data-testid="stSidebar"] a:hover {
+    background-color: #D4AF37 !important;
+    color: #161616 !important;
+    border-color: #D4AF37 !important;
+}
+
 /* Metric KPI Cards */
 .kpi-card {
     background-color: #FFFFFF;
     border-radius: 12px;
     padding: 1.25rem 1.5rem;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
@@ -163,11 +222,11 @@ h3 {
     margin: 0;
 }
 
-/* Containers with Depth & Shadow */
+/* Main Dashboard Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
@@ -193,6 +252,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #D4AF37 !important;
+    color: #161616 !important;
     box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2) !important;
     transform: translateY(-1px);
 }
@@ -270,20 +330,22 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ========== SIDEBAR REPOSITORY EXPLORER ==========
+# ========== CLICKUP-STYLE COLLAPSIBLE SIDEBAR ==========
 archive_data = load_archive_db()
 
 with st.sidebar:
-    st.markdown("<h3>Navigation & Archive</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#FFFFFF !important; font-size:1.1rem !important;'>Navigation</h3>", unsafe_allow_html=True)
     
-    # Native Page Link to the MoM Generator in the pages/ folder
-    if os.path.exists("pages/mom_generator.py") or os.path.exists("pages/1_MoM_Generator.py"):
-        target_page = "pages/mom_generator.py" if os.path.exists("pages/mom_generator.py") else "pages/1_MoM_Generator.py"
-        st.page_link(target_page, label="Launch MoM Generator", icon=":material/edit_document:")
-    
+    # Page Switcher
+    if os.path.exists("pages/mom_generator.py"):
+        st.page_link("pages/mom_generator.py", label="MoM Generator", icon=":material/edit_document:")
+    elif os.path.exists("pages/1_MoM_Generator.py"):
+        st.page_link("pages/1_MoM_Generator.py", label="MoM Generator", icon=":material/edit_document:")
+        
     st.markdown("---")
-    st.markdown("**Archive Search**")
-    search_query = st.text_input("Search archives", placeholder="Client, PIC, topic...", label_visibility="collapsed")
+    st.markdown("<p style='font-size:0.85rem; font-weight:600; color:#D4AF37;'>ARCHIVE EXPLORER</p>", unsafe_allow_html=True)
+    
+    search_query = st.text_input("Search archives", placeholder="Search client or topic...", label_visibility="collapsed")
     
     filtered_meetings = archive_data
     if search_query:
@@ -293,12 +355,12 @@ with st.sidebar:
             if q in m.get("client_name", "").lower() or q in m.get("summary", "").lower() or q in m.get("prepared_by", "").lower()
         ]
         
-    st.caption(f"Showing {len(filtered_meetings)} of {len(archive_data)} recorded meetings")
-    for m in filtered_meetings[:6]:
-        with st.expander(f"{m.get('client_name', 'Client')} ({m.get('date', 'Date')})"):
+    st.caption(f"{len(filtered_meetings)} of {len(archive_data)} logs")
+    for m in filtered_meetings[:5]:
+        with st.expander(f"{m.get('client_name', 'Client')} ({m.get('date', 'Date')[:6]})"):
             st.caption(f"Location: {m.get('location', 'N/A')}")
             st.caption(f"Prepared by: {m.get('prepared_by', 'N/A')}")
-            st.write(f"**Summary:** {m.get('summary', 'No summary logged.')}")
+            st.write(f"**Focus:** {m.get('summary', 'No summary logged.')}")
 
 # ========== MAIN DASHBOARD VIEW ==========
 # 1. High-Level KPI Metric Cards
