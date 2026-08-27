@@ -21,17 +21,17 @@ st.markdown("""
 <style>
 /* Global warm canvas background matching reference */
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F8F5EE !important;
+    background-color: #F6F2EA !important;
     background-image: 
-        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+        linear-gradient(to right, #E8E2D5 1px, transparent 1px),
+        linear-gradient(to bottom, #E8E2D5 1px, transparent 1px) !important;
     background-size: 32px 32px !important;
     overflow: hidden !important;
 }
 
 .main, .block-container {
     overflow: hidden !important;
-    padding-top: 1.2rem !important;
+    padding-top: 1rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
