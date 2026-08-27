@@ -3,8 +3,8 @@ import streamlit as st
 
 def setup_page_layout():
     """
-    Renders an ultra-compact luxury dark topbar with Cormorant Garamond italic labels,
-    proportional column layout, and custom SVG icons.
+    Renders a full-width luxury top bar across the top of the page
+    with Cormorant Garamond italic labels, SVG icons, and responsive spacing.
     """
     st.markdown("""
     <style>
@@ -28,7 +28,7 @@ def setup_page_layout():
         width: 0 !important;
     }
 
-    /* 2. RECLAIM PAGE TOP PADDING */
+    /* 2. RECLAIM PAGE PADDING */
     .block-container {
         padding-top: 1rem !important;
         padding-left: 2.5rem !important;
@@ -36,20 +36,27 @@ def setup_page_layout():
         max-width: 100% !important;
     }
 
-    /* 3. LUXURY TOPBAR CONTAINER */
+    /* 3. FULL-WIDTH TOPBAR CONTAINER */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) {
         background: #171819 !important;
         border: 1px solid rgba(201, 168, 76, 0.3) !important;
-        border-radius: 8px !important;
-        padding: 4px 10px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+        border-radius: 10px !important;
+        padding: 6px 16px !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3) !important;
         margin-bottom: 1.5rem !important;
         align-items: center !important;
-        width: fit-content !important;
-        gap: 0.5rem !important;
+        width: 100% !important;
+        display: flex !important;
+        gap: 1rem !important;
     }
 
     /* 4. BASE LINK STYLING */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) [data-testid="column"] {
+        width: auto !important;
+        flex: 0 1 auto !important;
+        min-width: fit-content !important;
+    }
+
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[data-testid="stPageLink"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) div[data-testid="stPageLink"] > a {
@@ -57,29 +64,30 @@ def setup_page_layout():
         background: transparent !important;
         border: 1px solid transparent !important;
         border-radius: 6px !important;
-        height: 32px !important;
-        min-height: 32px !important;
-        padding: 0 12px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        padding: 0 16px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-decoration: none !important;
         transition: all 0.2s ease !important;
-        overflow: visible !important;
+        white-space: nowrap !important;
     }
 
-    /* Font Typography Override */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span,
+    /* Typography */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span[data-testid="stPageLink-Text"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a p,
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span[data-testid="stPageLink-Text"] {
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span {
         font-family: 'Cormorant Garamond', serif !important;
         font-style: italic !important;
-        font-size: 1.15rem !important;
+        font-size: 1.25rem !important;
         font-weight: 600 !important;
         color: #C9A84C !important;
-        letter-spacing: 0.03em !important;
+        letter-spacing: 0.04em !important;
         line-height: 1 !important;
         white-space: nowrap !important;
+        overflow: visible !important;
     }
 
     /* 5. HOVER EFFECT */
@@ -107,7 +115,7 @@ def setup_page_layout():
         font-weight: 700 !important;
     }
 
-    /* 7. HIDE DEFAULT MATERIAL ICON GLYPHS */
+    /* 7. HIDE DEFAULT MATERIAL ICONS */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span[data-testid="stIconMaterial"] {
         display: none !important;
     }
@@ -116,9 +124,9 @@ def setup_page_layout():
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a::before {
         content: "";
         display: inline-block;
-        width: 15px;
-        height: 15px;
-        margin-right: 7px;
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
         background-color: #C9A84C;
         flex-shrink: 0 !important;
         transition: background-color 0.2s ease;
@@ -153,8 +161,8 @@ def setup_page_layout():
     </style>
     """, unsafe_allow_html=True)
 
-    # Expanded column ratios to prevent text truncation
-    col1, col2, col3, _ = st.columns([1.5, 1.4, 2.7, 4.4])
+    # Full-width balanced columns
+    col1, col2, col3, _ = st.columns([1.6, 1.5, 2.8, 6.1])
     with col1:
         st.markdown('<div class="nav-item-marker"></div>', unsafe_allow_html=True)
         st.page_link("app.py", label="Dashboard", use_container_width=True)
