@@ -782,7 +782,7 @@ with col_details:
         # Row 3: Client, Attendees, Prepared & Confirmed details
         r3_c1, r3_c2 = st.columns(2)
         with r3_c1:
-            client_name = st.text_input("Client / Company", value=st.session_state["meeting_client_name"], placeholder="XYZ Company")
+            client_name = st.text_input("Client / Company / Department", value=st.session_state["meeting_client_name"], placeholder="XYZ Company")
             st.session_state["meeting_client_name"] = client_name
             selected_crd = st.multiselect("CRD Team Attendees", options=CRD_MEMBERS, default=st.session_state["meeting_selected_crd"])
             st.session_state["meeting_selected_crd"] = selected_crd
