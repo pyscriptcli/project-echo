@@ -3,11 +3,11 @@ import datetime
 from utils.db import fetch_meeting_archives
 from utils.ai import query_global_team_archive
 
-# 1. Page Config (MUST be first)
+# 1. Page Configuration (Keep sidebar always visible)
 st.set_page_config(
     page_title="Project Echo - Executive Hub", 
     layout="wide", 
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # 2. Global State Initialization
@@ -16,16 +16,16 @@ if "global_chat_history" not in st.session_state:
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
-# 3. Custom CSS - Complete Sidebar Removal & Clean Top Bar
+# 3. Custom CSS (Persistent Icon-Only Sidebar + Complete Topbar & Collapse Removal)
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Background Grid */
+/* Background Canvas */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -35,91 +35,128 @@ html, body, [class*="css"] {
     color: #2D2D2D;
 }
 
-/* ================= 1. HIDE ALL SIDEBAR ARTIFACTS ================= */
-section[data-testid="stSidebar"],
-button[data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"] {
-    display: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    height: 0 !important;
-}
-
-/* ================= 2. HIDE STREAMLIT DEFAULT TOP HEADER ================= */
+/* Remove Default Streamlit Header & Navigation Artifacts */
 header[data-testid="stHeader"], 
 .stApp > header,
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 #MainMenu, 
-footer {
+footer,
+[data-testid="stSidebarNav"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
 }
 
-/* Full Width Main Container Spacing */
+/* Completely Disable and Hide Sidebar Collapse/Expand Toggle */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {
+    display: none !important;
+}
+
+/* Fixed Persistent Icon-Only Sidebar Strip */
+section[data-testid="stSidebar"] {
+    background-color: #272828 !important;
+    border-right: 1px solid rgba(201, 168, 76, 0.25) !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    width: 72px !important;
+    z-index: 100 !important;
+}
+
+section[data-testid="stSidebar"] > div:first-child {
+    width: 72px !important;
+    padding: 1.5rem 0.5rem !important;
+}
+
+/* Main Content Alignment */
 .block-container { 
-    padding-top: 1.5rem !important;
+    padding-top: 2rem !important;
     padding-right: 2.5rem !important;
-    padding-left: 2.5rem !important;
-    max-width: 100% !important;
+    padding-left: 2rem !important;
 }
 
-/* ================= 3. TOP NAVIGATION BAR ================= */
-.top-nav-container {
-    background-color: #272828;
-    border-radius: 12px;
-    padding: 0.6rem 1.75rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(201, 168, 76, 0.25);
-}
-
-.top-brand {
-    font-family: 'Cormorant Garamond', serif !important;
-    font-size: 1.6rem !important;
-    font-weight: 700 !important;
-    color: #c9a84c !important;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    height: 100%;
-}
-
-/* Nav Action Buttons */
-div[data-testid="stHorizontalBlock"]:has(button[key^="nav_"]) {
-    background-color: #272828;
-    padding: 0.5rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid rgba(201, 168, 76, 0.25);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    margin-bottom: 1.8rem;
-    align-items: center;
-}
-
-button[key^="nav_"] {
+/* Sidebar SVG Action Buttons */
+.stButton > button[key^="side_nav_"] {
     background-color: transparent !important;
-    color: #c9a84c !important;
     border: 1px solid transparent !important;
-    border-radius: 50px !important;
-    font-family: 'Cormorant Garamond', serif !important;
-    font-size: 1.15rem !important;
-    font-weight: 600 !important;
-    height: 38px !important;
+    border-radius: 12px !important;
+    height: 48px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    margin: 0 auto 0.75rem auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
 
-button[key^="nav_"]:hover {
+.stButton > button[key^="side_nav_"]:hover {
     background-color: rgba(201, 168, 76, 0.15) !important;
-    border-color: rgba(201, 168, 76, 0.4) !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 10px rgba(201, 168, 76, 0.2) !important;
+    border-color: rgba(201, 168, 76, 0.35) !important;
+    transform: translateY(-1px);
 }
 
-button[key="nav_dashboard"] {
-    background-color: rgba(201, 168, 76, 0.18) !important;
-    border-color: rgba(201, 168, 76, 0.45) !important;
-    color: #e5cf8e !important;
+.stButton > button[key="side_nav_dash"] {
+    background-color: rgba(201, 168, 76, 0.2) !important;
+    border-color: rgba(201, 168, 76, 0.5) !important;
+}
+
+/* Content Buttons */
+.stButton > button:not([key^="side_nav_"]) {
+    background-color: #272828 !important; 
+    color: #c9a84c !important;
+    border: 1px solid rgba(201, 168, 76, 0.3) !important; 
+    border-radius: 50px !important; 
+    font-family: 'Montserrat', sans-serif !important; 
+    font-weight: 500 !important;
+    font-size: 0.82rem !important;
+    padding: 0.4rem 1.2rem !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    transition: all 0.2s ease !important; 
+    width: 100% !important;
+}
+
+.stButton > button:not([key^="side_nav_"]):hover {
+    background-color: #c9a84c !important;
+    color: #272828 !important;
+    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3) !important;
+}
+
+/* Sidebar SVG Icon Masks */
+.stButton > button[key="side_nav_dash"]::before {
+    content: "";
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    background-color: #c9a84c;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+.stButton > button[key="side_nav_meetings"]::before {
+    content: "";
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    background-color: #c9a84c;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+.stButton > button[key="side_nav_mom"]::before {
+    content: "";
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    background-color: #c9a84c;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
 }
 
 /* KPI Cards */
@@ -149,7 +186,7 @@ button[key="nav_dashboard"] {
     margin: 0;
 }
 
-/* Vertical Block Containers */
+/* Main Block Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
@@ -159,29 +196,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     margin-bottom: 1.25rem !important;
 }
 
-/* Content Buttons */
-.stButton > button:not([key^="nav_"]) {
-    background-color: #272828 !important; 
-    color: #c9a84c !important;
-    border: 1px solid rgba(201, 168, 76, 0.3) !important; 
-    border-radius: 50px !important; 
-    font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important;
-    font-size: 0.82rem !important;
-    padding: 0.4rem 1.2rem !important;
-    min-height: 36px !important;
-    height: 36px !important;
-    transition: all 0.2s ease !important; 
-    width: 100% !important;
-}
-
-.stButton > button:not([key^="nav_"]):hover {
-    background-color: #c9a84c !important;
-    color: #272828 !important;
-    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3) !important;
-}
-
-/* Minimalist Chat */
+/* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }
 .chat-ai {
     align-self: flex-start;
@@ -215,8 +230,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 h3 {
     font-family: 'Playfair Display', serif !important;
-    font-style: italic !important; font-weight: 400 !important; 
-    color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
+    font-style: italic !important; 
+    font-weight: 400 !important; 
+    color: #1A2B4C !important; 
+    letter-spacing: 0.02em; 
+    margin-bottom: 0.25rem; 
+    font-size: 1.25rem !important;
 }
 
 .gallery-title {
@@ -243,30 +262,22 @@ h3 {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 4. Top Navigation Bar (Integrated Horizontal Menu)
-nav_brand, nav_gap, nav_item1, nav_item2, nav_item3, nav_item4 = st.columns([3.5, 2.5, 1.5, 1.5, 1.8, 1.5])
-
-with nav_brand:
-    st.markdown('<div class="top-brand">PROJECT ECHO</div>', unsafe_allow_html=True)
-with nav_item1:
-    if st.button("Dashboard", key="nav_dashboard"):
+# 4. Persistent SVG-Only Sidebar
+with st.sidebar:
+    st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
+    if st.button("", key="side_nav_dash", help="Dashboard"):
         st.rerun()
-with nav_item2:
-    if st.button("Generator", key="nav_generator"):
-        st.switch_page("pages/1_generator.py")
-with nav_item3:
-    if st.button("Meeting Details", key="nav_details"):
+    if st.button("", key="side_nav_meetings", help="Meetings / Gallery"):
         st.switch_page("pages/2_meeting_details.py")
-with nav_item4:
-    if st.button("Archives", key="nav_archives"):
-        st.switch_page("pages/3_archives.py")
+    if st.button("", key="side_nav_mom", help="Minutes of the Meeting Generator"):
+        st.switch_page("pages/1_generator.py")
 
-# SVG Icons
+# SVG Data Icons for Cards
 CALENDAR_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>'
 LOCATION_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
 USER_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
 
-# Fetch current live data from Supabase
+# Supabase Data Ingestion
 supabase_records = fetch_meeting_archives()
 
 # ========== METRICS COMPUTATION ==========
@@ -299,7 +310,7 @@ for m in supabase_records:
     else:
         total_external_meetings += 1
 
-# ========== MAIN DASHBOARD VIEW ==========
+# ========== MAIN VIEW ==========
 # 1. KPI Cards
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
