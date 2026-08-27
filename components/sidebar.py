@@ -33,4 +33,4 @@ def setup_page_layout():
     with col3:
         st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting", icon=":material/edit_note:", use_container_width=True)
     with col4:
-        st.page_link("pages/3_ask_echo.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
+        st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
