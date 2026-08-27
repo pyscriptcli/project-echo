@@ -132,7 +132,14 @@ OPENAI_API_KEY = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
 OPENAI_AUDIO_URL = "https://api.openai.com/v1/audio/transcriptions"
 
 CRD_MEMBERS = ["Sondi Tuazon", "Kristina Balajadia", "Meliza Zapata", "Dykstra Pineda", "Cedtrix Rena", "Carlo Medina", "Dave Policarpio", "Irish Rima"]
-LOCATION_OPTIONS = ["GreatWork Mega Tower 32F - Secret Room", "GreatWork Mega Tower 32F - Small Meeting Room", "GreatWork Mega Tower 24F - Meeting Room", "GreatWork Mega Tower 32F - Board Room", "GreatWork Mega Tower 32F - Co-working", "Online Meeting"]
+LOCATION_PRESETS = [
+    "GreatWork Mega Tower 32F - Secret Room",
+    "GreatWork Mega Tower 32F - Small Meeting Room",
+    "GreatWork Mega Tower 24F - Meeting Room",
+    "GreatWork Mega Tower 32F - Board Room",
+    "GreatWork Mega Tower 32F - Co-working",
+    "Online Meeting"
+]
 MEETING_TYPE_OPTIONS = ["Internal", "External", "Team"]
 
 # 6. Session State Initialization
@@ -294,7 +301,7 @@ def normalize_llm_json_to_df(data):
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = f"        "You are Echo , an executive AI analyst for PRIME Philippines. Answer user questions accurately by synthesizing past meeting records. Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. Do not use emojis; use plain text. Ask follow-up questions when useful.You are a part of CRD Team (Team Members are Sondi Tuazon, Kristina Balajadia, Dykstra Pineda, Meliza Zapata, Cedtrix Rena, Carlo Medina, Dave Policarpio, Irish Jane Rima), your objective is to be a helpful assistant". Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
+    system_prompt = f"You are Echo, an executive AI analyst for PRIME Philippines. Synthesize past meeting records and metadata accurately. Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
 Transcript: {transcript[:15000]}"""
@@ -744,17 +751,25 @@ with col_details:
                         st.write(f"• **Last Call:** `{last_call.strftime('%I:%M:%S %p')}`")
             st.markdown("---")
         
-        # Row 1: Date, Location, Meeting Type
+        # Row 1: Date, Location (Presets + Typeable Options), Meeting Type
         r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 0.9])
         with r1_c1:
             meeting_date = st.date_input("Date", value=st.session_state["meeting_date"])
             st.session_state["meeting_date"] = meeting_date
         with r1_c2:
-            try:
-                meeting_location = st.selectbox("Location", options=LOCATION_OPTIONS, index=LOCATION_OPTIONS.index(st.session_state.get("meeting_location")) if st.session_state.get("meeting_location") in LOCATION_OPTIONS else None, placeholder="e.g. Boardroom or GreatWork Tower", accept_user_input=True)
-            except TypeError:
-                loc_val = st.session_state.get("meeting_location", "")
-                meeting_location = st.text_input("Location", value=loc_val, placeholder="e.g. Boardroom or GreatWork Tower")
+            current_loc = st.session_state.get("meeting_location", "")
+            location_list = list(LOCATION_PRESETS)
+            if current_loc and current_loc not in location_list:
+                location_list.insert(0, current_loc)
+            
+            loc_idx = location_list.index(current_loc) if current_loc in location_list else None
+            meeting_location = st.selectbox(
+                "Location",
+                options=location_list,
+                index=loc_idx,
+                placeholder="Choose preset or type location...",
+                accept_user_input=True
+            )
             st.session_state["meeting_location"] = meeting_location if meeting_location else ""
         with r1_c3:
             curr_type = st.session_state.get("meeting_type", "Internal")
