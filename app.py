@@ -55,10 +55,15 @@ st.markdown("""
 }
 
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
+
+/* --- Warm Cream Architectural Grid Background --- */
 .stApp {
-    background-color: #F7F5F0;
-    background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-color: #F5F1E8 !important;
+    background-image: 
+        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+    background-size: 80px 80px !important;
+    background-position: 0 0 !important;
     color: #1A1A1A;
 }
 
@@ -330,7 +335,7 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 6. Layout Composition (Small Spacing & Tight Columns)
+# 6. Layout Composition
 if st.session_state["chat_fullscreen"]:
     col_left, col_right = None, st.container()
 else:
@@ -340,8 +345,8 @@ else:
 if not st.session_state["chat_fullscreen"]:
     with col_left:
         with st.container(height=720, border=True):
-            st.markdown('<p class="section-title">Dashboard</p>', unsafe_allow_html=True)
-            st.markdown('<p class="section-caption">Meeting records overview.</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
             
             # 2x2 Mini KPI Grid
             st.markdown(f"""
@@ -444,7 +449,7 @@ with col_right:
         chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.04, 0.04])
         
         with chat_header_col:
-            st.markdown('<p class="section-title">Ask Echo</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">Ask Echo — Global Intelligence</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-caption">Synthesize meeting archives, transcripts, and action logs.</p>', unsafe_allow_html=True)
             
         with btn_clear_col:
