@@ -22,8 +22,9 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 import requests
+import streamlit.components.v1 as components
 
-# Centralized DB import
+# Centralized DB import (Ensure utils/db.py exists as provided earlier)
 from utils.db import get_supabase_client
 
 # 1. Page Configuration (MUST be first)
@@ -33,83 +34,46 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. SVG Icons (No Emojis)
+# 2. SVG Icons (Strictly No Emojis)
 TRASH_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
 SAVE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>'
 COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
+SETTINGS_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle;"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>'
 
 # 3. Custom CSS (Topbar removed, UI preserved)
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
-
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
-
 .stApp {
     background-color: #F3EFE6; 
     background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 80px 80px;
-    color: #2D2D2D;
+    background-size: 80px 80px; color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 2rem !important; padding-right: 2rem !important; }
-
-h3 {
-    font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; 
-    color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
-}
-.playfair-label {
-    font-family: 'Playfair Display', serif !important; font-style: italic !important;
-    color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block;
-}
+h3 { font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important; }
+.playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 
 /* Sidebar Styling */
-section[data-testid="stSidebar"] {
-    background-color: #161616 !important; border-right: 1px solid #2B2B2B !important;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; z-index: 999995 !important;
-}
-button[data-testid="stSidebarCollapseButton"] {
-    display: flex !important; position: absolute !important; bottom: 24px !important; left: 50% !important;
-    transform: translateX(-50%) !important; width: 40px !important; height: 40px !important;
-    background-color: #222222 !important; border: 1px solid #333333 !important; border-radius: 50% !important;
-    color: #C5A059 !important; transition: all 0.2s ease !important; z-index: 999999 !important;
-}
+section[data-testid="stSidebar"] { background-color: #161616 !important; border-right: 1px solid #2B2B2B !important; box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; z-index: 999995 !important; }
+button[data-testid="stSidebarCollapseButton"] { display: flex !important; position: absolute !important; bottom: 24px !important; left: 50% !important; transform: translateX(-50%) !important; width: 40px !important; height: 40px !important; background-color: #222222 !important; border: 1px solid #333333 !important; border-radius: 50% !important; color: #C5A059 !important; transition: all 0.2s ease !important; z-index: 999999 !important; }
 button[data-testid="stSidebarCollapseButton"]:hover { background-color: #D4AF37 !important; color: #161616 !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
-    width: 48px !important; height: 48px !important; padding: 0 !important; display: flex !important;
-    align-items: center !important; justify-content: center !important; border-radius: 10px !important;
-    background-color: #222222 !important; border: 1px solid #333333 !important; transition: all 0.2s ease !important;
-}
+section[data-testid="stSidebar"] a[data-testid="stPageLink"] { width: 48px !important; height: 48px !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 10px !important; background-color: #222222 !important; border: 1px solid #333333 !important; transition: all 0.2s ease !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover { background-color: #D4AF37 !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] { display: none !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] { font-size: 1.5rem !important; color: #C5A059 !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover span[data-testid="stIconMaterial"] { color: #161616 !important; }
 
 /* Containers & Inputs */
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #FFFFFF !important; border-radius: 12px !important;
-    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important;
-}
-.stTextArea textarea, .stTextInput input, .stSelectbox select {
-    background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important;
-    border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
-}
-.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus {
-    background-color: #FFFFFF !important; border-color: #D4AF37 !important;
-}
+div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 12px !important; box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important; border: 1px solid rgba(0, 0, 0, 0.05) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
+.stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important; }
+.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #D4AF37 !important; }
 
 /* Buttons */
-.stButton > button {
-    background-color: #222222 !important; color: #FFFFFF !important; border: none !important; 
-    border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; 
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important;
-}
+.stButton > button { background-color: #222222 !important; color: #FFFFFF !important; border: none !important; border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important; }
 .stButton > button:hover { background-color: #D4AF37 !important; color: #161616 !important; }
-.stButton > button[key^="del_"] {
-    background-color: #FDF9F9 !important; color: #B23A3A !important; border: 1px solid rgba(178, 58, 58, 0.25) !important;
-}
+.stButton > button[key^="del_"] { background-color: #FDF9F9 !important; color: #B23A3A !important; border: 1px solid rgba(178, 58, 58, 0.25) !important; }
 .stButton > button[key^="del_"]:hover { background-color: #B23A3A !important; color: #FFFFFF !important; }
 
 /* Chat Styling */
@@ -151,7 +115,7 @@ if "meeting_prep_desig" not in st.session_state: st.session_state["meeting_prep_
 if "meeting_conf_name" not in st.session_state: st.session_state["meeting_conf_name"] = ""
 if "meeting_conf_desig" not in st.session_state: st.session_state["meeting_conf_desig"] = ""
 
-# 6. Core Logic Functions (Preserved)
+# 6. Core Logic Functions
 def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
     client = get_supabase_client()
     if not client: return False, "Supabase client uninitialized."
@@ -386,58 +350,99 @@ def ask_deepseek_question(transcript, question, chat_history):
         return f"Connection error: {e}"
 
 def set_cell_shading(cell, color_hex):
-    shd = parse_xml(f'<w:shd xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:ccolor="{color_hex}"/>')
+    shd = parse_xml(f'<w:shd xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:fill="{color_hex}"/>')
     cell._tc.get_or_add_tcPr().append(shd)
 
 def export_to_word(df, meeting_details, other_discussions):
     template_files = ["MOM_Template.docx", "MOM Template.docx"]
     template_path = next((f for f in template_files if os.path.exists(f)), None)
     doc = Document(template_path) if template_path else Document()
+    
     for section in doc.sections:
-        section.top_margin, section.bottom_margin, section.left_margin, section.right_margin = Inches(0.4), Inches(0.4), Inches(0.75), Inches(0.75)
+        section.top_margin = Inches(0.4)
+        section.bottom_margin = Inches(0.4)
+        section.left_margin = Inches(0.75)
+        section.right_margin = Inches(0.75)
+
     p_title = doc.add_paragraph()
-    p_title.alignment, p_title.paragraph_format.space_before, p_title.paragraph_format.space_after = WD_ALIGN_PARAGRAPH.CENTER, Pt(0), Pt(2)
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title.paragraph_format.space_before = Pt(0)
+    p_title.paragraph_format.space_after = Pt(2)
     r_title = p_title.add_run("MINUTES OF THE MEETING")
-    r_title.bold, r_title.underline, r_title.font.name, r_title.font.size = True, True, "Arial", Pt(11)
+    r_title.bold = True
+    r_title.underline = True
+    r_title.font.name = "Arial"
+    r_title.font.size = Pt(11)
+
     company_target = meeting_details.get("external_attendees", [])
     primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "CLIENT"
+    
     p_sub = doc.add_paragraph()
-    p_sub.alignment, p_sub.paragraph_format.space_after = WD_ALIGN_PARAGRAPH.CENTER, Pt(12)
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_sub.paragraph_format.space_after = Pt(12)
     r_sub = p_sub.add_run(f"PRIME PHILIPPINES & {primary_client_rep.upper()}")
-    r_sub.bold, r_sub.font.name, r_sub.font.size = True, "Arial", Pt(11)
-    date_str, time_str = meeting_details.get("date", "____________"), meeting_details.get("time_range", "")
+    r_sub.bold = True
+    r_sub.font.name = "Arial"
+    r_sub.font.size = Pt(11)
+
+    date_str = meeting_details.get("date", "____________")
+    time_str = meeting_details.get("time_range", "")
     full_date = f"Date: {date_str}" + (f", {time_str}" if time_str.strip() else "")
-    for p, text in [(doc.add_paragraph(full_date), full_date), (doc.add_paragraph(f"Location: {meeting_details.get('location', '____________')}"), f"Location: {meeting_details.get('location', '____________')}")]:
-        p.paragraph_format.space_after = Pt(2)
-        for r in p.runs: r.font.name, r.font.size = "Arial", Pt(10)
-    prime_atts, ext_atts = meeting_details.get("prime_attendees", []), meeting_details.get("external_attendees", [])
+    
+    p_date = doc.add_paragraph(full_date)
+    p_date.paragraph_format.space_after = Pt(2)
+    for r in p_date.runs: r.font.name, r.font.size = "Arial", Pt(10)
+
+    p_loc = doc.add_paragraph(f"Location: {meeting_details.get('location', '____________')}")
+    p_loc.paragraph_format.space_after = Pt(2)
+    for r in p_loc.runs: r.font.name, r.font.size = "Arial", Pt(10)
+
+    prime_atts = meeting_details.get("prime_attendees", [])
+    ext_atts = meeting_details.get("external_attendees", [])
+    
     p_att = doc.add_paragraph()
-    p_att.paragraph_format.space_after, p_att.paragraph_format.tab_stops.add_tab_stop(Inches(1.35), WD_TAB_ALIGNMENT.LEFT) = Pt(2), None
+    p_att.paragraph_format.space_after = Pt(2)
+    p_att.paragraph_format.tab_stops.add_tab_stop(Inches(1.35), WD_TAB_ALIGNMENT.LEFT)
     r_att_label = p_att.add_run("Attended by:")
     r_att_label.font.name, r_att_label.font.size = "Arial", Pt(10)
+    
     first_attendee = True
-    for att_list, suffix in [(ext_atts, f", {meeting_details.get('company_name')}" if meeting_details.get('company_name') else ""), (prime_atts, " – PRIME Philippines")]:
-        for att in att_list:
-            if not att.strip(): continue
-            p = p_att if first_attendee else doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(2)
-            if not first_attendee: p.paragraph_format.left_indent = Inches(1.35)
-            else: p.add_run("\t")
-            r = p.add_run(f"{att}{suffix}")
-            r.font.name, r.font.size = "Arial", Pt(10)
-            first_attendee = False
+    for att in ext_atts:
+        if not att.strip(): continue
+        p = p_att if first_attendee else doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(2)
+        if not first_attendee: p.paragraph_format.left_indent = Inches(1.35)
+        else: p.add_run("\t")
+        comp_label = f", {meeting_details.get('company_name')}" if meeting_details.get('company_name') else ""
+        r = p.add_run(f"{att}{comp_label}")
+        r.font.name, r.font.size = "Arial", Pt(10)
+        first_attendee = False
+
+    for att in prime_atts:
+        p = p_att if first_attendee else doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(2)
+        if not first_attendee: p.paragraph_format.left_indent = Inches(1.35)
+        else: p.add_run("\t")
+        r = p.add_run(f"{att} – PRIME Philippines")
+        r.font.name, r.font.size = "Arial", Pt(10)
+        first_attendee = False
+
     p_line = doc.add_paragraph()
-    p_line.paragraph_format.space_before, p_line.paragraph_format.space_after = Pt(4), Pt(6)
+    p_line.paragraph_format.space_before = Pt(4)
+    p_line.paragraph_format.space_after = Pt(6)
     r_line = p_line.add_run("_________________________________________________________________________________")
     r_line.font.name, r_line.font.color.rgb = "Arial", RGBColor(160, 160, 160)
+
     client_display = meeting_details.get('company_name', '').strip() or "the Client"
     p_intro = doc.add_paragraph(f"During the meeting held last {date_str}, PRIME Philippines, represented by the attendee/s shown above, met with {client_display} to discuss opportunities for collaboration.")
     p_intro.paragraph_format.space_after = Pt(10)
     for r in p_intro.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+
     table = doc.add_table(rows=len(df)+1, cols=4)
     table.alignment, table.style, table.autofit, table.allow_autofit = WD_TABLE_ALIGNMENT.CENTER, "Table Grid", False, False
     col_widths = [Inches(2.5), Inches(2.2), Inches(1.1), Inches(1.2)]
     headers = ["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]
+    
     for i, header in enumerate(headers):
         cell = table.rows[0].cells[i]
         cell.width, cell.text = col_widths[i], header
@@ -445,6 +450,7 @@ def export_to_word(df, meeting_details, other_discussions):
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         if p.runs: p.runs[0].font.bold, p.runs[0].font.size, p.runs[0].font.name = True, Pt(9), "Arial"
+
     for i, row in df.iterrows():
         cells = table.rows[i+1].cells
         cells[0].text, cells[1].text, cells[2].text, cells[3].text = f"{i+1}. {str(row.get('Discussion Points', ''))}", str(row.get("Action Plan", "")), str(row.get("Indicative Delivery Date", "")), str(row.get("Person-in-charge", ""))
@@ -453,10 +459,12 @@ def export_to_word(df, meeting_details, other_discussions):
             p = cell.paragraphs[0]
             if c_idx in [2, 3]: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(8.5), "Arial"
+
     doc.add_paragraph()
     p_note = doc.add_paragraph("*Note: The indicative delivery date serves as reference point and still subject to changes. Furthermore, it depends on the progress of both parties.")
     p_note.paragraph_format.space_after = Pt(8)
     p_note.runs[0].italic, p_note.runs[0].font.name, p_note.runs[0].font.size = True, "Arial", Pt(8)
+
     if other_discussions.strip():
         p_od_head = doc.add_paragraph()
         p_od_head.paragraph_format.space_before, p_od_head.paragraph_format.space_after = Pt(6), Pt(4)
@@ -465,17 +473,32 @@ def export_to_word(df, meeting_details, other_discussions):
         p_od = doc.add_paragraph(other_discussions)
         p_od.paragraph_format.space_after = Pt(12)
         for r in p_od.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
-    for label, name, desig, is_conf in [("Prepared by:", meeting_details.get("prep_name", "").strip() or "____________________", meeting_details.get("prep_desig", "").strip() or "PRIME Philippines", False), ("Confirmed by:", meeting_details.get("conf_name", "").strip() or (ext_atts[0] if ext_atts else "____________________"), meeting_details.get("conf_desig", "").strip() or (meeting_details.get("company_name", "").strip() or "Client"), True)]:
-        p_label = doc.add_paragraph(label)
-        p_label.paragraph_format.space_before = Pt(12) if not is_conf else 0
-        p_label.paragraph_format.space_after = Pt(2)
-        p_label.runs[0].font.name, p_label.runs[0].font.bold, p_label.runs[0].font.size = "Arial", True, Pt(9.5)
-        p_line = doc.add_paragraph("_______________________________")
-        p_line.paragraph_format.space_after = Pt(2)
-        p_line.runs[0].font.name = "Arial"
-        p_info = doc.add_paragraph(f"{name}\n{desig}")
-        p_info.paragraph_format.space_after = Pt(12) if not is_conf else Pt(6)
-        for r in p_info.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+
+    p_prep_label = doc.add_paragraph("Prepared by:")
+    p_prep_label.paragraph_format.space_before = Pt(12)
+    p_prep_label.paragraph_format.space_after = Pt(2)
+    p_prep_label.runs[0].font.name, p_prep_label.runs[0].font.bold, p_prep_label.runs[0].font.size = "Arial", True, Pt(9.5)
+    p_prep_line = doc.add_paragraph("_______________________________")
+    p_prep_line.paragraph_format.space_after = Pt(2)
+    p_prep_line.runs[0].font.name = "Arial"
+    prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
+    prep_desig = meeting_details.get("prep_desig", "").strip() or "PRIME Philippines"
+    p_prep_info = doc.add_paragraph(f"{prep_name}\n{prep_desig}")
+    p_prep_info.paragraph_format.space_after = Pt(12)
+    for r in p_prep_info.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+
+    p_conf_label = doc.add_paragraph("Confirmed by:")
+    p_conf_label.paragraph_format.space_after = Pt(2)
+    p_conf_label.runs[0].font.name, p_conf_label.runs[0].font.bold, p_conf_label.runs[0].font.size = "Arial", True, Pt(9.5)
+    p_conf_line = doc.add_paragraph("_______________________________")
+    p_conf_line.paragraph_format.space_after = Pt(2)
+    p_conf_line.runs[0].font.name = "Arial"
+    conf_name = meeting_details.get("conf_name", "").strip() or (ext_atts[0] if ext_atts else "____________________")
+    conf_desig = meeting_details.get("conf_desig", "").strip() or (meeting_details.get("company_name", "").strip() or "Client")
+    p_conf_info = doc.add_paragraph(f"{conf_name}\n{conf_desig}")
+    p_conf_info.paragraph_format.space_after = Pt(6)
+    for r in p_conf_info.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+
     bio = BytesIO()
     doc.save(bio)
     bio.seek(0)
@@ -485,6 +508,7 @@ def export_to_pdf(df, meeting_details, other_discussions):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.6 * inch, rightMargin=0.6 * inch, topMargin=0.5 * inch, bottomMargin=0.5 * inch)
     story, styles = [], getSampleStyleSheet()
+    
     style_title = ParagraphStyle('DocTitle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=11.5, alignment=1, spaceAfter=2)
     company_target = meeting_details.get("external_attendees", [])
     primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "CLIENT"
@@ -493,43 +517,78 @@ def export_to_pdf(df, meeting_details, other_discussions):
     style_th = ParagraphStyle('TableHead', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1)
     style_td = ParagraphStyle('TableData', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10)
     style_td_center = ParagraphStyle('TableDataCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10, alignment=1)
+
     story.append(Paragraph("<u>MINUTES OF THE MEETING</u>", style_title))
     story.append(Paragraph(f"PRIME PHILIPPINES & {primary_client_rep.upper()}", style_subtitle))
+    
     date_str, time_str = meeting_details.get("date", "____________"), meeting_details.get("time_range", "")
     full_date = f"<b>Date:</b> {date_str}" + (f", {time_str}" if time_str.strip() else "")
     story.append(Paragraph(full_date, style_body))
     story.append(Paragraph(f"<b>Location:</b> {meeting_details.get('location', '____________')}", style_body))
+    
     prime_atts, ext_atts = meeting_details.get("prime_attendees", []), meeting_details.get("external_attendees", [])
     att_list = []
     for att in ext_atts:
         if att.strip(): att_list.append(f"{att}{f', {meeting_details.get('company_name')}' if meeting_details.get('company_name') else ''}")
     for att in prime_atts: att_list.append(f"{att} – PRIME Philippines")
+    
     if att_list:
         story.append(Paragraph(f"<b>Attended by:</b>&nbsp;&nbsp;&nbsp;&nbsp;{att_list[0]}", style_body))
         for a in att_list[1:]: story.append(Paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{a}", style_body))
+    
     story.append(Spacer(1, 4))
     client_display = meeting_details.get('company_name', '').strip() or "the Client"
     story.append(Paragraph(f"During the meeting held last {date_str}, PRIME Philippines, represented by the attendee/s shown above, met with {client_display} to discuss opportunities for collaboration.", style_body))
     story.append(Spacer(1, 6))
+    
     table_data = [[Paragraph("<b>Discussion Points</b>", style_th), Paragraph("<b>Action Plan</b>", style_th), Paragraph("<b>Indicative Delivery Date</b>", style_th), Paragraph("<b>Person-in-charge</b>", style_th)]]
     for i, row in df.iterrows():
-        table_data.append([Paragraph(f"{i+1}. {str(row.get('Discussion Points', ''))}", style_td), Paragraph(str(row.get("Action Plan", "")), style_td), Paragraph(str(row.get("Indicative Delivery Date", "")), style_td_center), Paragraph(str(row.get("Person-in-charge", "")), style_td_center)])
+        table_data.append([
+            Paragraph(f"{i+1}. {str(row.get('Discussion Points', ''))}", style_td),
+            Paragraph(str(row.get("Action Plan", "")), style_td),
+            Paragraph(str(row.get("Indicative Delivery Date", "")), style_td_center),
+            Paragraph(str(row.get("Person-in-charge", "")), style_td_center)
+        ])
+    
     t = Table(table_data, colWidths=[2.4 * inch, 2.3 * inch, 1.1 * inch, 1.0 * inch], repeatRows=1)
-    t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#FFFF00')), ('ALIGN', (0, 0), (-1, 0), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), 0.5, colors.grey), ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4)]))
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#FFFF00')),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4)
+    ]))
     story.append(t)
+    
     note_style = ParagraphStyle('Note', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=7.5, leading=9, spaceBefore=4)
     story.append(Paragraph("*Note: The indicative delivery date serves as reference point and still subject to changes. Furthermore, it depends on the progress of both parties.", note_style))
+    
     if other_discussions.strip():
         story.append(Spacer(1, 6))
         story.append(Paragraph("<b>Other Discussions:</b>", style_body))
         story.append(Paragraph(other_discussions, style_body))
+    
     story.append(Spacer(1, 8))
-    prep_name, prep_desig = meeting_details.get("prep_name", "").strip() or "____________________", meeting_details.get("prep_desig", "").strip() or "PRIME Philippines"
-    conf_name, conf_desig = meeting_details.get("conf_name", "").strip() or (ext_atts[0] if ext_atts else "____________________"), meeting_details.get("conf_desig", "").strip() or (meeting_details.get("company_name", "").strip() or "Client")
-    sign_data = [[Paragraph("<b>Prepared by:</b>", style_body), Paragraph("<b>Confirmed by:</b>", style_body)], [Paragraph("_______________________________", style_body), Paragraph("_______________________________", style_body)], [Paragraph(f"{prep_name}<br/>{prep_desig}", style_body), Paragraph(f"{conf_name}<br/>{conf_desig}", style_body)]]
+    prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
+    prep_desig = meeting_details.get("prep_desig", "").strip() or "PRIME Philippines"
+    conf_name = meeting_details.get("conf_name", "").strip() or (ext_atts[0] if ext_atts else "____________________")
+    conf_desig = meeting_details.get("conf_desig", "").strip() or (meeting_details.get("company_name", "").strip() or "Client")
+    
+    sign_data = [
+        [Paragraph("<b>Prepared by:</b>", style_body), Paragraph("<b>Confirmed by:</b>", style_body)],
+        [Paragraph("_______________________________", style_body), Paragraph("_______________________________", style_body)],
+        [Paragraph(f"{prep_name}<br/>{prep_desig}", style_body), Paragraph(f"{conf_name}<br/>{conf_desig}", style_body)]
+    ]
     sign_table = Table(sign_data, colWidths=[3.4 * inch, 3.4 * inch])
-    sign_table.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LEFTPADDING', (0, 0), (-1, -1), 0), ('RIGHTPADDING', (0, 0), (-1, -1), 0), ('BOTTOMPADDING', (0, 0), (-1, -1), 2)]))
+    sign_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2)
+    ]))
     story.append(sign_table)
+    
     doc.build(story)
     buffer.seek(0)
     return buffer
@@ -624,7 +683,7 @@ with col_details:
         with head_col1:
             st.markdown('<h3 style="margin-top:0.2rem;">Meeting Details</h3>', unsafe_allow_html=True)
         with head_col2:
-            if st.button("⚙️", key="card_settings_btn", help="Settings"):
+            if st.button(SETTINGS_ICON, key="card_settings_btn", help="Settings"):
                 st.session_state["show_settings"] = not st.session_state["show_settings"]
                 st.rerun()
         if st.session_state["show_settings"]:
@@ -708,7 +767,6 @@ if st.session_state["transcript"]:
                 copy_html = f"""
                 <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#222222;color:#FFFFFF;border:none;border-radius:50px;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.2s ease;box-shadow:0 4px 6px rgba(0,0,0,0.1);}}button:hover{{background-color:#D4AF37;box-shadow:0 6px 12px rgba(212,175,55,0.2);transform:translateY(-1px);}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({json.dumps(st.session_state["transcript"])}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
-                import streamlit.components.v1 as components
                 components.html(copy_html, height=36)
             with t_col3:
                 st.download_button(label="Download", data=st.session_state["transcript"], file_name=f"Transcript_{meeting_date.strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
