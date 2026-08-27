@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import json
 import re
+import pandas as pd
 from datetime import datetime
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
@@ -26,6 +27,13 @@ SVG_GLOBE_ICON = """
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+"""
+
+SVG_BRAIN_ICON = """
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
+    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
 """
 
@@ -117,7 +125,7 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Inner Chat Box Container - THE ONLY SCROLLABLE REGION */
+/* Inner Chat Box Container */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -321,6 +329,16 @@ div[data-testid="stButton"] > button:hover {
     40% { transform: scale(1); opacity: 1; }
 }
 
+/* Inline Candidate Prompt Card */
+.echo-context-candidate-card {
+    background: #FFFFFF;
+    border: 1px solid #D4AF37;
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem;
+    margin-top: 0.35rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
 /* Docked Bottom Chat Input */
 .echo-input-dock {
     padding-top: 0.35rem !important;
@@ -348,6 +366,111 @@ div[data-testid="stChatInput"] textarea {
 </style>
 """
 
+@st.dialog("Echo Context Manager", width="large")
+def render_context_popup_dialog():
+    """Modal popup for manual and AI-assisted context knowledge additions."""
+    if "extracted_context_df" not in st.session_state:
+        st.session_state["extracted_context_df"] = None
+
+    mode = st.radio(
+        "Mode",
+        options=["AI Smart Extraction", "Manual Row Entry"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    if mode == "AI Smart Extraction":
+        raw_text = st.text_area(
+            "Raw Context Dump",
+            height=90,
+            placeholder="Paste raw notes, definitions, project scopes, or abbreviations here..."
+        )
+        c_act1, c_act2 = st.columns([1.5, 1])
+        with c_act1:
+            if st.button("Extract Knowledge", key="btn_dlg_run_ai", type="primary", use_container_width=True):
+                if raw_text.strip():
+                    with st.spinner("Analyzing text..."):
+                        extracted = _extract_context_with_ai(raw_text)
+                        if extracted:
+                            st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
+                            st.rerun()
+                        else:
+                            st.error("No actionable definitions or entities identified.")
+                else:
+                    st.warning("Please supply context text.")
+        with c_act2:
+            if st.button("Reset Draft Table", key="btn_dlg_reset", use_container_width=True):
+                st.session_state["extracted_context_df"] = None
+                st.rerun()
+
+    else:
+        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns([1.2, 1.5, 2.5, 0.8, 1])
+        with m_col1:
+            m_cat = st.selectbox("Category", options=["team", "jargon", "projects"], key="dlg_manual_cat")
+        with m_col2:
+            m_key = st.text_input("Key / Entity", placeholder="e.g. ROI", key="dlg_manual_key")
+        with m_col3:
+            m_val = st.text_input("Definition / Scope", placeholder="Return on Investment", key="dlg_manual_val")
+        with m_col4:
+            m_prio = st.number_input("Priority", min_value=1, max_value=5, value=1, key="dlg_manual_prio")
+        with m_col5:
+            st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("Add Row", key="btn_dlg_add_row", use_container_width=True):
+                if m_key.strip() and m_val.strip():
+                    new_entry = pd.DataFrame([{
+                        "category": m_cat,
+                        "key": m_key.strip(),
+                        "value": m_val.strip(),
+                        "priority": int(m_prio)
+                    }])
+                    if st.session_state["extracted_context_df"] is None:
+                        st.session_state["extracted_context_df"] = new_entry
+                    else:
+                        st.session_state["extracted_context_df"] = pd.concat(
+                            [st.session_state["extracted_context_df"], new_entry], ignore_index=True
+                        )
+                    st.rerun()
+                else:
+                    st.error("Key and Value required.")
+
+    if st.session_state["extracted_context_df"] is not None and not st.session_state["extracted_context_df"].empty:
+        st.markdown("---")
+        st.markdown("<p style='font-size:0.80rem; font-weight:600; color:#1A2B4C;'>Staged Knowledge Rows</p>", unsafe_allow_html=True)
+
+        column_config = {
+            "category": st.column_config.SelectboxColumn("Category", options=["team", "jargon", "projects"], required=True),
+            "key": st.column_config.TextColumn("Key / Entity", required=True),
+            "value": st.column_config.TextColumn("Value / Scope", required=True, width="large"),
+            "priority": st.column_config.NumberColumn("Priority (1-5)", min_value=1, max_value=5, default=1)
+        }
+
+        edited_df = st.data_editor(
+            st.session_state["extracted_context_df"],
+            column_config=column_config,
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True,
+            key="dlg_data_editor"
+        )
+
+        if st.button("Commit to Echo Knowledge Base", key="btn_dlg_commit", type="primary", use_container_width=True):
+            saved = 0
+            with st.spinner("Saving records..."):
+                for _, row in edited_df.iterrows():
+                    if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
+                        if upsert_echo_context(
+                            category=str(row['category']),
+                            key=str(row['key']),
+                            value=str(row['value']),
+                            priority=int(row['priority']) if pd.notna(row['priority']) else 1
+                        ):
+                            saved += 1
+            if saved > 0:
+                st.success(f"Saved {saved} record(s) to Knowledge Base.")
+                st.session_state["extracted_context_df"] = None
+                st.rerun()
+
+
 def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
@@ -363,8 +486,9 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
         st.session_state["echo_source_knowledge"] = True
     if "echo_source_web" not in st.session_state:
         st.session_state["echo_source_web"] = False
+    if "knowledge_proposal" not in st.session_state:
+        st.session_state["knowledge_proposal"] = None
 
-    # Calculate safe integer scroll height for container
     safe_scroll_height = max(300, int(height) - 130) if height else 500
 
     with target.container(border=True):
@@ -396,10 +520,16 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
                     st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
+                    
+                    st.markdown("---")
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
+                    if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
+                        render_context_popup_dialog()
 
             with c_clr:
                 if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
                     st.session_state["global_chat_history"] = []
+                    st.session_state["knowledge_proposal"] = None
                     st.rerun()
 
         # ==========================================
@@ -457,6 +587,41 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
                             
                         st.markdown('</div>', unsafe_allow_html=True)
 
+        # Knowledge Proposal Interactive Prompt Card
+        if st.session_state["knowledge_proposal"]:
+            prop = st.session_state["knowledge_proposal"]
+            with st.container():
+                st.markdown(
+                    f'<div class="echo-context-candidate-card">'
+                    f'<div style="font-size:0.75rem; font-weight:600; color:#854D0E; margin-bottom:2px;">'
+                    f'{SVG_BRAIN_ICON} Knowledge Candidate Identified'
+                    f'</div>'
+                    f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:6px;">'
+                    f'Save <b>{prop.get("key")}</b> ({prop.get("category")}) to Echo Knowledge Base?<br/>'
+                    f'<i>Definition: {prop.get("value")}</i>'
+                    f'</div></div>',
+                    unsafe_allow_html=True
+                )
+                kp_col1, kp_col2 = st.columns([0.5, 0.5])
+                with kp_col1:
+                    if st.button("Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
+                        upsert_echo_context(
+                            category=prop["category"],
+                            key=prop["key"],
+                            value=prop["value"],
+                            priority=prop.get("priority", 2)
+                        )
+                        st.session_state["global_chat_history"].append({
+                            "role": "assistant",
+                            "content": f"Confirmed: `{prop['key']}` registered into Echo Knowledge Base."
+                        })
+                        st.session_state["knowledge_proposal"] = None
+                        st.rerun()
+                with kp_col2:
+                    if st.button("Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
+                        st.session_state["knowledge_proposal"] = None
+                        st.rerun()
+
         # Docked Bottom Chat Input
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
         active_prompt = st.chat_input("Ask Echo...")
@@ -489,7 +654,7 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
-            answer = _query_echo_backend(
+            answer, proposed_fact = _query_echo_backend(
                 question=active_prompt,
                 archive_records=archives,
                 chat_history=st.session_state["global_chat_history"],
@@ -504,6 +669,8 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
                 "content": answer,
                 "sources": web_sources
             })
+            if proposed_fact:
+                st.session_state["knowledge_proposal"] = proposed_fact
 
             st.rerun()
 
@@ -536,6 +703,42 @@ def _perform_web_search(query: str) -> tuple:
     return ("\n".join(text_snippets), sources)
 
 
+def _extract_context_with_ai(raw_text: str) -> list:
+    """Invokes LLM extraction schema on raw unstructured entries."""
+    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+    if not api_key:
+        st.error("DeepSeek API Key configuration missing.")
+        return []
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    system_prompt = (
+        "Extract enterprise facts from text into a valid JSON object with key 'items'. "
+        "Each array entry must contain: 'category' ('team', 'jargon', or 'projects'), "
+        "'key' (term/proper noun), 'value' (definition/description), and 'priority' (integer 1-5)."
+    )
+
+    payload = {
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": raw_text}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.1,
+        "max_tokens": 800
+    }
+
+    try:
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=30)
+        if resp.status_code == 200:
+            parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
+            return parsed.get("items", [])
+        return []
+    except Exception as e:
+        st.error(f"Extraction error: {e}")
+        return []
+
+
 def _query_echo_backend(
     question: str, 
     archive_records: list, 
@@ -543,11 +746,11 @@ def _query_echo_backend(
     web_context: str = "",
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
-) -> str:
-    """Directly synthesizes sources into markdown."""
+) -> tuple:
+    """Synthesizes sources while detecting potential context knowledge additions."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets."
+        return "DeepSeek API Key is missing in Streamlit Secrets.", None
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
@@ -583,10 +786,16 @@ CURRENT DATE & TIME: {current_date_str}
     )
 
     system_prompt = (
-        "You are Echo, an AI analyst for PRIME Philippines. "
+        "You are Echo, an executive AI analyst for PRIME Philippines. "
         f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
         "Synthesize available sources and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
         f"{citation_rule}\n\n"
+        "Determine if the user input defines a new team member role, acronym, project specification, or technical jargon that should be preserved in the persistent Knowledge Base. "
+        "Always respond in JSON format matching the schema:\n"
+        "{\n"
+        "  \"response\": \"Your thorough markdown response to the user\",\n"
+        "  \"propose_knowledge\": null OR {\"category\": \"team|jargon|projects\", \"key\": \"Term/Entity\", \"value\": \"Definition/Description\", \"priority\": 2}\n"
+        "}\n\n"
         f"{context_string}\n"
     )
 
@@ -602,10 +811,29 @@ CURRENT DATE & TIME: {current_date_str}
         "max_tokens": 1500
     }
 
+    if model_name == "deepseek-chat":
+        payload["response_format"] = {"type": "json_object"}
+
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
-            return resp.json()["choices"][0]["message"]["content"].strip()
-        return f"Service notice ({resp.status_code}): {resp.text}"
+            raw_content = resp.json()["choices"][0]["message"]["content"].strip()
+            cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
+            cleaned = re.sub(r"^```\s*", "", cleaned, flags=re.MULTILINE).strip()
+
+            try:
+                result = json.loads(cleaned)
+                return result.get("response", cleaned), result.get("propose_knowledge")
+            except json.JSONDecodeError:
+                match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+                if match:
+                    try:
+                        result = json.loads(match.group(1))
+                        return result.get("response", cleaned), result.get("propose_knowledge")
+                    except Exception:
+                        pass
+                return raw_content, None
+
+        return f"Service notice ({resp.status_code}): {resp.text}", None
     except Exception as e:
-        return f"Analysis exception: {e}"
+        return f"Analysis exception: {e}", None
