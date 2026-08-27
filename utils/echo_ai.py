@@ -29,16 +29,9 @@ SVG_GLOBE_ICON = """
 </svg>
 """
 
-SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
-    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
-    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
-</svg>
-"""
-
 CHAT_COMPACT_CLEAN_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Playfair+Display:ital,wght@1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 /* Prevent outer viewport scrolling */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
@@ -48,14 +41,14 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
-/* Match the exact warm ivory architectural grid canvas */
+/* Match the exact warm architectural grid background */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background-color: #F9F6F0 !important;
+    background-color: #FAF8F5 !important;
     background-image: 
-        linear-gradient(to right, #E7E0D3 1px, transparent 1px),
-        linear-gradient(to bottom, #E7E0D3 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
-    border: 1px solid #DFD7C7 !important;
+        linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px) !important;
+    background-size: 30px 30px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     padding: 0 !important;
     box-shadow: none !important;
@@ -67,17 +60,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     height: calc(100vh - 120px) !important;
     max-height: calc(100vh - 120px) !important;
-    padding: 0.65rem 1rem !important;
+    padding: 0.5rem 0.85rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Meeting Details Styled Header Row */
+/* Meeting Details Exact Matched Header */
 .echo-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 0.35rem;
+    padding-bottom: 0.3rem;
     margin-bottom: 0.35rem;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
     flex-shrink: 0;
@@ -90,17 +83,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-title {
-    font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
-    font-style: italic;
-    font-size: 1.35rem;
-    font-weight: 600;
-    color: #1A2B4C;
-    margin: 0;
-    line-height: 1.1;
-    letter-spacing: 0.01em;
+    font-family: 'Playfair Display', serif !important;
+    font-style: italic !important;
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #1A2B4C !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.01em !important;
 }
 
-/* Dedicated Scrolling Chat Box with clean frosted white surface */
+/* Dedicated Scrolling Chat Box */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -110,9 +103,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(0, 0, 0, 0.07) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     padding: 0.75rem 1rem !important;
@@ -301,15 +293,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Knowledge Candidate Card */
-.echo-knowledge-card {
-    background: #F8FAFC;
-    border: 1px solid #D4AF37;
-    border-radius: 4px;
-    padding: 0.45rem 0.65rem;
-    margin-top: 0.3rem;
-}
-
 /* Docked Bottom Chat Input */
 .echo-input-dock {
     padding-top: 0.35rem !important;
@@ -343,8 +326,6 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
     # State Initializations
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
-    if "knowledge_proposal" not in st.session_state:
-        st.session_state["knowledge_proposal"] = None
     if "echo_selected_model" not in st.session_state:
         st.session_state["echo_selected_model"] = "deepseek-chat"
     if "echo_source_archives" not in st.session_state:
@@ -357,7 +338,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        # Header Row: Logo, Refined Italic Title, and Action Controls
+        # Header Row: Logo, Italic Title, and Action Controls
         h_left, h_mid, h_right = st.columns([0.035, 0.865, 0.10])
         with h_left:
             st.markdown(f'<div style="padding-top:2px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
@@ -390,7 +371,6 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
             with c_clr:
                 if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
                     st.session_state["global_chat_history"] = []
-                    st.session_state["knowledge_proposal"] = None
                     st.rerun()
 
         # ==========================================
@@ -448,40 +428,6 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                             
                         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Knowledge Proposal Interactive Card
-        if st.session_state["knowledge_proposal"]:
-            prop = st.session_state["knowledge_proposal"]
-            with st.container():
-                st.markdown(
-                    f'<div class="echo-knowledge-card">'
-                    f'<div style="font-family:\'Cinzel\',serif; font-size:0.68rem; font-weight:700; color:#854D0E; margin-bottom:2px;">'
-                    f'{SVG_BRAIN_ICON} Knowledge Base Candidate'
-                    f'</div>'
-                    f'<div style="font-size:0.75rem; color:#1F2937; margin-bottom:4px;">'
-                    f'Register <b>{prop.get("key")}</b> ({prop.get("category")}): <i>{prop.get("value")}</i>'
-                    f'</div></div>',
-                    unsafe_allow_html=True
-                )
-                kp_c1, kp_c2 = st.columns([0.5, 0.5])
-                with kp_c1:
-                    if st.button("Confirm Addition", key="btn_confirm_prop", use_container_width=True):
-                        upsert_echo_context(
-                            category=prop["category"],
-                            key=prop["key"],
-                            value=prop["value"],
-                            priority=prop.get("priority", 2)
-                        )
-                        st.session_state["global_chat_history"].append({
-                            "role": "assistant",
-                            "content": f"Confirmed: `{prop['key']}` registered into Echo Knowledge Base."
-                        })
-                        st.session_state["knowledge_proposal"] = None
-                        st.rerun()
-                with kp_c2:
-                    if st.button("Dismiss", key="btn_reject_prop", use_container_width=True):
-                        st.session_state["knowledge_proposal"] = None
-                        st.rerun()
-
         # Docked Bottom Chat Input
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
         active_prompt = st.chat_input("Inquire regarding historical archives, corporate context, or metrics...")
@@ -514,7 +460,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
-            answer, proposed_fact = _query_echo_backend(
+            answer = _query_echo_backend(
                 question=active_prompt,
                 archive_records=archives,
                 chat_history=st.session_state["global_chat_history"],
@@ -529,8 +475,6 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                 "content": answer,
                 "sources": web_sources
             })
-            if proposed_fact:
-                st.session_state["knowledge_proposal"] = proposed_fact
 
             st.rerun()
 
@@ -570,11 +514,11 @@ def _query_echo_backend(
     web_context: str = "",
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
-) -> tuple:
-    """Synthesizes dynamic sources based on configuration with fallback error handling."""
+) -> str:
+    """Directly synthesizes sources into markdown without fragile JSON serialization."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets.", None
+        return "DeepSeek API Key is missing in Streamlit Secrets."
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
@@ -611,16 +555,10 @@ CURRENT DATE & TIME: {current_date_str}
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        f"The current date is {current_date_str}. "
+        f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
         "Synthesize available sources and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
-        f"{citation_rule} "
-        "Determine if the user's input contains a new terminology definition, project assignment, or role update that could belong in the knowledge base. "
-        "Respond in strict JSON format matching the schema: "
-        "{"
-        "  \"response\": \"Your thorough Markdown response\", "
-        "  \"propose_knowledge\": null OR {\"category\": \"team|jargon|projects\", \"key\": \"Name/Term\", \"value\": \"Definition/Role\", \"priority\": 2}"
-        "}"
-        f"\n\n{context_string}\n"
+        f"{citation_rule}\n\n"
+        f"{context_string}\n"
     )
 
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
@@ -635,32 +573,10 @@ CURRENT DATE & TIME: {current_date_str}
         "max_tokens": 1500
     }
 
-    if model_name == "deepseek-chat":
-        payload["response_format"] = {"type": "json_object"}
-
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
-            raw_content = resp.json()["choices"][0]["message"]["content"].strip()
-
-            # Clean markdown code blocks if present
-            cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
-            cleaned = re.sub(r"^```\s*", "", cleaned, flags=re.MULTILINE).strip()
-
-            try:
-                result = json.loads(cleaned)
-                return result.get("response", cleaned), result.get("propose_knowledge")
-            except json.JSONDecodeError:
-                match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
-                if match:
-                    try:
-                        result = json.loads(match.group(1))
-                        return result.get("response", cleaned), result.get("propose_knowledge")
-                    except Exception:
-                        pass
-                
-                return raw_content, None
-
-        return f"Service notice ({resp.status_code}): {resp.text}", None
+            return resp.json()["choices"][0]["message"]["content"].strip()
+        return f"Service notice ({resp.status_code}): {resp.text}"
     except Exception as e:
-        return f"Analysis exception: {e}", None
+        return f"Analysis exception: {e}"
