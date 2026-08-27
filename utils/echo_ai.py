@@ -7,7 +7,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -36,21 +36,28 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-# Theme Styling: Cormorant Garamond for Title, Cinzel for tags, Montserrat for body
-CHAT_PRIME_THEME_CSS = """
+# Unified Warm Off-White Grid Theme & High-Contrast Typography
+CHAT_PRIME_UNIFIED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Montserrat:wght@300;400;500;600&display=swap');
 
-/* Main Executive Card Frame */
+/* Lock entire app body scrolling */
+.main, .block-container {
+    overflow: hidden !important;
+    padding-top: 2rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* Outer Card Frame: Matches page warm off-white background with subtle gold border */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background: #0D131F !important;
+    background: #FDFBF7 !important;
     background-image: 
-        linear-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(212, 175, 55, 0.04) 1px, transparent 1px) !important;
-    background-size: 28px 28px !important;
-    border: 1px solid rgba(212, 175, 55, 0.22) !important;
-    border-radius: 6px !important;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(212, 175, 55, 0.15) !important;
+        linear-gradient(rgba(212, 175, 55, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212, 175, 55, 0.08) 1px, transparent 1px) !important;
+    background-size: 32px 32px !important;
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
     overflow: hidden !important;
 }
 
@@ -59,41 +66,47 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     overflow: hidden !important;
     gap: 0 !important;
-    padding: 0.65rem 0.9rem !important;
+    padding: 0.6rem 0.85rem !important;
 }
 
-/* Minimalist Cormorant Garamond Header */
+/* Cormorant Garamond Header */
 .echo-header-box {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.45rem;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .echo-title {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 1.45rem;
+    font-size: 1.55rem;
     font-weight: 600;
-    color: #F8FAFC;
+    color: #111827;
     letter-spacing: 0.02em;
     margin: 0;
     line-height: 1;
 }
 
-/* Inner Scrollable Chat Feed */
-.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(7, 10, 18, 0.65) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.12) !important;
-    border-radius: 4px !important;
-    overflow-y: auto !important;
-    padding: 0.75rem 0.85rem !important;
+/* Inner Chat Box Container - STRICT SINGLE SCROLLBAR */
+.echo-chat-box-container {
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
 }
 
-/* User Message */
+.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 6px !important;
+    overflow-y: auto !important;
+    padding: 0.85rem 1rem !important;
+}
+
+/* User Message: Dark High-Contrast Bubble with Gold Border */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -105,19 +118,19 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-user-bubble {
     font-family: 'Montserrat', sans-serif;
-    background: #111A2B;
-    color: #F1F5F9 !important;
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    padding: 0.55rem 0.85rem;
+    background: #0E1626;
+    color: #FFFFFF !important;
+    border: 1px solid #D4AF37;
+    padding: 0.55rem 0.9rem;
     border-radius: 12px 2px 12px 12px;
     max-width: 78%;
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     line-height: 1.45;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     word-break: break-word;
 }
 .echo-user-bubble p {
-    color: #F1F5F9 !important;
+    color: #FFFFFF !important;
     margin: 0;
 }
 
@@ -125,7 +138,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #111A2B;
+    background: #0E1626;
     border: 1px solid #D4AF37;
     display: flex;
     align-items: center;
@@ -153,13 +166,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #090E17;
+    background: #0E1626;
     border: 1px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
 }
 
 .echo-assistant-title {
@@ -167,7 +180,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: #D4AF37;
+    color: #92400E;
 }
 
 .echo-assistant-badge-gold {
@@ -175,21 +188,21 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-size: 0.58rem;
     padding: 1px 4px;
     border-radius: 2px;
-    background: rgba(212, 175, 55, 0.15);
-    color: #F8FAFC;
+    background: #FEF3C7;
+    color: #92400E;
     font-weight: 600;
-    border: 0.5px solid rgba(212, 175, 55, 0.4);
+    border: 0.5px solid #FDE68A;
 }
 
 .echo-assistant-body {
     font-family: 'Montserrat', sans-serif;
     padding-left: 30px;
-    color: #CBD5E1;
-    font-size: 0.84rem;
-    line-height: 1.55;
+    color: #1F2937;
+    font-size: 0.88rem;
+    line-height: 1.6;
 }
 .echo-assistant-body strong {
-    color: #F8FAFC;
+    color: #0F172A;
 }
 
 /* Sources Pills */
@@ -204,47 +217,47 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-family: 'Montserrat', sans-serif;
     display: inline-flex;
     align-items: center;
-    background: #090E17;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: #FFFFFF;
+    border: 1px solid rgba(212, 175, 55, 0.5);
     border-radius: 4px;
     padding: 2px 7px;
-    font-size: 0.70rem;
-    color: #D4AF37 !important;
+    font-size: 0.72rem;
+    color: #854D0E !important;
     text-decoration: none !important;
     transition: all 0.2s ease;
 }
 .echo-source-pill:hover {
-    background: #111A2B;
+    background: #FEFCE8;
     border-color: #D4AF37;
-    color: #FFFFFF !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+    color: #713F12 !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
 }
 
-/* Markdown Tables */
+/* High-Contrast Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
     margin: 0.6rem 0;
-    font-size: 0.78rem;
-    background: #090E17;
+    font-size: 0.80rem;
+    background: #FFFFFF;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    border: 1px solid #E2E8F0;
 }
 .echo-assistant-body th {
     font-family: 'Cinzel', serif;
-    background: #111A2B;
+    background: #0E1626;
     color: #D4AF37;
     font-weight: 700;
     letter-spacing: 0.05em;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    border: 1px solid #334155;
     padding: 6px 10px;
     text-align: left;
 }
 .echo-assistant-body td {
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid #E2E8F0;
     padding: 6px 10px;
-    color: #CBD5E1;
+    color: #334155;
 }
 
 /* Thinking Indicator */
@@ -262,10 +275,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     gap: 6px;
     padding: 3px 10px;
     border-radius: 4px;
-    background: #111A2B;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: #FFFFFF;
+    border: 1px solid rgba(212, 175, 55, 0.4);
     font-size: 0.75rem;
-    color: #D4AF37;
+    color: #854D0E;
 }
 .echo-pulse-dot {
     width: 6px;
@@ -281,15 +294,15 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 /* Knowledge Candidate Card */
 .echo-knowledge-card {
-    background: #111A2B;
+    background: #FFFFFF;
     border: 1px solid #D4AF37;
     border-radius: 4px;
     padding: 0.6rem 0.8rem;
     margin-top: 0.4rem;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Docked Bottom Chat Input */
+/* Docked Bottom Chat Input - High Contrast Dark Slate */
 .echo-input-dock {
     padding-top: 0.4rem !important;
     display: flex;
@@ -297,29 +310,33 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 div[data-testid="stChatInput"] > div {
-    background: #090E17 !important;
-    border: 1px solid rgba(212, 175, 55, 0.35) !important;
-    border-radius: 4px !important;
-    box-shadow: none !important;
+    background: #FFFFFF !important;
+    border: 1.5px solid rgba(212, 175, 55, 0.6) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
 }
 
 div[data-testid="stChatInput"] textarea {
     font-family: 'Montserrat', sans-serif !important;
-    color: #F8FAFC !important;
-    font-size: 0.84rem !important;
+    color: #0F172A !important;
+    font-size: 0.86rem !important;
+}
+
+div[data-testid="stChatInput"] textarea::placeholder {
+    color: #64748B !important;
 }
 </style>
 """
 
 def render_echo_chat(
     container=None, 
-    height=720, 
+    height=740, 
     title="Ask Echo", 
     caption=None, 
     subtitle=None
 ):
     target = container if container else st
-    st.markdown(CHAT_PRIME_THEME_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_PRIME_UNIFIED_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -357,7 +374,7 @@ def render_echo_chat(
             c_settings, c_clr = st.columns(2)
             with c_settings:
                 with st.popover("", icon=":material/settings:", help="Configuration"):
-                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#D4AF37;'>AI MODEL</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     st.session_state["echo_selected_model"] = st.selectbox(
                         "Model",
                         options=["deepseek-chat", "deepseek-reasoner"],
@@ -365,7 +382,7 @@ def render_echo_chat(
                         label_visibility="collapsed"
                     )
                     st.markdown("---")
-                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#D4AF37;'>DATA SOURCES</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
                     st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
@@ -437,10 +454,10 @@ def render_echo_chat(
             with st.container():
                 st.markdown(
                     f'<div class="echo-knowledge-card">'
-                    f'<div style="font-family:\'Cinzel\',serif; font-size:0.7rem; font-weight:700; color:#D4AF37; margin-bottom:2px;">'
+                    f'<div style="font-family:\'Cinzel\',serif; font-size:0.7rem; font-weight:700; color:#854D0E; margin-bottom:2px;">'
                     f'{SVG_BRAIN_ICON} Knowledge Base Candidate'
                     f'</div>'
-                    f'<div style="font-family:\'Montserrat\',sans-serif; font-size:0.78rem; color:#CBD5E1; margin-bottom:6px;">'
+                    f'<div style="font-family:\'Montserrat\',sans-serif; font-size:0.80rem; color:#1F2937; margin-bottom:6px;">'
                     f'Register <b>{prop.get("key")}</b> ({prop.get("category")}): <i>{prop.get("value")}</i>'
                     f'</div></div>',
                     unsafe_allow_html=True
