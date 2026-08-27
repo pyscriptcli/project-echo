@@ -10,7 +10,7 @@ import json
 import requests
 import pandas as pd
 from utils.db import fetch_meeting_archives, get_supabase_client
-from components.sidebar import render_custom_sidebar
+from components.sidebar import setup_page_layout
 
 # 1. Page Configuration (MUST be first)
 st.set_page_config(
@@ -19,6 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+setup_page_layout()
 # 2. Global & Dashboard CSS
 st.markdown("""
 <style>
