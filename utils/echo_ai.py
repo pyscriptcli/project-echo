@@ -459,7 +459,7 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
 
         # Docked Bottom Chat Input
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
-        active_prompt = st.chat_input("Inquire regarding historical archives, corporate context, or metrics...")
+        active_prompt = st.chat_input("Ask Echo...")
         st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
