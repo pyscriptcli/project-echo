@@ -6,13 +6,15 @@ import pandas as pd
 from components.sidebar import render_custom_sidebar
 from utils.db import fetch_meeting_archives, get_supabase_client
 
+
+
 # 1. Page Configuration (MUST be first)
 st.set_page_config(
     page_title="Project Echo - Executive Hub",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
+render_custom_sidebar()
 # 2. Global & Dashboard CSS
 st.markdown("""
 <style>
