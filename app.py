@@ -32,7 +32,7 @@ st.markdown("""
 #MainMenu { visibility: hidden !important; }
 .block-container { padding-top: 2rem !important; padding-right: 2rem !important; }
 
-/* --- GLOBAL: Sidebar Styling (Cormorant Garamond, #272828, #c9a84c) --- */
+/* --- GLOBAL: Sidebar Styling --- */
 section[data-testid="stSidebar"] {
     background-color: #272828 !important;
     border-right: 1px solid #3a3a3a !important;
@@ -75,77 +75,59 @@ h3 {
     color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
 }
 
-/* Metric KPI Cards */
+/* 3D KPI Cards - Compact & Bigger Numbers */
 .kpi-card {
-    background-color: #FFFFFF;
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
     border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1rem;
+    box-shadow: 
+        0px 10px 15px -3px rgba(0, 0, 0, 0.15), 
+        0px 4px 6px -2px rgba(0, 0, 0, 0.05),
+        inset 0px 2px 0px 0px rgba(255, 255, 255, 1);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 4px solid #222222;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0px 15px 20px -3px rgba(0, 0, 0, 0.2), 
+        0px 4px 6px -2px rgba(0, 0, 0, 0.05),
+        inset 0px 2px 0px 0px rgba(255, 255, 255, 1);
+    border-bottom-color: #c9a84c;
 }
 .kpi-title {
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #888888;
-    margin-bottom: 0.25rem;
+    letter-spacing: 0.8px;
+    color: #666666;
+    margin-bottom: 0.1rem;
 }
 .kpi-value {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 1.9rem;
+    font-size: 2.8rem;
+    font-weight: 600;
     color: #1A2B4C;
     margin: 0;
+    text-shadow: 1px 2px 2px rgba(0,0,0,0.08);
 }
 
-/* Containers with Depth & Shadow */
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #FFFFFF !important; 
-    border-radius: 12px !important;
-    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important; 
-    padding: 1.5rem !important; 
-    margin-bottom: 1.25rem !important;
+/* Preset Buttons Styling */
+div[data-testid="stPopover"] button {
+    background-color: #e5e7eb !important;
+    color: #1a1a1a !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
 }
 
-/* Gallery Item Card */
-.gallery-card {
-    background-color: #FAFAFA;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px;
-    padding: 1.1rem;
-    margin-bottom: 0.85rem;
-    transition: all 0.2s ease;
-}
-.gallery-card:hover {
-    border-color: #D4AF37;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.12);
-    transform: translateY(-2px);
-}
-.gallery-title {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 1.15rem;
-    color: #1A2B4C;
-    margin: 0 0 0.25rem 0;
-}
-.gallery-sub {
-    font-size: 0.82rem;
-    color: #666;
-    margin-bottom: 0.4rem;
-}
-.gallery-desc {
-    font-size: 0.86rem;
-    color: #2D2D2D;
-    line-height: 1.4;
-}
-
-/* Uniform Pill Buttons */
-.stButton > button, .stDownloadButton > button {
+/* Uniform Pill Buttons (General) */
+.stButton > button {
     background-color: #222222 !important; 
     color: #FFFFFF !important;
     border: none !important; 
@@ -159,158 +141,150 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     height: 36px !important;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.2s ease !important; 
-    width: 100% !important;
 }
-.stButton > button:hover, .stDownloadButton > button:hover {
+.stButton > button:hover {
     background-color: #D4AF37 !important;
     color: #161616 !important;
     box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2) !important;
     transform: translateY(-1px);
 }
 
+/* Gallery Item Card */
+.gallery-card {
+    background-color: #FAFAFA;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 1.1rem;
+    margin-bottom: 0.85rem;
+    transition: all 0.2s ease;
+}
+.gallery-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: #1A2B4C; margin: 0 0 0.25rem 0; }
+.gallery-sub { font-size: 0.82rem; color: #666; margin-bottom: 0.4rem; }
+.gallery-desc { font-size: 0.86rem; color: #2D2D2D; line-height: 1.4; }
+
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }
-.chat-ai {
-    align-self: flex-start;
-    background-color: transparent;
-    color: #1A1A1A;
-    padding: 0.2rem;
-    max-width: 95%;
-    font-size: 0.88rem;
-    line-height: 1.5;
-}
+.chat-ai { align-self: flex-start; color: #1A1A1A; padding: 0.2rem; max-width: 95%; font-size: 0.88rem; line-height: 1.5; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
-.chat-user {
-    background-color: #F3F4F6;
-    color: #1A1A1A;
-    padding: 0.55rem 0.95rem;
-    border-radius: 14px;
-    max-width: 82%;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
+.chat-user { background-color: #F3F4F6; color: #1A1A1A; padding: 0.55rem 0.95rem; border-radius: 14px; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Global Session State
+# 4. Global Session State (Includes Date Picker State)
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
+
+now = datetime.datetime.now()
+today = now.date()
+
+if "start_date" not in st.session_state:
+    st.session_state["start_date"] = today.replace(day=1)
+if "end_date" not in st.session_state:
+    _, last_day = calendar.monthrange(today.year, today.month)
+    st.session_state["end_date"] = today.replace(day=last_day)
 
 # 5. Global AI Query Function
 def query_global_team_archive(question, archive_records, chat_history):
     DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not DEEPSEEK_API_KEY:
         return "DeepSeek API Key is missing. Please add it to your Streamlit Cloud Secrets."
-
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1)
-
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "You have direct access to the team's meeting archives, deliverables, summaries, and transcripts. "
-        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
-        "Format responses in concise, professional corporate English with bullet points. Direct answer first then expound after, show visuals like tables if applicable"
-        "Always ask for a follow up question or a question to keep the conversation going"
+        "Answer user questions accurately by synthesizing past meeting records. "
+        "Format responses in concise, professional corporate English with bullet points."
     )
-
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": question})
-
-    payload = {
-        "model": "deepseek-chat",
-        "messages": messages,
-        "temperature": 0.2,
-        "max_tokens": 750
-    }
-
+    payload = {"model": "deepseek-chat", "messages": messages, "temperature": 0.2, "max_tokens": 750}
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
-        if resp.status_code == 200:
-            return resp.json()["choices"][0]["message"]["content"].strip()
+        if resp.status_code == 200: return resp.json()["choices"][0]["message"]["content"].strip()
         return f"Service Notice ({resp.status_code}): {resp.text}"
-    except Exception as e:
-        return f"Connection error: {e}"
+    except Exception as e: return f"Connection error: {e}"
 
 # 6. Fetch Data
 supabase_records = fetch_meeting_archives(limit=100)
 
-# --- NEW: Title & Date Layout (Image Replicate) ---
-top_left, top_right = st.columns([3, 1.2])
+# 7. Header & Custom Popover Date Picker (Replicating image_c8959b.png)
+top_left, top_right = st.columns([2.5, 1.5])
 
 with top_left:
     st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-weight: 400; font-style: italic; color: #1A2B4C; margin-bottom: 0rem; padding-bottom: 0rem; font-size: 2.8rem;">Executive Hub</h1>', unsafe_allow_html=True)
     st.markdown('<p style="color: #888888; font-size: 1rem; margin-top: 0rem; padding-top: 0.2rem; padding-bottom: 1rem;">Team activity overview</p>', unsafe_allow_html=True)
 
 with top_right:
-    # Date Preset Selectbox
-    preset = st.selectbox(
-        "Date Range Preset", 
-        ["This Month", "This Week", "Last Week", "Last Month", "Custom Date Range"], 
-        index=0, 
-        label_visibility="collapsed"
-    )
+    st.write("") # Spacer
+    col_pop, col_reset = st.columns([3, 1])
     
-    now = datetime.datetime.now()
-    today = now.date()
-    
-    # Calculate dates based on preset
-    if preset == "This Month":
-        start_date = today.replace(day=1)
-        _, last_day = calendar.monthrange(today.year, today.month)
-        end_date = today.replace(day=last_day)
-    elif preset == "This Week":
-        start_date = today - datetime.timedelta(days=today.weekday())
-        end_date = start_date + datetime.timedelta(days=6)
-    elif preset == "Last Week":
-        start_date = today - datetime.timedelta(days=today.weekday() + 7)
-        end_date = start_date + datetime.timedelta(days=6)
-    elif preset == "Last Month":
-        first_this = today.replace(day=1)
-        last_prev = first_this - datetime.timedelta(days=1)
-        start_date = last_prev.replace(day=1)
-        end_date = last_prev
-    else: # Custom
-        selected_dates = st.date_input(
-            "Select Dates", 
-            value=(today.replace(day=1), today), 
-            label_visibility="collapsed"
-        )
-        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-            start_date, end_date = selected_dates
-        elif isinstance(selected_dates, tuple) and len(selected_dates) == 1:
-            start_date = selected_dates[0]
-            end_date = selected_dates[0]
-        else:
-            start_date = selected_dates
-            end_date = selected_dates
+    with col_pop:
+        date_label = f"{st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
+        with st.popover(date_label, use_container_width=True):
+            p_col1, p_col2 = st.columns([1, 2])
+            
+            with p_col1:
+                st.caption("PRESETS")
+                if st.button("This Week", use_container_width=True):
+                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
+                    st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                    st.rerun()
+                if st.button("Last Week", use_container_width=True):
+                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 7)
+                    st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                    st.rerun()
+                if st.button("This Month", use_container_width=True):
+                    st.session_state["start_date"] = today.replace(day=1)
+                    _, last = calendar.monthrange(today.year, today.month)
+                    st.session_state["end_date"] = today.replace(day=last)
+                    st.rerun()
+                if st.button("Last Month", use_container_width=True):
+                    first_this = today.replace(day=1)
+                    last_prev = first_this - datetime.timedelta(days=1)
+                    st.session_state["start_date"] = last_prev.replace(day=1)
+                    st.session_state["end_date"] = last_prev
+                    st.rerun()
+                if st.button("Clear", use_container_width=True):
+                    st.session_state["start_date"] = today.replace(day=1)
+                    _, last = calendar.monthrange(today.year, today.month)
+                    st.session_state["end_date"] = today.replace(day=last)
+                    st.rerun()
+                    
+            with p_col2:
+                selected_dates = st.date_input(
+                    "Date Range",
+                    value=(st.session_state["start_date"], st.session_state["end_date"]),
+                    label_visibility="collapsed"
+                )
+                if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+                    if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
+                        st.session_state["start_date"] = selected_dates[0]
+                        st.session_state["end_date"] = selected_dates[1]
+                        st.rerun()
+                        
+    with col_reset:
+        if st.button("Reset", use_container_width=True):
+            st.session_state["start_date"] = today.replace(day=1)
+            _, last = calendar.monthrange(today.year, today.month)
+            st.session_state["end_date"] = today.replace(day=last)
+            st.rerun()
 
-    # Show calculated dates if not using Custom (since Date Input already shows it natively)
-    if preset != "Custom Date Range":
-        st.markdown(f"<div style='text-align: right; color: #1A2B4C; font-weight: 500; font-size: 0.9rem;'>📅 {start_date.strftime('%b %d, %Y')} — {end_date.strftime('%b %d, %Y')}</div>", unsafe_allow_html=True)
-
-# 7. Metrics Computation & Filtering
+# 8. Filter Data based on State
 total_team_meetings = len(supabase_records)
 total_range_meetings = 0
 total_internal_meetings = 0
 total_external_meetings = 0
-
 filtered_records = []
 
 for m in supabase_records:
     m_date_raw = str(m.get("meeting_date", ""))
     try:
-        # Parse and check if meeting falls in selected date range
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d").date()
-        if start_date <= parsed_d <= end_date:
+        if st.session_state["start_date"] <= parsed_d <= st.session_state["end_date"]:
             filtered_records.append(m)
             total_range_meetings += 1
             
@@ -326,27 +300,26 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Main Dashboard View
-# KPI Cards
+# 9. KPI Cards (Compact & 3D Effect)
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Meetings (Selected)</div><div class="kpi-value">{total_range_meetings}</div></div>', unsafe_allow_html=True)
 with kpi2:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Team Meetings</div><div class="kpi-value">{total_team_meetings}</div></div>', unsafe_allow_html=True)
 with kpi3:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Internal Meetings</div><div class="kpi-value">{total_internal_meetings}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Internal</div><div class="kpi-value">{total_internal_meetings}</div></div>', unsafe_allow_html=True)
 with kpi4:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total External Meetings</div><div class="kpi-value">{total_external_meetings}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total External</div><div class="kpi-value">{total_external_meetings}</div></div>', unsafe_allow_html=True)
 
 st.write("")
 
-# Main Symmetrical Split
+# 10. Main Split Layout
 col_left, col_right = st.columns(2)
 
 with col_left:
     with st.container(height=580, border=True):
         st.markdown('<h3>Recent Meetings</h3>', unsafe_allow_html=True)
-        st.caption("Browse archived meetings for the selected date range. Click to inspect full details.")
+        st.caption("Browse archived meetings for the selected date range.")
         
         if filtered_records:
             for idx, m in enumerate(filtered_records):
@@ -356,18 +329,16 @@ with col_left:
                 location = m.get("location") or "Location N/A"
                 prep = m.get("prepared_by") or "CRD Team"
                 summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-                if not summary:
-                    summary = "Minutes generated and saved in meeting archive."
                 
                 with st.container(border=True):
                     gc1, gc2 = st.columns([7.5, 2.5])
                     with gc1:
                         st.markdown(f"<p class='gallery-title'>{client}</p>", unsafe_allow_html=True)
-                        st.markdown(f"<p class='gallery-sub'>Date: {m_date} &bull; {location} &bull; Prepared by: {prep}</p>", unsafe_allow_html=True)
-                        st.markdown(f"<p class='gallery-desc'>{summary[:160]}...</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='gallery-sub'>Date: {m_date} &bull; {location} &bull; Prep: {prep}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='gallery-desc'>{summary[:120]}...</p>", unsafe_allow_html=True)
                     with gc2:
                         st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
-                        if st.button("View Meeting", key=f"btn_view_{m_id}_{idx}"):
+                        if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
                             st.session_state["selected_meeting_id"] = m_id
                             st.switch_page("pages/2_meeting_details.py")
         else:
@@ -380,20 +351,16 @@ with col_right:
 
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         if not st.session_state["global_chat_history"]:
-            st.markdown(
-                '<div class="chat-ai">Hello. I am Echo. Ask me any question across your meeting archives.</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown('<div class="chat-ai">Hello. I am Echo. Ask me any question across your meeting archives.</div>', unsafe_allow_html=True)
         else:
             for msg in st.session_state["global_chat_history"]:
                 if msg["role"] == "assistant":
-                    formatted_content = msg["content"].replace("\n", "<br>")
-                    st.markdown(f'<div class="chat-ai">{formatted_content}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
                 else:
                     st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        if global_query := st.chat_input("Query whole company archive (e.g. 'What are the deliverables for Regis?')"):
+        if global_query := st.chat_input("Query whole company archive..."):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
             with st.spinner("Analyzing meeting archives..."):
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
