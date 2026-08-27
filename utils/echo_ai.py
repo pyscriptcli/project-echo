@@ -28,20 +28,33 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-CHAT_CUSTOM_THEME_CSS = """
+CHAT_GLASSMORPHISM_CSS = """
 <style>
-/* Light gray background for chat box */
+/* Glassmorphic Outer Card Container */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
-    background-color: #F8F9FA !important;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(16px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.65) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+}
+
+/* Glassmorphic Chat Scroll Area */
+.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 14px !important;
 }
 
 .echo-chat-viewport {
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* User Message: Black Bubble with Gold Accent & User Profile Icon */
+/* User Message: Black Bubble with Gold Accent & Glass Rim Glow */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -52,19 +65,21 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
 }
 
 .echo-user-bubble {
-    background: #111111;
-    color: #F3F4F6 !important;
+    background: rgba(17, 17, 17, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #F9FAFB !important;
     border: 1px solid #D4AF37;
-    padding: 0.8rem 1.2rem;
+    padding: 0.8rem 1.25rem;
     border-radius: 18px 4px 18px 18px;
     max-width: 78%;
     font-size: 0.92rem;
     line-height: 1.55;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), 0 0 1px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), 0 0 10px rgba(212, 175, 55, 0.25);
     word-break: break-word;
 }
 .echo-user-bubble p {
-    color: #F3F4F6 !important;
+    color: #F9FAFB !important;
     margin: 0;
 }
 
@@ -72,16 +87,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #111111;
+    background: rgba(17, 17, 17, 0.95);
     border: 1.5px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
-/* AI Assistant Message: Unboxed / Flat with Echo Profile Picture */
+/* AI Assistant Message: Crisp Contrast Typography on Frosted Glass */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
@@ -101,13 +116,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #111111 0%, #1F2937 100%);
+    background: linear-gradient(135deg, rgba(17, 17, 17, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
     border: 1.5px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
+    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
 }
 
 .echo-assistant-title {
@@ -119,47 +134,51 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
 
 .echo-assistant-badge-gold {
     font-size: 0.68rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #FEF3C7;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(254, 243, 199, 0.85);
     color: #92400E;
-    font-weight: 600;
-    border: 1px solid #FDE68A;
+    font-weight: 700;
+    border: 1px solid rgba(253, 230, 138, 0.8);
+    backdrop-filter: blur(4px);
 }
 
 .echo-assistant-body {
     padding-left: 42px;
-    color: #1F2937;
+    color: #111827;
     font-size: 0.94rem;
     line-height: 1.65;
 }
 
-/* Markdown Tables in AI replies */
+/* Markdown Tables with Clean Contrast on Glass */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
     margin: 1rem 0;
     font-size: 0.88rem;
-    background: #FFFFFF;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 .echo-assistant-body th {
-    background-color: #111111;
+    background: #111111;
     color: #D4AF37;
     font-weight: 600;
-    border: 1px solid #374151;
-    padding: 9px 12px;
+    border: 1px solid #2B2D31;
+    padding: 10px 14px;
     text-align: left;
 }
 .echo-assistant-body td {
-    border: 1px solid #E5E7EB;
-    padding: 9px 12px;
-    color: #374151;
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    padding: 10px 14px;
+    color: #1F2937;
 }
 
-/* Animated Thinking Pill */
+/* Frosted Thinking Indicator */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
@@ -171,14 +190,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
     font-size: 0.82rem;
-    color: #4B5563;
+    color: #374151;
     font-weight: 500;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .echo-pulse-dot {
     width: 8px;
@@ -192,28 +213,31 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Quick Question Action Buttons */
+/* Frosted Pill Buttons */
 div[data-testid="stHorizontalBlock"] .suggest-btn > button {
     border-radius: 20px !important;
     font-size: 0.78rem !important;
-    background-color: #FFFFFF !important;
-    border: 1px solid #E5E7EB !important;
+    background: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
     color: #1F2937 !important;
     height: 36px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
     transition: all 0.2s ease;
 }
 div[data-testid="stHorizontalBlock"] .suggest-btn > button:hover {
     border-color: #D4AF37 !important;
     color: #D4AF37 !important;
-    background-color: #FFFDF5 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2) !important;
 }
 </style>
 """
 
 def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize meeting archives, transcripts, and action logs."):
     target = container if container else st
-    st.markdown(CHAT_CUSTOM_THEME_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_GLASSMORPHISM_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -261,7 +285,10 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         with tab_chat:
             st.markdown('<div class="echo-chat-viewport"></div>', unsafe_allow_html=True)
             chat_feed_height = active_height - 250
+            
+            st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
             chat_box = st.container(height=chat_feed_height)
+            st.markdown('</div>', unsafe_allow_html=True)
 
             with chat_box:
                 if not st.session_state["global_chat_history"]:
