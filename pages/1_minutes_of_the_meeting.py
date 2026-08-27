@@ -133,6 +133,7 @@ OPENAI_AUDIO_URL = "https://api.openai.com/v1/audio/transcriptions"
 
 CRD_MEMBERS = ["Sondi Tuazon", "Kristina Balajadia", "Meliza Zapata", "Dykstra Pineda", "Cedtrix Rena", "Carlo Medina", "Dave Policarpio", "Irish Rima"]
 LOCATION_OPTIONS = ["GreatWork Mega Tower 32F - Secret Room", "GreatWork Mega Tower 32F - Small Meeting Room", "GreatWork Mega Tower 24F - Meeting Room", "GreatWork Mega Tower 32F - Board Room", "GreatWork Mega Tower 32F - Co-working", "Online Meeting"]
+MEETING_TYPE_OPTIONS = ["Internal", "External", "Team"]
 
 # 6. Session State Initialization
 if "transcript" not in st.session_state: st.session_state["transcript"] = ""
@@ -145,6 +146,7 @@ if "selected_engine" not in st.session_state: st.session_state["selected_engine"
 if "chat_history" not in st.session_state: st.session_state["chat_history"] = []
 if "meeting_date" not in st.session_state: st.session_state["meeting_date"] = datetime.date.today()
 if "meeting_location" not in st.session_state: st.session_state["meeting_location"] = ""
+if "meeting_type" not in st.session_state: st.session_state["meeting_type"] = "Internal"
 if "meeting_client_name" not in st.session_state: st.session_state["meeting_client_name"] = ""
 if "meeting_selected_crd" not in st.session_state: st.session_state["meeting_selected_crd"] = []
 if "meeting_ext_attendees" not in st.session_state: st.session_state["meeting_ext_attendees"] = ""
@@ -168,6 +170,7 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
         
         payload = {
             "meeting_id": meeting_id, "client_name": client_name, "meeting_date": meeting_date_str,
+            "meeting_type": meeting_details.get("meeting_type", "Internal"),
             "location": meeting_details.get("location", ""), "prepared_by": meeting_details.get("prep_name", ""),
             "confirmed_by": meeting_details.get("conf_name", ""), "summary_md": f"### Summary\n{other_discussions}",
             "transcript_md": f"### Transcript\n{transcript[:5000]}", "table_items": table_items,
@@ -291,9 +294,9 @@ def normalize_llm_json_to_df(data):
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = f"You are an AI assistant for PRIME Philippines. Analyze the meeting transcript and extract the meeting metadata. Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. Output ONLY a valid JSON object matching the schema."
+    system_prompt = f"You are an AI assistant for PRIME Philippines. Analyze the meeting transcript and extract the meeting metadata. Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
-Schema: {{"client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
+Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
 Transcript: {transcript[:15000]}"""
     payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1, "max_tokens": 500}
     try:
@@ -707,6 +710,8 @@ with col_details:
                     with st.spinner("Extracting metadata..."):
                         meta = extract_metadata_with_deepseek(st.session_state["transcript"])
                         if meta:
+                            if meta.get("meeting_type") and meta["meeting_type"] in MEETING_TYPE_OPTIONS:
+                                st.session_state["meeting_type"] = meta["meeting_type"]
                             if meta.get("client_name"): st.session_state["meeting_client_name"] = meta["client_name"]
                             if meta.get("location"): st.session_state["meeting_location"] = meta["location"]
                             if meta.get("crd_attendees"):
@@ -738,7 +743,9 @@ with col_details:
                         last_call = st.session_state["last_api_call"]
                         st.write(f"• **Last Call:** `{last_call.strftime('%I:%M:%S %p')}`")
             st.markdown("---")
-        r1_c1, r1_c2 = st.columns([1.2, 2.0])
+        
+        # Row 1: Date, Location, Meeting Type
+        r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 0.9])
         with r1_c1:
             meeting_date = st.date_input("Date", value=st.session_state["meeting_date"])
             st.session_state["meeting_date"] = meeting_date
@@ -749,6 +756,13 @@ with col_details:
                 loc_val = st.session_state.get("meeting_location", "")
                 meeting_location = st.text_input("Location", value=loc_val, placeholder="e.g. Boardroom or GreatWork Tower")
             st.session_state["meeting_location"] = meeting_location if meeting_location else ""
+        with r1_c3:
+            curr_type = st.session_state.get("meeting_type", "Internal")
+            type_idx = MEETING_TYPE_OPTIONS.index(curr_type) if curr_type in MEETING_TYPE_OPTIONS else 0
+            meeting_type = st.selectbox("Meeting Type", options=MEETING_TYPE_OPTIONS, index=type_idx)
+            st.session_state["meeting_type"] = meeting_type
+
+        # Row 2: Start and End Times
         r2_c1, r2_c2 = st.columns(2)
         with r2_c1:
             st.markdown("<p style='font-size:0.85rem; margin-bottom:0.2rem; color:#333; font-weight:500;'>Start Time</p>", unsafe_allow_html=True)
@@ -764,6 +778,8 @@ with col_details:
             em = ec2.selectbox("EM", [f"{i:02d}" for i in range(0,60,5)], key="em", label_visibility="collapsed")
             eap = ec3.selectbox("EAP", ["AM", "PM"], key="eap", label_visibility="collapsed")
             end_str = f"{eh}:{em} {eap}"
+        
+        # Row 3: Client, Attendees, Prepared & Confirmed details
         r3_c1, r3_c2 = st.columns(2)
         with r3_c1:
             client_name = st.text_input("Client / Company", value=st.session_state["meeting_client_name"], placeholder="XYZ Company")
@@ -889,6 +905,7 @@ if not st.session_state["df"].empty:
         time_range_str = f"{start_str} to {end_str}"
         meeting_details = {
             "date": meeting_date.strftime("%B %d, %Y"), "time_range": time_range_str,
+            "meeting_type": st.session_state.get("meeting_type", "Internal"),
             "location": meeting_location if meeting_location.strip() else "____________",
             "company_name": client_name.strip() if client_name.strip() else "",
             "prime_attendees": selected_crd,
