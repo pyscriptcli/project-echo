@@ -340,8 +340,8 @@ else:
 if not st.session_state["chat_fullscreen"]:
     with col_left:
         with st.container(height=720, border=True):
-            st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
-            st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">Dashboard</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-caption">Meeting records overview.</p>', unsafe_allow_html=True)
             
             # 2x2 Mini KPI Grid
             st.markdown(f"""
