@@ -7,7 +7,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -38,7 +38,7 @@ SVG_BRAIN_ICON = """
 
 CHAT_COMPACT_CLEAN_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 /* Prevent outer viewport scrolling */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
@@ -52,7 +52,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     padding: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
@@ -63,18 +63,18 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     height: calc(100vh - 120px) !important;
     max-height: calc(100vh - 120px) !important;
-    padding: 0.75rem 1.25rem !important;
+    padding: 0.65rem 1rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Compact Cormorant Garamond Header */
+/* Meeting Gallery Matched Header Style */
 .echo-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.4rem;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.35rem;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
     flex-shrink: 0;
 }
@@ -82,17 +82,18 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-title-wrap {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .echo-title {
-    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-style: italic;
-    font-size: 1.7rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: #1A2B4C;
     margin: 0;
-    line-height: 1;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
 }
 
 /* Dedicated Scrolling Chat Box */
@@ -107,9 +108,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
     border: 1px solid rgba(0, 0, 0, 0.07) !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     overflow-y: auto !important;
-    padding: 0.85rem 1.1rem !important;
+    padding: 0.75rem 1rem !important;
     height: 100% !important;
 }
 
@@ -128,10 +129,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     background: #111A2B;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37;
-    padding: 0.5rem 0.85rem;
+    padding: 0.45rem 0.8rem;
     border-radius: 12px 2px 12px 12px;
     max-width: 75%;
-    font-size: 0.84rem;
+    font-size: 0.82rem;
     line-height: 1.45;
     word-break: break-word;
 }
@@ -157,7 +158,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.85rem;
     background: transparent;
 }
 
@@ -169,8 +170,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-avatar-assistant {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -182,7 +183,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-assistant-title {
     font-family: 'Cinzel', serif;
-    font-size: 0.70rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     color: #854D0E;
@@ -190,7 +191,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-assistant-badge-gold {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     padding: 1px 4px;
     border-radius: 3px;
     background: #FEF3C7;
@@ -201,9 +202,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-assistant-body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    padding-left: 28px;
+    padding-left: 26px;
     color: #1E293B;
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     line-height: 1.55;
 }
 .echo-assistant-body strong {
@@ -216,16 +217,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-wrap: wrap;
     gap: 5px;
     margin-top: 0.4rem;
-    padding-left: 28px;
+    padding-left: 26px;
 }
 .echo-source-pill {
+    font-family: 'Plus Jakarta Sans', sans-serif;
     display: inline-flex;
     align-items: center;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.4);
     border-radius: 4px;
-    padding: 2px 7px;
-    font-size: 0.70rem;
+    padding: 2px 6px;
+    font-size: 0.68rem;
     color: #854D0E !important;
     text-decoration: none !important;
     font-weight: 500;
@@ -235,12 +237,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     border-color: #D4AF37;
 }
 
-/* Clean Formatted Tables */
+/* Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.5rem 0;
-    font-size: 0.80rem;
+    margin: 0.45rem 0;
+    font-size: 0.78rem;
     background: #FFFFFF;
     border-radius: 4px;
     overflow: hidden;
@@ -253,12 +255,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-weight: 700;
     letter-spacing: 0.04em;
     border: 1px solid #334155;
-    padding: 5px 8px;
+    padding: 4px 8px;
     text-align: left;
 }
 .echo-assistant-body td {
     border: 1px solid #E2E8F0;
-    padding: 5px 8px;
+    padding: 4px 8px;
     color: #334155;
 }
 
@@ -266,25 +268,25 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding-left: 0.2rem;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.55rem;
 }
 .echo-thinking-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
+    gap: 5px;
+    padding: 2px 8px;
     border-radius: 4px;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.35);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: #854D0E;
     font-weight: 500;
 }
 .echo-pulse-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background-color: #D4AF37;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
@@ -299,13 +301,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     background: #F8FAFC;
     border: 1px solid #D4AF37;
     border-radius: 4px;
-    padding: 0.5rem 0.75rem;
-    margin-top: 0.35rem;
+    padding: 0.45rem 0.65rem;
+    margin-top: 0.3rem;
 }
 
 /* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.45rem !important;
+    padding-top: 0.35rem !important;
     flex-shrink: 0 !important;
 }
 
@@ -317,14 +319,14 @@ div[data-testid="stChatInput"] {
 div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
     border: 1px solid rgba(212, 175, 55, 0.55) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02) !important;
 }
 
 div[data-testid="stChatInput"] textarea {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #0F172A !important;
-    font-size: 0.86rem !important;
+    font-size: 0.84rem !important;
 }
 </style>
 """
@@ -350,8 +352,8 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        # Header Row: Logo, Title, and Action Controls
-        h_left, h_mid, h_right = st.columns([0.04, 0.84, 0.12])
+        # Header Row: Logo, Refined Italic Title, and Action Controls
+        h_left, h_mid, h_right = st.columns([0.035, 0.865, 0.10])
         with h_left:
             st.markdown(f'<div style="padding-top:2px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
 
@@ -387,7 +389,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                     st.rerun()
 
         # ==========================================
-        # --- Chat Stream Feed (Auto-fills Remaining Space) ---
+        # --- Chat Stream Feed ---
         # ==========================================
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
         chat_box = st.container()
@@ -447,10 +449,10 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
             with st.container():
                 st.markdown(
                     f'<div class="echo-knowledge-card">'
-                    f'<div style="font-family:\'Cinzel\',serif; font-size:0.7rem; font-weight:700; color:#854D0E; margin-bottom:2px;">'
+                    f'<div style="font-family:\'Cinzel\',serif; font-size:0.68rem; font-weight:700; color:#854D0E; margin-bottom:2px;">'
                     f'{SVG_BRAIN_ICON} Knowledge Base Candidate'
                     f'</div>'
-                    f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:4px;">'
+                    f'<div style="font-size:0.75rem; color:#1F2937; margin-bottom:4px;">'
                     f'Register <b>{prop.get("key")}</b> ({prop.get("category")}): <i>{prop.get("value")}</i>'
                     f'</div></div>',
                     unsafe_allow_html=True
