@@ -1,28 +1,75 @@
 import streamlit as st
 import datetime
+from streamlit_navigation_bar import st_navbar
 from utils.db import fetch_meeting_archives
 from utils.ai import query_global_team_archive
 
-# 1. Page Config (MUST be first Streamlit command)
-st.set_page_config(page_title="Project Echo - Executive Hub", layout="wide", initial_sidebar_state="expanded")
+# 1. Page Config (MUST be first)
+st.set_page_config(
+    page_title="Project Echo - Executive Hub", 
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
 
-# 2. Global State Initialization
+# 2. Navigation Bar Setup (Dark & Gold Theme matching your branding)
+pages = ["Dashboard", "Generator", "Meeting Details", "Archives"]
+nav_styles = {
+    "nav": {
+        "background-color": "#272828",
+        "border-bottom": "1px solid rgba(201, 168, 76, 0.25)",
+        "height": "3.5rem",
+    },
+    "div": {
+        "max-width": "100%",
+        "padding": "0 2rem",
+    },
+    "span": {
+        "font-family": "'Cormorant Garamond', serif",
+        "font-size": "1.15rem",
+        "font-weight": "600",
+        "letter-spacing": "0.05em",
+        "border-radius": "6px",
+        "color": "#c9a84c",
+        "margin": "0 0.25rem",
+        "padding": "0.4rem 0.85rem",
+    },
+    "active": {
+        "background-color": "rgba(201, 168, 76, 0.18)",
+        "color": "#e5cf8e",
+        "border": "1px solid rgba(201, 168, 76, 0.4)",
+    },
+    "hover": {
+        "background-color": "rgba(201, 168, 76, 0.1)",
+        "color": "#ffffff",
+    },
+}
+
+selected_page = st_navbar(pages, styles=nav_styles)
+
+# Route navigation if switching tabs
+if selected_page == "Generator":
+    st.switch_page("pages/1_generator.py")
+elif selected_page == "Meeting Details":
+    st.switch_page("pages/2_meeting_details.py")
+elif selected_page == "Archives":
+    st.switch_page("pages/3_archives.py")
+
+# 3. Global State Initialization
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
-# 3. Custom CSS - Theming, Fonts, Responsive SVG Sidebar, and Top Bar Removal
+# 4. Custom CSS
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
-/* Base Font */
 html, body, [class*="css"] {
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Background */
+/* Background Grid */
 .stApp {
     background-color: #F3EFE6; 
     background-image: 
@@ -32,25 +79,52 @@ html, body, [class*="css"] {
     color: #2D2D2D;
 }
 
-/* ================= COMPLETE TOP BAR REMOVAL ================= */
-header[data-testid="stHeader"], 
-.stApp > header,
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-#MainMenu {
-    display: none !important;
-    visibility: hidden !important;
+/* Hide Default Header & Menu while KEEPING Sidebar Collapsed Trigger */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    pointer-events: none !important;
     height: 0 !important;
 }
 
-/* Main Content Spacing */
+[data-testid="stDecoration"], 
+#MainMenu, 
+footer {
+    display: none !important;
+}
+
+/* Enable clicking only on the sidebar collapse/expand icon button */
+button[data-testid="stSidebarCollapsedControl"] {
+    display: flex !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    top: 14px !important;
+    left: 14px !important;
+    z-index: 1000000 !important;
+    background-color: #272828 !important;
+    border: 1px solid #c9a84c !important;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    color: #c9a84c !important;
+}
+
+button[data-testid="stSidebarCollapsedControl"] svg {
+    fill: #c9a84c !important;
+}
+
+/* Hide default streamlit multipage navigation in sidebar to avoid duplicates */
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Main Container Padding Adjustment */
 .block-container { 
-    padding-top: 1.5rem !important;
+    padding-top: 2rem !important;
     padding-right: 2rem !important;
     padding-left: 2rem !important;
 }
 
-/* ================= SIDEBAR STYLING (#272828 & Cormorant Garamond) ================= */
+/* Sidebar Theme */
 section[data-testid="stSidebar"] {
     background-color: #272828 !important;
     border-right: 1px solid rgba(201, 168, 76, 0.2) !important;
@@ -60,113 +134,7 @@ section[data-testid="stSidebar"] {
 
 section[data-testid="stSidebar"] * {
     font-family: 'Cormorant Garamond', serif !important;
-}
-
-/* Sidebar Toggle / Collapse Button */
-button[data-testid="stSidebarCollapseButton"] {
-    display: flex !important; 
-    position: absolute !important;
-    bottom: 24px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    background-color: #1f2020 !important;
-    border: 1px solid #c9a84c !important;
-    border-radius: 50% !important;
     color: #c9a84c !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.25s ease !important;
-    z-index: 999999 !important;
-}
-
-button[data-testid="stSidebarCollapseButton"]:hover {
-    background-color: #c9a84c !important;
-    color: #272828 !important;
-    box-shadow: 0 0 12px rgba(201, 168, 76, 0.4) !important;
-}
-
-button[data-testid="stSidebarCollapseButton"] svg {
-    color: #c9a84c !important;
-    fill: #c9a84c !important;
-}
-
-button[data-testid="stSidebarCollapseButton"]:hover svg {
-    color: #272828 !important;
-    fill: #272828 !important;
-}
-
-/* Nav Item Container */
-section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-    padding: 1.5rem 0.6rem !important;
-    gap: 0.75rem !important;
-}
-
-/* Sidebar Page Links (Expanded: Icon + Text) */
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
-    width: 100% !important;
-    min-height: 44px !important;
-    padding: 0.5rem 0.85rem !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    border-radius: 8px !important;
-    background-color: transparent !important;
-    border: 1px solid transparent !important;
-    color: #c9a84c !important;
-    transition: all 0.2s ease !important;
-    text-decoration: none !important;
-}
-
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
-    background-color: rgba(201, 168, 76, 0.12) !important;
-    border: 1px solid rgba(201, 168, 76, 0.3) !important;
-    color: #e5cf8e !important;
-}
-
-/* Link Text Styling */
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] {
-    display: inline-block !important;
-    font-size: 1.18rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.03em !important;
-    color: #c9a84c !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-/* Sidebar Custom SVG Icons */
-.sidebar-svg {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    fill: #c9a84c;
-    transition: fill 0.2s ease;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover .sidebar-svg {
-    fill: #e5cf8e;
-}
-
-/* ================= COLLAPSED BEHAVIOR ================= */
-/* When sidebar collapses, hide text and center icons */
-section[data-testid="stSidebar"][aria-expanded="false"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] {
-    display: none !important;
-}
-
-section[data-testid="stSidebar"][aria-expanded="false"] a[data-testid="stPageLink"] {
-    width: 44px !important;
-    height: 44px !important;
-    padding: 0 !important;
-    justify-content: center !important;
-    margin: 0 auto !important;
 }
 
 /* KPI Cards */
@@ -196,7 +164,7 @@ section[data-testid="stSidebar"][aria-expanded="false"] a[data-testid="stPageLin
     margin: 0;
 }
 
-/* Vertical Containers with Depth */
+/* Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
@@ -215,11 +183,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important;
     font-size: 0.82rem !important;
-    letter-spacing: 0.5px; 
     padding: 0.4rem 1.2rem !important;
     min-height: 36px !important;
     height: 36px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
@@ -227,8 +193,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .stButton > button:hover {
     background-color: #c9a84c !important;
     color: #272828 !important;
-    box-shadow: 0 6px 12px rgba(201, 168, 76, 0.3) !important;
-    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3) !important;
 }
 
 /* Minimalist Chat */
@@ -254,7 +219,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* Content SVG Icons */
 .svg-icon {
     width: 15px;
     height: 15px;
@@ -294,32 +258,19 @@ h3 {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# Content SVG Icons definitions
+# SVG Icons
 CALENDAR_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>'
 LOCATION_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>'
 USER_ICON = '<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
 
-# Sidebar Navigation with SVG Icons & Cormorant Garamond Text
+# Sidebar Details (Visible on expand)
 with st.sidebar:
-    st.markdown('<div style="text-align: center; margin-bottom: 1.5rem; font-size: 1.45rem; font-weight: 700; color: #c9a84c; letter-spacing: 1px;">PROJECT ECHO</div>', unsafe_allow_html=True)
-    
-    # Custom SVG Navigation Links
-    st.markdown("""
-        <a href="/" target="_self" data-testid="stPageLink">
-            <svg class="sidebar-svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span data-testid="stPageLink-Text">Dashboard</span>
-        </a>
-        <a href="/generator" target="_self" data-testid="stPageLink">
-            <svg class="sidebar-svg" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-            <span data-testid="stPageLink-Text">Generator</span>
-        </a>
-        <a href="/archives" target="_self" data-testid="stPageLink">
-            <svg class="sidebar-svg" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-            <span data-testid="stPageLink-Text">Archives</span>
-        </a>
-    """, unsafe_allow_html=True)
+    st.markdown('<h2 style="font-size: 1.6rem; color: #c9a84c; text-align: center; margin-top: 1rem;">PROJECT ECHO</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; font-size: 0.95rem; color: #c9a84c; opacity: 0.8;">Executive Meeting Suite</p>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.caption("Navigation is also accessible via the top navigation bar.")
 
-# Fetch current live data from Supabase
+# Fetch records
 supabase_records = fetch_meeting_archives()
 
 # ========== METRICS COMPUTATION ==========
@@ -353,7 +304,6 @@ for m in supabase_records:
         total_external_meetings += 1
 
 # ========== MAIN DASHBOARD VIEW ==========
-# 1. Four KPI Number Cards
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Meetings ({current_month_name})</div><div class="kpi-value">{total_month_meetings}</div></div>', unsafe_allow_html=True)
@@ -366,7 +316,6 @@ with kpi4:
 
 st.write("")
 
-# 2. Main Split: Meeting Gallery (Left) & Ask Echo Global (Right)
 col_left, col_right = st.columns(2)
 
 with col_left:
