@@ -34,10 +34,242 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 3. Global & Dashboard CSS (Keep your existing CSS exactly as is)
+# 3. Global & Dashboard CSS (Your exact UI preserved)
 st.markdown("""
 <style>
-/* ... [PASTE YOUR ENTIRE EXISTING CSS BLOCK HERE] ... */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+
+/* --- Canvas & Minimal Outer Margins --- */
+.stApp > header { display: none !important; visibility: hidden !important; }
+#MainMenu { visibility: hidden !important; }
+.block-container { 
+    padding-top: 1rem !important; 
+    padding-bottom: 1.5rem !important;
+    padding-right: 1.5rem !important; 
+    padding-left: 1.5rem !important;
+    max-width: 100% !important;
+}
+
+html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
+
+/* --- Warm Cream Architectural Grid Background --- */
+.stApp {
+    background-color: #F5F1E8 !important;
+    background-image: 
+        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+    background-size: 80px 80px !important;
+    background-position: 0 0 !important;
+    color: #1A1A1A;
+}
+
+/* --- Section Headings --- */
+.section-title {
+    font-family: 'Playfair Display', serif !important;
+    font-style: italic !important; 
+    font-weight: 600 !important; 
+    color: #1A2B4C !important; 
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+}
+.section-caption {
+    font-size: 0.75rem;
+    color: #555E68;
+    margin-bottom: 0.5rem;
+}
+
+/* --- Tight 2x2 KPI Grid --- */
+.kpi-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
+}
+.kpi-mini-card {
+    background: #FFFFFF;
+    border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-left: 3.5px solid #22252A;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.kpi-mini-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6C727A;
+    margin-bottom: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kpi-mini-value {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1A2B4C;
+    margin: 0;
+    line-height: 1;
+}
+
+/* --- Scaled-down Date Picker --- */
+div[data-testid="stPopover"] { margin-bottom: 0.5rem !important; }
+div[data-testid="stPopover"] > button {
+    background-color: #FFFFFF !important;
+    color: #22252A !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 0.15rem 0.5rem !important;
+    font-size: 0.72rem !important;
+    min-height: 28px !important;
+    height: 28px !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #22252A !important;
+    background-color: #FAF8F5 !important;
+}
+
+/* --- Containers --- */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: #FFFFFF !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.025) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    padding: 1rem !important;
+}
+
+/* --- Buttons --- */
+.stButton > button {
+    background-color: #22252A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #111315 !important;
+    border-radius: 6px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.75rem !important;
+    min-height: 28px !important;
+    transition: all 0.15s ease !important;
+}
+.stButton > button:hover {
+    background-color: #111315 !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+}
+
+/* Minimal Icon Buttons (Clear & Fullscreen) */
+.icon-action-btn div[data-testid="stButton"] > button {
+    background-color: #FFFFFF !important;
+    color: #22252A !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+}
+.icon-action-btn div[data-testid="stButton"] > button:hover {
+    background-color: #FAF8F5 !important;
+    border-color: #22252A !important;
+    transform: none !important;
+}
+.icon-action-btn div[data-testid="stButton"] > button span {
+    font-size: 1.1rem !important;
+}
+
+/* --- Recent Meetings Cards --- */
+.gallery-card {
+    background-color: #FAF8F5;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    padding: 0.65rem 0.8rem;
+    margin-bottom: 0.35rem;
+}
+.gallery-title { 
+    font-family: 'Playfair Display', serif; 
+    font-style: italic; 
+    font-size: 0.95rem; 
+    font-weight: 600;
+    color: #1A2B4C; 
+    margin: 0 0 0.1rem 0; 
+}
+.gallery-sub { 
+    font-size: 0.68rem; 
+    color: #6C727A; 
+    margin-bottom: 0.3rem; 
+    font-weight: 500;
+}
+.gallery-desc { 
+    font-size: 0.74rem; 
+    color: #2D2D2D; 
+    line-height: 1.4; 
+    margin: 0;
+}
+
+/* --- Chat Overrides --- */
+div[data-testid="stChatMessage"] {
+    background-color: transparent !important;
+    padding: 0.25rem 0 !important;
+}
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
+    background-color: #FAF8F5 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left: 4px solid #22252A !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 0.6rem !important;
+}
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) div[data-testid="stMarkdownContainer"] * {
+    color: #1A1A1A !important;
+}
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+    background-color: #22252A !important;
+    border-radius: 10px 10px 2px 10px !important;
+    padding: 0.65rem 1rem !important;
+    margin-bottom: 0.6rem !important;
+    margin-left: auto !important;
+    max-width: 82% !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+}
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] * {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+}
+
+/* Chat Tables */
+div[data-testid="stChatMessage"] table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0.5rem 0 !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 6px !important;
+}
+div[data-testid="stChatMessage"] th {
+    background-color: #F1EFE9 !important;
+    color: #1A2B4C !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    padding: 6px 10px !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    font-size: 0.75rem !important;
+}
+div[data-testid="stChatMessage"] td {
+    padding: 6px 10px !important;
+    border-bottom: 1px solid #F3F4F6 !important;
+    color: #2D2D2D !important;
+    font-size: 0.75rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
