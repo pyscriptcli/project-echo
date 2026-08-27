@@ -88,7 +88,7 @@ def setup_page_layout():
     with st.sidebar:
         st.page_link("app.py", label="Dashboard")
         st.page_link("pages/2_meeting_details.py", label="Meetings")
-        st.page_link("pages/1_minutes_of_the_meeting.py", label="MoM")
+        st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting")
 
 # Compatibility aliases
 single_page_layout = setup_page_layout
