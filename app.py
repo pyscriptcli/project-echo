@@ -1,17 +1,16 @@
+import sys
+import os
+
+# Add root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
+
 import streamlit as st
 import datetime
 import json
 import requests
 import pandas as pd
 from utils.db import fetch_meeting_archives, get_supabase_client
-import sys
-import os
-
-# Add root directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from components.sidebar import render_custom_sidebar
-
 
 # 1. Page Configuration (MUST be first)
 st.set_page_config(
@@ -19,7 +18,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-render_custom_sidebar()
+
 # 2. Global & Dashboard CSS
 st.markdown("""
 <style>
@@ -191,7 +190,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Render Global Sidebar
+# 3. Render Navigation
 render_custom_sidebar()
 
 # 4. Global Session State
