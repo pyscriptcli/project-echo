@@ -91,28 +91,18 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     margin: 0;
 }
 
+.echo-caption {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    color: #94A3B8;
+    margin: 2px 0 0 0;
+}
+
 .echo-gold-bar {
     width: 28px;
     height: 1.5px;
     background: #D4AF37;
     margin: 4px auto 0 auto;
-}
-
-/* Fullscreen Immersive Mode */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    max-height: 100vh !important;
-    z-index: 999999 !important;
-    border-radius: 0 !important;
-    background: #080C14 !important;
-    padding: 1rem 3rem !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
 }
 
 /* Inner Scrollable Chat Feed */
@@ -352,7 +342,13 @@ div[data-testid="stToggle"] label p {
 </style>
 """
 
-def render_echo_chat(container=None, height=720, title="Global Intelligence", subtitle="BY THE NUMBERS"):
+def render_echo_chat(
+    container=None, 
+    height=720, 
+    title="Global Intelligence", 
+    caption="Synthesize meeting archives, transcripts, and action logs.", 
+    subtitle="BY THE NUMBERS"
+):
     target = container if container else st
     st.markdown(CHAT_PRIME_THEME_CSS, unsafe_allow_html=True)
 
@@ -361,21 +357,16 @@ def render_echo_chat(container=None, height=720, title="Global Intelligence", su
         st.session_state["global_chat_history"] = []
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
-    if "chat_is_fullscreen" not in st.session_state:
-        st.session_state["chat_is_fullscreen"] = False
     if "echo_web_search_enabled" not in st.session_state:
         st.session_state["echo_web_search_enabled"] = False
 
-    is_fs = st.session_state["chat_is_fullscreen"]
-    chat_scroll_height = 720 if is_fs else max(260, int(height) - 170)
+    chat_scroll_height = max(260, int(height) - 170)
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
-        if is_fs:
-            st.markdown('<div class="echo-fullscreen-active"></div>', unsafe_allow_html=True)
 
         # Header Controls & Executive Titles
-        h_left, h_mid, h_right = st.columns([0.08, 0.84, 0.08])
+        h_left, h_mid, h_right = st.columns([0.06, 0.88, 0.06])
         with h_left:
             st.markdown(f'<div style="padding-top:4px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
 
@@ -384,23 +375,17 @@ def render_echo_chat(container=None, height=720, title="Global Intelligence", su
                 f'<div class="echo-header-box">'
                 f'<div class="echo-kicker">{subtitle}</div>'
                 f'<h2 class="echo-title">{title}</h2>'
+                f'<p class="echo-caption">{caption}</p>'
                 f'<div class="echo-gold-bar"></div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
 
         with h_right:
-            c_fs, c_clr = st.columns(2)
-            with c_fs:
-                fs_icon = ":material/fullscreen_exit:" if is_fs else ":material/fullscreen:"
-                if st.button("", icon=fs_icon, key="btn_toggle_fullscreen", help="Fullscreen Toggle"):
-                    st.session_state["chat_is_fullscreen"] = not st.session_state["chat_is_fullscreen"]
-                    st.rerun()
-            with c_clr:
-                if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Clear conversation"):
-                    st.session_state["global_chat_history"] = []
-                    st.session_state["knowledge_proposal"] = None
-                    st.rerun()
+            if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Clear conversation"):
+                st.session_state["global_chat_history"] = []
+                st.session_state["knowledge_proposal"] = None
+                st.rerun()
 
         # ==========================================
         # --- Chat Stream Feed ---
