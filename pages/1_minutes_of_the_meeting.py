@@ -30,7 +30,7 @@ import requests
 import streamlit.components.v1 as components
 
 # Centralized DB & Components
-from utils.db import get_supabase_client
+from utils.db import get_supabase_client, fetch_echo_context
 from components.sidebar import setup_page_layout
 
 # 1. Page Configuration (MUST be the first Streamlit command)
@@ -331,8 +331,39 @@ def extract_structured_insights(transcript, engine="AI - DeepSeek"):
         time.sleep(0.2)
         progress_bar.empty()
         return res_df, res_other
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). The transcript contains Tagalog, English, and Taglish dialogue. Analyze the full conversation context and translate all colloquial, informal, and mixed-language statements into polished, high-level corporate English. Synthesize all key agreements, status reports, core discussion points, definitive action plans, indicative delivery timelines, and assigned persons-in-charge without omitting critical business context. Output valid JSON only matching the exact schema provided."
+
+    # 1. Fetch Live Context from Supabase[cite: 1]
+    context_data = fetch_echo_context()[cite: 1]
+
+    # 2. Format it for the AI[cite: 1]
+    team_list = ", ".join(context_data.get('team', []))[cite: 1]
+    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])[cite: 1]
+    projects = ", ".join(context_data.get('projects', []))[cite: 1]
+
+    context_string = f"""
+    ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
+    ---------------------------------------
+    TEAM MEMBERS: {team_list}
+    ACTIVE PROJECTS: {projects}
+    TECHNICAL JARGON:
+    {jargon_list}
+
+    INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the transcript. 
+    If the transcript says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
+    """[cite: 1]
+
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}[cite: 1]
+
+    # 3. Update the System Prompt with Live Context[cite: 1]
+    system_prompt = (
+        "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). "[cite: 1]
+        "The transcript contains Tagalog, English, and Taglish dialogue. "[cite: 1]
+        "Analyze the full conversation context and translate all colloquial, informal, and mixed-language statements into polished, high-level corporate English. "[cite: 1]
+        "Synthesize all key agreements, status reports, core discussion points, definitive action plans, indicative delivery timelines, and assigned persons-in-charge. "[cite: 1]
+        f"\n\n{context_string}\n"[cite: 1]
+        "Output valid JSON only matching the exact schema provided."[cite: 1]
+    )
+
     user_prompt = f"""Synthesize the following meeting transcript into formal, high-level Minutes of Meeting (MOM) formatted as valid JSON:
 Schema: {{"table_items": [{{"Discussion Points": "Formal summary of key milestones, operational updates, or strategic topics discussed", "Action Plan": "Concrete, actionable executive deliverables and next steps (state 'None' if purely informational)", "Indicative Delivery Date": "Specific date, timeline, or 'TBD'", "Person-in-charge": "Designated individual, department (e.g., PRIME Philippines, Client name), or 'Unassigned'"}}], "other_discussions": "High-level summary of peripheral discussions, informal remarks, or general alignment"}}
 Transcript: {transcript[:28000]}"""
