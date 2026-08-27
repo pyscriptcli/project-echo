@@ -32,10 +32,10 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 3. Global & Dashboard CSS (Synchronized Heights & Architectural Grid)
+# 3. Global & Dashboard CSS (Pill Buttons & Architectural Canvas)
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&family=Cinzel:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Canvas & Margins */
 .stApp > header { display: none !important; visibility: hidden !important; }
@@ -51,22 +51,22 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Warm Cream Architectural Grid Canvas */
+/* Warm Ivory Architectural Grid Canvas */
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F8F5EE !important;
+    background-color: #F6F2EA !important;
     background-image: 
-        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+        linear-gradient(to right, #E8E2D5 1px, transparent 1px),
+        linear-gradient(to bottom, #E8E2D5 1px, transparent 1px) !important;
     background-size: 32px 32px !important;
     color: #1A1A1A;
 }
 
-/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
+/* Synchronize Dashboard Card Containers */
 .dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     box-shadow: none !important;
     height: calc(100vh - 130px) !important;
     max-height: calc(100vh - 130px) !important;
@@ -100,7 +100,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     margin: 0 0 0.35rem 0 !important;
 }
 
-/* Tight 2x2 KPI Grid */
+/* 2x2 KPI Grid */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -109,11 +109,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     flex-shrink: 0;
 }
 .kpi-mini-card {
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
     padding: 0.4rem 0.55rem;
     border: 1px solid rgba(0, 0, 0, 0.07);
-    border-left: 3px solid #1A2B4C;
+    border-left: 3.5px solid #111A2B;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
     display: flex;
     flex-direction: column;
@@ -140,20 +140,25 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     line-height: 1;
 }
 
-/* Date Picker Popover Button */
+/* Date Picker Popover Pill */
 div[data-testid="stPopover"] {
     margin-bottom: 0.4rem !important;
     flex-shrink: 0 !important;
 }
 div[data-testid="stPopover"] > button {
-    background-color: rgba(255, 255, 255, 0.85) !important;
-    color: #1A2B4C !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    border-radius: 4px !important;
-    padding: 0.1rem 0.5rem !important;
+    background-color: #111A2B !important;
+    color: #F8FAFC !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 20px !important;
+    padding: 0.1rem 0.75rem !important;
     font-size: 0.72rem !important;
-    min-height: 26px !important;
-    height: 26px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    transition: all 0.2s ease !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #F1C40F !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
 /* Left Column Inner Feed Auto-Scroll */
@@ -178,7 +183,7 @@ div[data-testid="stPopover"] > button {
 .gallery-card {
     background-color: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 0.5rem 0.65rem;
     margin-bottom: 0.25rem;
 }
@@ -203,17 +208,22 @@ div[data-testid="stPopover"] > button {
     margin: 0;
 }
 
-/* Small View Details Button */
-.left-feed-container .stButton > button {
+/* Charcoal Black & Gold Accent Pill Buttons */
+.stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
-    border: 1px solid #111A2B !important;
-    border-radius: 4px !important;
-    font-size: 0.70rem !important;
-    padding: 0.2rem 0.5rem !important;
-    min-height: 24px !important;
-    height: 24px !important;
-    margin-bottom: 0.4rem !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 20px !important;
+    font-size: 0.72rem !important;
+    padding: 0.2rem 0.75rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    transition: all 0.2s ease !important;
+}
+.stButton > button:hover {
+    border-color: #F1C40F !important;
+    background-color: #1A263D !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -279,7 +289,7 @@ with col_left:
         </div>
         """, unsafe_allow_html=True)
 
-        # Date Picker Popover
+        # Date Picker Popover Pill
         date_label = f"{st.session_state['start_date'].strftime('%b %d')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
         with st.popover(date_label, use_container_width=True):
             p_col1, p_col2 = st.columns([1.1, 1.9])
