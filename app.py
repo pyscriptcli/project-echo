@@ -43,14 +43,14 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
 
-/* --- Canvas & Layout --- */
+/* --- Canvas & Minimal Outer Margins --- */
 .stApp > header { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: hidden !important; }
 .block-container { 
-    padding-top: 1.5rem !important; 
-    padding-bottom: 2rem !important;
-    padding-right: 2.5rem !important; 
-    padding-left: 2.5rem !important;
+    padding-top: 1rem !important; 
+    padding-bottom: 1.5rem !important;
+    padding-right: 1.5rem !important; 
+    padding-left: 1.5rem !important;
     max-width: 100% !important;
 }
 
@@ -62,33 +62,33 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     color: #1A1A1A;
 }
 
-/* --- Section Typography --- */
+/* --- Section Headings --- */
 .section-title {
     font-family: 'Playfair Display', serif !important;
     font-style: italic !important; 
     font-weight: 600 !important; 
     color: #1A2B4C !important; 
-    font-size: 1.2rem !important;
+    font-size: 1.15rem !important;
     margin: 0 !important;
 }
 .section-caption {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: #555E68;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.5rem;
 }
 
-/* --- 2x2 Tight KPI Grid --- */
+/* --- Tight 2x2 KPI Grid --- */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.45rem;
-    margin-bottom: 0.5rem;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
 }
 .kpi-mini-card {
     background: #FFFFFF;
     border-radius: 6px;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(0, 0, 0, 0.07);
     border-left: 3.5px solid #22252A;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     display: flex;
@@ -96,12 +96,12 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     justify-content: center;
 }
 .kpi-mini-title {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #6C727A;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.1rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -109,24 +109,24 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .kpi-mini-value {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: #1A2B4C;
     margin: 0;
     line-height: 1;
 }
 
-/* --- Scaled-down Date Picker under 2x2 --- */
+/* --- Scaled-down Date Picker --- */
 div[data-testid="stPopover"] {
-    margin-bottom: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
 }
 div[data-testid="stPopover"] > button {
     background-color: #FFFFFF !important;
     color: #22252A !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     border-radius: 6px !important;
-    padding: 0.2rem 0.5rem !important;
-    font-size: 0.7rem !important;
+    padding: 0.15rem 0.5rem !important;
+    font-size: 0.72rem !important;
     min-height: 28px !important;
     height: 28px !important;
 }
@@ -135,13 +135,13 @@ div[data-testid="stPopover"] > button:hover {
     background-color: #FAF8F5 !important;
 }
 
-/* --- Container Panels --- */
+/* --- Containers --- */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.025) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.025) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    padding: 1.25rem !important;
+    padding: 1rem !important;
 }
 
 /* --- Buttons --- */
@@ -153,10 +153,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.75rem !important;
-    letter-spacing: 0.02em;
-    padding: 0.35rem 0.8rem !important;
-    min-height: 30px !important;
-    transition: all 0.2s ease !important;
+    padding: 0.3rem 0.75rem !important;
+    min-height: 28px !important;
+    transition: all 0.15s ease !important;
 }
 .stButton > button:hover {
     background-color: #111315 !important;
@@ -164,26 +163,29 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transform: translateY(-1px);
 }
 
-/* Minimal Icon-Only Action Buttons */
-.chat-action-btn button {
-    background-color: transparent !important;
-    color: #555E68 !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+/* Minimal Icon Buttons (Clear & Fullscreen) */
+.icon-action-btn div[data-testid="stButton"] > button {
+    background-color: #FFFFFF !important;
+    color: #22252A !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
     border-radius: 6px !important;
     padding: 0 !important;
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    min-height: 32px !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-shadow: none !important;
 }
-.chat-action-btn button:hover {
-    background-color: #F1EFE9 !important;
-    color: #111315 !important;
+.icon-action-btn div[data-testid="stButton"] > button:hover {
+    background-color: #FAF8F5 !important;
     border-color: #22252A !important;
     transform: none !important;
+}
+.icon-action-btn div[data-testid="stButton"] > button span {
+    font-size: 1.1rem !important;
 }
 
 /* --- Recent Meetings Cards --- */
@@ -191,25 +193,25 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FAF8F5;
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 6px;
-    padding: 0.75rem 0.85rem;
+    padding: 0.65rem 0.8rem;
     margin-bottom: 0.35rem;
 }
 .gallery-title { 
     font-family: 'Playfair Display', serif; 
     font-style: italic; 
-    font-size: 0.98rem; 
+    font-size: 0.95rem; 
     font-weight: 600;
     color: #1A2B4C; 
-    margin: 0 0 0.15rem 0; 
+    margin: 0 0 0.1rem 0; 
 }
 .gallery-sub { 
-    font-size: 0.7rem; 
+    font-size: 0.68rem; 
     color: #6C727A; 
-    margin-bottom: 0.35rem; 
+    margin-bottom: 0.3rem; 
     font-weight: 500;
 }
 .gallery-desc { 
-    font-size: 0.76rem; 
+    font-size: 0.74rem; 
     color: #2D2D2D; 
     line-height: 1.4; 
     margin: 0;
@@ -218,15 +220,15 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 /* --- Chat Overrides --- */
 div[data-testid="stChatMessage"] {
     background-color: transparent !important;
-    padding: 0.3rem 0 !important;
+    padding: 0.25rem 0 !important;
 }
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
     background-color: #FAF8F5 !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-left: 4px solid #22252A !important;
     border-radius: 0 8px 8px 0 !important;
-    padding: 0.85rem 1.1rem !important;
-    margin-bottom: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 0.6rem !important;
 }
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) div[data-testid="stMarkdownContainer"] * {
     color: #1A1A1A !important;
@@ -234,11 +236,11 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
     background-color: #22252A !important;
     border-radius: 10px 10px 2px 10px !important;
-    padding: 0.75rem 1.1rem !important;
-    margin-bottom: 0.75rem !important;
+    padding: 0.65rem 1rem !important;
+    margin-bottom: 0.6rem !important;
     margin-left: auto !important;
     max-width: 82% !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
 }
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] * {
     color: #FFFFFF !important;
@@ -249,7 +251,7 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"])
 div[data-testid="stChatMessage"] table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin: 0.65rem 0 !important;
+    margin: 0.5rem 0 !important;
     background-color: #FFFFFF !important;
     border: 1px solid #E5E7EB !important;
     border-radius: 6px !important;
@@ -261,13 +263,13 @@ div[data-testid="stChatMessage"] th {
     text-align: left !important;
     padding: 6px 10px !important;
     border-bottom: 1px solid #E5E7EB !important;
-    font-size: 0.76rem !important;
+    font-size: 0.75rem !important;
 }
 div[data-testid="stChatMessage"] td {
     padding: 6px 10px !important;
     border-bottom: 1px solid #F3F4F6 !important;
     color: #2D2D2D !important;
-    font-size: 0.76rem !important;
+    font-size: 0.75rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -328,17 +330,11 @@ for m in supabase_records:
     except Exception:
         pass
 
-# SVG Icons
-ICON_CLEAR = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>"""
-ICON_EXPAND = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>"""
-ICON_COLLAPSE = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M10 14l-7 7"/></svg>"""
-ICON_CALENDAR = """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>"""
-
-# 6. Layout Composition
+# 6. Layout Composition (Small Spacing & Tight Columns)
 if st.session_state["chat_fullscreen"]:
     col_left, col_right = None, st.container()
 else:
-    col_left, col_right = st.columns([1, 2.1], gap="large")
+    col_left, col_right = st.columns([1, 2.3], gap="small")
 
 # Left Column (Overview, Date Filter, Feed)
 if not st.session_state["chat_fullscreen"]:
@@ -347,7 +343,7 @@ if not st.session_state["chat_fullscreen"]:
             st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
             
-            # Tight 2x2 KPI Grid
+            # 2x2 Mini KPI Grid
             st.markdown(f"""
             <div class="kpi-grid-2x2">
                 <div class="kpi-mini-card">
@@ -369,9 +365,9 @@ if not st.session_state["chat_fullscreen"]:
             </div>
             """, unsafe_allow_html=True)
 
-            # Compact Scaled Date Picker below 2x2
+            # Compact Popover directly underneath
             date_label = f"{st.session_state['start_date'].strftime('%b %d')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
-            with st.popover(f"{date_label}", use_container_width=True):
+            with st.popover(date_label, use_container_width=True):
                 p_col1, p_col2 = st.columns([1.1, 1.9])
                 with p_col1:
                     st.caption("PRESETS")
@@ -394,7 +390,7 @@ if not st.session_state["chat_fullscreen"]:
                         st.session_state["start_date"] = last_prev.replace(day=1)
                         st.session_state["end_date"] = last_prev
                         st.rerun()
-                    st.markdown("<div style='margin-top: 0.4rem;'></div>", unsafe_allow_html=True)
+                    st.markdown("<div style='margin-top: 0.3rem;'></div>", unsafe_allow_html=True)
                     if st.button("Reset", key="btn_reset_inside", use_container_width=True):
                         st.session_state["start_date"] = today.replace(day=1)
                         _, last = calendar.monthrange(today.year, today.month)
@@ -414,10 +410,10 @@ if not st.session_state["chat_fullscreen"]:
                             st.session_state["end_date"] = selected_dates[1]
                             st.rerun()
 
-            st.markdown('<p class="section-title" style="margin-top: 0.5rem !important;">Recent Meetings</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title" style="margin-top: 0.4rem !important;">Recent Meetings</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-caption">Scroll to explore filtered meetings.</p>', unsafe_allow_html=True)
             
-            feed_container = st.container(height=280)
+            feed_container = st.container(height=310)
             with feed_container:
                 if filtered_records:
                     for idx, m in enumerate(filtered_records):
@@ -438,36 +434,36 @@ if not st.session_state["chat_fullscreen"]:
                         if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
                             st.session_state["selected_meeting_id"] = m_id
                             st.switch_page("pages/2_meeting_details.py")
-                        st.markdown("<div style='margin-bottom: 0.45rem;'></div>", unsafe_allow_html=True)
+                        st.markdown("<div style='margin-bottom: 0.35rem;'></div>", unsafe_allow_html=True)
                 else:
                     st.info("No records found.")
 
 # Right Column (AI Chat)
 with col_right:
     with st.container(height=720, border=True):
-        chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.05, 0.05])
+        chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.04, 0.04])
         
         with chat_header_col:
             st.markdown('<p class="section-title">Ask Echo — Global Intelligence</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-caption">Synthesize meeting archives, transcripts, and action logs.</p>', unsafe_allow_html=True)
             
         with btn_clear_col:
-            st.markdown('<div class="chat-action-btn">', unsafe_allow_html=True)
-            if st.button(ICON_CLEAR, key="btn_clear_chat", help="Clear conversation"):
+            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
+            if st.button("", icon=":material/delete:", key="btn_clear_chat", help="Clear chat"):
                 st.session_state["global_chat_history"] = []
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
             
         with btn_full_col:
-            st.markdown('<div class="chat-action-btn">', unsafe_allow_html=True)
-            current_icon = ICON_COLLAPSE if st.session_state["chat_fullscreen"] else ICON_EXPAND
+            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
+            full_icon = ":material/fullscreen_exit:" if st.session_state["chat_fullscreen"] else ":material/fullscreen:"
             tooltip = "Exit Fullscreen" if st.session_state["chat_fullscreen"] else "Fullscreen"
-            if st.button(current_icon, key="btn_fullscreen_chat", help=tooltip):
+            if st.button("", icon=full_icon, key="btn_fullscreen_chat", help=tooltip):
                 st.session_state["chat_fullscreen"] = not st.session_state["chat_fullscreen"]
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        chat_feed_height = 540 if not st.session_state["chat_fullscreen"] else 560
+        chat_feed_height = 545 if not st.session_state["chat_fullscreen"] else 565
         chat_history_container = st.container(height=chat_feed_height)
         with chat_history_container:
             if not st.session_state["global_chat_history"]:
