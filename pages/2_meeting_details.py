@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 from utils.db import fetch_meeting_archives, get_supabase_client
 
 # 1. Page Config
@@ -9,11 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. SVG Icons (No Emojis)
-TRASH_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
-SAVE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>'
-
-# 3. Custom CSS (Topbar removed, UI preserved)
+# 2. Custom CSS
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -57,7 +54,7 @@ section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
 }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover { background-color: #D4AF37 !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] { display: none !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] { font-size: 1.5rem !important; color: #C5A059 !important; }
+section[data-testid="stSidebar"] a[data-testid="stIconMaterial"] { font-size: 1.5rem !important; color: #C5A059 !important; }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover span[data-testid="stIconMaterial"] { color: #161616 !important; }
 
 /* Containers & Inputs */
@@ -66,7 +63,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
     border: 1px solid rgba(0, 0, 0, 0.05) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important;
 }
-.stTextArea textarea, .stTextInput input {
+.stTextArea textarea, .stTextInput input, .stSelectbox [data-baseweb="select"] {
     background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important;
     border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
 }
@@ -78,7 +75,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .stButton > button {
     background-color: #222222 !important; color: #FFFFFF !important; border: none !important; 
     border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; 
+    font-weight: 500 !important; font-size: 0.82rem !important; height: 38px !important; 
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important;
 }
 .stButton > button:hover { background-color: #D4AF37 !important; color: #161616 !important; }
@@ -90,15 +87,99 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 4. Data Fetching
+# 3. Data Fetching
 meetings = fetch_meeting_archives(limit=500)
 
 if not meetings:
     st.info("No meeting records found in Supabase.")
     st.stop()
 
-# 5. Meeting Selection Logic
-meeting_map = {f"{m.get('client_name', 'Client')} ({str(m.get('meeting_date', ''))[:10]}) - {m.get('meeting_id')}": m for m in meetings}
+# Helper function to extract normalized YYYY-MM-DD
+def get_iso_date(meeting_item):
+    raw_d = str(meeting_item.get("meeting_date", ""))
+    return raw_d[:10] if len(raw_d) >= 10 else ""
+
+# Precompute dates with meetings
+meeting_dates = sorted(list({get_iso_date(m) for m in meetings if get_iso_date(m)}), reverse=True)
+
+# 4. Search & Date Filter Bar
+with st.container(border=True):
+    st.markdown("<h3>Find & Inspect Meeting</h3>", unsafe_allow_html=True)
+    
+    col_search, col_cal_btn, col_reset = st.columns([6.5, 2.5, 1])
+    
+    with col_search:
+        search_query = st.text_input(
+            "Search Meetings",
+            placeholder="Search by client, ID, topic, transcript, PIC...",
+            label_visibility="collapsed",
+            key="meeting_search_query"
+        )
+    
+    with col_cal_btn:
+        show_cal = st.toggle("Filter by Date", key="toggle_date_picker")
+        
+    with col_reset:
+        if st.button("Clear", help="Reset all search and date filters"):
+            st.session_state["meeting_search_query"] = ""
+            st.session_state["selected_date_filter"] = "All Dates"
+            st.rerun()
+
+    selected_date = st.session_state.get("selected_date_filter", "All Dates")
+    
+    # Visual Date Selector with Meeting Indicator Dots
+    if show_cal:
+        date_options = ["All Dates"] + [f"• {d}" for d in meeting_dates]
+        curr_idx = 0
+        if selected_date != "All Dates":
+            formatted_curr = f"• {selected_date}"
+            if formatted_curr in date_options:
+                curr_idx = date_options.index(formatted_curr)
+        
+        chosen_date_label = st.selectbox(
+            "Select meeting date (• indicates active records):",
+            options=date_options,
+            index=curr_idx,
+            key="date_picker_dropdown"
+        )
+        selected_date = chosen_date_label.replace("• ", "")
+        st.session_state["selected_date_filter"] = selected_date
+
+# 5. Filtering Logic
+filtered_meetings = meetings
+
+# Filter by Date
+if selected_date and selected_date != "All Dates":
+    filtered_meetings = [m for m in filtered_meetings if get_iso_date(m) == selected_date]
+
+# Filter by Search Query
+if search_query:
+    q = search_query.lower()
+    def matches(m):
+        searchable_corpus = " ".join([
+            str(m.get("client_name", "")),
+            str(m.get("meeting_id", "")),
+            str(m.get("meeting_date", "")),
+            str(m.get("location", "")),
+            str(m.get("prepared_by", "")),
+            str(m.get("confirmed_by", "")),
+            str(m.get("transcript_md", "")),
+            str(m.get("summary_md", "")),
+            str(m.get("table_items", ""))
+        ]).lower()
+        return q in searchable_corpus
+    
+    filtered_meetings = [m for m in filtered_meetings if matches(m)]
+
+if not filtered_meetings:
+    st.warning("No meetings found matching your search or date criteria.")
+    st.stop()
+
+# 6. Meeting Selection
+meeting_map = {
+    f"{m.get('client_name', 'Client')} ({get_iso_date(m)}) - {m.get('meeting_id')}": m 
+    for m in filtered_meetings
+}
 
 default_idx = 0
 selected_id = st.session_state.get("selected_meeting_id")
@@ -112,7 +193,7 @@ sel_label = st.selectbox("Select Meeting to Inspect", options=list(meeting_map.k
 selected_meeting = meeting_map[sel_label]
 m_id = selected_meeting.get("meeting_id")
 
-# 6. Meeting Details Card
+# 7. Meeting Details Card
 with st.container(border=True):
     st.markdown("<h3>Meeting Details</h3>", unsafe_allow_html=True)
     d1, d2, d3 = st.columns(3)
@@ -126,7 +207,7 @@ with st.container(border=True):
         st.write(f"**Confirmed by:** {selected_meeting.get('confirmed_by', 'N/A')}")
         st.write(f"**Meeting ID:** `{m_id}`")
 
-# 7. Full Transcript
+# 8. Full Transcript
 raw_transcript = selected_meeting.get("transcript_md", "No transcript stored.")
 with st.expander("Full Transcript (Click to Expand)", expanded=False):
     st.text_area(
@@ -137,14 +218,14 @@ with st.expander("Full Transcript (Click to Expand)", expanded=False):
         label_visibility="collapsed"
     )
 
-# 8. Minutes of Meeting Interactive Editor (Bug-Free State Logic)
+# 9. Minutes of Meeting Interactive Editor
 with st.container(border=True):
     st.markdown("<h3>Minutes of Meeting Editor</h3>", unsafe_allow_html=True)
     st.caption("Edit action items and discussion points inline. Changes are saved to Supabase when you click 'Save All Changes'.")
     
     editor_key = f"mom_rows_{m_id}"
     
-    # Initialize state with list of dicts (prevents DataFrame index-shifting bugs)
+    # Initialize state with list of dicts
     if editor_key not in st.session_state:
         raw_items = selected_meeting.get("table_items", [])
         if isinstance(raw_items, list) and len(raw_items) > 0:
@@ -176,10 +257,9 @@ with st.container(border=True):
                 st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"pic_{m_id}_{idx}", height=75, label_visibility="collapsed")
             with c_del:
                 st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                if st.button(TRASH_ICON, key=f"del_{m_id}_{idx}", help="Delete Row"):
-                    continue  # Skip adding this row to rows_to_keep
+                if st.button(":material/delete:", key=f"del_{m_id}_{idx}", help="Delete Row"):
+                    continue
             
-            # Capture updated values for rows that were NOT deleted
             rows_to_keep.append({
                 "Discussion Points": st.session_state[f"dp_{m_id}_{idx}"],
                 "Action Plan": st.session_state[f"ap_{m_id}_{idx}"],
@@ -187,7 +267,7 @@ with st.container(border=True):
                 "Person-in-charge": st.session_state[f"pic_{m_id}_{idx}"]
             })
 
-    # If a row was deleted, update state and rerun to prevent index mismatch
+    # If a row was deleted, update state and rerun
     if len(rows_to_keep) != len(rows):
         st.session_state[editor_key] = rows_to_keep
         st.rerun()
@@ -216,9 +296,9 @@ with st.container(border=True):
 
     # Save Updates
     st.write("")
-    sv_col1, sv_col2 = st.columns([8, 2])
+    sv_col1, sv_col2 = st.columns([7.5, 2.5])
     with sv_col2:
-        if st.button(f"{SAVE_ICON} Save All Changes", key=f"btn_save_{m_id}", type="primary"):
+        if st.button(":material/save: Save All Changes", key=f"btn_save_{m_id}", type="primary"):
             with st.spinner("Saving to Supabase..."):
                 client = get_supabase_client()
                 if not client:
@@ -231,7 +311,6 @@ with st.container(border=True):
                         }).eq("meeting_id", m_id).execute()
                         
                         st.success("Meeting record updated successfully!")
-                        # Clear editor state to force reload of fresh data
                         if editor_key in st.session_state:
                             del st.session_state[editor_key]
                     except Exception as e:
