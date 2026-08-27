@@ -36,10 +36,10 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-# Fonts: Playfair Display (Executive Serif), Cinzel (Header tags), Montserrat (Clean body)
+# Theme Styling: Cormorant Garamond for Title, Cinzel for tags, Montserrat for body
 CHAT_PRIME_THEME_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Montserrat:wght@300;400;500;600&display=swap');
 
 /* Main Executive Card Frame */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
@@ -52,7 +52,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     border-radius: 6px !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(212, 175, 55, 0.15) !important;
     overflow: hidden !important;
-    padding: 0 !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
@@ -60,49 +59,28 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     overflow: hidden !important;
     gap: 0 !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.65rem 0.9rem !important;
 }
 
-/* Header Typography & Gold Accent Divider */
+/* Minimalist Cormorant Garamond Header */
 .echo-header-box {
-    text-align: center;
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-}
-
-.echo-kicker {
-    font-family: 'Cinzel', serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: #D4AF37;
-    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
 }
 
 .echo-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 1.25rem;
-    font-weight: 400;
+    font-size: 1.45rem;
+    font-weight: 600;
     color: #F8FAFC;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     margin: 0;
-}
-
-.echo-caption {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.75rem;
-    color: #94A3B8;
-    margin: 2px 0 0 0;
-}
-
-.echo-gold-bar {
-    width: 28px;
-    height: 1.5px;
-    background: #D4AF37;
-    margin: 4px auto 0 auto;
+    line-height: 1;
 }
 
 /* Inner Scrollable Chat Feed */
@@ -115,7 +93,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     padding: 0.75rem 0.85rem !important;
 }
 
-/* User Message: Dark Navy/Charcoal Bubble with Gold Border */
+/* User Message */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -242,7 +220,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
 }
 
-/* Markdown Tables Styled in Prime Dark & Gold */
+/* Markdown Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
@@ -301,7 +279,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Knowledge Proposal Inline Prompt */
+/* Knowledge Candidate Card */
 .echo-knowledge-card {
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -311,9 +289,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
-/* Bottom Bar Docked Styling */
+/* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.35rem !important;
+    padding-top: 0.4rem !important;
     display: flex;
     flex-direction: column;
 }
@@ -330,24 +308,15 @@ div[data-testid="stChatInput"] textarea {
     color: #F8FAFC !important;
     font-size: 0.84rem !important;
 }
-
-/* Streamlit Toggle Overwrite */
-div[data-testid="stToggle"] label p {
-    font-family: 'Cinzel', serif !important;
-    font-size: 0.68rem !important;
-    letter-spacing: 0.08em !important;
-    color: #D4AF37 !important;
-    text-transform: uppercase !important;
-}
 </style>
 """
 
 def render_echo_chat(
     container=None, 
     height=720, 
-    title="Global Intelligence", 
-    caption="Synthesize meeting archives, transcripts, and action logs.", 
-    subtitle="BY THE NUMBERS"
+    title="Ask Echo", 
+    caption=None, 
+    subtitle=None
 ):
     target = container if container else st
     st.markdown(CHAT_PRIME_THEME_CSS, unsafe_allow_html=True)
@@ -357,35 +326,55 @@ def render_echo_chat(
         st.session_state["global_chat_history"] = []
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
-    if "echo_web_search_enabled" not in st.session_state:
-        st.session_state["echo_web_search_enabled"] = False
+    if "echo_selected_model" not in st.session_state:
+        st.session_state["echo_selected_model"] = "deepseek-chat"
+    if "echo_source_archives" not in st.session_state:
+        st.session_state["echo_source_archives"] = True
+    if "echo_source_knowledge" not in st.session_state:
+        st.session_state["echo_source_knowledge"] = True
+    if "echo_source_web" not in st.session_state:
+        st.session_state["echo_source_web"] = False
 
-    chat_scroll_height = max(260, int(height) - 170)
+    chat_scroll_height = max(260, int(height) - 130)
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        # Header Controls & Executive Titles
-        h_left, h_mid, h_right = st.columns([0.06, 0.88, 0.06])
+        # Header Row: Logo, Title, and Action Controls
+        h_left, h_mid, h_right = st.columns([0.05, 0.83, 0.12])
         with h_left:
             st.markdown(f'<div style="padding-top:4px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
 
         with h_mid:
             st.markdown(
                 f'<div class="echo-header-box">'
-                f'<div class="echo-kicker">{subtitle}</div>'
                 f'<h2 class="echo-title">{title}</h2>'
-                f'<p class="echo-caption">{caption}</p>'
-                f'<div class="echo-gold-bar"></div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
 
         with h_right:
-            if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Clear conversation"):
-                st.session_state["global_chat_history"] = []
-                st.session_state["knowledge_proposal"] = None
-                st.rerun()
+            c_settings, c_clr = st.columns(2)
+            with c_settings:
+                with st.popover("", icon=":material/settings:", help="Configuration"):
+                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#D4AF37;'>AI MODEL</span>", unsafe_allow_html=True)
+                    st.session_state["echo_selected_model"] = st.selectbox(
+                        "Model",
+                        options=["deepseek-chat", "deepseek-reasoner"],
+                        index=0,
+                        label_visibility="collapsed"
+                    )
+                    st.markdown("---")
+                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#D4AF37;'>DATA SOURCES</span>", unsafe_allow_html=True)
+                    st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
+                    st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
+                    st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
+
+            with c_clr:
+                if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
+                    st.session_state["global_chat_history"] = []
+                    st.session_state["knowledge_proposal"] = None
+                    st.rerun()
 
         # ==========================================
         # --- Chat Stream Feed ---
@@ -442,7 +431,7 @@ def render_echo_chat(
                             
                         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Knowledge Proposal Prompt Card
+        # Knowledge Proposal Interactive Card
         if st.session_state["knowledge_proposal"]:
             prop = st.session_state["knowledge_proposal"]
             with st.container():
@@ -476,13 +465,8 @@ def render_echo_chat(
                         st.session_state["knowledge_proposal"] = None
                         st.rerun()
 
-        # Docked Bottom Controls
+        # Docked Bottom Chat Input
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
-        _, tool_right = st.columns([0.80, 0.20])
-        with tool_right:
-            use_web = st.toggle("Search Web", value=st.session_state["echo_web_search_enabled"], key="toggle_web_search")
-            st.session_state["echo_web_search_enabled"] = use_web
-
         active_prompt = st.chat_input("Inquire regarding historical archives, corporate context, or metrics...")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -498,7 +482,7 @@ def render_echo_chat(
                     unsafe_allow_html=True
                 )
                 thinking_placeholder = st.empty()
-                status_text = "Echo is searching the web..." if use_web else "Echo is synthesizing..."
+                status_text = "Echo is searching the web..." if st.session_state["echo_source_web"] else "Echo is synthesizing..."
                 thinking_placeholder.markdown(
                     f'<div class="echo-thinking-wrapper">'
                     f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
@@ -509,14 +493,17 @@ def render_echo_chat(
                     unsafe_allow_html=True
                 )
 
-            archives = fetch_meeting_archives(limit=100)
-            web_context, web_sources = _perform_web_search(active_prompt) if use_web else ("", [])
+            # Source Ingestion Routing
+            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
+            web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
             answer, proposed_fact = _query_echo_backend(
                 question=active_prompt,
                 archive_records=archives,
                 chat_history=st.session_state["global_chat_history"],
-                web_context=web_context
+                web_context=web_context,
+                model_name=st.session_state["echo_selected_model"],
+                include_knowledge=st.session_state["echo_source_knowledge"]
             )
             
             thinking_placeholder.empty()
@@ -559,31 +546,44 @@ def _perform_web_search(query: str) -> tuple:
     return ("\n".join(text_snippets), sources)
 
 
-def _query_echo_backend(question: str, archive_records: list, chat_history: list, web_context: str = "") -> tuple:
-    """Synthesizes archives and optional web search results."""
+def _query_echo_backend(
+    question: str, 
+    archive_records: list, 
+    chat_history: list, 
+    web_context: str = "",
+    model_name: str = "deepseek-chat",
+    include_knowledge: bool = True
+) -> tuple:
+    """Synthesizes dynamic sources based on configuration."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets.", None
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    archive_context = json.dumps(archive_records, indent=1)
+    archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
 
-    context_data = fetch_echo_context()
-    team_list = ", ".join(context_data.get('team', []))
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-    projects = ", ".join(context_data.get('projects', []))
-
-    current_date_str = datetime.now().strftime("%A, %B %d, %Y")
-    web_section = f"\nLIVE WEB SEARCH RESULTS:\n{web_context}\n" if web_context else ""
-
-    context_string = f"""
-CURRENT DATE & TIME: {current_date_str}
+    if include_knowledge:
+        context_data = fetch_echo_context()
+        team_list = ", ".join(context_data.get('team', []))
+        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
+        projects = ", ".join(context_data.get('projects', []))
+        knowledge_section = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
 TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
+"""
+    else:
+        knowledge_section = ""
+
+    current_date_str = datetime.now().strftime("%A, %B %d, %Y")
+    web_section = f"\nLIVE WEB SEARCH RESULTS:\n{web_context}\n" if web_context else ""
+
+    context_string = f"""
+CURRENT DATE & TIME: {current_date_str}
+{knowledge_section}
 {web_section}
 """
 
@@ -595,7 +595,7 @@ TECHNICAL JARGON:
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
         f"The current date is {current_date_str}. "
-        "Synthesize meeting archives and web findings accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
+        "Synthesize available sources and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
         f"{citation_rule} "
         "Determine if the user's input contains a new terminology definition, project assignment, or role update that could belong in the knowledge base. "
         "Respond in strict JSON format matching the schema: "
@@ -612,7 +612,7 @@ TECHNICAL JARGON:
     messages.append({"role": "user", "content": question})
 
     payload = {
-        "model": "deepseek-chat",
+        "model": model_name,
         "messages": messages,
         "response_format": {"type": "json_object"},
         "temperature": 0.2,
