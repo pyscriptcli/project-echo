@@ -18,7 +18,13 @@ st.set_page_config(
 )
 setup_page_layout()
 
-# 2. Custom CSS
+# 2. Global State for View Mode
+if "view_mode" not in st.session_state:
+    st.session_state["view_mode"] = "gallery"  # "gallery" or "details"
+if "selected_meeting_id" not in st.session_state:
+    st.session_state["selected_meeting_id"] = None
+
+# 3. Custom CSS & Exact Tab Bar Styling
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -32,7 +38,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
-.block-container { padding-top: 1.25rem !important; padding-right: 1.5rem !important; padding-left: 1.5rem !important; }
+.block-container { padding-top: 1.5rem !important; padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
 
 h3 {
     font-family: 'Playfair Display', serif !important; 
@@ -41,7 +47,7 @@ h3 {
     color: #1A2B4C !important; 
     letter-spacing: 0.02em; 
     margin-bottom: 0.25rem; 
-    font-size: 1.25rem !important;
+    font-size: 1.35rem !important;
 }
 
 .playfair-label {
@@ -53,16 +59,17 @@ h3 {
     display: block;
 }
 
-/* Master Cards */
+/* White Card Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
     box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
     border: 1px solid rgba(0, 0, 0, 0.05) !important; 
-    padding: 1.1rem !important; 
-    margin-bottom: 0.75rem !important;
+    padding: 1.5rem !important; 
+    margin-bottom: 1rem !important;
 }
 
+/* Form Inputs */
 .stTextArea textarea, .stTextInput input, [data-baseweb="input"], [data-baseweb="select"] {
     background-color: #FAFAFA !important; 
     border: 1px solid rgba(0,0,0,0.08) !important;
@@ -75,7 +82,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-color: #D4AF37 !important;
 }
 
-/* Base Buttons */
+/* Action Buttons */
 .stButton > button {
     background-color: #1C1C1C !important; 
     color: #FFFFFF !important; 
@@ -83,9 +90,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important; 
-    font-size: 0.8rem !important; 
-    height: 34px !important; 
-    padding: 0 1rem !important;
+    font-size: 0.82rem !important; 
+    height: 36px !important; 
+    padding: 0 1.25rem !important;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
@@ -96,43 +103,61 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     color: #161616 !important; 
 }
 
-/* Gallery Card Typography */
+/* Back Button Pill */
+.stButton > button[key="btn_back_gallery"] {
+    background-color: transparent !important;
+    color: #1A2B4C !important;
+    border: 1px solid rgba(26, 43, 76, 0.3) !important;
+    width: auto !important;
+    min-width: 160px !important;
+}
+.stButton > button[key="btn_back_gallery"]:hover {
+    background-color: #1A2B4C !important;
+    color: #FFFFFF !important;
+}
+
+/* Gallery Typography */
 .card-title {
     font-family: 'Playfair Display', serif !important;
     font-style: italic !important;
-    font-size: 1.15rem !important;
+    font-size: 1.22rem !important;
     color: #1A2B4C !important;
-    margin: 0 0 0.15rem 0 !important;
-    line-height: 1.3 !important;
+    margin: 0 0 0.2rem 0 !important;
 }
 
 .card-meta {
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
     color: #666666 !important;
-    margin-bottom: 0.45rem !important;
-    line-height: 1.4 !important;
+    margin-bottom: 0.5rem !important;
 }
 
 .card-desc {
-    font-size: 0.85rem !important;
+    font-size: 0.88rem !important;
     color: #2D2D2D !important;
-    line-height: 1.45 !important;
+    line-height: 1.5 !important;
     margin: 0 !important;
 }
 
-/* Save Button Icon */
-.stButton > button[key^="btn_save_"]::before {
-    content: "";
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    margin-right: 6px;
-    background-color: currentColor;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+/* ================= EXACT TAB STYLING (Image Match) ================= */
+button[data-baseweb="tab"] {
+    background: transparent !important;
+    border: none !important;
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
+    color: #1A2B4C !important;
+    padding: 0.5rem 1rem !important;
 }
 
-/* Delete Button Icon */
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #FF4B4B !important;
+    border-bottom: 2px solid #FF4B4B !important;
+}
+
+div[data-baseweb="tab-highlight"] {
+    background-color: #FF4B4B !important;
+}
+
+/* Delete Row Button Styling & SVG Icon */
 .stButton > button[key^="del_"] { 
     background-color: #FDF9F9 !important; 
     color: #B23A3A !important; 
@@ -152,11 +177,23 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") no-repeat center;
 }
+
+/* Save Button Icon */
+.stButton > button[key^="btn_save_"]::before {
+    content: "";
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 6px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 3. Data Fetching
+# 4. Data Ingestion
 meetings = fetch_meeting_archives(limit=500)
 
 if not meetings:
@@ -168,24 +205,36 @@ def get_iso_date(meeting_item):
     return raw_d[:10] if len(raw_d) >= 10 else ""
 
 all_dates = sorted(list({get_iso_date(m) for m in meetings if get_iso_date(m)}), reverse=True)
+all_clients = sorted(list({str(m.get("client_name", "Unknown")).strip() for m in meetings if m.get("client_name")}))
 
-# 4. Master-Detail Layout (Narrow Left Gallery, Broad Right Inspector)
-col_gallery, col_viewer = st.columns([4.2, 5.8], gap="medium")
-
-# ================= LEFT: Compact Gallery Pane =================
-with col_gallery:
+# ==============================================================================
+# MODE 1: FULL-SCREEN MEETING GALLERY
+# ==============================================================================
+if st.session_state["view_mode"] == "gallery":
     with st.container(border=True):
-        st.markdown("<h3>Meeting Gallery</h3>", unsafe_allow_html=True)
-        st.caption("Search, filter, and inspect archived meeting minutes.")
+        st.markdown("<h3>Meeting Gallery & Search Hub</h3>", unsafe_allow_html=True)
+        st.caption("Search across meeting topics, filter by dates/clients, or inspect complete minutes.")
         
-        c_search, c_date = st.columns([6.5, 3.5])
-        with c_search:
-            search_q = st.text_input("Search", placeholder="Client, PIC, ID...", label_visibility="collapsed", key="search_query")
-        with c_date:
-            f_date = st.selectbox("Date Filter", options=["All Dates"] + all_dates, index=0, label_visibility="collapsed", key="date_dropdown")
+        # Comprehensive Filter Bar
+        f_c1, f_c2, f_c3, f_c4 = st.columns([4.5, 2.2, 2.2, 1.1])
         
-        # Filtering
+        with f_c1:
+            search_q = st.text_input("Search", placeholder="Search by client, ID, topic, transcript, PIC...", label_visibility="collapsed", key="gal_search_q")
+        with f_c2:
+            f_client = st.selectbox("Client Filter", options=["All Clients"] + all_clients, index=0, label_visibility="collapsed", key="gal_client_f")
+        with f_c3:
+            f_date = st.selectbox("Date Filter", options=["All Dates"] + all_dates, index=0, label_visibility="collapsed", key="gal_date_f")
+        with f_c4:
+            if st.button("Reset", key="btn_reset_filters"):
+                st.session_state["gal_search_q"] = ""
+                st.session_state["gal_client_f"] = "All Clients"
+                st.session_state["gal_date_f"] = "All Dates"
+                st.rerun()
+
+        # Filtering Logic
         filtered_meetings = meetings
+        if f_client != "All Clients":
+            filtered_meetings = [m for m in filtered_meetings if str(m.get("client_name", "")).strip() == f_client]
         if f_date != "All Dates":
             filtered_meetings = [m for m in filtered_meetings if get_iso_date(m) == f_date]
         if search_q:
@@ -204,80 +253,80 @@ with col_gallery:
                 ]).lower()
             ]
 
-        st.caption(f"Showing **{len(filtered_meetings)}** record(s)")
-        st.markdown("<hr style='margin: 0.4rem 0 0.8rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.06);'>", unsafe_allow_html=True)
+        st.caption(f"Showing **{len(filtered_meetings)}** matching meeting archive(s)")
+        st.markdown("<hr style='margin: 0.5rem 0 1rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.06);'>", unsafe_allow_html=True)
 
-        # Scrollable list of cards matching design
-        with st.container(height=650):
-            if not filtered_meetings:
-                st.warning("No records matched your search.")
-            else:
-                for idx, m in enumerate(filtered_meetings):
-                    m_id_val = m.get("meeting_id", f"MOM-{idx}")
-                    client_lbl = m.get("client_name") or "Meeting Record"
-                    d_val = get_iso_date(m) or "____________"
-                    loc_val = m.get("location") or "____________"
-                    prep_val = m.get("prepared_by") or "CRD Team"
-                    
-                    summary_raw = str(m.get("summary_md", "")).replace("### Summary", "").strip()
-                    if not summary_raw:
-                        summary_raw = "No summary recorded. Minutes generated and stored in Supabase archive."
-                    preview_text = summary_raw[:150] + ("..." if len(summary_raw) > 150 else "")
+        if not filtered_meetings:
+            st.warning("No meeting records matched your search parameters.")
+        else:
+            for idx, m in enumerate(filtered_meetings):
+                m_id_val = m.get("meeting_id", f"MOM-{idx}")
+                client_lbl = m.get("client_name") or "Meeting Record"
+                d_val = get_iso_date(m) or "____________"
+                loc_val = m.get("location") or "____________"
+                prep_val = m.get("prepared_by") or "CRD Team"
+                
+                summary_raw = str(m.get("summary_md", "")).replace("### Summary", "").strip()
+                if not summary_raw:
+                    summary_raw = "No summary recorded. Minutes generated and stored in Supabase archive."
+                preview_text = summary_raw[:220] + ("..." if len(summary_raw) > 220 else "")
 
-                    with st.container(border=True):
-                        card_left, card_btn = st.columns([7.4, 2.6])
-                        with card_left:
-                            st.markdown(f"<p class='card-title'>{client_lbl}</p>", unsafe_allow_html=True)
-                            st.markdown(f"<p class='card-meta'>Date: {d_val} &bull; {loc_val} &bull; Prepared by: {prep_val}</p>", unsafe_allow_html=True)
-                            st.markdown(f"<p class='card-desc'>{preview_text}</p>", unsafe_allow_html=True)
-                        with card_btn:
-                            st.write("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-                            if st.button("View Meeting", key=f"view_m_{m_id_val}_{idx}"):
-                                st.session_state["selected_meeting_id"] = m_id_val
-                                st.rerun()
+                with st.container(border=True):
+                    c_info, c_act = st.columns([8.2, 1.8])
+                    with c_info:
+                        st.markdown(f"<p class='card-title'>{client_lbl}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='card-meta'>Date: {d_val} &bull; {loc_val} &bull; Prepared by: {prep_val}</p>", unsafe_allow_html=True)
+                        st.markdown(f"<p class='card-desc'>{preview_text}</p>", unsafe_allow_html=True)
+                    with c_act:
+                        st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+                        if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}"):
+                            st.session_state["selected_meeting_id"] = m_id_val
+                            st.session_state["view_mode"] = "details"
+                            st.rerun()
 
-# Determine currently selected meeting for right viewer
-if not filtered_meetings:
-    with col_viewer:
-        st.info("Select or clear filter to display meeting details.")
-    st.stop()
+# ==============================================================================
+# MODE 2: FULL-SCREEN MEETING VIEWER & INSPECTOR
+# ==============================================================================
+elif st.session_state["view_mode"] == "details":
+    target_id = st.session_state.get("selected_meeting_id")
+    active_meeting = next((m for m in meetings if m.get("meeting_id") == target_id), None)
 
-selected_id = st.session_state.get("selected_meeting_id")
-valid_ids = [m.get("meeting_id") for m in filtered_meetings]
+    if not active_meeting:
+        st.session_state["view_mode"] = "gallery"
+        st.rerun()
 
-if selected_id not in valid_ids:
-    active_meeting = filtered_meetings[0]
-    st.session_state["selected_meeting_id"] = active_meeting.get("meeting_id")
-else:
-    active_meeting = next(m for m in filtered_meetings if m.get("meeting_id") == selected_id)
+    m_id = active_meeting.get("meeting_id")
 
-m_id = active_meeting.get("meeting_id")
+    # Header Navigation Bar
+    top_nav1, top_nav2 = st.columns([2.5, 7.5])
+    with top_nav1:
+        if st.button("← Back to Gallery", key="btn_back_gallery"):
+            st.session_state["view_mode"] = "gallery"
+            st.rerun()
 
-# ================= RIGHT: Meeting Viewer & Editor =================
-with col_viewer:
-    # Metadata Overview
+    # Meeting Metadata Card
     with st.container(border=True):
-        head_c1, head_c2 = st.columns([6.5, 3.5])
-        with head_c1:
-            st.markdown(f"<h3>{active_meeting.get('client_name', 'Meeting Record')}</h3>", unsafe_allow_html=True)
+        m_head1, m_head2 = st.columns([6.5, 3.5])
+        with m_head1:
+            st.markdown(f"<h3>{active_meeting.get('client_name', 'Client Meeting')}</h3>", unsafe_allow_html=True)
             st.caption(f"Meeting ID: `{m_id}`")
-        with head_c2:
+        with m_head2:
             st.write(f"**Date:** {active_meeting.get('meeting_date', 'N/A')}")
             st.write(f"**Location:** {active_meeting.get('location', 'N/A')}")
 
-        m_c1, m_c2 = st.columns(2)
-        with m_c1:
+        d_c1, d_c2 = st.columns(2)
+        with d_c1:
             st.write(f"**Prepared By:** {active_meeting.get('prepared_by', 'N/A')}")
-        with m_c2:
+        with d_c2:
             st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
 
-    # Tabs for Editor & Transcript
+    # Tabs (Matching Attached Screenshot Styling)
     tab_editor, tab_transcript = st.tabs(["Minutes of Meeting Editor", "Full Transcript"])
 
     with tab_editor:
         with st.container(border=True):
             st.markdown("<h3>Minutes of Meeting Items</h3>", unsafe_allow_html=True)
-            st.caption("Inline editable cards. Changes update directly to Supabase.")
+            st.caption("Inline editable cards. Changes are synchronized directly to Supabase.")
 
             editor_key = f"mom_rows_{m_id}"
             if editor_key not in st.session_state:
@@ -325,7 +374,7 @@ with col_viewer:
                 st.session_state[editor_key] = rows_to_keep
                 st.rerun()
 
-            add_c1, _ = st.columns([2.5, 7.5])
+            add_c1, _ = st.columns([2, 8])
             with add_c1:
                 if st.button("+ Add Item", key=f"btn_add_{m_id}"):
                     rows_to_keep.append({
@@ -340,16 +389,16 @@ with col_viewer:
             summary_val = st.text_area(
                 "Summary Content",
                 value=current_summary,
-                height=100,
+                height=110,
                 label_visibility="collapsed",
                 key=f"summary_{m_id}"
             )
 
             st.write("")
-            sv_col1, sv_col2 = st.columns([7.0, 3.0])
+            sv_col1, sv_col2 = st.columns([7.5, 2.5])
             with sv_col2:
                 if st.button("Save All Changes", key=f"btn_save_{m_id}"):
-                    with st.spinner("Saving to Supabase..."):
+                    with st.spinner("Saving updates to Supabase..."):
                         client = get_supabase_client()
                         if not client:
                             st.error("Supabase client uninitialized.")
