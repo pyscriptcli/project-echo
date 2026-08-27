@@ -38,7 +38,7 @@ SVG_BRAIN_ICON = """
 
 CHAT_COMPACT_CLEAN_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Playfair+Display:ital,wght@1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 /* Prevent outer viewport scrolling */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
@@ -48,11 +48,15 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
-/* Seamless Container matching native app canvas */
+/* Match the exact warm ivory architectural grid canvas */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 10px !important;
+    background-color: #F9F6F0 !important;
+    background-image: 
+        linear-gradient(to right, #E7E0D3 1px, transparent 1px),
+        linear-gradient(to bottom, #E7E0D3 1px, transparent 1px) !important;
+    background-size: 32px 32px !important;
+    border: 1px solid #DFD7C7 !important;
+    border-radius: 8px !important;
     padding: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
@@ -68,7 +72,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     box-sizing: border-box !important;
 }
 
-/* Meeting Gallery Matched Header Style */
+/* Meeting Details Styled Header Row */
 .echo-header-row {
     display: flex;
     align-items: center;
@@ -86,7 +90,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-title {
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
     font-style: italic;
     font-size: 1.35rem;
     font-weight: 600;
@@ -96,7 +100,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     letter-spacing: 0.01em;
 }
 
-/* Dedicated Scrolling Chat Box */
+/* Dedicated Scrolling Chat Box with clean frosted white surface */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -106,8 +110,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     padding: 0.75rem 1rem !important;
@@ -566,7 +571,7 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> tuple:
-    """Synthesizes dynamic sources based on configuration."""
+    """Synthesizes dynamic sources based on configuration with fallback error handling."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets.", None
@@ -626,16 +631,36 @@ CURRENT DATE & TIME: {current_date_str}
     payload = {
         "model": model_name,
         "messages": messages,
-        "response_format": {"type": "json_object"},
         "temperature": 0.2,
-        "max_tokens": 1000
+        "max_tokens": 1500
     }
+
+    if model_name == "deepseek-chat":
+        payload["response_format"] = {"type": "json_object"}
 
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
-            result = json.loads(resp.json()["choices"][0]["message"]["content"])
-            return result.get("response", ""), result.get("propose_knowledge")
+            raw_content = resp.json()["choices"][0]["message"]["content"].strip()
+
+            # Clean markdown code blocks if present
+            cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
+            cleaned = re.sub(r"^```\s*", "", cleaned, flags=re.MULTILINE).strip()
+
+            try:
+                result = json.loads(cleaned)
+                return result.get("response", cleaned), result.get("propose_knowledge")
+            except json.JSONDecodeError:
+                match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+                if match:
+                    try:
+                        result = json.loads(match.group(1))
+                        return result.get("response", cleaned), result.get("propose_knowledge")
+                    except Exception:
+                        pass
+                
+                return raw_content, None
+
         return f"Service notice ({resp.status_code}): {resp.text}", None
     except Exception as e:
         return f"Analysis exception: {e}", None
