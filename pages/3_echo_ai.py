@@ -16,16 +16,16 @@ st.set_page_config(
 )
 setup_page_layout()
 
-# 2. Global Canvas Background Grid & Scroll Lock
+# 2. Large Architectural Grid Canvas (Matching Meeting Gallery)
 st.markdown("""
 <style>
-/* Global warm canvas background matching reference */
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F6F2EA !important;
+    background-color: #F5F1E8 !important;
     background-image: 
-        linear-gradient(to right, #E8E2D5 1px, transparent 1px),
-        linear-gradient(to bottom, #E8E2D5 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
+        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+    background-size: 80px 80px !important;
+    background-position: 0 0 !important;
     overflow: hidden !important;
 }
 
