@@ -415,6 +415,6 @@ with col_right:
     render_echo_chat(
         container=st,
         height=720,
-        title="Ask Echo — Global Intelligence",
+        title="Ask Echo",
         caption="Synthesize meeting archives, transcripts, and action logs."
     )
