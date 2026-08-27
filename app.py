@@ -3,9 +3,14 @@ import datetime
 import json
 import requests
 import pandas as pd
-from components.sidebar import render_custom_sidebar
 from utils.db import fetch_meeting_archives, get_supabase_client
+import sys
+import os
 
+# Add root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from components.sidebar import render_custom_sidebar
 
 
 # 1. Page Configuration (MUST be first)
