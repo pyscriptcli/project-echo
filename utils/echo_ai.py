@@ -3,7 +3,7 @@ import requests
 import json
 import pandas as pd
 import re
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -269,13 +269,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.echo-toolbar-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 0.25rem;
 }
 
 .echo-input-dock div[data-testid="stChatInput"] {
@@ -588,13 +581,12 @@ def _render_context_manager_subtab():
 
 
 def _perform_web_search(query: str) -> str:
-    """Fetches real-time web context using DuckDuckGo Instant Answer or SerpApi if configured."""
+    """Fetches real-time web context using DuckDuckGo HTML endpoint."""
     try:
         url = "https://html.duckduckgo.com/html/"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         resp = requests.post(url, data={"q": query}, headers=headers, timeout=10)
         if resp.status_code == 200:
-            # Extract basic text snippets & links
             snippets = re.findall(r'<a class="result__snippet[^>]*>(.*?)</a>', resp.text, re.DOTALL)
             urls = re.findall(r'<a class="result__url[^>]*href="([^"]+)"', resp.text)
             
