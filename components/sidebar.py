@@ -1,9 +1,10 @@
+# In components/sidebar.py
 import streamlit as st
 
 def setup_page_layout():
     """
-    Renders a premium, luxury dark top bar with Cormorant Garamond italic labels
-    and pure SVG icons, completely hiding the native sidebar.
+    Renders a premium, luxury dark top bar with pure text (Cormorant Garamond italic)
+    in gold, without any icons, completely hiding the native sidebar.
     """
     st.markdown("""
     <style>
@@ -73,28 +74,28 @@ def setup_page_layout():
         white-space: nowrap !important;
     }
 
-    /* Typography */
+    /* Typography - Set to Gold */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span[data-testid="stPageLink-Text"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a p,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span {
         font-family: 'Cormorant Garamond', serif !important;
         font-style: italic !important;
-        font-size: 1.25rem !important;
+        font-size: 1.35rem !important; /* Slightly larger to compensate for no icons */
         font-weight: 600 !important;
-        color: #7A7E85 !important;
-        letter-spacing: 0.03em !important;
+        color: #C9A84C !important;
+        letter-spacing: 0.04em !important;
         line-height: 1 !important;
         transition: color 0.2s ease !important;
     }
 
     /* 5. HOVER EFFECT */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover {
-        background-color: rgba(255, 255, 255, 0.04) !important;
+        background-color: rgba(201, 168, 76, 0.08) !important;
     }
 
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover span,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover p {
-        color: #C9A84C !important;
+        color: #F0DFC0 !important; /* Lighter bright gold on hover */
     }
 
     /* 6. ACTIVE SELECTED TAB */
@@ -107,49 +108,15 @@ def setup_page_layout():
 
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"] span,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"] p {
-        color: #D4AF37 !important;
+        color: #D4AF37 !important; /* Vivid active gold */
         font-weight: 700 !important;
     }
 
-    /* 7. HIDE DEFAULT MATERIAL ICONS */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span[data-testid="stIconMaterial"] {
-        display: none !important;
-    }
-
-    /* 8. PURE SVG ICONS BEFORE TEXT */
+    /* 7. HIDE DEFAULT MATERIAL ICONS AND ANY RESIDUAL SVG BEFORE BLOCKS */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span[data-testid="stIconMaterial"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a::before {
-        content: "";
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 10px;
-        background-color: #7A7E85;
-        flex-shrink: 0 !important;
-        transition: background-color 0.2s ease;
-    }
-
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover::before,
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"]::before {
-        background-color: #D4AF37 !important;
-    }
-
-    /* Dashboard Icon */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href$="app.py"]::before,
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href="/"]::before {
-        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
-    }
-
-    /* Meetings Icon */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="meeting_details"]::before {
-        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
-    }
-
-    /* MoM Icon */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="minutes_of_the_meeting"]::before {
-        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
+        display: none !important;
+        content: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
