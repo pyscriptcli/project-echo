@@ -348,7 +348,7 @@ div[data-testid="stChatInput"] textarea {
 </style>
 """
 
-def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None, subtitle=None):
+def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
@@ -363,6 +363,9 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
         st.session_state["echo_source_knowledge"] = True
     if "echo_source_web" not in st.session_state:
         st.session_state["echo_source_web"] = False
+
+    # Calculate safe integer scroll height for container
+    safe_scroll_height = max(300, int(height) - 130) if height else 500
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
@@ -403,7 +406,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
         # --- Chat Stream Feed ---
         # ==========================================
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-        chat_box = st.container(height=int(height - 130) if height else None)
+        chat_box = st.container(height=safe_scroll_height)
         st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
