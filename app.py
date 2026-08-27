@@ -212,12 +212,13 @@ def query_global_team_archive(question, archive_records, chat_history):
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "You have direct access to the team's Supabase meeting archives, deliverables, summaries, and transcripts. "
+        "You have direct access to the team's meeting archives, deliverables, summaries, and transcripts. "
         "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
-        "Format responses in concise, professional corporate English with clean markdown bullet points."
+        "Format responses in concise, professional corporate English with bullet points. Direct answer first then expound after, show visuals like tables if applicable"
+        "Always ask for a follow up question or a question to keep the conversation going"
     )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nCompany Supabase Meeting Archives:\n{archive_context[:28000]}"}]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": question})
@@ -301,7 +302,7 @@ with col_left:
                 prep = m.get("prepared_by") or "CRD Team"
                 summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
                 if not summary:
-                    summary = "Minutes generated and stored in Supabase archive."
+                    summary = "Minutes generated and saved in meeting archive."
                 
                 with st.container(border=True):
                     gc1, gc2 = st.columns([7.5, 2.5])
@@ -315,7 +316,7 @@ with col_left:
                             st.session_state["selected_meeting_id"] = m_id
                             st.switch_page("pages/2_meeting_details.py")
         else:
-            st.info("No meeting archives found in Supabase.")
+            st.info("No meeting archives found.")
 
 with col_right:
     with st.container(height=580, border=True):
@@ -325,7 +326,7 @@ with col_right:
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         if not st.session_state["global_chat_history"]:
             st.markdown(
-                '<div class="chat-ai">Hello. I am Echo Global. Ask me any question across your Supabase meeting archive.</div>',
+                '<div class="chat-ai">Hello. I am Echo. Ask me any question across your meeting archives.</div>',
                 unsafe_allow_html=True
             )
         else:
@@ -339,7 +340,7 @@ with col_right:
 
         if global_query := st.chat_input("Query whole company archive (e.g. 'What are the deliverables for Regis?')"):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
-            with st.spinner("Analyzing Supabase archives..."):
+            with st.spinner("Analyzing meeting archives..."):
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
             st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
             st.rerun()
