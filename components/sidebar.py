@@ -3,14 +3,14 @@ import streamlit as st
 
 def setup_page_layout():
     """
-    Renders a streamlined topbar navigation where buttons auto-fit their content,
-    styled in luxury dark charcoal, Cormorant Garamond italic typography, and gold accents.
+    Renders an ultra-compact luxury dark topbar with Cormorant Garamond italic labels,
+    proportional column layout, and custom SVG icons.
     """
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Montserrat:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&display=swap');
 
-    /* 1. HIDE ALL DEFAULT STREAMLIT HEADERS & SIDEBARS */
+    /* 1. HIDE ALL DEFAULT STREAMLIT HEADER & SIDEBAR ARTIFACTS */
     header[data-testid="stHeader"], 
     .stApp > header, 
     [data-testid="stDecoration"],
@@ -36,51 +36,42 @@ def setup_page_layout():
         max-width: 100% !important;
     }
 
-    /* 3. NAVBAR CAPSULE WRAPPER (Auto-sized, flex layout) */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) {
-        display: inline-flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
+    /* 3. LUXURY TOPBAR CONTAINER */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) {
         background: #171819 !important;
-        border: 1px solid rgba(201, 168, 76, 0.28) !important;
+        border: 1px solid rgba(201, 168, 76, 0.3) !important;
         border-radius: 8px !important;
-        padding: 4px 8px !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+        padding: 4px 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
         margin-bottom: 1.5rem !important;
-        width: auto !important;
-        min-width: 480px !important;
-        max-width: 100% !important;
-        gap: 4px !important;
+        align-items: center !important;
+        width: fit-content !important;
+        gap: 0.5rem !important;
     }
 
-    /* Remove column bounding constraints inside navbar */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) > div[data-testid="column"] {
-        width: auto !important;
-        min-width: unset !important;
-        flex: 0 0 auto !important;
-    }
-
-    /* 4. NAVBAR BUTTON LINKS */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"] {
+    /* 4. BASE LINK STYLING */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[data-testid="stPageLink"],
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) div[data-testid="stPageLink"] > a {
+        background-color: transparent !important;
         background: transparent !important;
         border: 1px solid transparent !important;
         border-radius: 6px !important;
         height: 32px !important;
         min-height: 32px !important;
-        padding: 0 14px !important;
+        padding: 0 12px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-decoration: none !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        white-space: nowrap !important;
+        transition: all 0.2s ease !important;
+        overflow: visible !important;
     }
 
-    /* Cormorant Garamond Italic Typography */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"] span,
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"] p {
+    /* Font Typography Override */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a p,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span[data-testid="stPageLink-Text"] {
         font-family: 'Cormorant Garamond', serif !important;
         font-style: italic !important;
         font-size: 1.15rem !important;
@@ -91,87 +82,86 @@ def setup_page_layout():
         white-space: nowrap !important;
     }
 
-    /* 5. HOVER STATE */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"]:hover {
+    /* 5. HOVER EFFECT */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover {
         background-color: rgba(201, 168, 76, 0.12) !important;
         border-color: rgba(201, 168, 76, 0.35) !important;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"]:hover span,
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"]:hover p {
-        color: #F3E2B8 !important;
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover span,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover p {
+        color: #F0DFC0 !important;
     }
 
     /* 6. ACTIVE SELECTED TAB */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"][aria-current="page"] {
-        background: linear-gradient(180deg, rgba(201, 168, 76, 0.24) 0%, rgba(201, 168, 76, 0.08) 100%) !important;
-        border: 1px solid rgba(201, 168, 76, 0.65) !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"],
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[data-active="true"] {
+        background: linear-gradient(180deg, rgba(201, 168, 76, 0.25) 0%, rgba(201, 168, 76, 0.08) 100%) !important;
+        border: 1px solid rgba(201, 168, 76, 0.6) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"][aria-current="page"] span,
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"][aria-current="page"] p {
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"] span,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"] p {
         color: #FFFFFF !important;
         font-weight: 700 !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7) !important;
     }
 
-    /* 7. HIDE DEFAULT MATERIAL ICONS */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) span[data-testid="stIconMaterial"] {
+    /* 7. HIDE DEFAULT MATERIAL ICON GLYPHS */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span[data-testid="stIconMaterial"] {
         display: none !important;
     }
 
-    /* 8. PURE SVG ICONS BEFORE LINK TEXT */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"]::before {
+    /* 8. PURE SVG ICONS BEFORE TEXT */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a::before {
         content: "";
         display: inline-block;
         width: 15px;
         height: 15px;
-        margin-right: 8px;
+        margin-right: 7px;
         background-color: #C9A84C;
         flex-shrink: 0 !important;
         transition: background-color 0.2s ease;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"]:hover::before {
-        background-color: #F3E2B8;
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a:hover::before {
+        background-color: #F0DFC0;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[data-testid="stPageLink"][aria-current="page"]::before {
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"]::before {
         background-color: #FFFFFF !important;
     }
 
-    /* Dashboard SVG Icon */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[href$="app.py"]::before,
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[href="/"]::before {
+    /* Dashboard Icon */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="app"]::before,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href="/"]::before {
         -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
     }
 
-    /* Meetings SVG Icon */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[href*="meeting_details"]::before {
+    /* Meetings Icon */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="meeting_details"]::before {
         -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
     }
 
-    /* Minutes of Meeting SVG Icon */
-    div[data-testid="stHorizontalBlock"]:has(.nav-anchor-point) a[href*="minutes_of_the_meeting"]::before {
+    /* Minutes of Meeting Icon */
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="minutes_of_the_meeting"]::before {
         -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # 4 Columns: 3 links + 1 tiny anchor column
-    c1, c2, c3, c_anchor = st.columns([1, 1, 1, 0.01])
-    with c1:
+    # Expanded column ratios to prevent text truncation
+    col1, col2, col3, _ = st.columns([1.5, 1.4, 2.7, 4.4])
+    with col1:
+        st.markdown('<div class="nav-item-marker"></div>', unsafe_allow_html=True)
         st.page_link("app.py", label="Dashboard", use_container_width=True)
-    with c2:
+    with col2:
         st.page_link("pages/2_meeting_details.py", label="Meetings", use_container_width=True)
-    with c3:
+    with col3:
         st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting", use_container_width=True)
-    with c_anchor:
-        st.markdown('<div class="nav-anchor-point"></div>', unsafe_allow_html=True)
 
-# Backwards compatibility alias
-setup_page_layout = single_page_layout
+# Compatibility alias
+single_page_layout = setup_page_layout
