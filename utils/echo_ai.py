@@ -446,7 +446,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                 )
 
             # Source Ingestion Routing
-            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else [][cite: 1]
+            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
             answer = _query_echo_backend(
@@ -505,18 +505,18 @@ def _query_echo_backend(
     include_knowledge: bool = True
 ) -> str:
     """Directly synthesizes sources into markdown without schema parsing errors."""
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()[cite: 1]
+    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets."[cite: 1]
+        return "DeepSeek API Key is missing in Streamlit Secrets."
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}[cite: 1]
-    archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"[cite: 1]
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
 
     if include_knowledge:
-        context_data = fetch_echo_context()[cite: 1]
-        team_list = ", ".join(context_data.get('team', []))[cite: 1]
-        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])[cite: 1]
-        projects = ", ".join(context_data.get('projects', []))[cite: 1]
+        context_data = fetch_echo_context()
+        team_list = ", ".join(context_data.get('team', []))
+        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
+        projects = ", ".join(context_data.get('projects', []))
         knowledge_section = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
@@ -524,7 +524,7 @@ TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
-"""[cite: 1]
+"""
     else:
         knowledge_section = ""
 
@@ -550,22 +550,22 @@ CURRENT DATE & TIME: {current_date_str}
         f"{context_string}\n"
     )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}][cite: 1]
-    for msg in chat_history[-6:]:[cite: 1]
-        messages.append({"role": msg["role"], "content": msg["content"]})[cite: 1]
-    messages.append({"role": "user", "content": question})[cite: 1]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
+    for msg in chat_history[-6:]:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": question})
 
     payload = {
-        "model": model_name,[cite: 1]
-        "messages": messages,[cite: 1]
-        "temperature": 0.2,[cite: 1]
+        "model": model_name,
+        "messages": messages,
+        "temperature": 0.2,
         "max_tokens": 1500
     }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)[cite: 1]
-        if resp.status_code == 200:[cite: 1]
-            return resp.json()["choices"][0]["message"]["content"].strip()[cite: 1]
-        return f"Service notice ({resp.status_code}): {resp.text}"[cite: 1]
-    except Exception as e:[cite: 1]
-        return f"Analysis exception: {e}"[cite: 1]
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
+        if resp.status_code == 200:
+            return resp.json()["choices"][0]["message"]["content"].strip()
+        return f"Service notice ({resp.status_code}): {resp.text}"
+    except Exception as e:
+        return f"Analysis exception: {e}"
