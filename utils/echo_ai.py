@@ -3,7 +3,7 @@ import requests
 import json
 import re
 from datetime import datetime
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -36,7 +36,7 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-# Fonts imported: Playfair Display (Serif header), Cinzel (Executive label), Montserrat (Clean body)
+# Fonts: Playfair Display (Executive Serif), Cinzel (Header tags), Montserrat (Clean body)
 CHAT_PRIME_THEME_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;1,400;1,600&display=swap');
@@ -125,7 +125,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     padding: 0.75rem 0.85rem !important;
 }
 
-/* User Message: Sleek Dark Navy/Charcoal Bubble with Gold Border */
+/* User Message: Dark Navy/Charcoal Bubble with Gold Border */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -165,7 +165,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     flex-shrink: 0;
 }
 
-/* AI Assistant Message: Clean High-Contrast Layout */
+/* AI Assistant Message */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
@@ -524,7 +524,7 @@ def render_echo_chat(container=None, height=720, title="Global Intelligence", su
                     unsafe_allow_html=True
                 )
 
-            archives = fetch_meeting_archives(limit=100)[cite: 1]
+            archives = fetch_meeting_archives(limit=100)
             web_context, web_sources = _perform_web_search(active_prompt) if use_web else ("", [])
             
             answer, proposed_fact = _query_echo_backend(
@@ -576,17 +576,17 @@ def _perform_web_search(query: str) -> tuple:
 
 def _query_echo_backend(question: str, archive_records: list, chat_history: list, web_context: str = "") -> tuple:
     """Synthesizes archives and optional web search results."""
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()[cite: 1]
+    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets.", None[cite: 1]
+        return "DeepSeek API Key is missing in Streamlit Secrets.", None
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}[cite: 1]
-    archive_context = json.dumps(archive_records, indent=1)[cite: 1]
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    archive_context = json.dumps(archive_records, indent=1)
 
-    context_data = fetch_echo_context()[cite: 1]
-    team_list = ", ".join(context_data.get('team', []))[cite: 1]
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])[cite: 1]
-    projects = ", ".join(context_data.get('projects', []))[cite: 1]
+    context_data = fetch_echo_context()
+    team_list = ", ".join(context_data.get('team', []))
+    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
+    projects = ", ".join(context_data.get('projects', []))
 
     current_date_str = datetime.now().strftime("%A, %B %d, %Y")
     web_section = f"\nLIVE WEB SEARCH RESULTS:\n{web_context}\n" if web_context else ""
@@ -600,7 +600,7 @@ ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
 {web_section}
-"""[cite: 1]
+"""
 
     citation_rule = (
         "Incorporate web facts smoothly into the response. Link structures are managed by the UI pills."
@@ -619,26 +619,26 @@ TECHNICAL JARGON:
         "  \"propose_knowledge\": null OR {\"category\": \"team|jargon|projects\", \"key\": \"Name/Term\", \"value\": \"Definition/Role\", \"priority\": 2}"
         "}"
         f"\n\n{context_string}\n"
-    )[cite: 1]
+    )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}][cite: 1]
-    for msg in chat_history[-6:]:[cite: 1]
-        messages.append({"role": msg["role"], "content": msg["content"]})[cite: 1]
-    messages.append({"role": "user", "content": question})[cite: 1]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
+    for msg in chat_history[-6:]:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": question})
 
     payload = {
-        "model": "deepseek-chat",[cite: 1]
-        "messages": messages,[cite: 1]
-        "response_format": {"type": "json_object"},[cite: 1]
-        "temperature": 0.2,[cite: 1]
+        "model": "deepseek-chat",
+        "messages": messages,
+        "response_format": {"type": "json_object"},
+        "temperature": 0.2,
         "max_tokens": 1000
     }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)[cite: 1]
-        if resp.status_code == 200:[cite: 1]
-            result = json.loads(resp.json()["choices"][0]["message"]["content"])[cite: 1]
-            return result.get("response", ""), result.get("propose_knowledge")[cite: 1]
-        return f"Service notice ({resp.status_code}): {resp.text}", None[cite: 1]
-    except Exception as e:[cite: 1]
-        return f"Analysis exception: {e}", None[cite: 1]
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
+        if resp.status_code == 200:
+            result = json.loads(resp.json()["choices"][0]["message"]["content"])
+            return result.get("response", ""), result.get("propose_knowledge")
+        return f"Service notice ({resp.status_code}): {resp.text}", None
+    except Exception as e:
+        return f"Analysis exception: {e}", None
