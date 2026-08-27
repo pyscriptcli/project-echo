@@ -7,7 +7,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -15,7 +15,7 @@ SVG_ECHO_LOGO = """
 """
 
 SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
 </svg>
@@ -30,103 +30,109 @@ SVG_GLOBE_ICON = """
 """
 
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
 """
 
-# Unified Warm Off-White Grid Theme & High-Contrast Typography
-CHAT_PRIME_UNIFIED_CSS = """
+CHAT_COMPACT_CLEAN_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Montserrat:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-/* Lock entire app body scrolling */
-.main, .block-container {
+/* Prevent outer viewport scrolling */
+html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 2rem !important;
-    padding-bottom: 0rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
-/* Outer Card Frame: Matches page warm off-white background with subtle gold border */
+/* Seamless Container matching native app canvas */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background: #FDFBF7 !important;
-    background-image: 
-        linear-gradient(rgba(212, 175, 55, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(212, 175, 55, 0.08) 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
-    border: 1px solid rgba(212, 175, 55, 0.35) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    background: transparent !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     overflow: hidden !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    height: calc(100vh - 120px) !important;
+    max-height: calc(100vh - 120px) !important;
+    padding: 0.75rem 1.25rem !important;
     gap: 0 !important;
-    padding: 0.6rem 0.85rem !important;
+    box-sizing: border-box !important;
 }
 
-/* Cormorant Garamond Header */
-.echo-header-box {
+/* Compact Cormorant Garamond Header */
+.echo-header-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 0.35rem;
+    justify-content: space-between;
+    padding-bottom: 0.4rem;
     margin-bottom: 0.4rem;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    flex-shrink: 0;
+}
+
+.echo-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .echo-title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
     font-style: italic;
-    font-size: 1.55rem;
+    font-size: 1.7rem;
     font-weight: 600;
-    color: #111827;
-    letter-spacing: 0.02em;
+    color: #1A2B4C;
     margin: 0;
     line-height: 1;
 }
 
-/* Inner Chat Box Container - STRICT SINGLE SCROLLBAR */
+/* Dedicated Scrolling Chat Box */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    border-radius: 6px !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    border-radius: 8px !important;
     overflow-y: auto !important;
-    padding: 0.85rem 1rem !important;
+    padding: 0.85rem 1.1rem !important;
+    height: 100% !important;
 }
 
-/* User Message: Dark High-Contrast Bubble with Gold Border */
+/* User Message Bubble */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
     gap: 8px;
     width: 100%;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.75rem;
 }
 
 .echo-user-bubble {
-    font-family: 'Montserrat', sans-serif;
-    background: #0E1626;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #111A2B;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37;
-    padding: 0.55rem 0.9rem;
+    padding: 0.5rem 0.85rem;
     border-radius: 12px 2px 12px 12px;
-    max-width: 78%;
-    font-size: 0.86rem;
+    max-width: 75%;
+    font-size: 0.84rem;
     line-height: 1.45;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     word-break: break-word;
 }
 .echo-user-bubble p {
@@ -135,10 +141,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-avatar-user {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: #0E1626;
+    background: #111A2B;
     border: 1px solid #D4AF37;
     display: flex;
     align-items: center;
@@ -151,7 +157,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 1.1rem;
+    margin-bottom: 0.9rem;
     background: transparent;
 }
 
@@ -159,35 +165,34 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
 }
 
 .echo-avatar-assistant {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: #0E1626;
+    background: #111A2B;
     border: 1px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
 }
 
 .echo-assistant-title {
     font-family: 'Cinzel', serif;
-    font-size: 0.72rem;
+    font-size: 0.70rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: #92400E;
+    color: #854D0E;
 }
 
 .echo-assistant-badge-gold {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 0.58rem;
     padding: 1px 4px;
-    border-radius: 2px;
+    border-radius: 3px;
     background: #FEF3C7;
     color: #92400E;
     font-weight: 600;
@@ -195,11 +200,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-assistant-body {
-    font-family: 'Montserrat', sans-serif;
-    padding-left: 30px;
-    color: #1F2937;
-    font-size: 0.88rem;
-    line-height: 1.6;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding-left: 28px;
+    color: #1E293B;
+    font-size: 0.86rem;
+    line-height: 1.55;
 }
 .echo-assistant-body strong {
     color: #0F172A;
@@ -210,34 +215,31 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    margin-top: 0.5rem;
-    padding-left: 30px;
+    margin-top: 0.4rem;
+    padding-left: 28px;
 }
 .echo-source-pill {
-    font-family: 'Montserrat', sans-serif;
     display: inline-flex;
     align-items: center;
-    background: #FFFFFF;
-    border: 1px solid rgba(212, 175, 55, 0.5);
+    background: #F8FAFC;
+    border: 1px solid rgba(212, 175, 55, 0.4);
     border-radius: 4px;
     padding: 2px 7px;
-    font-size: 0.72rem;
+    font-size: 0.70rem;
     color: #854D0E !important;
     text-decoration: none !important;
-    transition: all 0.2s ease;
+    font-weight: 500;
 }
 .echo-source-pill:hover {
     background: #FEFCE8;
     border-color: #D4AF37;
-    color: #713F12 !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
 }
 
-/* High-Contrast Tables */
+/* Clean Formatted Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.6rem 0;
+    margin: 0.5rem 0;
     font-size: 0.80rem;
     background: #FFFFFF;
     border-radius: 4px;
@@ -246,17 +248,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 .echo-assistant-body th {
     font-family: 'Cinzel', serif;
-    background: #0E1626;
+    background: #111A2B;
     color: #D4AF37;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     border: 1px solid #334155;
-    padding: 6px 10px;
+    padding: 5px 8px;
     text-align: left;
 }
 .echo-assistant-body td {
     border: 1px solid #E2E8F0;
-    padding: 6px 10px;
+    padding: 5px 8px;
     color: #334155;
 }
 
@@ -266,19 +268,19 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     align-items: center;
     gap: 8px;
     padding-left: 0.2rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.6rem;
 }
 .echo-thinking-pill {
-    font-family: 'Montserrat', sans-serif;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 3px 10px;
     border-radius: 4px;
-    background: #FFFFFF;
-    border: 1px solid rgba(212, 175, 55, 0.4);
+    background: #F8FAFC;
+    border: 1px solid rgba(212, 175, 55, 0.35);
     font-size: 0.75rem;
     color: #854D0E;
+    font-weight: 500;
 }
 .echo-pulse-dot {
     width: 6px;
@@ -294,49 +296,42 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 /* Knowledge Candidate Card */
 .echo-knowledge-card {
-    background: #FFFFFF;
+    background: #F8FAFC;
     border: 1px solid #D4AF37;
     border-radius: 4px;
-    padding: 0.6rem 0.8rem;
-    margin-top: 0.4rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.35rem;
 }
 
-/* Docked Bottom Chat Input - High Contrast Dark Slate */
+/* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.4rem !important;
-    display: flex;
-    flex-direction: column;
+    padding-top: 0.45rem !important;
+    flex-shrink: 0 !important;
+}
+
+div[data-testid="stChatInput"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
 div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
-    border: 1.5px solid rgba(212, 175, 55, 0.6) !important;
-    border-radius: 6px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(212, 175, 55, 0.55) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
 }
 
 div[data-testid="stChatInput"] textarea {
-    font-family: 'Montserrat', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
     color: #0F172A !important;
     font-size: 0.86rem !important;
-}
-
-div[data-testid="stChatInput"] textarea::placeholder {
-    color: #64748B !important;
 }
 </style>
 """
 
-def render_echo_chat(
-    container=None, 
-    height=740, 
-    title="Ask Echo", 
-    caption=None, 
-    subtitle=None
-):
+def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
-    st.markdown(CHAT_PRIME_UNIFIED_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_COMPACT_CLEAN_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -352,20 +347,18 @@ def render_echo_chat(
     if "echo_source_web" not in st.session_state:
         st.session_state["echo_source_web"] = False
 
-    chat_scroll_height = max(260, int(height) - 130)
-
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
         # Header Row: Logo, Title, and Action Controls
-        h_left, h_mid, h_right = st.columns([0.05, 0.83, 0.12])
+        h_left, h_mid, h_right = st.columns([0.04, 0.84, 0.12])
         with h_left:
-            st.markdown(f'<div style="padding-top:4px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="padding-top:2px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
 
         with h_mid:
             st.markdown(
-                f'<div class="echo-header-box">'
-                f'<h2 class="echo-title">{title}</h2>'
+                f'<div class="echo-header-row">'
+                f'<div class="echo-title-wrap"><h2 class="echo-title">{title}</h2></div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
@@ -373,7 +366,7 @@ def render_echo_chat(
         with h_right:
             c_settings, c_clr = st.columns(2)
             with c_settings:
-                with st.popover("", icon=":material/settings:", help="Configuration"):
+                with st.popover("", icon=":material/settings:", help="Settings"):
                     st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     st.session_state["echo_selected_model"] = st.selectbox(
                         "Model",
@@ -394,10 +387,10 @@ def render_echo_chat(
                     st.rerun()
 
         # ==========================================
-        # --- Chat Stream Feed ---
+        # --- Chat Stream Feed (Auto-fills Remaining Space) ---
         # ==========================================
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-        chat_box = st.container(height=chat_scroll_height)
+        chat_box = st.container()
         st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
@@ -457,7 +450,7 @@ def render_echo_chat(
                     f'<div style="font-family:\'Cinzel\',serif; font-size:0.7rem; font-weight:700; color:#854D0E; margin-bottom:2px;">'
                     f'{SVG_BRAIN_ICON} Knowledge Base Candidate'
                     f'</div>'
-                    f'<div style="font-family:\'Montserrat\',sans-serif; font-size:0.80rem; color:#1F2937; margin-bottom:6px;">'
+                    f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:4px;">'
                     f'Register <b>{prop.get("key")}</b> ({prop.get("category")}): <i>{prop.get("value")}</i>'
                     f'</div></div>',
                     unsafe_allow_html=True
