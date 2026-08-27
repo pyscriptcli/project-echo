@@ -15,7 +15,7 @@ from components.sidebar import setup_page_layout
 
 # 1. Page Configuration (MUST be first)
 st.set_page_config(
-    page_title="Project Echo - Executive Hub",
+    page_title="Project Echo - Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -213,10 +213,6 @@ supabase_records = fetch_meeting_archives(limit=100)
 
 # 7. Header & Custom Popover Date Picker (Replicating image_c8959b.png)
 top_left, top_right = st.columns([2.5, 1.5])
-
-with top_left:
-    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-weight: 400; font-style: italic; color: #1A2B4C; margin-bottom: 0rem; padding-bottom: 0rem; font-size: 2.8rem;">Executive Hub</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #888888; font-size: 1rem; margin-top: 0rem; padding-top: 0.2rem; padding-bottom: 1rem;">Team activity overview</p>', unsafe_allow_html=True)
 
 with top_right:
     st.write("") # Spacer
