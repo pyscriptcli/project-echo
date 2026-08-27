@@ -22,12 +22,28 @@ st.set_page_config(
 
 setup_page_layout()
 
-# 2. Global & Dashboard CSS
+# 2. Session State Initialization
+if "global_chat_history" not in st.session_state:
+    st.session_state["global_chat_history"] = []
+if "selected_meeting_id" not in st.session_state:
+    st.session_state["selected_meeting_id"] = None
+if "chat_fullscreen" not in st.session_state:
+    st.session_state["chat_fullscreen"] = False
+
+today = datetime.datetime.now().date()
+
+if "start_date" not in st.session_state:
+    st.session_state["start_date"] = today.replace(day=1)
+if "end_date" not in st.session_state:
+    _, last_day = calendar.monthrange(today.year, today.month)
+    st.session_state["end_date"] = today.replace(day=last_day)
+
+# 3. Global & Dashboard CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
 
-/* --- Page Canvas & Spacing --- */
+/* --- Canvas & Layout --- */
 .stApp > header { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: hidden !important; }
 .block-container { 
@@ -52,63 +68,80 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     font-style: italic !important; 
     font-weight: 600 !important; 
     color: #1A2B4C !important; 
-    font-size: 1.25rem !important;
-    margin: 0 0 0.15rem 0 !important;
+    font-size: 1.2rem !important;
+    margin: 0 !important;
 }
 .section-caption {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #555E68;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.65rem;
 }
 
-/* --- Compact Left Column Metrics --- */
-.kpi-column {
+/* --- 2x2 Tight KPI Grid --- */
+.kpi-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
+}
+.kpi-mini-card {
+    background: #FFFFFF;
+    border-radius: 6px;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-left: 3.5px solid #22252A;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    margin-bottom: 1.25rem;
+    justify-content: center;
 }
-.kpi-card {
-    background: #FFFFFF;
-    border-radius: 8px;
-    padding: 0.65rem 0.9rem;
-    border: 1px solid rgba(0, 0, 0, 0.07);
-    border-left: 4px solid #22252A;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s ease;
-}
-.kpi-card:hover {
-    border-left-color: #111315;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-.kpi-title {
-    font-size: 0.7rem;
+.kpi-mini-title {
+    font-size: 0.62rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #555E68;
-    margin: 0;
+    letter-spacing: 0.04em;
+    color: #6C727A;
+    margin-bottom: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.kpi-value {
+.kpi-mini-value {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: #1A2B4C;
     margin: 0;
     line-height: 1;
 }
 
-/* --- Streamlit Container Panels --- */
+/* --- Scaled-down Date Picker under 2x2 --- */
+div[data-testid="stPopover"] {
+    margin-bottom: 0.85rem !important;
+}
+div[data-testid="stPopover"] > button {
+    background-color: #FFFFFF !important;
+    color: #22252A !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.7rem !important;
+    min-height: 28px !important;
+    height: 28px !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #22252A !important;
+    background-color: #FAF8F5 !important;
+}
+
+/* --- Container Panels --- */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.025) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    padding: 1.4rem !important;
+    padding: 1.25rem !important;
 }
 
 /* --- Buttons --- */
@@ -119,10 +152,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 6px !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
     letter-spacing: 0.02em;
-    padding: 0.35rem 0.9rem !important;
-    min-height: 32px !important;
+    padding: 0.35rem 0.8rem !important;
+    min-height: 30px !important;
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
@@ -131,32 +164,54 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transform: translateY(-1px);
 }
 
-/* --- Meeting Card Feed --- */
+/* Minimal Icon-Only Action Buttons */
+.chat-action-btn button {
+    background-color: transparent !important;
+    color: #555E68 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.chat-action-btn button:hover {
+    background-color: #F1EFE9 !important;
+    color: #111315 !important;
+    border-color: #22252A !important;
+    transform: none !important;
+}
+
+/* --- Recent Meetings Cards --- */
 .gallery-card {
     background-color: #FAF8F5;
     border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 8px;
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.4rem;
+    border-radius: 6px;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 0.35rem;
 }
 .gallery-title { 
     font-family: 'Playfair Display', serif; 
     font-style: italic; 
-    font-size: 1.05rem; 
+    font-size: 0.98rem; 
     font-weight: 600;
     color: #1A2B4C; 
     margin: 0 0 0.15rem 0; 
 }
 .gallery-sub { 
-    font-size: 0.72rem; 
+    font-size: 0.7rem; 
     color: #6C727A; 
-    margin-bottom: 0.45rem; 
+    margin-bottom: 0.35rem; 
     font-weight: 500;
 }
 .gallery-desc { 
-    font-size: 0.8rem; 
+    font-size: 0.76rem; 
     color: #2D2D2D; 
-    line-height: 1.45; 
+    line-height: 1.4; 
     margin: 0;
 }
 
@@ -170,8 +225,8 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-left: 4px solid #22252A !important;
     border-radius: 0 8px 8px 0 !important;
-    padding: 0.9rem 1.15rem !important;
-    margin-bottom: 0.85rem !important;
+    padding: 0.85rem 1.1rem !important;
+    margin-bottom: 0.75rem !important;
 }
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) div[data-testid="stMarkdownContainer"] * {
     color: #1A1A1A !important;
@@ -179,8 +234,8 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
     background-color: #22252A !important;
     border-radius: 10px 10px 2px 10px !important;
-    padding: 0.75rem 1.15rem !important;
-    margin-bottom: 0.85rem !important;
+    padding: 0.75rem 1.1rem !important;
+    margin-bottom: 0.75rem !important;
     margin-left: auto !important;
     max-width: 82% !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
@@ -194,59 +249,28 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"])
 div[data-testid="stChatMessage"] table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin: 0.75rem 0 !important;
+    margin: 0.65rem 0 !important;
     background-color: #FFFFFF !important;
     border: 1px solid #E5E7EB !important;
     border-radius: 6px !important;
-    overflow: hidden !important;
 }
 div[data-testid="stChatMessage"] th {
     background-color: #F1EFE9 !important;
     color: #1A2B4C !important;
     font-weight: 600 !important;
     text-align: left !important;
-    padding: 7px 10px !important;
+    padding: 6px 10px !important;
     border-bottom: 1px solid #E5E7EB !important;
-    font-size: 0.78rem !important;
+    font-size: 0.76rem !important;
 }
 div[data-testid="stChatMessage"] td {
-    padding: 7px 10px !important;
+    padding: 6px 10px !important;
     border-bottom: 1px solid #F3F4F6 !important;
     color: #2D2D2D !important;
-    font-size: 0.78rem !important;
-}
-
-/* Compact Bottom Date Picker Popover */
-div[data-testid="stPopover"] > button {
-    background-color: #FFFFFF !important;
-    color: #22252A !important;
-    border: 1px solid #D1D5DB !important;
-    border-radius: 6px !important;
-    padding: 0.25rem 0.65rem !important;
-    font-size: 0.75rem !important;
-    min-height: 28px !important;
-    height: 28px !important;
-}
-div[data-testid="stPopover"] > button:hover {
-    border-color: #22252A !important;
-    background-color: #FAF8F5 !important;
+    font-size: 0.76rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
-
-# 3. Global Session State
-if "global_chat_history" not in st.session_state:
-    st.session_state["global_chat_history"] = []
-if "selected_meeting_id" not in st.session_state:
-    st.session_state["selected_meeting_id"] = None
-
-today = datetime.datetime.now().date()
-
-if "start_date" not in st.session_state:
-    st.session_state["start_date"] = today.replace(day=1)
-if "end_date" not in st.session_state:
-    _, last_day = calendar.monthrange(today.year, today.month)
-    st.session_state["end_date"] = today.replace(day=last_day)
 
 # 4. Global AI Query Function
 def query_global_team_archive(question, archive_records, chat_history):
@@ -260,7 +284,7 @@ def query_global_team_archive(question, archive_records, chat_history):
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
         "Answer user questions accurately by synthesizing past meeting records. "
         "Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. "
-        "Do not use emojis; use standard text formatting. Ask follow-up questions when useful."
+        "Do not use emojis; use plain text. Ask follow-up questions when useful."
     )
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
@@ -304,66 +328,154 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 6. Optimized Split Workspace Layout
-col_left, col_right = st.columns([1, 2.1], gap="large")
+# SVG Icons
+ICON_CLEAR = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>"""
+ICON_EXPAND = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>"""
+ICON_COLLAPSE = """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M10 14l-7 7"/></svg>"""
+ICON_CALENDAR = """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>"""
 
-with col_left:
-    with st.container(height=700, border=True):
-        st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
-        
-        # Vertical KPI summary stack
-        st.markdown(f"""
-        <div class="kpi-column">
-            <div class="kpi-card"><span class="kpi-title">In Selected Range</span><span class="kpi-value">{total_range_meetings}</span></div>
-            <div class="kpi-card"><span class="kpi-title">Total Team Archive</span><span class="kpi-value">{total_team_meetings}</span></div>
-            <div class="kpi-card"><span class="kpi-title">Internal Meetings</span><span class="kpi-value">{total_internal_meetings}</span></div>
-            <div class="kpi-card"><span class="kpi-title">External Meetings</span><span class="kpi-value">{total_external_meetings}</span></div>
-        </div>
-        """, unsafe_allow_html=True)
+# 6. Layout Composition
+if st.session_state["chat_fullscreen"]:
+    col_left, col_right = None, st.container()
+else:
+    col_left, col_right = st.columns([1, 2.1], gap="large")
 
-        st.markdown('<p class="section-title" style="margin-top: 1rem !important;">Recent Meetings</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Scroll to explore filtered meetings.</p>', unsafe_allow_html=True)
-        
-        feed_container = st.container(height=260)
-        with feed_container:
-            if filtered_records:
-                for idx, m in enumerate(filtered_records):
-                    m_id = m.get("meeting_id") or f"MOM-{idx}"
-                    client = m.get("client_name") or "Meeting Record"
-                    m_date = str(m.get("meeting_date", "N/A"))[:10]
-                    prep = m.get("prepared_by") or "CRD Team"
-                    summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-                    
-                    st.markdown(f"""
-                    <div class="gallery-card">
-                        <p class="gallery-title">{client}</p>
-                        <p class="gallery-sub">{m_date} &bull; {prep}</p>
-                        <p class="gallery-desc">{summary[:95]}...</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("View Meeting", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
-                        st.session_state["selected_meeting_id"] = m_id
-                        st.switch_page("pages/2_meeting_details.py")
-                    st.markdown("<div style='margin-bottom: 0.6rem;'></div>", unsafe_allow_html=True)
-            else:
-                st.info("No records found.")
+# Left Column (Overview, Date Filter, Feed)
+if not st.session_state["chat_fullscreen"]:
+    with col_left:
+        with st.container(height=720, border=True):
+            st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
+            
+            # Tight 2x2 KPI Grid
+            st.markdown(f"""
+            <div class="kpi-grid-2x2">
+                <div class="kpi-mini-card">
+                    <span class="kpi-mini-title">Selected</span>
+                    <span class="kpi-mini-value">{total_range_meetings}</span>
+                </div>
+                <div class="kpi-mini-card">
+                    <span class="kpi-mini-title">Team Archive</span>
+                    <span class="kpi-mini-value">{total_team_meetings}</span>
+                </div>
+                <div class="kpi-mini-card">
+                    <span class="kpi-mini-title">Internal</span>
+                    <span class="kpi-mini-value">{total_internal_meetings}</span>
+                </div>
+                <div class="kpi-mini-card">
+                    <span class="kpi-mini-title">External</span>
+                    <span class="kpi-mini-value">{total_external_meetings}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
+            # Compact Scaled Date Picker below 2x2
+            date_label = f"{st.session_state['start_date'].strftime('%b %d')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
+            with st.popover(f"{date_label}", use_container_width=True):
+                p_col1, p_col2 = st.columns([1.1, 1.9])
+                with p_col1:
+                    st.caption("PRESETS")
+                    if st.button("This Week", key="btn_tw", use_container_width=True):
+                        st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
+                        st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                        st.rerun()
+                    if st.button("Last Week", key="btn_lw", use_container_width=True):
+                        st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 7)
+                        st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                        st.rerun()
+                    if st.button("This Month", key="btn_tm", use_container_width=True):
+                        st.session_state["start_date"] = today.replace(day=1)
+                        _, last = calendar.monthrange(today.year, today.month)
+                        st.session_state["end_date"] = today.replace(day=last)
+                        st.rerun()
+                    if st.button("Last Month", key="btn_lm", use_container_width=True):
+                        first_this = today.replace(day=1)
+                        last_prev = first_this - datetime.timedelta(days=1)
+                        st.session_state["start_date"] = last_prev.replace(day=1)
+                        st.session_state["end_date"] = last_prev
+                        st.rerun()
+                    st.markdown("<div style='margin-top: 0.4rem;'></div>", unsafe_allow_html=True)
+                    if st.button("Reset", key="btn_reset_inside", use_container_width=True):
+                        st.session_state["start_date"] = today.replace(day=1)
+                        _, last = calendar.monthrange(today.year, today.month)
+                        st.session_state["end_date"] = today.replace(day=last)
+                        st.rerun()
+
+                with p_col2:
+                    st.caption("CUSTOM RANGE")
+                    selected_dates = st.date_input(
+                        "Date Range",
+                        value=(st.session_state["start_date"], st.session_state["end_date"]),
+                        label_visibility="collapsed"
+                    )
+                    if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+                        if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
+                            st.session_state["start_date"] = selected_dates[0]
+                            st.session_state["end_date"] = selected_dates[1]
+                            st.rerun()
+
+            st.markdown('<p class="section-title" style="margin-top: 0.5rem !important;">Recent Meetings</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-caption">Scroll to explore filtered meetings.</p>', unsafe_allow_html=True)
+            
+            feed_container = st.container(height=280)
+            with feed_container:
+                if filtered_records:
+                    for idx, m in enumerate(filtered_records):
+                        m_id = m.get("meeting_id") or f"MOM-{idx}"
+                        client = m.get("client_name") or "Meeting Record"
+                        m_date = str(m.get("meeting_date", "N/A"))[:10]
+                        prep = m.get("prepared_by") or "CRD Team"
+                        summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+                        
+                        st.markdown(f"""
+                        <div class="gallery-card">
+                            <p class="gallery-title">{client}</p>
+                            <p class="gallery-sub">{m_date} &bull; {prep}</p>
+                            <p class="gallery-desc">{summary[:90]}...</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
+                            st.session_state["selected_meeting_id"] = m_id
+                            st.switch_page("pages/2_meeting_details.py")
+                        st.markdown("<div style='margin-bottom: 0.45rem;'></div>", unsafe_allow_html=True)
+                else:
+                    st.info("No records found.")
+
+# Right Column (AI Chat)
 with col_right:
-    with st.container(height=700, border=True):
-        st.markdown('<p class="section-title">Ask Echo — Global Intelligence</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Synthesize meeting archives, transcripts, and action logs.</p>', unsafe_allow_html=True)
+    with st.container(height=720, border=True):
+        chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.05, 0.05])
+        
+        with chat_header_col:
+            st.markdown('<p class="section-title">Ask Echo — Global Intelligence</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-caption">Synthesize meeting archives, transcripts, and action logs.</p>', unsafe_allow_html=True)
+            
+        with btn_clear_col:
+            st.markdown('<div class="chat-action-btn">', unsafe_allow_html=True)
+            if st.button(ICON_CLEAR, key="btn_clear_chat", help="Clear conversation"):
+                st.session_state["global_chat_history"] = []
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with btn_full_col:
+            st.markdown('<div class="chat-action-btn">', unsafe_allow_html=True)
+            current_icon = ICON_COLLAPSE if st.session_state["chat_fullscreen"] else ICON_EXPAND
+            tooltip = "Exit Fullscreen" if st.session_state["chat_fullscreen"] else "Fullscreen"
+            if st.button(current_icon, key="btn_fullscreen_chat", help=tooltip):
+                st.session_state["chat_fullscreen"] = not st.session_state["chat_fullscreen"]
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        chat_history_container = st.container(height=525)
+        chat_feed_height = 540 if not st.session_state["chat_fullscreen"] else 560
+        chat_history_container = st.container(height=chat_feed_height)
         with chat_history_container:
             if not st.session_state["global_chat_history"]:
-                with st.chat_message("assistant", avatar="utils/assistant_icon.svg" if os.path.exists("utils/assistant_icon.svg") else None):
+                with st.chat_message("assistant"):
                     st.markdown("**System Online:** Hello. I am Echo. Ask me anything across your entire meeting archive.")
             else:
                 for msg in st.session_state["global_chat_history"]:
-                    avatar_path = ("utils/assistant_icon.svg" if os.path.exists("utils/assistant_icon.svg") else None) if msg["role"] == "assistant" else None
-                    with st.chat_message(msg["role"], avatar=avatar_path):
+                    with st.chat_message(msg["role"]):
                         st.markdown(msg["content"])
 
         if global_query := st.chat_input("Ask Echo a question..."):
@@ -372,55 +484,3 @@ with col_right:
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
             st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
             st.rerun()
-
-# 7. Bottom Compact Date Picker with Embedded Reset
-st.markdown("<div style='margin-top: 1.25rem;'></div>", unsafe_allow_html=True)
-foot_l, foot_r = st.columns([3.5, 1.2])
-
-with foot_r:
-    date_label = f"{st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
-    
-    with st.popover(date_label, use_container_width=True):
-        p_col1, p_col2 = st.columns([1.1, 1.9])
-        
-        with p_col1:
-            st.caption("PRESETS")
-            if st.button("This Week", key="btn_tw", use_container_width=True):
-                st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
-                st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
-                st.rerun()
-            if st.button("Last Week", key="btn_lw", use_container_width=True):
-                st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 7)
-                st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
-                st.rerun()
-            if st.button("This Month", key="btn_tm", use_container_width=True):
-                st.session_state["start_date"] = today.replace(day=1)
-                _, last = calendar.monthrange(today.year, today.month)
-                st.session_state["end_date"] = today.replace(day=last)
-                st.rerun()
-            if st.button("Last Month", key="btn_lm", use_container_width=True):
-                first_this = today.replace(day=1)
-                last_prev = first_this - datetime.timedelta(days=1)
-                st.session_state["start_date"] = last_prev.replace(day=1)
-                st.session_state["end_date"] = last_prev
-                st.rerun()
-                
-            st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-            if st.button("Reset Range", key="btn_reset_inside", use_container_width=True):
-                st.session_state["start_date"] = today.replace(day=1)
-                _, last = calendar.monthrange(today.year, today.month)
-                st.session_state["end_date"] = today.replace(day=last)
-                st.rerun()
-
-        with p_col2:
-            st.caption("CUSTOM RANGE")
-            selected_dates = st.date_input(
-                "Date Range",
-                value=(st.session_state["start_date"], st.session_state["end_date"]),
-                label_visibility="collapsed"
-            )
-            if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-                if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
-                    st.session_state["start_date"] = selected_dates[0]
-                    st.session_state["end_date"] = selected_dates[1]
-                    st.rerun()
