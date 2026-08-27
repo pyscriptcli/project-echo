@@ -191,9 +191,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Render Navigation
-render_custom_sidebar()
-
 # 4. Global Session State
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
