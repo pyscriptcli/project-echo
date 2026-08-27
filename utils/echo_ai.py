@@ -1,401 +1,310 @@
-import streamlit as st
-import requests
-import json
-import pandas as pd
+import os
 import re
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
+import sys
+import json
+import urllib.parse
+from pathlib import Path
+import requests
+import pandas as pd
+from pypdf import PdfReader
+from docx import Document
+from pptx import Presentation
+from supabase import create_client, Client
 
-# --- Pure SVG Icon Assets (No Emojis) ---
-SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
-    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-    <polyline points="2 17 12 22 22 17"></polyline>
-    <polyline points="2 12 12 17 22 12"></polyline>
-</svg>
-"""
+# --- Configuration ---
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
+DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
 
-SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
-    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
-    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
-</svg>
-"""
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 
-CHAT_UI_CSS = """
-<style>
-/* Pill-shaped modern chat styling */
-.echo-chat-thread {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 0.5rem 0.2rem;
-}
-.echo-msg-row-user {
-    display: flex;
-    justify-content: flex-end;
-    width: 100%;
-}
-.echo-msg-user {
-    background: linear-gradient(135deg, #1A2B4C 0%, #2D4675 100%);
-    color: #FFFFFF;
-    padding: 0.75rem 1.25rem;
-    border-radius: 24px 24px 4px 24px;
-    max-width: 80%;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    box-shadow: 0 4px 12px rgba(26, 43, 76, 0.12);
-}
-.echo-msg-row-assistant {
-    display: flex;
-    justify-content: flex-start;
-    width: 100%;
-}
-.echo-msg-assistant {
-    background-color: #FFFFFF;
-    color: #1F2937;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 0.85rem 1.35rem;
-    border-radius: 24px 24px 24px 4px;
-    max-width: 88%;
-    font-size: 0.88rem;
-    line-height: 1.55;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-.echo-system-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #1A2B4C;
-    margin-bottom: 0.4rem;
-}
-.echo-inline-card {
-    background-color: #FBF9F5;
-    border: 1px dashed #D4AF37;
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    margin-top: 0.6rem;
-}
-</style>
-"""
-
-def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize enterprise archives, align records, and synchronize organizational knowledge."):
-    target = container if container else st
-    st.markdown(CHAT_UI_CSS, unsafe_allow_html=True)
-
-    # State Initializations
-    if "global_chat_history" not in st.session_state:
-        st.session_state["global_chat_history"] = []
-    if "extracted_context_df" not in st.session_state:
-        st.session_state["extracted_context_df"] = None
-    if "knowledge_proposal" not in st.session_state:
-        st.session_state["knowledge_proposal"] = None
-
-    with target.container(height=height, border=True):
-        # Header Controls
-        header_col, btn_clear_col = st.columns([0.94, 0.06])
-        with header_col:
-            st.markdown(
-                f'<div style="display:flex; align-items:center; gap:8px;">'
-                f'{SVG_ECHO_LOGO}<span style="font-family: \'Playfair Display\', serif; font-size: 1.15rem; font-weight:600; color:#1A2B4C;">{title}</span>'
-                f'</div>'
-                f'<p style="font-size:0.8rem; color:#6B7280; margin: 0 0 0.5rem 0;">{caption}</p>',
-                unsafe_allow_html=True
-            )
-        with btn_clear_col:
-            if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
-                st.session_state["global_chat_history"] = []
-                st.session_state["knowledge_proposal"] = None
-                st.rerun()
-
-        # Tab Navigation Architecture
-        tab_chat, tab_context = st.tabs(["Intelligence Thread", "Echo Knowledge Vault"])
-
-        # --- TAB 1: Chat Thread ---
-        with tab_chat:
-            chat_box = st.container(height=height - 240)
-            with chat_box:
-                st.markdown('<div class="echo-chat-thread">', unsafe_allow_html=True)
-                
-                if not st.session_state["global_chat_history"]:
-                    st.markdown(
-                        '<div class="echo-msg-row-assistant">'
-                        '<div class="echo-msg-assistant">'
-                        '<div class="echo-system-badge">Echo Assistant</div>'
-                        'Global Intelligence active. Inquire regarding past decisions, cross-meeting action plans, or designated timelines across historical records.'
-                        '</div></div>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    for idx, msg in enumerate(st.session_state["global_chat_history"]):
-                        if msg["role"] == "user":
-                            st.markdown(
-                                f'<div class="echo-msg-row-user">'
-                                f'<div class="echo-msg-user">{msg["content"]}</div>'
-                                f'</div>',
-                                unsafe_allow_html=True
-                            )
-                        else:
-                            content_html = msg["content"].replace("\n", "<br>")
-                            st.markdown(
-                                f'<div class="echo-msg-row-assistant">'
-                                f'<div class="echo-msg-assistant">'
-                                f'<div class="echo-system-badge">Echo Assistant</div>'
-                                f'{content_html}'
-                                f'</div></div>',
-                                unsafe_allow_html=True
-                            )
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
-            # Active Knowledge Proposal Approval Card
-            if st.session_state["knowledge_proposal"]:
-                prop = st.session_state["knowledge_proposal"]
-                with st.container(border=True):
-                    st.markdown(
-                        f'<div class="echo-system-badge" style="color:#D4AF37;">'
-                        f'{SVG_BRAIN_ICON} Knowledge Base Addition Detected'
-                        f'</div>'
-                        f'<p style="font-size:0.84rem; margin:0 0 0.5rem 0; color:#374151;">'
-                        f'Would you like to register <b>{prop.get("key")}</b> ({prop.get("category")}) to the Echo Knowledge Base?<br/>'
-                        f'<i>Value: {prop.get("value")}</i>'
-                        f'</p>',
-                        unsafe_allow_html=True
-                    )
-                    c_approve, c_reject = st.columns([1, 1])
-                    with c_approve:
-                        if st.button("Confirm & Add to Echo Knowledge", key="btn_confirm_prop", type="primary", use_container_width=True):
-                            upsert_echo_context(
-                                category=prop["category"],
-                                key=prop["key"],
-                                value=prop["value"],
-                                priority=prop.get("priority", 2)
-                            )
-                            st.session_state["global_chat_history"].append({
-                                "role": "assistant",
-                                "content": f"Confirmed: `{prop['key']}` has been recorded into the Echo Knowledge Base."
-                            })
-                            st.session_state["knowledge_proposal"] = None
-                            st.rerun()
-                    with c_reject:
-                        if st.button("Dismiss", key="btn_reject_prop", use_container_width=True):
-                            st.session_state["knowledge_proposal"] = None
-                            st.rerun()
-
-            # Chat Input Field
-            if prompt := st.chat_input("Ask a question, identify project facts, or provide knowledge updates..."):
-                st.session_state["global_chat_history"].append({"role": "user", "content": prompt})
-                with st.spinner("Synthesizing archives and analyzing entities..."):
-                    archives = fetch_meeting_archives(limit=100)
-                    answer, proposed_fact = _query_echo_backend(prompt, archives, st.session_state["global_chat_history"])
-                    
-                    st.session_state["global_chat_history"].append({"role": "assistant", "content": answer})
-                    if proposed_fact:
-                        st.session_state["knowledge_proposal"] = proposed_fact
-                st.rerun()
-
-        # --- TAB 2: Knowledge Base Manager ---
-        with tab_context:
-            _render_context_manager_subtab()
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 
-def _render_context_manager_subtab():
-    """Renders structured dual-mode Context Management UI within the dedicated tab."""
-    mode = st.radio(
-        "Context Input Mode",
-        options=["AI Smart Extraction", "Manual Entry"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
+# ==========================================
+# 1. Multi-Format Text Extraction Layer
+# ==========================================
 
-    if mode == "AI Smart Extraction":
-        raw_text = st.text_area(
-            "Raw Information Dump",
-            height=100,
-            placeholder="Paste raw corporate updates, abbreviations, or team designations here...",
-            label_visibility="collapsed"
-        )
-        col_act1, col_act2 = st.columns([1.5, 1])
-        with col_act1:
-            if st.button("Structure Unstructured Notes", key="btn_run_ai_struct", use_container_width=True, type="primary"):
-                if raw_text.strip():
-                    with st.spinner("Extracting parameters..."):
-                        extracted = _extract_context_with_ai(raw_text)
-                        if extracted:
-                            st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
-                            st.rerun()
-                        else:
-                            st.error("No actionable definitions or entities identified.")
-                else:
-                    st.warning("Please supply context text.")
-        with col_act2:
-            if st.button("Clear Working Table", key="btn_reset_tbl", use_container_width=True):
-                st.session_state["extracted_context_df"] = None
-                st.rerun()
+def extract_from_pdf(file_path: str) -> str:
+    reader = PdfReader(file_path)
+    text_chunks = [page.extract_text() or "" for page in reader.pages]
+    return "\n".join(text_chunks)
 
+
+def extract_from_docx(file_path: str) -> str:
+    doc = Document(file_path)
+    lines = []
+    for p in doc.paragraphs:
+        if p.text.strip():
+            lines.append(p.text.strip())
+    for table in doc.tables:
+        for row in table.rows:
+            row_vals = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+            if row_vals:
+                lines.append(" | ".join(row_vals))
+    return "\n".join(lines)
+
+
+def extract_from_pptx(file_path: str) -> str:
+    prs = Presentation(file_path)
+    text_lines = []
+    for slide_idx, slide in enumerate(prs.slides):
+        text_lines.append(f"\n--- Slide {slide_idx + 1} ---")
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    if paragraph.text.strip():
+                        text_lines.append(paragraph.text.strip())
+            elif shape.has_table:
+                for row in shape.table.rows:
+                    row_vals = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if row_vals:
+                        text_lines.append(" | ".join(row_vals))
+    return "\n".join(text_lines)
+
+
+def extract_from_spreadsheet(file_path: str) -> str:
+    ext = os.path.splitext(file_path)[1].lower()
+    lines = []
+    if ext == ".csv":
+        df = pd.read_csv(file_path)
+        lines.append(df.to_string(index=False))
     else:
-        st.caption("Add an individual entity record directly into the staged schema.")
-        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns([1.2, 1.5, 2.5, 0.8, 1])
-        with m_col1:
-            m_cat = st.selectbox("Category", options=["team", "jargon", "projects"], key="manual_cat")
-        with m_col2:
-            m_key = st.text_input("Entity / Key", placeholder="e.g., QBR", key="manual_key")
-        with m_col3:
-            m_val = st.text_input("Definition / Role", placeholder="Quarterly Business Review", key="manual_val")
-        with m_col4:
-            m_prio = st.number_input("Priority", min_value=1, max_value=5, value=1, key="manual_prio")
-        with m_col5:
-            st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Add Row", key="btn_add_manual_row", use_container_width=True):
-                if m_key.strip() and m_val.strip():
-                    new_entry = pd.DataFrame([{
-                        "category": m_cat,
-                        "key": m_key.strip(),
-                        "value": m_val.strip(),
-                        "priority": int(m_prio)
-                    }])
-                    if st.session_state["extracted_context_df"] is None:
-                        st.session_state["extracted_context_df"] = new_entry
-                    else:
-                        st.session_state["extracted_context_df"] = pd.concat([st.session_state["extracted_context_df"], new_entry], ignore_index=True)
-                    st.rerun()
-                else:
-                    st.error("Key and Value required.")
-
-    # Shared Editable Review Data Grid
-    if st.session_state["extracted_context_df"] is not None and not st.session_state["extracted_context_df"].empty:
-        st.markdown("---")
-        st.markdown("<p style='font-size:0.85rem; font-weight:600; color:#1A2B4C;'>Staged Knowledge Base Rows</p>", unsafe_allow_html=True)
-
-        column_config = {
-            "category": st.column_config.SelectboxColumn("Category", options=["team", "jargon", "projects"], required=True),
-            "key": st.column_config.TextColumn("Key / Entity", required=True),
-            "value": st.column_config.TextColumn("Value / Definition", required=True, width="large"),
-            "priority": st.column_config.NumberColumn("Priority (1-5)", min_value=1, max_value=5, default=1)
-        }
-
-        edited_df = st.data_editor(
-            st.session_state["extracted_context_df"],
-            column_config=column_config,
-            num_rows="dynamic",
-            use_container_width=True,
-            hide_index=True,
-            key="vault_data_editor"
-        )
-
-        if st.button("Save All to Knowledge Base", key="btn_commit_vault", type="primary", use_container_width=True):
-            saved = 0
-            with st.spinner("Committing to repository..."):
-                for _, row in edited_df.iterrows():
-                    if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
-                        if upsert_echo_context(
-                            category=str(row['category']),
-                            key=str(row['key']),
-                            value=str(row['value']),
-                            priority=int(row['priority']) if pd.notna(row['priority']) else 1
-                        ):
-                            saved += 1
-            if saved > 0:
-                st.success(f"Successfully committed {saved} item(s) to Echo Brain.")
-                st.session_state["extracted_context_df"] = None
-                st.rerun()
+        excel_file = pd.ExcelFile(file_path)
+        for sheet_name in excel_file.sheet_names:
+            lines.append(f"\n--- Sheet: {sheet_name} ---")
+            df = pd.read_excel(file_path, sheet_name=sheet_name)
+            df = df.dropna(how="all").dropna(axis=1, how="all")
+            lines.append(df.to_string(index=False))
+    return "\n".join(lines)
 
 
-def _extract_context_with_ai(raw_text: str) -> list:
-    """Invokes LLM extraction schema on raw unstructured entries."""
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-    if not api_key:
-        st.error("DeepSeek API Key configuration missing.")
+def extract_from_plaintext(file_path: str) -> str:
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        return f.read()
+
+
+def load_document_text(file_path: str) -> str:
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext == ".pdf":
+        return extract_from_pdf(file_path)
+    elif ext in [".docx", ".doc"]:
+        return extract_from_docx(file_path)
+    elif ext in [".pptx", ".ppt"]:
+        return extract_from_pptx(file_path)
+    elif ext in [".xlsx", ".xls", ".csv"]:
+        return extract_from_spreadsheet(file_path)
+    elif ext in [".txt", ".md", ".json"]:
+        return extract_from_plaintext(file_path)
+    else:
+        raise ValueError(f"Unsupported format '{ext}'. Supported: .pdf, .docx, .pptx, .xlsx, .csv, .txt, .md")
+
+
+# ==========================================
+# 2. Text Chunking & LLM Structuring Layer
+# ==========================================
+
+def chunk_text(text: str, chunk_size: int = 12000, overlap: int = 1000) -> list[str]:
+    chunks = []
+    start = 0
+    clean_text = text.strip()
+    if not clean_text:
+        return []
+    while start < len(clean_text):
+        end = start + chunk_size
+        chunks.append(clean_text[start:end])
+        start += chunk_size - overlap
+    return chunks
+
+
+def extract_entities_with_llm(text_chunk: str) -> list[dict]:
+    if not DEEPSEEK_API_KEY:
+        print("  [Notice] DEEPSEEK_API_KEY missing. Skipping LLM structuring.")
         return []
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
     system_prompt = (
-        "Extract enterprise facts from text into a valid JSON object with key 'items'. "
-        "Each array entry must contain: 'category' ('team', 'jargon', or 'projects'), "
-        "'key' (term/proper noun), 'value' (definition/description), and 'priority' (integer 1-5)."
+        "You are an enterprise knowledge extraction AI for PRIME Philippines. "
+        "Extract all actionable knowledge into a JSON object with key 'items'. "
+        "Schema for each item:\n"
+        "- category: Exactly one of ['team', 'projects', 'jargon']\n"
+        "- key: Canonical name, abbreviation, or entity title (e.g. 'CAPEX', 'Project Echo', 'John Doe')\n"
+        "- value: Exhaustive description, definition, role, or scope\n"
+        "- priority: Integer from 1 (contextual) to 5 (mission critical)"
     )
 
     payload = {
         "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": raw_text}
+            {"role": "user", "content": f"Extract entities from this content:\n\n{text_chunk}"}
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.1,
-        "max_tokens": 800
+        "max_tokens": 1500
     }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=30)
+        resp = requests.post(DEEPSEEK_CHAT_URL, headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
             parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
             return parsed.get("items", [])
+        print(f"  [API Error] Status {resp.status_code}: {resp.text}")
         return []
     except Exception as e:
-        st.error(f"Extraction error: {e}")
+        print(f"  [Error] LLM request failed: {e}")
         return []
 
 
-def _query_echo_backend(question: str, archive_records: list, chat_history: list) -> tuple:
-    """
-    Synthesizes archives while verifying if the user statement contains novel knowledge base entities.
-    Returns a tuple: (answer_text, proposed_knowledge_dict_or_None)
-    """
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-    if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets.", None
+def upsert_to_supabase(items: list[dict]):
+    if not supabase:
+        print("  [Database] Supabase not connected. Skipping DB upsert.")
+        return
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    archive_context = json.dumps(archive_records, indent=1)
+    success = 0
+    for item in items:
+        try:
+            payload = {
+                "category": str(item.get("category", "jargon")).lower().strip(),
+                "key": str(item.get("key", "")).strip(),
+                "value": str(item.get("value", "")).strip(),
+                "priority": int(item.get("priority", 1))
+            }
+            if payload["key"] and payload["value"]:
+                supabase.table("echo_context").upsert(payload, on_conflict="category,key").execute()
+                success += 1
+        except Exception as e:
+            print(f"  [DB Error] Failed to write '{item.get('key')}': {e}")
+    print(f"  [Database] Successfully synced {success}/{len(items)} items to Supabase.")
 
-    context_data = fetch_echo_context()
-    team_list = ", ".join(context_data.get('team', []))
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-    projects = ", ".join(context_data.get('projects', []))
 
-    context_string = f"""
-ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
----------------------------------------
-TEAM MEMBERS: {team_list}
-ACTIVE PROJECTS: {projects}
-TECHNICAL JARGON:
-{jargon_list}
-"""
+# ==========================================
+# 3. Helpers: Path Cleaner & Hyperlink Formatter
+# ==========================================
 
-    system_prompt = (
-        "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Synthesize meeting archives accurately. Format with plain text and Markdown tables/bullets only. No emojis. "
-        "Determine if the user's input contains a new terminology definition, project assignment, or role update that could belong in the knowledge base. "
-        "Respond in strict JSON with schema: "
-        "{"
-        "  \"response\": \"Your thorough Markdown answer to the user\", "
-        "  \"propose_knowledge\": null OR {\"category\": \"team|jargon|projects\", \"key\": \"Name/Term\", \"value\": \"Definition/Role\", \"priority\": 2}"
-        "}"
-        f"\n\n{context_string}\n"
-    )
+def clean_drag_and_drop_path(raw_input: str) -> str:
+    """Sanitizes file paths dragged into macOS, Windows, and Linux terminals."""
+    cleaned = raw_input.strip()
+    # Remove leading and trailing quotation marks added by terminal emulators
+    if (cleaned.startswith("'") and cleaned.endswith("'")) or (cleaned.startswith('"') and cleaned.endswith('"')):
+        cleaned = cleaned[1:-1]
+    # Handle escaped spaces from POSIX terminals (e.g., /Path\ With\ Spaces.pdf)
+    cleaned = cleaned.replace("\\ ", " ")
+    # Handle file:// URI scheme drops
+    if cleaned.startswith("file://"):
+        parsed_url = urllib.parse.urlparse(cleaned)
+        cleaned = urllib.parse.unquote(parsed_url.path)
+        if sys.platform.startswith("win") and cleaned.startswith("/"):
+            cleaned = cleaned[1:]
+    return os.path.abspath(cleaned)
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:26000]}"}]
-    for msg in chat_history[-6:]:
-        messages.append({"role": msg["role"], "content": msg["content"]})
-    messages.append({"role": "user", "content": question})
 
-    payload = {
-        "model": "deepseek-chat",
-        "messages": messages,
-        "response_format": {"type": "json_object"},
-        "temperature": 0.2,
-        "max_tokens": 900
-    }
+def create_terminal_hyperlink(file_path: str, display_text: str = None) -> str:
+    """Generates an ANSI/OSC 8 clickable hyperlink supported in modern terminals."""
+    display = display_text if display_text else file_path
+    abs_path = os.path.abspath(file_path)
+    file_url = Path(abs_path).as_uri()
+    # OSC 8 escape sequence: \033]8;;URI\033\TEXT\033]8;;\033\
+    return f"\033]8;;{file_url}\033\\{display}\033]8;;\033\\"
 
-    try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
-        if resp.status_code == 200:
-            result = json.loads(resp.json()["choices"][0]["message"]["content"])
-            return result.get("response", ""), result.get("propose_knowledge")
-        return f"Service notice ({resp.status_code}): {resp.text}", None
-    except Exception as e:
-        return f"Analysis exception: {e}", None
+
+def get_default_downloads_folder() -> Path:
+    """Resolves standard Downloads directory across macOS, Windows, and Linux."""
+    return Path.home() / "Downloads"
+
+
+# ==========================================
+# 4. Processing Pipeline
+# ==========================================
+
+def process_file_pipeline(file_path: str):
+    print(f"\n[*] Reading document: {file_path}")
+    raw_text = load_document_text(file_path)
+    print(f"[*] Extracted {len(raw_text):,} characters.")
+
+    chunks = chunk_text(raw_text)
+    print(f"[*] Segmented into {len(chunks)} chunk(s). Processing with DeepSeek...")
+
+    all_items = []
+    seen_keys = set()
+
+    for idx, chunk in enumerate(chunks):
+        print(f"  -> Structuring chunk {idx + 1}/{len(chunks)}...")
+        extracted = extract_entities_with_llm(chunk)
+        for item in extracted:
+            cat = str(item.get("category", "")).lower().strip()
+            key = str(item.get("key", "")).lower().strip()
+            if cat in ["team", "projects", "jargon"] and key:
+                dedup_key = (cat, key)
+                if dedup_key not in seen_keys:
+                    seen_keys.add(dedup_key)
+                    all_items.append(item)
+
+    print(f"[*] Found {len(all_items)} unique structured entities.")
+
+    # Target save location: ~/Downloads
+    downloads_dir = get_default_downloads_folder()
+    downloads_dir.mkdir(parents=True, exist_ok=True)
+    
+    stem = Path(file_path).stem
+    safe_stem = re.sub(r'[^a-zA-Z0-9_-]', '_', stem)
+    output_filename = f"echo_knowledge_{safe_stem}.json"
+    output_path = downloads_dir / output_filename
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump({"items": all_items}, f, indent=2, ensure_ascii=False)
+
+    upsert_to_supabase(all_items)
+
+    # Clickable terminal hyperlink output
+    clickable_link = create_terminal_hyperlink(str(output_path), display_text=str(output_path))
+    print("\n[✓] Ingestion Complete!")
+    print(f"[*] File saved to: {clickable_link}")
+    print("    (Hold Cmd/Ctrl and click the link above to open)\n")
+
+
+# ==========================================
+# 5. Interactive Terminal Loop
+# ==========================================
+
+def main():
+    print("=" * 65)
+    print("  PROJECT ECHO — UNIVERSAL DOCUMENT KNOWLEDGE INGESTION")
+    print("=" * 65)
+    print("Supported Formats: PDF, DOCX, PPTX, XLSX, XLS, CSV, TXT, MD")
+    print("Type 'exit' or press Ctrl+C to quit.\n")
+
+    while True:
+        try:
+            user_input = input("Drag and drop your file here: ").strip()
+            
+            if not user_input:
+                continue
+            if user_input.lower() in ["exit", "quit", "q"]:
+                print("Exiting.")
+                break
+
+            target_path = clean_drag_and_drop_path(user_input)
+
+            if not os.path.isfile(target_path):
+                print(f"[!] Error: Could not locate file at: {target_path}\n")
+                continue
+
+            process_file_pipeline(target_path)
+
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break
+        except Exception as e:
+            print(f"[!] Pipeline Error: {e}\n")
+
+
+if __name__ == "__main__":
+    main()
