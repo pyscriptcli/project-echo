@@ -34,13 +34,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. SVG Icons (Strictly No Emojis)
-TRASH_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
-SAVE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>'
-COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
-SETTINGS_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: middle;"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>'
-
-# 3. Custom CSS (Topbar removed, UI preserved)
+# 2. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -70,11 +64,53 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 .stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important; }
 .stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #D4AF37 !important; }
 
-/* Buttons */
-.stButton > button { background-color: #222222 !important; color: #FFFFFF !important; border: none !important; border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important; }
+/* Buttons General */
+.stButton > button { background-color: #222222 !important; color: #FFFFFF !important; border: none !important; border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
 .stButton > button:hover { background-color: #D4AF37 !important; color: #161616 !important; }
+
+/* Settings Button SVG Icon */
+.stButton > button[key="card_settings_btn"] {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+}
+.stButton > button[key="card_settings_btn"]::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+/* Save Meeting Button SVG Icon */
+.stButton > button[key="btn_save_supabase_bottom"]::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+/* Delete Row Button Styling & SVG Icon */
 .stButton > button[key^="del_"] { background-color: #FDF9F9 !important; color: #B23A3A !important; border: 1px solid rgba(178, 58, 58, 0.25) !important; }
 .stButton > button[key^="del_"]:hover { background-color: #B23A3A !important; color: #FFFFFF !important; }
+.stButton > button[key^="del_"]::before {
+    content: "";
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 4px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") no-repeat center;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") no-repeat center;
+}
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }
@@ -84,6 +120,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# 3. SVG Templates for HTML components
+COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
 
 # 4. Constants & Config
 DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
@@ -683,7 +722,7 @@ with col_details:
         with head_col1:
             st.markdown('<h3 style="margin-top:0.2rem;">Meeting Details</h3>', unsafe_allow_html=True)
         with head_col2:
-            if st.button(SETTINGS_ICON, key="card_settings_btn", help="Settings"):
+            if st.button("", key="card_settings_btn", help="Settings"):
                 st.session_state["show_settings"] = not st.session_state["show_settings"]
                 st.rerun()
         if st.session_state["show_settings"]:
@@ -822,7 +861,7 @@ if not st.session_state["df"].empty:
                     st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"pic_{idx}", height=75, label_visibility="collapsed")
                 with c_del:
                     st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                    if st.button(f"{TRASH_ICON} Delete", key=f"del_{idx}"):
+                    if st.button("Delete", key=f"del_{idx}"):
                         continue 
                 
                 rows_to_keep.append({
@@ -870,7 +909,7 @@ if not st.session_state["df"].empty:
         st.write("")
         save_col1, save_col2 = st.columns([8, 2])
         with save_col2:
-            if st.button(f"{SAVE_ICON} Save Meeting", key="btn_save_supabase_bottom"):
+            if st.button("Save Meeting", key="btn_save_supabase_bottom"):
                 success, msg = save_meeting_to_supabase(meeting_details, st.session_state["df"], st.session_state["other_discussions"], st.session_state["transcript"])
                 if success:
                     st.success(msg)
