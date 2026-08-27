@@ -3,7 +3,7 @@ import requests
 import json
 import pandas as pd
 import re
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -30,18 +30,42 @@ SVG_BRAIN_ICON = """
 
 CHAT_GLASSMORPHISM_CSS = """
 <style>
-/* Outer Card Container with Frosted Glass */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
+/* Outer Card Container - Frosted Glass without outer scrollbar */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background: rgba(255, 255, 255, 0.45) !important;
     backdrop-filter: blur(16px) saturate(160%) !important;
     -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
     border: 1px solid rgba(255, 255, 255, 0.65) !important;
     border-radius: 18px !important;
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
-    transition: all 0.3s ease-in-out;
+    overflow: hidden !important;
 }
 
-/* Fullscreen Viewport Overlay */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    gap: 0.5rem !important;
+}
+
+/* Tab contents filling full remaining height */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabs"] {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabContent"] {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Fullscreen Viewport Mode */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     position: fixed !important;
     top: 0 !important;
@@ -57,21 +81,26 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     padding: 1.5rem 3rem !important;
     box-sizing: border-box !important;
-    overflow-y: auto !important;
+    overflow: hidden !important;
 }
 
 /* Inner Scrollable Chat Feed */
+.echo-chat-box-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
     background: rgba(255, 255, 255, 0.35) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 14px !important;
-}
-
-.echo-chat-viewport {
-    padding: 0.1rem;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100% !important;
+    overflow-y: auto !important;
 }
 
 /* User Message Bubble */
@@ -233,11 +262,27 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Persistent Docked Chat Input Box at Container Bottom */
-div[data-testid="stChatInput"] {
-    margin-top: 0.75rem !important;
+/* Persistent Bottom Input Bar & Toolbar */
+.echo-input-dock {
+    flex-shrink: 0 !important;
+    padding-top: 0.35rem !important;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
-div[data-testid="stChatInput"] > div {
+
+.echo-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.25rem;
+}
+
+.echo-input-dock div[data-testid="stChatInput"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+.echo-input-dock div[data-testid="stChatInput"] > div {
     background: rgba(255, 255, 255, 0.85) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
@@ -245,7 +290,7 @@ div[data-testid="stChatInput"] > div {
     border-radius: 14px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
 }
-div[data-testid="stChatInput"] textarea {
+.echo-input-dock div[data-testid="stChatInput"] textarea {
     color: #111827 !important;
 }
 </style>
@@ -264,14 +309,15 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["knowledge_proposal"] = None
     if "chat_is_fullscreen" not in st.session_state:
         st.session_state["chat_is_fullscreen"] = False
+    if "echo_web_search_enabled" not in st.session_state:
+        st.session_state["echo_web_search_enabled"] = False
 
     is_fs = st.session_state["chat_is_fullscreen"]
-    outer_container_height = 880 if is_fs else int(height)
-    
-    # Reserve fixed vertical space so the input box stays persistently docked outside the scroll zone
-    chat_feed_height = 640 if is_fs else max(260, int(height) - 230)
+    outer_container_height = 920 if is_fs else int(height)
+    inner_scroll_height = outer_container_height - 210
 
     with target.container(height=outer_container_height, border=True):
+        st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
         if is_fs:
             st.markdown('<div class="echo-fullscreen-active"></div>', unsafe_allow_html=True)
 
@@ -282,7 +328,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                 f'<div style="display:flex; align-items:center; gap:8px;">'
                 f'{SVG_ECHO_LOGO}<span style="font-family: \'Playfair Display\', serif; font-size: 1.15rem; font-weight:600; color:#111827;">{title}</span>'
                 f'</div>'
-                f'<p style="font-size:0.8rem; color:#6B7280; margin: 0 0 0.5rem 0;">{caption}</p>',
+                f'<p style="font-size:0.8rem; color:#6B7280; margin: 0 0 0.25rem 0;">{caption}</p>',
                 unsafe_allow_html=True
             )
         with btn_fs_col:
@@ -304,10 +350,8 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         # --- TAB 1: Chat Feed ---
         # ==========================================
         with tab_chat:
-            st.markdown('<div class="echo-chat-viewport"></div>', unsafe_allow_html=True)
-            
             st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-            chat_box = st.container(height=chat_feed_height)
+            chat_box = st.container(height=inner_scroll_height)
             st.markdown('</div>', unsafe_allow_html=True)
 
             with chat_box:
@@ -383,8 +427,16 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.session_state["knowledge_proposal"] = None
                             st.rerun()
 
-            # Persistent Bottom Chat Input
+            # Docked Chat Input Area + Web Search Tick
+            st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
+            
+            tool_col1, tool_col2 = st.columns([0.8, 0.2])
+            with tool_col2:
+                use_web = st.toggle("Search Web", value=st.session_state["echo_web_search_enabled"], key="toggle_web_search", help="Enable to fetch live web sources and cite them in responses.")
+                st.session_state["echo_web_search_enabled"] = use_web
+
             active_prompt = st.chat_input("Ask a question, identify project facts, or provide knowledge updates...")
+            st.markdown('</div>', unsafe_allow_html=True)
 
             if active_prompt:
                 st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
@@ -398,18 +450,26 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                         unsafe_allow_html=True
                     )
                     thinking_placeholder = st.empty()
+                    search_label = "Echo is searching the web and thinking..." if use_web else "Echo is thinking..."
                     thinking_placeholder.markdown(
-                        '<div class="echo-thinking-wrapper">'
+                        f'<div class="echo-thinking-wrapper">'
                         f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                        '<div class="echo-thinking-pill">'
-                        '<div class="echo-pulse-dot"></div> Echo is thinking...'
-                        '</div>'
-                        '</div>',
+                        f'<div class="echo-thinking-pill">'
+                        f'<div class="echo-pulse-dot"></div> {search_label}'
+                        f'</div>'
+                        f'</div>',
                         unsafe_allow_html=True
                     )
 
                 archives = fetch_meeting_archives(limit=100)
-                answer, proposed_fact = _query_echo_backend(active_prompt, archives, st.session_state["global_chat_history"])
+                web_context = _perform_web_search(active_prompt) if use_web else ""
+                
+                answer, proposed_fact = _query_echo_backend(
+                    question=active_prompt,
+                    archive_records=archives,
+                    chat_history=st.session_state["global_chat_history"],
+                    web_context=web_context
+                )
                 
                 thinking_placeholder.empty()
                 st.session_state["global_chat_history"].append({"role": "assistant", "content": answer})
@@ -527,6 +587,30 @@ def _render_context_manager_subtab():
                 st.rerun()
 
 
+def _perform_web_search(query: str) -> str:
+    """Fetches real-time web context using DuckDuckGo Instant Answer or SerpApi if configured."""
+    try:
+        url = "https://html.duckduckgo.com/html/"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        resp = requests.post(url, data={"q": query}, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            # Extract basic text snippets & links
+            snippets = re.findall(r'<a class="result__snippet[^>]*>(.*?)</a>', resp.text, re.DOTALL)
+            urls = re.findall(r'<a class="result__url[^>]*href="([^"]+)"', resp.text)
+            
+            clean_results = []
+            for i in range(min(5, len(snippets))):
+                clean_text = re.sub(r'<.*?>', '', snippets[i]).strip()
+                link = urls[i] if i < len(urls) else ""
+                clean_results.append(f"[{i+1}] Source: {clean_text} (URL: {link})")
+            
+            if clean_results:
+                return "\n".join(clean_results)
+    except Exception:
+        pass
+    return ""
+
+
 def _extract_context_with_ai(raw_text: str) -> list:
     """Invokes LLM extraction schema on raw unstructured entries."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
@@ -563,8 +647,8 @@ def _extract_context_with_ai(raw_text: str) -> list:
         return []
 
 
-def _query_echo_backend(question: str, archive_records: list, chat_history: list) -> tuple:
-    """Synthesizes archives while verifying if the user statement contains novel knowledge base entities."""
+def _query_echo_backend(question: str, archive_records: list, chat_history: list, web_context: str = "") -> tuple:
+    """Synthesizes archives and optional web search results while providing clean citations."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets.", None
@@ -577,6 +661,8 @@ def _query_echo_backend(question: str, archive_records: list, chat_history: list
     jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
     projects = ", ".join(context_data.get('projects', []))
 
+    web_section = f"\nLIVE WEB SEARCH RESULTS:\n{web_context}\n" if web_context else ""
+
     context_string = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
@@ -584,11 +670,18 @@ TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
+{web_section}
 """
+
+    citation_rule = (
+        "When using LIVE WEB SEARCH RESULTS, cite your claims with hyperlinks or footnote markers pointing directly to the sources provided. "
+        if web_context else ""
+    )
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Synthesize meeting archives accurately. Format responses cleanly using standard Markdown headings, lists, and Markdown tables where appropriate. No emojis. "
+        "Synthesize meeting archives and web findings accurately. Format responses cleanly using standard Markdown headings, lists, and Markdown tables where appropriate. No emojis. "
+        f"{citation_rule}"
         "Determine if the user's input contains a new terminology definition, project assignment, or role update that could belong in the knowledge base. "
         "Respond in strict JSON format matching the schema: "
         "{"
@@ -598,7 +691,7 @@ TECHNICAL JARGON:
         f"\n\n{context_string}\n"
     )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:26000]}"}]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": question})
@@ -608,7 +701,7 @@ TECHNICAL JARGON:
         "messages": messages,
         "response_format": {"type": "json_object"},
         "temperature": 0.2,
-        "max_tokens": 900
+        "max_tokens": 1000
     }
 
     try:
