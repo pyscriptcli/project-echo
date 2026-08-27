@@ -1,7 +1,7 @@
 # In components/sidebar.py
 import streamlit as st
 
-def single_page_layout():
+def setup_page_layout():
     """
     Renders an ultra-compact, premium top bar with luxury dark styling,
     gold typography, vertical separators, and SVG icons.
