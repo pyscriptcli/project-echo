@@ -3,9 +3,9 @@ import requests
 import json
 from utils.db import fetch_meeting_archives, fetch_echo_context
 
-def render_echo_chat(container=None, height=720, title="Ask Echo", caption="Synthesize meeting archives, transcripts, and action logs."):
+def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize meeting archives, transcripts, and action logs."):
     """
-    Renders the global Ask Echo chat interface.
+    Renders the global Ask Echo chat interface as a reusable component.
     """
     target = container if container else st
     
@@ -13,6 +13,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo", caption="Synt
         st.session_state["global_chat_history"] = []
 
     with target.container(height=height, border=True):
+        # Header & Action Buttons
         chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.04, 0.04])
         
         with chat_header_col:
@@ -36,7 +37,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo", caption="Synt
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # Calculate feed height based on total container height minus header/input approx height
+        # Chat Feed (Inherits your custom CSS for stChatMessage)
         chat_feed_height = height - 175 
         chat_history_container = st.container(height=chat_feed_height)
         
@@ -49,6 +50,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo", caption="Synt
                     with st.chat_message(msg["role"]):
                         st.markdown(msg["content"])
 
+        # Chat Input
         if global_query := st.chat_input("Ask Echo a question..."):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
             with st.spinner("Analyzing meeting archives..."):
@@ -75,20 +77,21 @@ def _query_echo_backend(question: str, archive_records: list, chat_history: list
     projects = ", ".join(context_data.get('projects', []))
     
     context_string = f"""
-    ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
-    ---------------------------------------
-    TEAM MEMBERS: {team_list}
-    ACTIVE PROJECTS: {projects}
-    TECHNICAL JARGON:
-    {jargon_list}
-    
-    INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the archives. 
-    If the archive says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
-    """
+ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
+---------------------------------------
+TEAM MEMBERS: {team_list}
+ACTIVE PROJECTS: {projects}
+TECHNICAL JARGON:
+{jargon_list}
 
+INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the archives. 
+If the archive says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
+"""
+
+    # 3. Build System Prompt with Context Injection
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Answer user questions accurately by synthesizing past meeting records. "
+        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
         "Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. "
         "Do not use emojis; use plain text. Ask follow-up questions when useful."
         f"\n\n{context_string}\n"
