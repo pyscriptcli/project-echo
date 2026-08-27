@@ -3,7 +3,7 @@ import requests
 import json
 import re
 from datetime import datetime
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -32,6 +32,14 @@ SVG_GLOBE_ICON = """
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
+
+/* Prevent outer viewport scrolling */
+html, body, [data-testid="stAppViewContainer"], .main, .block-container {
+    overflow: hidden !important;
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
 
 /* Card Container with matching grid transparency */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
