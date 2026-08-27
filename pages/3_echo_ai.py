@@ -10,7 +10,7 @@ from utils.echo_ai import render_echo_chat
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Project Echo - Global Intelligence",
+    page_title="Project Echo",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -31,6 +31,6 @@ Dedicated workspace for deep-dive analysis across all meeting archives, transcri
 render_echo_chat(
     container=st,
     height=850, 
-    title="Ask Echo — Global Intelligence",
+    title="Ask Echo",
     caption="Synthesize meeting archives, transcripts, and action logs."
 )
