@@ -1,22 +1,123 @@
-import streamlit as st
-import requests
+import sys
+import os
 import json
-import pandas as pd
 import re
+import datetime
+import pandas as pd
+import requests
+import streamlit as st
+
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
-# SVG Icon for the Context Manager Header
-SVG_CONTEXT_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A2B4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;">
-    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-    <path d="M2 17l10 5 10-5"></path>
-    <path d="M2 12l10 5 10-5"></path>
-</svg>
+# --- Custom Styling & CSS Scaffolding ---
+CHAT_CUSTOM_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.echo-chat-wrapper {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1E293B;
+}
+
+/* Header Container */
+.echo-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 0.75rem;
+}
+.echo-title-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #0EA5E9;
+    background: rgba(14, 165, 233, 0.1);
+    padding: 2px 8px;
+    border-radius: 9999px;
+    margin-bottom: 4px;
+}
+.echo-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+}
+.echo-caption {
+    font-size: 0.8rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Status Indicator */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #059669;
+    font-weight: 500;
+    background: #ECFDF5;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    border: 1px solid #A7F3D0;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #10B981;
+    border-radius: 50%;
+}
+
+/* Suggestion Pills */
+.echo-prompt-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* Context Manager Stats Box */
+.ctx-metric-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+}
+.ctx-metric-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+}
+.ctx-metric-lbl {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748B;
+    margin: 0;
+}
+</style>
 """
 
-def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize meeting archives, transcripts, and action logs."):
+
+def render_echo_chat(
+    container=None,
+    height: int = 740,
+    title: str = "Ask Echo",
+    caption: str = "Synthesizing cross-meeting intelligence & active action logs.",
+):
     target = container if container else st
-    
+    st.markdown(CHAT_CUSTOM_CSS, unsafe_allow_html=True)
+
+    # Session State Initialization
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "show_context_manager" not in st.session_state:
@@ -25,237 +126,315 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["extracted_context_df"] = None
 
     with target.container(height=height, border=True):
-        # 1. Header & Action Buttons
-        chat_header_col, btn_clear_col, btn_full_col, btn_context_col = st.columns([1, 0.04, 0.04, 0.04])
-        
-        with chat_header_col:
-            st.markdown(f'<p class="section-title">{title}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="section-caption">{caption}</p>', unsafe_allow_html=True)
-            
-        with btn_clear_col:
-            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
-            if st.button("", icon=":material/delete:", key="btn_clear_chat", help="Clear chat"):
+        # 1. Header Toolbar
+        c_title, c_clear, c_ctx = st.columns([1, 0.05, 0.05])
+        with c_title:
+            st.markdown(
+                f"""
+                <div class="echo-chat-wrapper">
+                    <div class="echo-header-bar">
+                        <div>
+                            <div class="echo-title-badge"><span class="status-dot"></span> PRIME Intelligence</div>
+                            <h3 class="echo-title">{title}</h3>
+                            <p class="echo-caption">{caption}</p>
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with c_clear:
+            if st.button("", icon=":material/delete_sweep:", key="btn_clear_chat", help="Clear conversation history"):
                 st.session_state["global_chat_history"] = []
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        with btn_full_col:
-            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
-            is_fullscreen = st.session_state.get("chat_fullscreen", False)
-            full_icon = ":material/fullscreen_exit:" if is_fullscreen else ":material/fullscreen:"
-            tooltip = "Exit Fullscreen" if is_fullscreen else "Fullscreen"
-            if st.button("", icon=full_icon, key="btn_fullscreen_chat", help=tooltip):
-                st.session_state["chat_fullscreen"] = not is_fullscreen
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        # NEW: Context Manager Toggle Button
-        with btn_context_col:
-            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
-            ctx_icon = ":material/bookmark_remove:" if st.session_state["show_context_manager"] else ":material/bookmark_add:"
-            ctx_tooltip = "Hide Context Manager" if st.session_state["show_context_manager"] else "Manage Echo Context"
-            if st.button("", icon=ctx_icon, key="btn_toggle_context", help=ctx_tooltip):
+        with c_ctx:
+            ctx_btn_icon = ":material/database:" if not st.session_state["show_context_manager"] else ":material/close:"
+            ctx_btn_help = "Open Knowledge Base Hub" if not st.session_state["show_context_manager"] else "Close Knowledge Base Hub"
+            if st.button("", icon=ctx_btn_icon, key="btn_toggle_ctx", help=ctx_btn_help):
                 st.session_state["show_context_manager"] = not st.session_state["show_context_manager"]
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
-        # 2. Chat Feed
-        chat_feed_height = 545 if not st.session_state["chat_fullscreen"] else 565
+        # 2. Main Layout (Context Manager Drawer vs Chat Area)
         if st.session_state["show_context_manager"]:
-            chat_feed_height -= 200 # Reduce chat height if manager is open
-            
-        chat_history_container = st.container(height=chat_feed_height)
-        with chat_history_container:
-            if not st.session_state["global_chat_history"]:
-                with st.chat_message("assistant"):
-                    st.markdown("**System Online:** Hello. I am Echo. Ask me anything across your entire meeting archive.")
-            else:
-                for msg in st.session_state["global_chat_history"]:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["content"])
+            chat_col, ctx_col = st.columns([1.1, 0.9], gap="medium")
+            with ctx_col:
+                _render_context_manager()
+            chat_target = chat_col
+            feed_height = height - 210
+        else:
+            chat_target = st.container()
+            feed_height = height - 190
 
-        # 3. Chat Input
-        if global_query := st.chat_input("Ask Echo a question..."):
-            st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
-            with st.spinner("Analyzing meeting archives..."):
-                archives = fetch_meeting_archives(limit=100)
-                ans = _query_echo_backend(global_query, archives, st.session_state["global_chat_history"])
-            st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
-            st.rerun()
+        # 3. Chat Feed Area
+        with chat_target:
+            chat_history_container = st.container(height=feed_height)
+            with chat_history_container:
+                if not st.session_state["global_chat_history"]:
+                    with st.chat_message("assistant", avatar="✨"):
+                        st.markdown(
+                            "**Echo System Active.** Ask me across all stored Minutes of Meetings, deliverables, decisions, and timelines."
+                        )
+                        st.markdown(
+                            """
+                            **Suggested Inquiries:**
+                            - *Summarize all pending action items assigned to CRD.*
+                            - *What were the major blockers discussed in the latest client meetings?*
+                            - *Show all project milestones targeted for next month.*
+                            """
+                        )
+                else:
+                    for msg in st.session_state["global_chat_history"]:
+                        avatar = "✨" if msg["role"] == "assistant" else None
+                        with st.chat_message(msg["role"], avatar=avatar):
+                            st.markdown(msg["content"])
 
-    # 4. Context Manager UI (Rendered outside the main chat container to avoid scrolling issues)
-    if st.session_state["show_context_manager"]:
-        _render_context_manager(target)
+            # 4. Message Input & Dispatch
+            if user_query := st.chat_input("Ask a question about past meetings or deliverables..."):
+                st.session_state["global_chat_history"].append({"role": "user", "content": user_query})
+                with st.spinner("Synthesizing archives..."):
+                    archives = fetch_meeting_archives(limit=100)
+                    response = _query_echo_backend(
+                        user_query, archives, st.session_state["global_chat_history"]
+                    )
+                st.session_state["global_chat_history"].append({"role": "assistant", "content": response})
+                st.rerun()
 
 
-def _render_context_manager(target):
-    """Renders the Context Management UI for adding/editing Echo's knowledge base."""
-    with target.container(border=True):
-        st.markdown(f'<h4 style="margin:0; color:#1A2B4C;">{SVG_CONTEXT_ICON}Echo Context Manager</h4>', unsafe_allow_html=True)
-        st.caption("Paste raw notes, team updates, or jargon. Echo will structure it for you to review and save.")
-        
-        raw_text = st.text_area(
-            "Raw Text Dump", 
-            height=100, 
-            placeholder="e.g., 'Alice is the new Lead Dev. K8s stands for Kubernetes. We are starting Project Echo next week.'",
-            label_visibility="collapsed"
+def _render_context_manager():
+    """Renders the Knowledge Base Context Hub with live stats, structured review, and direct editing."""
+    ctx_data = fetch_echo_context()
+    team_count = len(ctx_data.get("team", []))
+    jargon_count = len(ctx_data.get("jargon", {}))
+    proj_count = len(ctx_data.get("projects", []))
+
+    st.markdown("#### Knowledge Base (Source of Truth)")
+    st.caption("Entries here override transcript homophones and define company entities.")
+
+    # Live Knowledge Metrics
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.markdown(
+            f'<div class="ctx-metric-card"><p class="ctx-metric-val">{team_count}</p><p class="ctx-metric-lbl">Team</p></div>',
+            unsafe_allow_html=True,
         )
-        
-        col_ext, col_save, col_clear = st.columns([1.2, 1.2, 1])
-        
-        with col_ext:
-            if st.button("Extract & Structure with AI", key="btn_extract_ctx", use_container_width=True):
+    with m2:
+        st.markdown(
+            f'<div class="ctx-metric-card"><p class="ctx-metric-val">{jargon_count}</p><p class="ctx-metric-lbl">Jargon</p></div>',
+            unsafe_allow_html=True,
+        )
+    with m3:
+        st.markdown(
+            f'<div class="ctx-metric-card"><p class="ctx-metric-val">{proj_count}</p><p class="ctx-metric-lbl">Projects</p></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.write("")
+
+    tab_auto, tab_manual = st.tabs(["Smart Extraction", "Direct Injection"])
+
+    # Tab 1: AI-Powered Unstructured Context Ingestion
+    with tab_auto:
+        raw_text = st.text_area(
+            "Raw Notes or Jargon Dump",
+            placeholder="Paste rough text here (e.g., 'Marc joined the Backend team. SOW stands for Statement of Work. Project Orion deadline is next Friday.').",
+            height=110,
+            label_visibility="collapsed",
+        )
+        c_ext_btn, c_clr_btn = st.columns([1.5, 1])
+        with c_ext_btn:
+            if st.button("Extract Entities", key="btn_run_ai_ctx", use_container_width=True, type="primary"):
                 if raw_text.strip():
-                    with st.spinner("AI is structuring your data..."):
-                        extracted_data = _extract_context_with_ai(raw_text)
-                        if extracted_data:
-                            st.session_state["extracted_context_df"] = pd.DataFrame(extracted_data)
+                    with st.spinner("Extracting structured entities..."):
+                        extracted_list = _extract_context_with_ai(raw_text)
+                        if extracted_list:
+                            st.session_state["extracted_context_df"] = pd.DataFrame(extracted_list)
                             st.rerun()
                         else:
-                            st.error("AI could not extract structured data. Please try rephrasing.")
+                            st.warning("No structured entities could be identified.")
                 else:
-                    st.warning("Please enter some text first.")
-                    
-        with col_clear:
-            if st.button("Clear Table", key="btn_clear_ctx_table", use_container_width=True):
+                    st.warning("Please paste context or terminology notes.")
+        with c_clr_btn:
+            if st.button("Reset", key="btn_clear_staged_ctx", use_container_width=True):
                 st.session_state["extracted_context_df"] = None
                 st.rerun()
 
-        # Display Editable Table
+        # Data Editor Interface for Staged Entries
         if st.session_state["extracted_context_df"] is not None:
             st.markdown("---")
-            st.markdown("**Review & Edit Extracted Context:**")
-            
-            # Define column configs for the data editor
+            st.markdown("**Review & Approve Entities:**")
+
             column_config = {
                 "category": st.column_config.SelectboxColumn(
                     "Category",
                     options=["team", "jargon", "projects"],
-                    required=True
+                    required=True,
+                    width="small",
                 ),
-                "key": st.column_config.TextColumn("Key (Term/Name)", required=True),
-                "value": st.column_config.TextColumn("Value (Definition/Role)", required=True, width="large"),
-                "priority": st.column_config.NumberColumn("Priority (1-5)", min_value=1, max_value=5, step=1, default=1)
+                "key": st.column_config.TextColumn("Identifier / Term", required=True, width="medium"),
+                "value": st.column_config.TextColumn("Full Name / Definition / Role", required=True, width="large"),
+                "priority": st.column_config.NumberColumn(
+                    "Priority (1-5)", min_value=1, max_value=5, step=1, default=1, width="small"
+                ),
             }
-            
+
             edited_df = st.data_editor(
                 st.session_state["extracted_context_df"],
                 column_config=column_config,
                 num_rows="dynamic",
                 use_container_width=True,
                 hide_index=True,
-                key="ctx_data_editor"
+                key="ai_ctx_editor",
             )
-            
-            with col_save:
-                if st.button("Save to Echo Brain", key="btn_save_ctx", use_container_width=True, type="primary"):
-                    success_count = 0
-                    fail_count = 0
-                    with st.spinner("Saving to database..."):
-                        for index, row in edited_df.iterrows():
-                            if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
-                                success = upsert_echo_context(
-                                    category=str(row['category']),
-                                    key=str(row['key']),
-                                    value=str(row['value']),
-                                    priority=int(row['priority']) if pd.notna(row['priority']) else 1
-                                )
-                                if success:
-                                    success_count += 1
-                                else:
-                                    fail_count += 1
-                    
-                    if success_count > 0:
-                        st.success(f"Successfully saved {success_count} entries to Echo's knowledge base!")
-                        st.session_state["extracted_context_df"] = None
+
+            if st.button("Commit to Brain", key="btn_commit_ctx_db", type="primary", use_container_width=True):
+                _save_dataframe_to_context(edited_df)
+
+    # Tab 2: Direct Single-Item Entry
+    with tab_manual:
+        with st.form("quick_context_form", clear_on_submit=True):
+            f_cat = st.selectbox("Category", options=["jargon", "team", "projects"])
+            f_key = st.text_input("Key / Term", placeholder="e.g., K8s or John Doe")
+            f_val = st.text_input("Value / Description", placeholder="e.g., Kubernetes or Senior Systems Architect")
+            f_prio = st.slider("Priority", 1, 5, 1)
+
+            if st.form_submit_button("Add Single Entry", use_container_width=True):
+                if f_key.strip() and f_val.strip():
+                    ok = upsert_echo_context(category=f_cat, key=f_key.strip(), value=f_val.strip(), priority=f_prio)
+                    if ok:
+                        st.success(f"Added '{f_key.strip()}' to {f_cat} knowledge base.")
                         st.rerun()
-                    if fail_count > 0:
-                        st.warning(f"Failed to save {fail_count} entries.")
+                    else:
+                        st.error("Failed to commit entry.")
+                else:
+                    st.warning("Both Key and Value are required.")
+
+
+def _save_dataframe_to_context(df: pd.DataFrame):
+    """Iterates through data editor records and commits them to Supabase."""
+    success_count, fail_count = 0, 0
+    with st.spinner("Writing to knowledge base..."):
+        for _, row in df.iterrows():
+            if pd.notna(row.get("category")) and pd.notna(row.get("key")) and pd.notna(row.get("value")):
+                ok = upsert_echo_context(
+                    category=str(row["category"]).strip().lower(),
+                    key=str(row["key"]).strip(),
+                    value=str(row["value"]).strip(),
+                    priority=int(row["priority"]) if pd.notna(row.get("priority")) else 1,
+                )
+                if ok:
+                    success_count += 1
+                else:
+                    fail_count += 1
+
+        if success_count > 0:
+            st.success(f"Committed {success_count} entities to Echo Brain.")
+            st.session_state["extracted_context_df"] = None
+            st.rerun()
+        if fail_count > 0:
+            st.warning(f"Could not persist {fail_count} entities.")
 
 
 def _extract_context_with_ai(raw_text: str) -> list:
-    """Calls DeepSeek to convert raw text into a structured JSON list of context items."""
+    """Uses DeepSeek structured JSON completion to isolate contextual entities."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        st.error("DeepSeek API Key is missing.")
+        st.error("DEEPSEEK_API_KEY secret is missing.")
         return []
-    
+
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    
     system_prompt = (
-        "You are a data structuring assistant. Extract team members, technical jargon, and project names from the user's text. "
-        "Output ONLY a valid JSON object with a single key 'items' containing an array of objects. "
-        "Each object must have: 'category' (either 'team', 'jargon', or 'projects'), 'key' (the term or name), "
-        "'value' (the definition, role, or full name), and 'priority' (integer 1 to 5, where 5 is highest importance)."
+        "You are an executive knowledge-base curation engine. Extract entities from unstructured text. "
+        "Categorize each entity strictly into one of: 'team', 'jargon', or 'projects'. "
+        "Return ONLY a valid JSON object matching this schema: "
+        '{"items": [{"category": "team|jargon|projects", "key": "short term or name", "value": "full expansion or role", "priority": 1-5}]}'
     )
-    
+
     payload = {
         "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": raw_text}
+            {"role": "user", "content": raw_text},
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.1,
-        "max_tokens": 800
+        "max_tokens": 1000,
     }
-    
+
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=30)
         if resp.status_code == 200:
-            raw_json = resp.json()["choices"][0]["message"]["content"]
-            parsed = json.loads(raw_json)
+            raw_text_out = resp.json()["choices"][0]["message"]["content"].strip()
+            clean_text = re.sub(r"^```(?:json)?\s*", "", raw_text_out)
+            clean_text = re.sub(r"\s*```$", "", clean_text).strip()
+            parsed = json.loads(clean_text)
             return parsed.get("items", [])
-        return []
     except Exception as e:
-        st.error(f"Context extraction failed: {e}")
-        return []
+        st.error(f"Context extraction error: {e}")
+    return []
 
 
 def _query_echo_backend(question: str, archive_records: list, chat_history: list) -> str:
-    """Internal function to handle the AI API call with Context Injection."""
+    """Synthesizes question answering with RAG over meeting archives and the live knowledge base."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets."
-    
+        return "DEEPSEEK_API_KEY is not configured in Streamlit Secrets."
+
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    archive_context = json.dumps(archive_records, indent=1)
-    
+
+    # Compile Ground Truth Knowledge Base
     context_data = fetch_echo_context()
-    team_list = ", ".join(context_data.get('team', []))
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-    projects = ", ".join(context_data.get('projects', []))
-    
-    context_string = f"""
+    team_list = ", ".join(context_data.get("team", [])) or "None specified"
+    jargon_list = (
+        "\n".join([f"- {k}: {v}" for k, v in context_data.get("jargon", {}).items()])
+        or "None specified"
+    )
+    projects = ", ".join(context_data.get("projects", [])) or "None specified"
+
+    knowledge_block = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
 TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
-TECHNICAL JARGON:
+TECHNICAL JARGON & ACRONYMS:
 {jargon_list}
 
-INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the archives. 
-If the archive says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
+INSTRUCTION: Use this knowledge base as the ground truth. Correct any misheard terminology or homophones found in past meeting transcripts.
 """
 
     system_prompt = (
-        "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
-        "Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. "
-        "Do not use emojis; use plain text. Ask follow-up questions when useful."
-        f"\n\n{context_string}\n"
+        "You are Echo Global, the executive AI intelligence system for PRIME Philippines. "
+        "Answer user inquiries authoritatively by synthesizing meeting archives, action items, dates, and responsibilities. "
+        "Structure responses cleanly using Markdown headings, bullet points, and tables where applicable. "
+        "Do not use emojis in your responses. Always maintain a professional, corporate tone."
+        f"\n\n{knowledge_block}"
     )
-    
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
+
+    archive_dump = json.dumps(archive_records, indent=1)
+    messages = [
+        {
+            "role": "system",
+            "content": f"{system_prompt}\n\nMEETING ARCHIVES DATABASE:\n{archive_dump[:28000]}",
+        }
+    ]
+
+    # Include recent chat history for context continuity
     for msg in chat_history[-6:]:
-        messages.append({"role": msg["role"], "content": msg["content"]})
+        if msg.get("content"):
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
     messages.append({"role": "user", "content": question})
-    
-    payload = {"model": "deepseek-chat", "messages": messages, "temperature": 0.2, "max_tokens": 750}
+
+    payload = {
+        "model": "deepseek-chat",
+        "messages": messages,
+        "temperature": 0.2,
+        "max_tokens": 900,
+    }
+
     try:
         resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
             return resp.json()["choices"][0]["message"]["content"].strip()
-        return f"Service Notice ({resp.status_code}): {resp.text}"
+        return f"Service notice ({resp.status_code}): {resp.text}"
     except Exception as e:
         return f"Connection error: {e}"
