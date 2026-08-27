@@ -332,13 +332,13 @@ def extract_structured_insights(transcript, engine="AI - DeepSeek"):
         progress_bar.empty()
         return res_df, res_other
 
-    # 1. Fetch Live Context from Supabase[cite: 1]
-    context_data = fetch_echo_context()[cite: 1]
+    # 1. Fetch Live Context from Supabase
+    context_data = fetch_echo_context()
 
-    # 2. Format it for the AI[cite: 1]
-    team_list = ", ".join(context_data.get('team', []))[cite: 1]
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])[cite: 1]
-    projects = ", ".join(context_data.get('projects', []))[cite: 1]
+    # 2. Format it for the AI
+    team_list = ", ".join(context_data.get('team', []))
+    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
+    projects = ", ".join(context_data.get('projects', []))
 
     context_string = f"""
     ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
@@ -350,18 +350,18 @@ def extract_structured_insights(transcript, engine="AI - DeepSeek"):
 
     INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the transcript. 
     If the transcript says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
-    """[cite: 1]
+    """
 
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}[cite: 1]
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
 
-    # 3. Update the System Prompt with Live Context[cite: 1]
+    # 3. Update the System Prompt with Live Context
     system_prompt = (
-        "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). "[cite: 1]
-        "The transcript contains Tagalog, English, and Taglish dialogue. "[cite: 1]
-        "Analyze the full conversation context and translate all colloquial, informal, and mixed-language statements into polished, high-level corporate English. "[cite: 1]
-        "Synthesize all key agreements, status reports, core discussion points, definitive action plans, indicative delivery timelines, and assigned persons-in-charge. "[cite: 1]
-        f"\n\n{context_string}\n"[cite: 1]
-        "Output valid JSON only matching the exact schema provided."[cite: 1]
+        "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). "
+        "The transcript contains Tagalog, English, and Taglish dialogue. "
+        "Analyze the full conversation context and translate all colloquial, informal, and mixed-language statements into polished, high-level corporate English. "
+        "Synthesize all key agreements, status reports, core discussion points, definitive action plans, indicative delivery timelines, and assigned persons-in-charge. "
+        f"\n\n{context_string}\n"
+        "Output valid JSON only matching the exact schema provided."
     )
 
     user_prompt = f"""Synthesize the following meeting transcript into formal, high-level Minutes of Meeting (MOM) formatted as valid JSON:
