@@ -52,11 +52,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     max-height: 100vh !important;
     z-index: 999999 !important;
     border-radius: 0 !important;
-    background: rgba(248, 249, 250, 0.94) !important;
+    background: rgba(248, 249, 250, 0.96) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     padding: 1.5rem 3rem !important;
     box-sizing: border-box !important;
+    overflow-y: auto !important;
 }
 
 /* Glassmorphic Chat Scroll Area */
@@ -271,9 +272,12 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["pending_user_prompt"] = None
 
     is_fs = st.session_state["chat_is_fullscreen"]
-    active_height = None if is_fs else height
+    
+    # Use valid integer pixel values for st.container(height=...)
+    outer_container_height = 880 if is_fs else int(height)
+    chat_feed_height = 680 if is_fs else max(300, int(height) - 250)
 
-    with target.container(height=active_height, border=True):
+    with target.container(height=outer_container_height, border=True):
         # Fullscreen marker hook for CSS
         if is_fs:
             st.markdown('<div class="echo-fullscreen-active"></div>', unsafe_allow_html=True)
@@ -308,7 +312,6 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         # ==========================================
         with tab_chat:
             st.markdown('<div class="echo-chat-viewport"></div>', unsafe_allow_html=True)
-            chat_feed_height = 720 if is_fs else (height - 250)
             
             st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
             chat_box = st.container(height=chat_feed_height)
