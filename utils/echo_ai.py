@@ -382,14 +382,14 @@ def render_context_popup_dialog():
     if mode == "AI Smart Extraction":
         raw_text = st.text_area(
             "Raw Context Dump",
-            height=90,
-            placeholder="Paste raw notes, definitions, project scopes, or abbreviations here..."
+            height=120,
+            placeholder="Paste raw notes, property details, definitions, project scopes, or abbreviations here..."
         )
         c_act1, c_act2 = st.columns([1.5, 1])
         with c_act1:
             if st.button("Extract Knowledge", key="btn_dlg_run_ai", type="primary", use_container_width=True):
                 if raw_text.strip():
-                    with st.spinner("Analyzing text..."):
+                    with st.spinner("Extracting structured knowledge..."):
                         extracted = _extract_context_with_ai(raw_text)
                         if extracted:
                             st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
@@ -704,7 +704,7 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str) -> list:
-    """Invokes LLM extraction schema on raw unstructured entries."""
+    """Invokes LLM extraction schema with robust JSON repairing for large context dumps."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         st.error("DeepSeek API Key configuration missing.")
@@ -712,27 +712,64 @@ def _extract_context_with_ai(raw_text: str) -> list:
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system_prompt = (
-        "Extract enterprise facts from text into a valid JSON object with key 'items'. "
-        "Each array entry must contain: 'category' ('team', 'jargon', or 'projects'), "
-        "'key' (term/proper noun), 'value' (definition/description), and 'priority' (integer 1-5)."
+        "Extract enterprise facts, property specs, corporate updates, and technical definitions from the text. "
+        "Return a valid JSON object strictly matching this schema: "
+        "{\"items\": [{\"category\": \"team\"|\"jargon\"|\"projects\", \"key\": \"Term/Entity Name\", \"value\": \"Detailed Definition/Specification\", \"priority\": 2}]}"
     )
 
     payload = {
         "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": raw_text}
+            {"role": "user", "content": raw_text[:8000]}
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.1,
-        "max_tokens": 800
+        "max_tokens": 4000
     }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=30)
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
-            parsed = json.loads(resp.json()["choices"][0]["message"]["content"])
-            return parsed.get("items", [])
+            raw_content = resp.json()["choices"][0]["message"]["content"].strip()
+            
+            # Clean markdown formatting backticks
+            cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
+            cleaned = re.sub(r"^```\s*", "", cleaned, flags=re.MULTILINE).strip()
+
+            try:
+                parsed = json.loads(cleaned)
+                if isinstance(parsed, dict) and "items" in parsed:
+                    return parsed["items"]
+                elif isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                # Handle possible truncated JSON streams
+                match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+                if match:
+                    try:
+                        parsed = json.loads(match.group(1))
+                        return parsed.get("items", [])
+                    except Exception:
+                        pass
+                
+                # Regex fallback directly over individual objects
+                item_matches = re.findall(
+                    r'\{\s*"category"\s*:\s*"([^"]+)"\s*,\s*"key"\s*:\s*"([^"]+)"\s*,\s*"value"\s*:\s*"([^"]+)"(?:\s*,\s*"priority"\s*:\s*(\d+))?\s*\}',
+                    cleaned
+                )
+                if item_matches:
+                    fallback_items = []
+                    for cat, key, val, prio in item_matches:
+                        fallback_items.append({
+                            "category": cat,
+                            "key": key,
+                            "value": val,
+                            "priority": int(prio) if prio else 2
+                        })
+                    return fallback_items
+
+        st.error(f"Extraction response error ({resp.status_code}): {resp.text}")
         return []
     except Exception as e:
         st.error(f"Extraction error: {e}")
@@ -790,7 +827,7 @@ CURRENT DATE & TIME: {current_date_str}
         f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
         "Synthesize available sources and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
         f"{citation_rule}\n\n"
-        "Determine if the user input defines a new team member role, acronym, project specification, or technical jargon that should be preserved in the persistent Knowledge Base. "
+        "Determine if the user input defines a new team member role, acronym, project specification, property update, or technical jargon that should be preserved in the persistent Knowledge Base. "
         "Always respond in JSON format matching the schema:\n"
         "{\n"
         "  \"response\": \"Your thorough markdown response to the user\",\n"
@@ -808,7 +845,7 @@ CURRENT DATE & TIME: {current_date_str}
         "model": model_name,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 1500
+        "max_tokens": 2000
     }
 
     if model_name == "deepseek-chat":
