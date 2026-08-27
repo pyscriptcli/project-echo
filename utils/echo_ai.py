@@ -3,11 +3,12 @@ import requests
 import json
 import pandas as pd
 import re
+from datetime import datetime
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -21,6 +22,14 @@ SVG_USER_ICON = """
 </svg>
 """
 
+SVG_GLOBE_ICON = """
+<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="2" y1="12" x2="22" y2="12"></line>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+</svg>
+"""
+
 SVG_BRAIN_ICON = """
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
@@ -28,16 +37,16 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-CHAT_GLASSMORPHISM_CSS = """
+CHAT_POLISHED_CSS = """
 <style>
-/* Outer Card Container - Frosted Glass without outer scrollbar */
+/* Outer Card Container - Frosted Glass Frame */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background: rgba(255, 255, 255, 0.45) !important;
     backdrop-filter: blur(16px) saturate(160%) !important;
     -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
     border: 1px solid rgba(255, 255, 255, 0.65) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05) !important;
     overflow: hidden !important;
 }
 
@@ -46,10 +55,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     height: 100% !important;
     overflow: hidden !important;
-    gap: 0.5rem !important;
+    gap: 0.35rem !important;
 }
 
-/* Tab contents filling full remaining height */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabs"] {
     flex: 1 !important;
     display: flex !important;
@@ -65,7 +73,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[d
     overflow: hidden !important;
 }
 
-/* Fullscreen Viewport Mode */
+/* Fullscreen Immersive Viewport Mode */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     position: fixed !important;
     top: 0 !important;
@@ -76,10 +84,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     max-height: 100vh !important;
     z-index: 999999 !important;
     border-radius: 0 !important;
-    background: rgba(248, 249, 250, 0.96) !important;
+    background: rgba(248, 249, 250, 0.97) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    padding: 1.5rem 3rem !important;
+    padding: 1.25rem 2.5rem !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
 }
@@ -98,33 +106,32 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
     height: 100% !important;
     overflow-y: auto !important;
+    padding: 0.75rem 1rem !important;
 }
 
-/* User Message Bubble */
+/* User Message: Dark Bubble with Gold Accent */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
     gap: 10px;
     width: 100%;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .echo-user-bubble {
-    background: rgba(17, 17, 17, 0.94);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: #111111;
     color: #F9FAFB !important;
     border: 1px solid #D4AF37;
-    padding: 0.8rem 1.25rem;
+    padding: 0.65rem 1.15rem;
     border-radius: 18px 4px 18px 18px;
-    max-width: 78%;
-    font-size: 0.92rem;
-    line-height: 1.55;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), 0 0 10px rgba(212, 175, 55, 0.25);
+    max-width: 75%;
+    font-size: 0.90rem;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 6px rgba(212, 175, 55, 0.2);
     word-break: break-word;
 }
 .echo-user-bubble p {
@@ -133,126 +140,149 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
 }
 
 .echo-avatar-user {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: rgba(17, 17, 17, 0.95);
+    background: #111111;
     border: 1.5px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Assistant Message Row */
+/* AI Assistant Message */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
     background: transparent;
 }
 
 .echo-assistant-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 0.4rem;
+    gap: 8px;
+    margin-bottom: 0.35rem;
 }
 
 .echo-avatar-assistant {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(17, 17, 17, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
+    background: linear-gradient(135deg, #111111 0%, #1F2937 100%);
     border: 1.5px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 2px 6px rgba(212, 175, 55, 0.25);
 }
 
 .echo-assistant-title {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: #111827;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
 }
 
 .echo-assistant-badge-gold {
-    font-size: 0.68rem;
-    padding: 2px 7px;
-    border-radius: 6px;
-    background: rgba(254, 243, 199, 0.85);
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(254, 243, 199, 0.9);
     color: #92400E;
     font-weight: 700;
     border: 1px solid rgba(253, 230, 138, 0.8);
-    backdrop-filter: blur(4px);
 }
 
 .echo-assistant-body {
-    padding-left: 42px;
-    color: #111827;
-    font-size: 0.94rem;
-    line-height: 1.65;
+    padding-left: 36px;
+    color: #1F2937;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+/* Interactive Pill Sources */
+.echo-sources-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.75rem;
+    padding-left: 36px;
+}
+.echo-source-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #1E293B !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.echo-source-pill:hover {
+    background: #FFFDF5;
+    border-color: #D4AF37;
+    color: #B45309 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
 }
 
 /* Markdown Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1rem 0;
-    font-size: 0.88rem;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 10px;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(229, 231, 235, 0.8);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E5E7EB;
 }
 .echo-assistant-body th {
     background: #111111;
     color: #D4AF37;
     font-weight: 600;
-    border: 1px solid #2B2D31;
-    padding: 10px 14px;
+    border: 1px solid #374151;
+    padding: 8px 12px;
     text-align: left;
 }
 .echo-assistant-body td {
-    border: 1px solid rgba(229, 231, 235, 0.8);
-    padding: 10px 14px;
-    color: #1F2937;
+    border: 1px solid #E5E7EB;
+    padding: 8px 12px;
+    color: #374151;
 }
 
 /* Thinking Indicator Pill */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding-left: 0.2rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 .echo-thinking-pill {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    font-size: 0.82rem;
-    color: #374151;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(229, 231, 235, 0.9);
+    font-size: 0.80rem;
+    color: #4B5563;
     font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .echo-pulse-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     background-color: #D4AF37;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
@@ -262,13 +292,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Persistent Bottom Input Bar & Toolbar */
+/* Docked Bottom Bar */
 .echo-input-dock {
     flex-shrink: 0 !important;
-    padding-top: 0.35rem !important;
+    padding-top: 0.25rem !important;
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .echo-input-dock div[data-testid="stChatInput"] {
@@ -276,22 +305,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     margin-bottom: 0 !important;
 }
 .echo-input-dock div[data-testid="stChatInput"] > div {
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(212, 175, 55, 0.4) !important;
-    border-radius: 14px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
-}
-.echo-input-dock div[data-testid="stChatInput"] textarea {
-    color: #111827 !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 </style>
 """
 
 def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize meeting archives, transcripts, and action logs."):
     target = container if container else st
-    st.markdown(CHAT_GLASSMORPHISM_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_POLISHED_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -306,8 +330,8 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["echo_web_search_enabled"] = False
 
     is_fs = st.session_state["chat_is_fullscreen"]
-    outer_container_height = 920 if is_fs else int(height)
-    inner_scroll_height = outer_container_height - 210
+    outer_container_height = 900 if is_fs else int(height)
+    inner_scroll_height = outer_container_height - 200
 
     with target.container(height=outer_container_height, border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
@@ -384,7 +408,17 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                                 unsafe_allow_html=True
                             )
                             st.markdown(msg["content"])
-                            st.markdown('</div></div>', unsafe_allow_html=True)
+                            st.markdown('</div>', unsafe_allow_html=True)
+                            
+                            # Render formatted pill sources if present
+                            if msg.get("sources"):
+                                sources_html = '<div class="echo-sources-container">'
+                                for src in msg["sources"]:
+                                    sources_html += f'<a href="{src["url"]}" target="_blank" class="echo-source-pill">{SVG_GLOBE_ICON}{src["title"]}</a>'
+                                sources_html += '</div>'
+                                st.markdown(sources_html, unsafe_allow_html=True)
+                                
+                            st.markdown('</div>', unsafe_allow_html=True)
 
             # Active Knowledge Proposal Card
             if st.session_state["knowledge_proposal"]:
@@ -420,12 +454,11 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.session_state["knowledge_proposal"] = None
                             st.rerun()
 
-            # Docked Chat Input Area + Web Search Tick
+            # Docked Chat Input & Compact Switch
             st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
-            
-            tool_col1, tool_col2 = st.columns([0.8, 0.2])
-            with tool_col2:
-                use_web = st.toggle("Search Web", value=st.session_state["echo_web_search_enabled"], key="toggle_web_search", help="Enable to fetch live web sources and cite them in responses.")
+            tool_left, tool_right = st.columns([0.80, 0.20])
+            with tool_right:
+                use_web = st.toggle("Search Web", value=st.session_state["echo_web_search_enabled"], key="toggle_web_search")
                 st.session_state["echo_web_search_enabled"] = use_web
 
             active_prompt = st.chat_input("Ask a question, identify project facts, or provide knowledge updates...")
@@ -443,7 +476,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                         unsafe_allow_html=True
                     )
                     thinking_placeholder = st.empty()
-                    search_label = "Echo is searching the web and thinking..." if use_web else "Echo is thinking..."
+                    search_label = "Echo is searching the web and analyzing..." if use_web else "Echo is thinking..."
                     thinking_placeholder.markdown(
                         f'<div class="echo-thinking-wrapper">'
                         f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
@@ -455,7 +488,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                     )
 
                 archives = fetch_meeting_archives(limit=100)
-                web_context = _perform_web_search(active_prompt) if use_web else ""
+                web_context, web_sources = _perform_web_search(active_prompt) if use_web else ("", [])
                 
                 answer, proposed_fact = _query_echo_backend(
                     question=active_prompt,
@@ -465,7 +498,11 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                 )
                 
                 thinking_placeholder.empty()
-                st.session_state["global_chat_history"].append({"role": "assistant", "content": answer})
+                st.session_state["global_chat_history"].append({
+                    "role": "assistant",
+                    "content": answer,
+                    "sources": web_sources
+                })
                 if proposed_fact:
                     st.session_state["knowledge_proposal"] = proposed_fact
 
@@ -580,27 +617,33 @@ def _render_context_manager_subtab():
                 st.rerun()
 
 
-def _perform_web_search(query: str) -> str:
-    """Fetches real-time web context using DuckDuckGo HTML endpoint."""
+def _perform_web_search(query: str) -> tuple:
+    """Fetches real-time web context and structured source objects."""
+    sources = []
+    text_snippets = []
     try:
         url = "https://html.duckduckgo.com/html/"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         resp = requests.post(url, data={"q": query}, headers=headers, timeout=10)
         if resp.status_code == 200:
+            titles = re.findall(r'<a class="result__url"[^>]*>(.*?)</a>', resp.text)
             snippets = re.findall(r'<a class="result__snippet[^>]*>(.*?)</a>', resp.text, re.DOTALL)
             urls = re.findall(r'<a class="result__url[^>]*href="([^"]+)"', resp.text)
             
-            clean_results = []
-            for i in range(min(5, len(snippets))):
-                clean_text = re.sub(r'<.*?>', '', snippets[i]).strip()
-                link = urls[i] if i < len(urls) else ""
-                clean_results.append(f"[{i+1}] Source: {clean_text} (URL: {link})")
-            
-            if clean_results:
-                return "\n".join(clean_results)
+            for i in range(min(4, len(snippets))):
+                clean_snippet = re.sub(r'<.*?>', '', snippets[i]).strip()
+                link = urls[i] if i < len(urls) else "#"
+                raw_title = re.sub(r'<.*?>', '', titles[i]).strip() if i < len(titles) else f"Source {i+1}"
+                
+                # Format a friendly source title
+                domain = re.sub(r'^https?://(www\.)?', '', link).split('/')[0]
+                pill_title = domain if domain else raw_title[:20]
+
+                sources.append({"title": pill_title, "url": link})
+                text_snippets.append(f"[{i+1}] {clean_snippet} (URL: {link})")
     except Exception:
         pass
-    return ""
+    return ("\n".join(text_snippets), sources)
 
 
 def _extract_context_with_ai(raw_text: str) -> list:
@@ -640,7 +683,7 @@ def _extract_context_with_ai(raw_text: str) -> list:
 
 
 def _query_echo_backend(question: str, archive_records: list, chat_history: list, web_context: str = "") -> tuple:
-    """Synthesizes archives and optional web search results while providing clean citations."""
+    """Synthesizes archives and optional web search results."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets.", None
@@ -653,9 +696,11 @@ def _query_echo_backend(question: str, archive_records: list, chat_history: list
     jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
     projects = ", ".join(context_data.get('projects', []))
 
+    current_date_str = datetime.now().strftime("%A, %B %d, %Y")
     web_section = f"\nLIVE WEB SEARCH RESULTS:\n{web_context}\n" if web_context else ""
 
     context_string = f"""
+CURRENT DATE & TIME: {current_date_str}
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
 TEAM MEMBERS: {team_list}
@@ -666,14 +711,15 @@ TECHNICAL JARGON:
 """
 
     citation_rule = (
-        "When using LIVE WEB SEARCH RESULTS, cite your claims with hyperlinks or footnote markers pointing directly to the sources provided. "
+        "Incorporate web facts naturally into the narrative without raw bulleted link dumps, as structured source pills are handled automatically."
         if web_context else ""
     )
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
+        f"The current date is {current_date_str}. Directly answer date/time inquiries accurately using this temporal anchor. "
         "Synthesize meeting archives and web findings accurately. Format responses cleanly using standard Markdown headings, lists, and Markdown tables where appropriate. No emojis. "
-        f"{citation_rule}"
+        f"{citation_rule} "
         "Determine if the user's input contains a new terminology definition, project assignment, or role update that could belong in the knowledge base. "
         "Respond in strict JSON format matching the schema: "
         "{"
