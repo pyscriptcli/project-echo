@@ -1,9 +1,64 @@
 import streamlit as st
 import requests
 import json
-from utils.db import fetch_echo_context
+from utils.db import fetch_meeting_archives, fetch_echo_context
 
-def query_global_team_archive(question: str, archive_records: list, chat_history: list) -> str:
+def render_echo_chat(container=None, height=720, title="Ask Echo", caption="Synthesize meeting archives, transcripts, and action logs."):
+    """
+    Renders the global Ask Echo chat interface.
+    """
+    target = container if container else st
+    
+    if "global_chat_history" not in st.session_state:
+        st.session_state["global_chat_history"] = []
+
+    with target.container(height=height, border=True):
+        chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.04, 0.04])
+        
+        with chat_header_col:
+            st.markdown(f'<p class="section-title">{title}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p class="section-caption">{caption}</p>', unsafe_allow_html=True)
+            
+        with btn_clear_col:
+            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
+            if st.button("", icon=":material/delete:", key="btn_clear_chat", help="Clear chat"):
+                st.session_state["global_chat_history"] = []
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with btn_full_col:
+            st.markdown('<div class="icon-action-btn">', unsafe_allow_html=True)
+            is_fullscreen = st.session_state.get("chat_fullscreen", False)
+            full_icon = ":material/fullscreen_exit:" if is_fullscreen else ":material/fullscreen:"
+            tooltip = "Exit Fullscreen" if is_fullscreen else "Fullscreen"
+            if st.button("", icon=full_icon, key="btn_fullscreen_chat", help=tooltip):
+                st.session_state["chat_fullscreen"] = not is_fullscreen
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # Calculate feed height based on total container height minus header/input approx height
+        chat_feed_height = height - 175 
+        chat_history_container = st.container(height=chat_feed_height)
+        
+        with chat_history_container:
+            if not st.session_state["global_chat_history"]:
+                with st.chat_message("assistant"):
+                    st.markdown("**System Online:** Hello. I am Echo. Ask me anything across your entire meeting archive.")
+            else:
+                for msg in st.session_state["global_chat_history"]:
+                    with st.chat_message(msg["role"]):
+                        st.markdown(msg["content"])
+
+        if global_query := st.chat_input("Ask Echo a question..."):
+            st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
+            with st.spinner("Analyzing meeting archives..."):
+                archives = fetch_meeting_archives(limit=100)
+                ans = _query_echo_backend(global_query, archives, st.session_state["global_chat_history"])
+            st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
+            st.rerun()
+
+def _query_echo_backend(question: str, archive_records: list, chat_history: list) -> str:
+    """Internal function to handle the AI API call with Context Injection."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "⚠️ DeepSeek API Key is missing in Streamlit Secrets."
@@ -33,25 +88,22 @@ def query_global_team_archive(question: str, archive_records: list, chat_history
 
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
-        "Format responses in concise, professional corporate English with clean markdown bullet points."
+        "Answer user questions accurately by synthesizing past meeting records. "
+        "Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. "
+        "Do not use emojis; use plain text. Ask follow-up questions when useful."
         f"\n\n{context_string}\n"
     )
     
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nArchives:\n{archive_context[:28000]}"}]
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": question})
     
+    payload = {"model": "deepseek-chat", "messages": messages, "temperature": 0.2, "max_tokens": 750}
     try:
-        resp = requests.post(
-            "https://api.deepseek.com/chat/completions",
-            headers=headers,
-            json={"model": "deepseek-chat", "messages": messages, "temperature": 0.2, "max_tokens": 750},
-            timeout=60
-        )
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
             return resp.json()["choices"][0]["message"]["content"].strip()
-        return f"⚠️ API Error ({resp.status_code}): {resp.text}"
+        return f"Service Notice ({resp.status_code}): {resp.text}"
     except Exception as e:
-        return f"⚠️ Connection error: {e}"
+        return f"Connection error: {e}"
