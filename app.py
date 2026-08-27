@@ -1,12 +1,12 @@
 import sys
 import os
 import calendar
+import datetime
 
 # Add root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 import streamlit as st
-import datetime
 import json
 import requests
 import pandas as pd
@@ -243,30 +243,59 @@ def query_global_team_archive(question, archive_records, chat_history):
 # 6. Fetch Data
 supabase_records = fetch_meeting_archives(limit=100)
 
-# --- NEW: Date Range Picker Logic ---
-now = datetime.datetime.now()
-_, last_day = calendar.monthrange(now.year, now.month)
-default_start = now.replace(day=1).date()
-default_end = now.replace(day=last_day).date()
+# --- NEW: Title & Date Layout (Image Replicate) ---
+top_left, top_right = st.columns([3, 1.2])
 
-st.markdown('<h3>Dashboard Options</h3>', unsafe_allow_html=True)
-col_dp, _ = st.columns([1, 3])
-with col_dp:
-    selected_dates = st.date_input(
-        "Filter by Date Range",
-        value=(default_start, default_end),
-        key="date_range_picker"
+with top_left:
+    st.markdown('<h1 style="font-family: \'Playfair Display\', serif; font-weight: 400; font-style: italic; color: #1A2B4C; margin-bottom: 0rem; padding-bottom: 0rem; font-size: 2.8rem;">Executive Hub</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #888888; font-size: 1rem; margin-top: 0rem; padding-top: 0.2rem; padding-bottom: 1rem;">Team activity overview</p>', unsafe_allow_html=True)
+
+with top_right:
+    # Date Preset Selectbox
+    preset = st.selectbox(
+        "Date Range Preset", 
+        ["This Month", "This Week", "Last Week", "Last Month", "Custom Date Range"], 
+        index=0, 
+        label_visibility="collapsed"
     )
+    
+    now = datetime.datetime.now()
+    today = now.date()
+    
+    # Calculate dates based on preset
+    if preset == "This Month":
+        start_date = today.replace(day=1)
+        _, last_day = calendar.monthrange(today.year, today.month)
+        end_date = today.replace(day=last_day)
+    elif preset == "This Week":
+        start_date = today - datetime.timedelta(days=today.weekday())
+        end_date = start_date + datetime.timedelta(days=6)
+    elif preset == "Last Week":
+        start_date = today - datetime.timedelta(days=today.weekday() + 7)
+        end_date = start_date + datetime.timedelta(days=6)
+    elif preset == "Last Month":
+        first_this = today.replace(day=1)
+        last_prev = first_this - datetime.timedelta(days=1)
+        start_date = last_prev.replace(day=1)
+        end_date = last_prev
+    else: # Custom
+        selected_dates = st.date_input(
+            "Select Dates", 
+            value=(today.replace(day=1), today), 
+            label_visibility="collapsed"
+        )
+        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+            start_date, end_date = selected_dates
+        elif isinstance(selected_dates, tuple) and len(selected_dates) == 1:
+            start_date = selected_dates[0]
+            end_date = selected_dates[0]
+        else:
+            start_date = selected_dates
+            end_date = selected_dates
 
-# Handle cases where user clicks only one date in the range picker
-if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-    start_date, end_date = selected_dates
-elif isinstance(selected_dates, tuple) and len(selected_dates) == 1:
-    start_date = selected_dates[0]
-    end_date = selected_dates[0]
-else:
-    start_date = selected_dates
-    end_date = selected_dates
+    # Show calculated dates if not using Custom (since Date Input already shows it natively)
+    if preset != "Custom Date Range":
+        st.markdown(f"<div style='text-align: right; color: #1A2B4C; font-weight: 500; font-size: 0.9rem;'>📅 {start_date.strftime('%b %d, %Y')} — {end_date.strftime('%b %d, %Y')}</div>", unsafe_allow_html=True)
 
 # 7. Metrics Computation & Filtering
 total_team_meetings = len(supabase_records)
@@ -316,7 +345,7 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     with st.container(height=580, border=True):
-        st.markdown('<h3>Recent Meetings</h3>', unsafe_allow_html=True) # Renamed Heading
+        st.markdown('<h3>Recent Meetings</h3>', unsafe_allow_html=True)
         st.caption("Browse archived meetings for the selected date range. Click to inspect full details.")
         
         if filtered_records:
