@@ -41,7 +41,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Card Container with matching grid transparency */
+/* Card Container with matching 80px grid background */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -84,6 +84,36 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     letter-spacing: 0.01em !important;
 }
 
+/* Header Controls Pill Buttons */
+div[data-testid="stPopover"] > button {
+    background-color: #111A2B !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 20px !important;
+    padding: 0.15rem 0.5rem !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    transition: all 0.2s ease !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #F1C40F !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+}
+
+div[data-testid="stButton"] > button {
+    background-color: #111A2B !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 20px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    transition: all 0.2s ease !important;
+}
+div[data-testid="stButton"] > button:hover {
+    border-color: #F1C40F !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+}
+
 /* Inner Chat Box Container */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
@@ -94,7 +124,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.75) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
@@ -212,18 +242,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     display: inline-flex;
     align-items: center;
-    background: #F8FAFC;
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    border-radius: 3px;
-    padding: 1px 5px;
+    background: #111A2B;
+    border: 1px solid #D4AF37;
+    border-radius: 12px;
+    padding: 1px 7px;
     font-size: 0.68rem;
-    color: #854D0E !important;
+    color: #D4AF37 !important;
     text-decoration: none !important;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 .echo-source-pill:hover {
-    background: #FEFCE8;
-    border-color: #D4AF37;
+    border-color: #F1C40F;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
 }
 
 /* Tables */
@@ -266,7 +298,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     align-items: center;
     gap: 4px;
     padding: 2px 7px;
-    border-radius: 3px;
+    border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.35);
     font-size: 0.70rem;
@@ -298,9 +330,10 @@ div[data-testid="stChatInput"] {
 
 div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.5) !important;
-    border-radius: 6px !important;
+    border: 1px solid rgba(212, 175, 55, 0.55) !important;
+    border-radius: 20px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    padding: 2px 8px !important;
 }
 
 div[data-testid="stChatInput"] textarea {
@@ -504,7 +537,7 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> str:
-    """Directly synthesizes sources into markdown without schema parsing errors."""
+    """Directly synthesizes sources into markdown."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets."
