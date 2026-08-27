@@ -39,7 +39,7 @@ SVG_BRAIN_ICON = """
 
 CHAT_POLISHED_CSS = """
 <style>
-/* Outer Card Container - Frosted Glass Frame */
+/* Outer Card Container - Frosted Glass Frame with NO overflow scrollbar */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background: rgba(255, 255, 255, 0.45) !important;
     backdrop-filter: blur(16px) saturate(160%) !important;
@@ -53,24 +53,14 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    height: 100% !important;
     overflow: hidden !important;
-    gap: 0.35rem !important;
+    gap: 0.25rem !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabs"] {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-}
-
+/* Prevent tabs and tab contents from creating intermediate scrollbars */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabs"],
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) div[data-testid="stTabContent"] {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 /* Fullscreen Immersive Viewport Mode */
@@ -92,22 +82,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     overflow: hidden !important;
 }
 
-/* Inner Scrollable Chat Feed */
-.echo-chat-box-container {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-}
-
+/* Inner Scrollable Chat Feed - THE ONLY SCROLLING ELEMENT */
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
     background: rgba(255, 255, 255, 0.35) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 12px !important;
-    height: 100% !important;
     overflow-y: auto !important;
     padding: 0.75rem 1rem !important;
 }
@@ -294,8 +275,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
 
 /* Docked Bottom Bar */
 .echo-input-dock {
-    flex-shrink: 0 !important;
-    padding-top: 0.25rem !important;
+    padding-top: 0.4rem !important;
     display: flex;
     flex-direction: column;
 }
@@ -330,10 +310,10 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["echo_web_search_enabled"] = False
 
     is_fs = st.session_state["chat_is_fullscreen"]
-    outer_container_height = 900 if is_fs else int(height)
-    inner_scroll_height = outer_container_height - 200
+    chat_scroll_height = 700 if is_fs else max(300, int(height) - 240)
 
-    with target.container(height=outer_container_height, border=True):
+    # Outer container without fixed height to prevent double outer scrollbars
+    with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
         if is_fs:
             st.markdown('<div class="echo-fullscreen-active"></div>', unsafe_allow_html=True)
@@ -368,7 +348,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         # ==========================================
         with tab_chat:
             st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-            chat_box = st.container(height=inner_scroll_height)
+            chat_box = st.container(height=chat_scroll_height)
             st.markdown('</div>', unsafe_allow_html=True)
 
             with chat_box:
@@ -410,7 +390,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.markdown(msg["content"])
                             st.markdown('</div>', unsafe_allow_html=True)
                             
-                            # Render formatted pill sources if present
+                            # Render pill sources if available
                             if msg.get("sources"):
                                 sources_html = '<div class="echo-sources-container">'
                                 for src in msg["sources"]:
@@ -635,7 +615,6 @@ def _perform_web_search(query: str) -> tuple:
                 link = urls[i] if i < len(urls) else "#"
                 raw_title = re.sub(r'<.*?>', '', titles[i]).strip() if i < len(titles) else f"Source {i+1}"
                 
-                # Format a friendly source title
                 domain = re.sub(r'^https?://(www\.)?', '', link).split('/')[0]
                 pill_title = domain if domain else raw_title[:20]
 
