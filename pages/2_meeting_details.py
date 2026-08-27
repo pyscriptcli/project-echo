@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.db import fetch_meeting_archives, get_supabase_client
-from components.sidebar import render_custom_sidebar
+from components.sidebar import setup_page_layout
 
 # 1. Page Config
 st.set_page_config(
@@ -10,6 +10,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+setup_page_layout()
+
 
 # 2. Custom CSS (Sidebar styling removed - handled globally by app.py)
 CUSTOM_CSS = """
