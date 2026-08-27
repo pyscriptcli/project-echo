@@ -30,7 +30,7 @@ SVG_BRAIN_ICON = """
 
 CHAT_GLASSMORPHISM_CSS = """
 <style>
-/* Glassmorphic Outer Card Container */
+/* Outer Card Container with Frosted Glass */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     background: rgba(255, 255, 255, 0.45) !important;
     backdrop-filter: blur(16px) saturate(160%) !important;
@@ -41,7 +41,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
     transition: all 0.3s ease-in-out;
 }
 
-/* TRUE FULLSCREEN VIEWPORT OVERLAY */
+/* Fullscreen Viewport Overlay */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     position: fixed !important;
     top: 0 !important;
@@ -60,7 +60,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     overflow-y: auto !important;
 }
 
-/* Glassmorphic Chat Scroll Area */
+/* Inner Scrollable Chat Feed */
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
     background: rgba(255, 255, 255, 0.35) !important;
     backdrop-filter: blur(12px) !important;
@@ -70,11 +70,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
 }
 
 .echo-chat-viewport {
-    padding: 0.25rem;
+    padding: 0.1rem;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* User Message: Black Bubble with Gold Accent & Glass Rim Glow */
+/* User Message Bubble */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -116,7 +116,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
-/* AI Assistant Message: Crisp Contrast Typography on Frosted Glass */
+/* Assistant Message Row */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
@@ -170,7 +170,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     line-height: 1.65;
 }
 
-/* Markdown Tables with Clean Contrast on Glass */
+/* Markdown Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
@@ -198,7 +198,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     color: #1F2937;
 }
 
-/* Frosted Thinking Indicator */
+/* Thinking Indicator Pill */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
@@ -233,24 +233,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-fullscreen-active) {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Frosted Pill Buttons */
-div[data-testid="stHorizontalBlock"] .suggest-btn > button {
-    border-radius: 20px !important;
-    font-size: 0.78rem !important;
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(6px) !important;
-    -webkit-backdrop-filter: blur(6px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.85) !important;
-    color: #1F2937 !important;
-    height: 36px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
-    transition: all 0.2s ease;
+/* Persistent Docked Chat Input Box at Container Bottom */
+div[data-testid="stChatInput"] {
+    margin-top: 0.75rem !important;
 }
-div[data-testid="stHorizontalBlock"] .suggest-btn > button:hover {
-    border-color: #D4AF37 !important;
-    color: #D4AF37 !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2) !important;
+div[data-testid="stChatInput"] > div {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(212, 175, 55, 0.4) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+}
+div[data-testid="stChatInput"] textarea {
+    color: #111827 !important;
 }
 </style>
 """
@@ -268,17 +264,14 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         st.session_state["knowledge_proposal"] = None
     if "chat_is_fullscreen" not in st.session_state:
         st.session_state["chat_is_fullscreen"] = False
-    if "pending_user_prompt" not in st.session_state:
-        st.session_state["pending_user_prompt"] = None
 
     is_fs = st.session_state["chat_is_fullscreen"]
-    
-    # Use valid integer pixel values for st.container(height=...)
     outer_container_height = 880 if is_fs else int(height)
-    chat_feed_height = 680 if is_fs else max(300, int(height) - 250)
+    
+    # Reserve fixed vertical space so the input box stays persistently docked outside the scroll zone
+    chat_feed_height = 640 if is_fs else max(260, int(height) - 230)
 
     with target.container(height=outer_container_height, border=True):
-        # Fullscreen marker hook for CSS
         if is_fs:
             st.markdown('<div class="echo-fullscreen-active"></div>', unsafe_allow_html=True)
 
@@ -332,27 +325,6 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                         '</div>',
                         unsafe_allow_html=True
                     )
-                    st.markdown("<p style='font-size:0.78rem; color:#6B7280; margin-top:1.2rem; margin-bottom:0.4rem; padding-left: 42px;'>Suggested prompts:</p>", unsafe_allow_html=True)
-                    s_col1, s_col2, s_col3 = st.columns(3)
-                    with s_col1:
-                        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-                        if st.button("List active CRD members", key="sug_1", use_container_width=True):
-                            st.session_state["pending_user_prompt"] = "List all active CRD team members and their roles."
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with s_col2:
-                        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-                        if st.button("Identify pending deliverables", key="sug_2", use_container_width=True):
-                            st.session_state["pending_user_prompt"] = "Summarize pending action deliverables across recent meetings in a table."
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with s_col3:
-                        st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-                        if st.button("Who is JPY?", key="sug_3", use_container_width=True):
-                            st.session_state["pending_user_prompt"] = "Who is JPY in PRIME Philippines?"
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
-
                 else:
                     for msg in st.session_state["global_chat_history"]:
                         if msg["role"] == "user":
@@ -377,7 +349,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.markdown(msg["content"])
                             st.markdown('</div></div>', unsafe_allow_html=True)
 
-            # Active Knowledge Proposal Interactive Card
+            # Active Knowledge Proposal Card
             if st.session_state["knowledge_proposal"]:
                 prop = st.session_state["knowledge_proposal"]
                 with st.container(border=True):
@@ -411,12 +383,10 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.session_state["knowledge_proposal"] = None
                             st.rerun()
 
-            # Chat Input Field
-            chat_input_val = st.chat_input("Ask a question, identify project facts, or provide knowledge updates...")
-            active_prompt = chat_input_val or st.session_state.get("pending_user_prompt")
+            # Persistent Bottom Chat Input
+            active_prompt = st.chat_input("Ask a question, identify project facts, or provide knowledge updates...")
 
             if active_prompt:
-                st.session_state["pending_user_prompt"] = None
                 st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
 
                 with chat_box:
