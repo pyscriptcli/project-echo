@@ -301,7 +301,11 @@ def normalize_llm_json_to_df(data):
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = f"You are Echo, an executive AI analyst for PRIME Philippines. Synthesize past meeting records and metadata accurately. Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
+    system_prompt = (
+        "You are Echo, an executive AI analyst for PRIME Philippines. Synthesize past meeting records and metadata accurately. "
+        f"Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. "
+        "Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
+    )
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
 Transcript: {transcript[:15000]}"""
@@ -751,25 +755,33 @@ with col_details:
                         st.write(f"• **Last Call:** `{last_call.strftime('%I:%M:%S %p')}`")
             st.markdown("---")
         
-        # Row 1: Date, Location (Presets + Typeable Options), Meeting Type
+        # Row 1: Date, Location (Presets + Custom option), Meeting Type
         r1_c1, r1_c2, r1_c3 = st.columns([1.1, 1.4, 0.9])
         with r1_c1:
             meeting_date = st.date_input("Date", value=st.session_state["meeting_date"])
             st.session_state["meeting_date"] = meeting_date
         with r1_c2:
             current_loc = st.session_state.get("meeting_location", "")
-            location_list = list(LOCATION_PRESETS)
-            if current_loc and current_loc not in location_list:
-                location_list.insert(0, current_loc)
+            loc_options = list(LOCATION_PRESETS)
             
-            loc_idx = location_list.index(current_loc) if current_loc in location_list else None
-            meeting_location = st.selectbox(
-                "Location",
-                options=location_list,
-                index=loc_idx,
-                placeholder="Choose preset or type location...",
-                accept_user_input=True
-            )
+            if current_loc and current_loc not in loc_options:
+                loc_options.append(current_loc)
+            loc_options.append("Other / Custom...")
+
+            default_idx = loc_options.index(current_loc) if current_loc in loc_options else 0
+            selected_loc_choice = st.selectbox("Location", options=loc_options, index=default_idx)
+            
+            if selected_loc_choice == "Other / Custom...":
+                custom_loc = st.text_input(
+                    "Enter Location", 
+                    value="" if current_loc in LOCATION_PRESETS else current_loc, 
+                    placeholder="e.g. Boardroom or Client Office",
+                    label_visibility="collapsed"
+                )
+                meeting_location = custom_loc
+            else:
+                meeting_location = selected_loc_choice
+                
             st.session_state["meeting_location"] = meeting_location if meeting_location else ""
         with r1_c3:
             curr_type = st.session_state.get("meeting_type", "Internal")
