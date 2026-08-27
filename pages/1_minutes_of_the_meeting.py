@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 import datetime
 import json
@@ -5,7 +11,6 @@ import re
 import subprocess
 import tempfile
 import time
-import os
 from io import BytesIO
 
 import docx
@@ -24,25 +29,21 @@ from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Tabl
 import requests
 import streamlit.components.v1 as components
 
-# Centralized DB import (Ensure utils/db.py exists as provided earlier)
+# Centralized DB & Components
 from utils.db import get_supabase_client
-
-import streamlit as st
 from components.sidebar import render_custom_sidebar
 
-# ... rest of your page code ...
-
-# Render the sidebar
-render_custom_sidebar()
-
-# 1. Page Configuration (MUST be first)
+# 1. Page Configuration (MUST be the first Streamlit command)
 st.set_page_config(
     page_title="Project Echo - MoM Generator",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 2. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
+# 2. Render Global Navigation
+render_custom_sidebar()
+
+# 3. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -53,19 +54,9 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     background-size: 80px 80px; color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
-.block-container { padding-top: 2rem !important; padding-right: 2rem !important; }
+.block-container { padding-top: 1.5rem !important; padding-right: 2rem !important; }
 h3 { font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important; }
 .playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
-
-/* Sidebar Styling */
-section[data-testid="stSidebar"] { background-color: #161616 !important; border-right: 1px solid #2B2B2B !important; box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; z-index: 999995 !important; }
-button[data-testid="stSidebarCollapseButton"] { display: flex !important; position: absolute !important; bottom: 24px !important; left: 50% !important; transform: translateX(-50%) !important; width: 40px !important; height: 40px !important; background-color: #222222 !important; border: 1px solid #333333 !important; border-radius: 50% !important; color: #C5A059 !important; transition: all 0.2s ease !important; z-index: 999999 !important; }
-button[data-testid="stSidebarCollapseButton"]:hover { background-color: #D4AF37 !important; color: #161616 !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] { width: 48px !important; height: 48px !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 10px !important; background-color: #222222 !important; border: 1px solid #333333 !important; transition: all 0.2s ease !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover { background-color: #D4AF37 !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] { display: none !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] { font-size: 1.5rem !important; color: #C5A059 !important; }
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover span[data-testid="stIconMaterial"] { color: #161616 !important; }
 
 /* Containers & Inputs */
 div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 12px !important; box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important; border: 1px solid rgba(0, 0, 0, 0.05) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
@@ -129,10 +120,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 3. SVG Templates for HTML components
+# 4. SVG Templates for HTML components
 COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
 
-# 4. Constants & Config
+# 5. Constants & Config
 DEEPSEEK_API_KEY = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions"
 GROQ_API_KEY = str(st.secrets.get("GROQ_API_KEY", "")).strip()
@@ -143,7 +134,7 @@ OPENAI_AUDIO_URL = "https://api.openai.com/v1/audio/transcriptions"
 CRD_MEMBERS = ["Sondi Tuazon", "Kristina Balajadia", "Meliza Zapata", "Dykstra Pineda", "Cedtrix Rena", "Carlo Medina", "Dave Policarpio", "Irish Rima"]
 LOCATION_OPTIONS = ["GreatWork Mega Tower 32F - Secret Room", "GreatWork Mega Tower 32F - Small Meeting Room", "GreatWork Mega Tower 24F - Meeting Room", "GreatWork Mega Tower 32F - Board Room", "GreatWork Mega Tower 32F - Co-working", "Online Meeting"]
 
-# 5. Session State Initialization
+# 6. Session State Initialization
 if "transcript" not in st.session_state: st.session_state["transcript"] = ""
 if "df" not in st.session_state: st.session_state["df"] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
 if "other_discussions" not in st.session_state: st.session_state["other_discussions"] = ""
@@ -162,7 +153,7 @@ if "meeting_prep_desig" not in st.session_state: st.session_state["meeting_prep_
 if "meeting_conf_name" not in st.session_state: st.session_state["meeting_conf_name"] = ""
 if "meeting_conf_desig" not in st.session_state: st.session_state["meeting_conf_desig"] = ""
 
-# 6. Core Logic Functions
+# 7. Core Logic Functions
 def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
     client = get_supabase_client()
     if not client: return False, "Supabase client uninitialized."
@@ -640,7 +631,7 @@ def export_to_pdf(df, meeting_details, other_discussions):
     buffer.seek(0)
     return buffer
 
-# 7. UI Layout
+# 8. UI Layout
 col_upload, col_details = st.columns(2)
 
 # LEFT CONTAINER: Audio & Text Upload Section
