@@ -1,4 +1,3 @@
-# In components/sidebar.py
 import streamlit as st
 
 def setup_page_layout():
@@ -24,11 +23,15 @@ def setup_page_layout():
     </style>
     """, unsafe_allow_html=True)
 
-    # Render your custom horizontal navbar
-    col1, col2, col3, _ = st.columns([1.2, 1.2, 2.2, 5.4])
+    # Render your custom horizontal navbar (Added col4 for Ask Echo)
+    col1, col2, col3, col4, _ = st.columns([1.2, 1.2, 2.2, 1.5, 3.9])
+    
     with col1:
         st.page_link("app.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
     with col2:
         st.page_link("pages/2_meeting_details.py", label="Meetings", icon=":material/menu_book:", use_container_width=True)
     with col3:
         st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting", icon=":material/edit_note:", use_container_width=True)
+    with col4:
+        # NEW LINK TO THE ECHO PAGE
+        st.page_link("pages/3_ask_echo.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
