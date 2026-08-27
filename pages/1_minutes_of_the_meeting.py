@@ -31,7 +31,7 @@ import streamlit.components.v1 as components
 
 # Centralized DB & Components
 from utils.db import get_supabase_client
-from components.sidebar import render_custom_sidebar
+from components.sidebar import setup_page_layout
 
 # 1. Page Configuration (MUST be the first Streamlit command)
 st.set_page_config(
@@ -41,7 +41,7 @@ st.set_page_config(
 )
 
 # 2. Render Global Navigation
-render_custom_sidebar()
+setup_page_layout()
 
 # 3. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
 CUSTOM_CSS = """
