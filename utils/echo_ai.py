@@ -381,21 +381,21 @@ def render_context_popup_dialog():
 
     if mode == "AI Smart Extraction":
         raw_text = st.text_area(
-            "Raw Context / Scouting Dump",
+            "Raw Context / Knowledge Dump",
             height=140,
-            placeholder="Paste raw text, table logs, property records, or corporate notes here..."
+            placeholder="Paste raw unstructured notes, custom tables, logs, property records, or specs here..."
         )
         c_act1, c_act2 = st.columns([1.5, 1])
         with c_act1:
             if st.button("Extract Structured Knowledge", key="btn_dlg_run_ai", type="primary", use_container_width=True):
                 if raw_text.strip():
-                    with st.spinner("Extracting structured records into JSON schema..."):
+                    with st.spinner("Extracting structured knowledge entries..."):
                         extracted = _extract_context_with_ai(raw_text)
                         if extracted:
                             st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
                             st.rerun()
                         else:
-                            st.error("No actionable definitions, properties, or entities identified.")
+                            st.error("No actionable knowledge items or entities identified.")
                 else:
                     st.warning("Please supply context text.")
         with c_act2:
@@ -406,11 +406,11 @@ def render_context_popup_dialog():
     else:
         m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns([1.2, 1.5, 2.5, 0.8, 1])
         with m_col1:
-            m_cat = st.selectbox("Category", options=["properties", "team", "jargon", "projects"], key="dlg_manual_cat")
+            m_cat = st.selectbox("Category", options=["knowledge", "team", "jargon", "projects"], key="dlg_manual_cat")
         with m_col2:
-            m_key = st.text_input("Key / Property Name", placeholder="e.g. Sct. Gandia Lot", key="dlg_manual_key")
+            m_key = st.text_input("Key / Entity Identifier", placeholder="e.g. SRC-01162026-001 or Topic", key="dlg_manual_key")
         with m_col3:
-            m_val = st.text_input("Value / JSON Object", placeholder='e.g. {"rate": 249, "size": 441}', key="dlg_manual_val")
+            m_val = st.text_input("Value / Structured JSON", placeholder='e.g. {"property": "Sct. Gandia", "rate": 249}', key="dlg_manual_val")
         with m_col4:
             m_prio = st.number_input("Priority", min_value=1, max_value=5, value=2, key="dlg_manual_prio")
         with m_col5:
@@ -438,7 +438,7 @@ def render_context_popup_dialog():
         st.markdown("<p style='font-size:0.80rem; font-weight:600; color:#1A2B4C;'>Staged Knowledge Rows (JSON Structured Values)</p>", unsafe_allow_html=True)
 
         column_config = {
-            "category": st.column_config.SelectboxColumn("Category", options=["properties", "team", "jargon", "projects"], required=True),
+            "category": st.column_config.SelectboxColumn("Category", options=["knowledge", "team", "jargon", "projects"], required=True),
             "key": st.column_config.TextColumn("Key / Entity Name", required=True),
             "value": st.column_config.TextColumn("Value (JSON / String)", required=True, width="large"),
             "priority": st.column_config.NumberColumn("Priority (1-5)", min_value=1, max_value=5, default=2)
@@ -455,7 +455,7 @@ def render_context_popup_dialog():
 
         if st.button("Commit to Echo Knowledge Base", key="btn_dlg_commit", type="primary", use_container_width=True):
             saved = 0
-            with st.spinner("Saving structured records..."):
+            with st.spinner("Saving knowledge records..."):
                 for _, row in edited_df.iterrows():
                     if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
                         if upsert_echo_context(
@@ -708,7 +708,7 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str) -> list:
-    """Invokes LLM extraction schema with robust JSON repairing for large scouting / tabular dumps."""
+    """Invokes LLM extraction schema with JSON chunking/recovery for unstructured and tabular data."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         st.error("DeepSeek API Key configuration missing.")
@@ -716,12 +716,12 @@ def _extract_context_with_ai(raw_text: str) -> list:
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system_prompt = (
-        "You are an expert real estate data parser for PRIME Philippines. "
-        "Extract entities, scouting properties, team designations, jargon, and projects from the input text. "
-        "For tabular/scouting logs, set 'category': 'properties', 'key': [Property Name or Scouting ID], "
-        "and 'value': a compact JSON string representing the full structured specifications (e.g. {\"location\": \"...\", \"size_sqm\": 441, \"rate_month\": 109809, \"contact\": \"...\", \"coordinates\": \"...\"}). "
-        "For terms/jargon/team, set 'category' to 'team', 'jargon', or 'projects' and 'value' to the definition string. "
-        "Always return a JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
+        "You are an enterprise data extraction engine for PRIME Philippines. "
+        "Analyze the input text and extract all entities, properties, procedures, definitions, or table records. "
+        "For complex, tabular, or scouting logs that have varying schemas, assign 'category': 'knowledge', 'key': [Main Entity Name or Code], "
+        "and 'value': a compact JSON string capturing all available key-value pairs (e.g. {\"location\": \"...\", \"rate\": 100, \"contact\": \"...\"}). "
+        "For team members, jargon, or projects, assign 'category' to 'team', 'jargon', or 'projects' respectively with a string or JSON 'value'. "
+        "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
     )
 
     payload = {
@@ -784,7 +784,7 @@ def _extract_context_with_ai(raw_text: str) -> list:
 
 
 def _normalize_extracted_items(items: list) -> list:
-    """Ensures complex JSON values inside item objects are cleanly stringified for database storage."""
+    """Ensures nested JSON values inside item objects are cleanly stringified for database storage."""
     normalized = []
     for item in items:
         if isinstance(item, dict) and "key" in item and "value" in item:
@@ -792,7 +792,7 @@ def _normalize_extracted_items(items: list) -> list:
             if isinstance(val, (dict, list)):
                 val = json.dumps(val)
             normalized.append({
-                "category": str(item.get("category", "properties")),
+                "category": str(item.get("category", "knowledge")),
                 "key": str(item["key"]),
                 "value": str(val),
                 "priority": int(item.get("priority", 2))
@@ -821,7 +821,7 @@ def _query_echo_backend(
         team_list = ", ".join(context_data.get('team', []))
         jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
         projects = ", ".join(context_data.get('projects', []))
-        properties_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('properties', {}).items()])
+        knowledge_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('knowledge', {}).items()])
 
         knowledge_section = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
@@ -830,8 +830,8 @@ TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
-SCOUTING PROPERTIES / SPECIFICATIONS:
-{properties_list}
+ENTERPRISE KNOWLEDGE / STRUCTURED ENTITIES:
+{knowledge_list}
 """
     else:
         knowledge_section = ""
@@ -853,13 +853,13 @@ CURRENT DATE & TIME: {current_date_str}
     system_prompt = (
         "You are Echo, an executive AI analyst for PRIME Philippines. "
         f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
-        "Synthesize available sources, properties, and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
+        "Synthesize available sources, structured knowledge, and meeting archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
         f"{citation_rule}\n\n"
-        "Determine if the user input defines a new team member role, acronym, project specification, scouting property, or technical jargon that should be preserved in the persistent Knowledge Base. "
+        "Determine if the user input defines a new team member role, acronym, project specification, property update, or general entity that should be preserved in the persistent Knowledge Base. "
         "Always respond in JSON format matching the schema:\n"
         "{\n"
         "  \"response\": \"Your thorough markdown response to the user\",\n"
-        "  \"propose_knowledge\": null OR {\"category\": \"properties|team|jargon|projects\", \"key\": \"Term/Property Name\", \"value\": \"Definition or JSON string\", \"priority\": 2}\n"
+        "  \"propose_knowledge\": null OR {\"category\": \"knowledge|team|jargon|projects\", \"key\": \"Term/Entity Name\", \"value\": \"Definition or JSON string\", \"priority\": 2}\n"
         "}\n\n"
         f"{context_string}\n"
     )
