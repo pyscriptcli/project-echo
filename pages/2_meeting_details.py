@@ -18,6 +18,10 @@ st.set_page_config(
 )
 setup_page_layout()
 
+# Default date filter to "This Month" (shows all meetings within the current month when collapsed)
+today = date.today()
+first_day_of_month = today.replace(day=1)
+
 # 2. Global State for View Mode & Filters
 if "view_mode" not in st.session_state:
     st.session_state["view_mode"] = "gallery"
@@ -28,9 +32,12 @@ if "gal_search_q" not in st.session_state:
 if "gal_type_f" not in st.session_state:
     st.session_state["gal_type_f"] = "All Meetings"
 if "gal_date_range" not in st.session_state:
-    st.session_state["gal_date_range"] = ()
+    # Default to current month range: (Start of month, today)
+    st.session_state["gal_date_range"] = (first_day_of_month, today)
+if "temp_date_range" not in st.session_state:
+    st.session_state["temp_date_range"] = st.session_state["gal_date_range"]
 
-# 3. Custom CSS & Native Styling
+# 3. Custom CSS & Popover Date Picker Styling
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -109,25 +116,76 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     color: #161616 !important; 
 }
 
-/* Date Popover Button Styling */
+/* Topbar Date Picker Trigger Styling (Matches Mockup) */
 div[data-testid="stPopover"] > button {
-    background-color: #FAFAFA !important;
-    color: #1A2B4C !important;
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    border-radius: 8px !important;
-    font-size: 0.82rem !important;
-    font-weight: 500 !important;
-    height: 36px !important;
+    background-color: #FFFFFF !important;
+    color: #003B6F !important;
+    border: 1.5px solid #003B6F !important;
+    border-radius: 6px !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+    height: 38px !important;
     box-shadow: none !important;
     width: 100% !important;
     text-align: left !important;
     justify-content: flex-start !important;
+    padding: 0 0.85rem !important;
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: #D4AF37 !important;
+    border-color: #00274B !important;
+    background-color: #F8FAFC !important;
+    color: #00274B !important;
+}
+
+/* Popover Content Width for Split-Pane Date Picker */
+div[data-testid="stPopoverBody"] {
+    min-width: 580px !important;
+    max-width: 620px !important;
+    padding: 1.25rem !important;
     background-color: #FFFFFF !important;
-    color: #1A2B4C !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Left Sidebar Quick Preset Buttons */
+.stButton > button[key^="preset_"] {
+    background-color: transparent !important;
+    color: #4A5568 !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding: 0.45rem 0.65rem !important;
+    height: 34px !important;
+    margin-bottom: 0.35rem !important;
+    box-shadow: none !important;
+}
+
+.stButton > button[key^="preset_"]:hover {
+    background-color: #EDF2F7 !important;
+    color: #1A202C !important;
+}
+
+.stButton > button[key^="preset_active_"] {
+    border: 1.5px solid #003B6F !important;
+    color: #003B6F !important;
+    font-weight: 600 !important;
+}
+
+/* Date Picker Apply Button (Navy Solid Match) */
+.stButton > button[key="btn_apply_modal_date"] {
+    background-color: #003B6F !important;
+    color: #FFFFFF !important;
+    border-radius: 4px !important;
+    height: 36px !important;
+    font-weight: 600 !important;
+}
+.stButton > button[key="btn_apply_modal_date"]:hover {
+    background-color: #00284D !important;
+    color: #FFFFFF !important;
 }
 
 /* Back Button Pill */
@@ -220,7 +278,7 @@ div[data-baseweb="tab-highlight"] {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 4. Data Ingestion & Normalization
+# 4. Data Ingestion & Date Normalization
 meetings = fetch_meeting_archives(limit=500)
 
 if not meetings:
@@ -263,7 +321,7 @@ if st.session_state["view_mode"] == "gallery":
         st.caption("Search across meeting topics, filter by category or date range, and inspect complete minutes.")
         
         # Filter Bar Layout
-        f_c1, f_c2, f_c3, f_c4 = st.columns([4.2, 2.5, 2.3, 1.0])
+        f_c1, f_c2, f_c3, f_c4 = st.columns([4.2, 2.3, 2.5, 1.0])
         
         with f_c1:
             search_input = st.text_input(
@@ -287,62 +345,65 @@ if st.session_state["view_mode"] == "gallery":
             st.session_state["gal_type_f"] = selected_type
             
         with f_c3:
-            # Format display label on popover
+            # Format trigger label to match the exact calendar tag layout in image
             dr = st.session_state["gal_date_range"]
             if dr and len(dr) == 2:
-                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')} — {dr[1].strftime('%b %d, %Y')}"
+                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')} — {dr[1].strftime('%b %d, %Y')} •"
             elif dr and len(dr) == 1:
-                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')}"
+                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')} •"
             else:
-                btn_label = "📅 Select Date or Range"
+                btn_label = f"📅 {first_day_of_month.strftime('%b %d, %Y')} — {today.strftime('%b %d, %Y')} •"
 
+            # Popover Dialog styled identical to reference image (Presets on Left, Calendar on Right)
             with st.popover(btn_label, use_container_width=True):
-                st.markdown("**Date Filter**")
-                today = date.today()
+                pop_left, pop_right = st.columns([1.1, 2.3], gap="medium")
                 
-                # Preset Quick Filters
-                p_c1, p_c2, p_c3 = st.columns(3)
-                with p_c1:
-                    if st.button("This Week", key="pw_this_week"):
+                with pop_left:
+                    st.markdown("<p style='font-size:0.75rem; color:#888; margin-bottom:0.4rem; text-transform:uppercase;'>Presets</p>", unsafe_allow_html=True)
+                    
+                    if st.button("This Week", key="preset_this_week"):
                         start_w = today - timedelta(days=today.weekday())
                         st.session_state["gal_date_range"] = (start_w, start_w + timedelta(days=6))
                         st.rerun()
-                    if st.button("This Month", key="pw_this_month"):
-                        st.session_state["gal_date_range"] = (today.replace(day=1), today)
-                        st.rerun()
-                with p_c2:
-                    if st.button("Last Week", key="pw_last_week"):
+                    if st.button("Last Week", key="preset_last_week"):
                         start_lw = today - timedelta(days=today.weekday() + 7)
                         st.session_state["gal_date_range"] = (start_lw, start_lw + timedelta(days=6))
                         st.rerun()
-                    if st.button("Last Month", key="pw_last_month"):
+                    if st.button("This Month", key="preset_this_month"):
+                        st.session_state["gal_date_range"] = (today.replace(day=1), today)
+                        st.rerun()
+                    if st.button("Last Month", key="preset_last_month"):
                         first_this = today.replace(day=1)
                         last_m_end = first_this - timedelta(days=1)
                         st.session_state["gal_date_range"] = (last_m_end.replace(day=1), last_m_end)
                         st.rerun()
-                with p_c3:
-                    if st.button("Clear Date", key="pw_clear_date"):
+                    if st.button("Clear", key="preset_clear"):
                         st.session_state["gal_date_range"] = ()
                         st.rerun()
                 
-                st.markdown("---")
-                picked_range = st.date_input(
-                    "Choose Exact Date or Range",
-                    value=st.session_state["gal_date_range"],
-                    key="date_range_picker"
-                )
-                if st.button("Apply", key="btn_apply_date"):
-                    if isinstance(picked_range, tuple):
-                        st.session_state["gal_date_range"] = picked_range
-                    elif isinstance(picked_range, date):
-                        st.session_state["gal_date_range"] = (picked_range, picked_range)
-                    st.rerun()
+                with pop_right:
+                    picked_range = st.date_input(
+                        "Custom Range",
+                        value=st.session_state["gal_date_range"] if st.session_state["gal_date_range"] else (first_day_of_month, today),
+                        label_visibility="collapsed",
+                        key="modal_date_picker"
+                    )
+                    
+                    st.write("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+                    app_c1, app_c2 = st.columns([5, 5])
+                    with app_c2:
+                        if st.button("Apply", key="btn_apply_modal_date"):
+                            if isinstance(picked_range, tuple):
+                                st.session_state["gal_date_range"] = picked_range
+                            elif isinstance(picked_range, date):
+                                st.session_state["gal_date_range"] = (picked_range, picked_range)
+                            st.rerun()
 
         with f_c4:
             if st.button("Reset", key="btn_reset_all_filters"):
                 st.session_state["gal_search_q"] = ""
                 st.session_state["gal_type_f"] = "All Meetings"
-                st.session_state["gal_date_range"] = ()
+                st.session_state["gal_date_range"] = (first_day_of_month, today)
                 st.rerun()
 
         # Filtering Logic Execution
@@ -357,7 +418,7 @@ if st.session_state["view_mode"] == "gallery":
                 if categorize_meeting(m) != active_type:
                     continue
             
-            # 2. Date filter
+            # 2. Date filter (Enforced: Defaults to current month when collapsed)
             if active_dr:
                 m_date_obj = parse_meeting_date(m.get("meeting_date", ""))
                 if not m_date_obj:
@@ -386,11 +447,11 @@ if st.session_state["view_mode"] == "gallery":
             filtered_meetings.append(m)
 
         # Dynamic Search Status Counter
-        is_filtered = bool(q_clean or active_type != "All Meetings" or active_dr)
+        is_filtered = bool(q_clean or active_type != "All Meetings" or active_dr != (first_day_of_month, today))
         if is_filtered:
             st.caption(f"Showing **{len(filtered_meetings)}** matching meeting archive(s)")
         else:
-            st.caption(f"Showing all **{len(filtered_meetings)}** meeting archive(s)")
+            st.caption(f"Showing all **{len(filtered_meetings)}** meeting archive(s) for this month")
 
         st.markdown("<hr style='margin: 0.5rem 0 1rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.06);'>", unsafe_allow_html=True)
 
@@ -458,7 +519,7 @@ elif st.session_state["view_mode"] == "details":
         with d_c2:
             st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
 
-    # Tabs
+    # Tabs (Matching Exact Image Styling)
     tab_editor, tab_transcript = st.tabs(["Minutes of Meeting Editor", "Full Transcript"])
 
     with tab_editor:
