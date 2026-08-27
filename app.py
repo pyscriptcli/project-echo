@@ -444,7 +444,7 @@ with col_right:
         chat_header_col, btn_clear_col, btn_full_col = st.columns([1, 0.04, 0.04])
         
         with chat_header_col:
-            st.markdown('<p class="section-title">Ask Echo — Global Intelligence</p>', unsafe_allow_html=True)
+            st.markdown('<p class="section-title">Ask Echo</p>', unsafe_allow_html=True)
             st.markdown('<p class="section-caption">Synthesize meeting archives, transcripts, and action logs.</p>', unsafe_allow_html=True)
             
         with btn_clear_col:
