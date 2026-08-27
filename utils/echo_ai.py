@@ -3,121 +3,187 @@ import requests
 import json
 import pandas as pd
 import re
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10A37F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
 </svg>
 """
 
+SVG_USER_ICON = """
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+</svg>
+"""
+
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
 """
 
-CHATGPT_UI_CSS = """
+CHAT_CUSTOM_THEME_CSS = """
 <style>
-/* Base Container Typography */
-.echo-chat-thread {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 0.5rem;
+/* Light gray background for chat box */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-viewport) {
+    background-color: #F8F9FA !important;
+    border-radius: 12px;
+}
+
+.echo-chat-viewport {
+    padding: 0.25rem 0.5rem;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* User Message Row - Clean Modern Bubble */
+/* User Message: Black Bubble with Gold Accent & User Profile Icon */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
+    align-items: flex-start;
+    gap: 10px;
     width: 100%;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
 }
-.echo-msg-user {
-    background-color: #F4F4F4;
-    color: #0D0D0D !important;
-    padding: 0.65rem 1rem;
-    border-radius: 1.25rem;
-    max-width: 75%;
+
+.echo-user-bubble {
+    background: #111111;
+    color: #F3F4F6 !important;
+    border: 1px solid #D4AF37;
+    padding: 0.8rem 1.2rem;
+    border-radius: 18px 4px 18px 18px;
+    max-width: 78%;
     font-size: 0.92rem;
-    line-height: 1.5;
+    line-height: 1.55;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), 0 0 1px rgba(212, 175, 55, 0.4);
     word-break: break-word;
-    box-shadow: none;
-    border: 1px solid rgba(0, 0, 0, 0.04);
 }
-.echo-msg-user p {
-    color: #0D0D0D !important;
+.echo-user-bubble p {
+    color: #F3F4F6 !important;
     margin: 0;
 }
 
-/* Assistant Message Row - Streamlined ChatGPT Flat Style */
+.echo-avatar-user {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #111111;
+    border: 1.5px solid #D4AF37;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* AI Assistant Message: Unboxed / Flat with Echo Profile Picture */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.75rem;
     background: transparent;
 }
+
 .echo-assistant-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 0.35rem;
+    gap: 10px;
+    margin-bottom: 0.4rem;
 }
+
 .echo-avatar-assistant {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background-color: #10A37F;
+    background: linear-gradient(135deg, #111111 0%, #1F2937 100%);
+    border: 1.5px solid #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #FFFFFF;
-    font-size: 0.7rem;
-    font-weight: bold;
-}
-.echo-assistant-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #2D3748;
-}
-.echo-assistant-body {
-    padding-left: 2rem;
-    color: #0D0D0D;
-    font-size: 0.92rem;
-    line-height: 1.6;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
 }
 
-/* Animated Thinking Indicator */
+.echo-assistant-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: 0.02em;
+}
+
+.echo-assistant-badge-gold {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #FEF3C7;
+    color: #92400E;
+    font-weight: 600;
+    border: 1px solid #FDE68A;
+}
+
+.echo-assistant-body {
+    padding-left: 42px;
+    color: #1F2937;
+    font-size: 0.94rem;
+    line-height: 1.65;
+}
+
+/* Markdown Tables in AI replies */
+.echo-assistant-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+    background: #FFFFFF;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+.echo-assistant-body th {
+    background-color: #111111;
+    color: #D4AF37;
+    font-weight: 600;
+    border: 1px solid #374151;
+    padding: 9px 12px;
+    text-align: left;
+}
+.echo-assistant-body td {
+    border: 1px solid #E5E7EB;
+    padding: 9px 12px;
+    color: #374151;
+}
+
+/* Animated Thinking Pill */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding-left: 0.25rem;
-    margin-bottom: 1rem;
+    gap: 10px;
+    padding-left: 0.2rem;
+    margin-bottom: 1.25rem;
 }
 .echo-thinking-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background: #F7F7F8;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #FFFFFF;
     border: 1px solid #E5E7EB;
-    font-size: 0.8rem;
-    color: #6B7280;
+    font-size: 0.82rem;
+    color: #4B5563;
     font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 .echo-pulse-dot {
-    width: 7px;
-    height: 7px;
-    background-color: #10A37F;
+    width: 8px;
+    height: 8px;
+    background-color: #D4AF37;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
 }
@@ -126,49 +192,28 @@ CHATGPT_UI_CSS = """
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Markdown Table Styling */
-.echo-assistant-body table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.75rem 0;
-    font-size: 0.86rem;
-}
-.echo-assistant-body th {
-    background-color: #F9FAFB;
-    color: #111827;
-    font-weight: 600;
-    border: 1px solid #E5E7EB;
-    padding: 8px 12px;
-    text-align: left;
-}
-.echo-assistant-body td {
-    border: 1px solid #E5E7EB;
-    padding: 8px 12px;
-    color: #374151;
-}
-
-/* Interactive Pill Suggestion Buttons */
+/* Quick Question Action Buttons */
 div[data-testid="stHorizontalBlock"] .suggest-btn > button {
-    border-radius: 16px !important;
+    border-radius: 20px !important;
     font-size: 0.78rem !important;
     background-color: #FFFFFF !important;
     border: 1px solid #E5E7EB !important;
-    color: #374151 !important;
+    color: #1F2937 !important;
     height: 36px !important;
-    box-shadow: none !important;
-    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    transition: all 0.2s ease;
 }
 div[data-testid="stHorizontalBlock"] .suggest-btn > button:hover {
-    border-color: #10A37F !important;
-    color: #10A37F !important;
-    background-color: #F0FDF4 !important;
+    border-color: #D4AF37 !important;
+    color: #D4AF37 !important;
+    background-color: #FFFDF5 !important;
 }
 </style>
 """
 
 def render_echo_chat(container=None, height=720, title="Ask Echo — Global Intelligence", caption="Synthesize meeting archives, transcripts, and action logs."):
     target = container if container else st
-    st.markdown(CHATGPT_UI_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_CUSTOM_THEME_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -190,7 +235,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
         with header_col:
             st.markdown(
                 f'<div style="display:flex; align-items:center; gap:8px;">'
-                f'{SVG_ECHO_LOGO}<span style="font-size: 1.1rem; font-weight:600; color:#111827;">{title}</span>'
+                f'{SVG_ECHO_LOGO}<span style="font-family: \'Playfair Display\', serif; font-size: 1.15rem; font-weight:600; color:#111827;">{title}</span>'
                 f'</div>'
                 f'<p style="font-size:0.8rem; color:#6B7280; margin: 0 0 0.5rem 0;">{caption}</p>',
                 unsafe_allow_html=True
@@ -208,13 +253,13 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                 st.session_state["knowledge_proposal"] = None
                 st.rerun()
 
-        # Navigation Tabs
         tab_chat, tab_context = st.tabs(["Chat", "Context Manager"])
 
         # ==========================================
         # --- TAB 1: Chat Feed ---
         # ==========================================
         with tab_chat:
+            st.markdown('<div class="echo-chat-viewport"></div>', unsafe_allow_html=True)
             chat_feed_height = active_height - 250
             chat_box = st.container(height=chat_feed_height)
 
@@ -223,16 +268,17 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                     st.markdown(
                         '<div class="echo-msg-row-assistant">'
                         '<div class="echo-assistant-header">'
-                        '<div class="echo-avatar-assistant">E</div>'
-                        '<span class="echo-assistant-name">Echo</span>'
+                        f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                        '<span class="echo-assistant-title">Echo Intelligence</span>'
+                        '<span class="echo-assistant-badge-gold">AI</span>'
                         '</div>'
                         '<div class="echo-assistant-body">'
-                        'Hello! How can I assist you with corporate archives, project milestones, or team rosters today?'
+                        'Hi Team, this is Echo, ask me anything...'
                         '</div>'
                         '</div>',
                         unsafe_allow_html=True
                     )
-                    st.markdown("<p style='font-size:0.78rem; color:#6B7280; margin-top:1rem; margin-bottom:0.4rem;'>Suggested questions:</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='font-size:0.78rem; color:#6B7280; margin-top:1.2rem; margin-bottom:0.4rem; padding-left: 42px;'>Suggested prompts:</p>", unsafe_allow_html=True)
                     s_col1, s_col2, s_col3 = st.columns(3)
                     with s_col1:
                         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
@@ -242,7 +288,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                         st.markdown('</div>', unsafe_allow_html=True)
                     with s_col2:
                         st.markdown('<div class="suggest-btn">', unsafe_allow_html=True)
-                        if st.button("Pending deliverables", key="sug_2", use_container_width=True):
+                        if st.button("Identify pending deliverables", key="sug_2", use_container_width=True):
                             st.session_state["pending_user_prompt"] = "Summarize pending action deliverables across recent meetings in a table."
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
@@ -258,7 +304,8 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                         if msg["role"] == "user":
                             st.markdown(
                                 f'<div class="echo-msg-row-user">'
-                                f'<div class="echo-msg-user">{msg["content"]}</div>'
+                                f'<div class="echo-user-bubble">{msg["content"]}</div>'
+                                f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
                                 f'</div>',
                                 unsafe_allow_html=True
                             )
@@ -266,8 +313,9 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             st.markdown(
                                 '<div class="echo-msg-row-assistant">'
                                 '<div class="echo-assistant-header">'
-                                '<div class="echo-avatar-assistant">E</div>'
-                                '<span class="echo-assistant-name">Echo</span>'
+                                f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                                '<span class="echo-assistant-title">Echo Intelligence</span>'
+                                '<span class="echo-assistant-badge-gold">AI</span>'
                                 '</div>'
                                 '<div class="echo-assistant-body">',
                                 unsafe_allow_html=True
@@ -280,11 +328,11 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                 prop = st.session_state["knowledge_proposal"]
                 with st.container(border=True):
                     st.markdown(
-                        f'<div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:700; color:#10A37F; text-transform:uppercase; margin-bottom:4px;">'
-                        f'{SVG_BRAIN_ICON} Knowledge Base Candidate'
+                        f'<div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:700; color:#D4AF37; text-transform:uppercase; margin-bottom:4px;">'
+                        f'{SVG_BRAIN_ICON} Knowledge Base Addition Detected'
                         f'</div>'
                         f'<p style="font-size:0.84rem; margin:0 0 0.5rem 0; color:#374151;">'
-                        f'Add <b>{prop.get("key")}</b> ({prop.get("category")}) to the Echo Knowledge Base?<br/>'
+                        f'Register <b>{prop.get("key")}</b> ({prop.get("category")}) to the Echo Knowledge Base?<br/>'
                         f'<i>Value: {prop.get("value")}</i>'
                         f'</p>',
                         unsafe_allow_html=True
@@ -300,7 +348,7 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                             )
                             st.session_state["global_chat_history"].append({
                                 "role": "assistant",
-                                "content": f"Confirmed: `{prop['key']}` has been registered into the Echo Knowledge Base."
+                                "content": f"Confirmed: `{prop['key']}` has been recorded into the Echo Knowledge Base."
                             })
                             st.session_state["knowledge_proposal"] = None
                             st.rerun()
@@ -317,20 +365,20 @@ def render_echo_chat(container=None, height=720, title="Ask Echo — Global Inte
                 st.session_state["pending_user_prompt"] = None
                 st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
 
-                # Display the user message immediately & trigger the thinking indicator
                 with chat_box:
                     st.markdown(
                         f'<div class="echo-msg-row-user">'
-                        f'<div class="echo-msg-user">{active_prompt}</div>'
+                        f'<div class="echo-user-bubble">{active_prompt}</div>'
+                        f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
                         f'</div>',
                         unsafe_allow_html=True
                     )
                     thinking_placeholder = st.empty()
                     thinking_placeholder.markdown(
                         '<div class="echo-thinking-wrapper">'
-                        '<div class="echo-avatar-assistant">E</div>'
+                        f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
                         '<div class="echo-thinking-pill">'
-                        '<div class="echo-pulse-dot"></div> Thinking...'
+                        '<div class="echo-pulse-dot"></div> Echo is thinking...'
                         '</div>'
                         '</div>',
                         unsafe_allow_html=True
@@ -373,7 +421,7 @@ def _render_context_manager_subtab():
         with col_act1:
             if st.button("Structure Unstructured Notes", key="btn_run_ai_struct", use_container_width=True, type="primary"):
                 if raw_text.strip():
-                    with st.spinner("Analyzing context..."):
+                    with st.spinner("Extracting..."):
                         extracted = _extract_context_with_ai(raw_text)
                         if extracted:
                             st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
@@ -439,7 +487,7 @@ def _render_context_manager_subtab():
 
         if st.button("Save All to Knowledge Base", key="btn_commit_vault", type="primary", use_container_width=True):
             saved = 0
-            with st.spinner("Committing entries..."):
+            with st.spinner("Saving..."):
                 for _, row in edited_df.iterrows():
                     if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
                         if upsert_echo_context(
