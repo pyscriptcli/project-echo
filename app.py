@@ -1,5 +1,6 @@
 import sys
 import os
+import calendar
 
 # Add root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
@@ -20,6 +21,7 @@ st.set_page_config(
 )
 
 setup_page_layout()
+
 # 2. Global & Dashboard CSS
 st.markdown("""
 <style>
@@ -241,41 +243,65 @@ def query_global_team_archive(question, archive_records, chat_history):
 # 6. Fetch Data
 supabase_records = fetch_meeting_archives(limit=100)
 
-# 7. Metrics Computation
+# --- NEW: Date Range Picker Logic ---
 now = datetime.datetime.now()
-current_month_name = now.strftime("%B")
-current_year = now.year
-current_month = now.month
+_, last_day = calendar.monthrange(now.year, now.month)
+default_start = now.replace(day=1).date()
+default_end = now.replace(day=last_day).date()
 
-total_month_meetings = 0
+st.markdown('<h3>Dashboard Options</h3>', unsafe_allow_html=True)
+col_dp, _ = st.columns([1, 3])
+with col_dp:
+    selected_dates = st.date_input(
+        "Filter by Date Range",
+        value=(default_start, default_end),
+        key="date_range_picker"
+    )
+
+# Handle cases where user clicks only one date in the range picker
+if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+    start_date, end_date = selected_dates
+elif isinstance(selected_dates, tuple) and len(selected_dates) == 1:
+    start_date = selected_dates[0]
+    end_date = selected_dates[0]
+else:
+    start_date = selected_dates
+    end_date = selected_dates
+
+# 7. Metrics Computation & Filtering
 total_team_meetings = len(supabase_records)
+total_range_meetings = 0
 total_internal_meetings = 0
 total_external_meetings = 0
+
+filtered_records = []
 
 for m in supabase_records:
     m_date_raw = str(m.get("meeting_date", ""))
     try:
-        parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d")
-        if parsed_d.year == current_year and parsed_d.month == current_month:
-            total_month_meetings += 1
+        # Parse and check if meeting falls in selected date range
+        parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d").date()
+        if start_date <= parsed_d <= end_date:
+            filtered_records.append(m)
+            total_range_meetings += 1
+            
+            client_name_str = str(m.get("client_name", "")).strip().lower()
+            raw_payload = m.get("raw_payload", {}) or {}
+            meeting_details_dict = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
+            external_atts = meeting_details_dict.get("external_attendees", [])
+            
+            if "internal" in client_name_str or "prime" in client_name_str or (not external_atts and not client_name_str):
+                total_internal_meetings += 1
+            else:
+                total_external_meetings += 1
     except Exception:
         pass
-
-    client_name_str = str(m.get("client_name", "")).strip().lower()
-    raw_payload = m.get("raw_payload", {}) or {}
-    meeting_details_dict = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
-    external_atts = meeting_details_dict.get("external_attendees", [])
-    
-    if "internal" in client_name_str or "prime" in client_name_str or (not external_atts and not client_name_str):
-        total_internal_meetings += 1
-    else:
-        total_external_meetings += 1
 
 # 8. Main Dashboard View
 # KPI Cards
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Meetings ({current_month_name})</div><div class="kpi-value">{total_month_meetings}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="kpi-card"><div class="kpi-title">Meetings (Selected)</div><div class="kpi-value">{total_range_meetings}</div></div>', unsafe_allow_html=True)
 with kpi2:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total Team Meetings</div><div class="kpi-value">{total_team_meetings}</div></div>', unsafe_allow_html=True)
 with kpi3:
@@ -290,11 +316,11 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     with st.container(height=580, border=True):
-        st.markdown('<h3>Meeting Gallery</h3>', unsafe_allow_html=True)
-        st.caption("Browse all archived meetings. Click any entry to inspect full details, transcript, and edit minutes.")
+        st.markdown('<h3>Recent Meetings</h3>', unsafe_allow_html=True) # Renamed Heading
+        st.caption("Browse archived meetings for the selected date range. Click to inspect full details.")
         
-        if supabase_records:
-            for idx, m in enumerate(supabase_records):
+        if filtered_records:
+            for idx, m in enumerate(filtered_records):
                 m_id = m.get("meeting_id") or f"MOM-{idx}"
                 client = m.get("client_name") or "Meeting Record"
                 m_date = str(m.get("meeting_date", "N/A"))[:10]
@@ -316,7 +342,7 @@ with col_left:
                             st.session_state["selected_meeting_id"] = m_id
                             st.switch_page("pages/2_meeting_details.py")
         else:
-            st.info("No meeting archives found.")
+            st.info("No meeting archives found for the selected date range.")
 
 with col_right:
     with st.container(height=580, border=True):
