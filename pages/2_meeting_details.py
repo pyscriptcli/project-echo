@@ -103,7 +103,7 @@ meeting_dates = sorted(list({get_iso_date(m) for m in meetings if get_iso_date(m
 
 # 4. Search & Calendar Filter Bar
 with st.container(border=True):
-    st.markdown("<h3>Find & Inspect Meeting</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>Search Meetings</h3>", unsafe_allow_html=True)
     
     col_search, col_cal, col_reset = st.columns([7.5, 1.2, 1.3])
     
