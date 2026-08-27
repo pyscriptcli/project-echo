@@ -3,8 +3,8 @@ import streamlit as st
 
 def setup_page_layout():
     """
-    Renders a centered floating luxury pill navbar with Cormorant Garamond italic labels,
-    balanced spacing, and custom pure-SVG icons.
+    Renders an ultra-compact, centered floating luxury pill navbar with Cormorant Garamond italic labels,
+    SVG icons, and the shortened 'MoM' label.
     """
     st.markdown("""
     <style>
@@ -30,37 +30,37 @@ def setup_page_layout():
 
     /* 2. RECLAIM PAGE TOP PADDING */
     .block-container {
-        padding-top: 1.2rem !important;
+        padding-top: 1rem !important;
         padding-left: 2.5rem !important;
         padding-right: 2.5rem !important;
         max-width: 100% !important;
     }
 
-    /* 3. CENTERED FLOATING CAPSULE CONTAINER */
+    /* 3. CENTERED ULTRA-COMPACT FLOATING PILL CAPSULE */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) {
         background: #171819 !important;
-        border: 1px solid rgba(201, 168, 76, 0.3) !important;
+        border: 1px solid rgba(201, 168, 76, 0.35) !important;
         border-radius: 50px !important;
-        padding: 6px 18px !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
-        margin: 0 auto 1.8rem auto !important;
+        padding: 4px 12px !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+        margin: 0 auto 1.4rem auto !important;
         align-items: center !important;
         justify-content: center !important;
         width: fit-content !important;
-        max-width: 90vw !important;
         display: flex !important;
-        gap: 0.75rem !important;
+        gap: 0.35rem !important;
     }
 
-    /* Target inner column flex wrappers */
+    /* Strip native column margins and force inline hugging */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) [data-testid="column"] {
         width: auto !important;
         flex: 0 0 auto !important;
         min-width: fit-content !important;
         padding: 0 !important;
+        margin: 0 !important;
     }
 
-    /* 4. BASE LINK BUTTONS */
+    /* 4. BASE COMPACT LINK BUTTONS */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[data-testid="stPageLink"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) div[data-testid="stPageLink"] > a {
@@ -68,14 +68,14 @@ def setup_page_layout():
         background: transparent !important;
         border: 1px solid transparent !important;
         border-radius: 50px !important;
-        height: 34px !important;
-        min-height: 34px !important;
-        padding: 0 16px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        padding: 0 12px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-decoration: none !important;
-        transition: all 0.22s ease !important;
+        transition: all 0.2s ease !important;
         white-space: nowrap !important;
     }
 
@@ -85,7 +85,7 @@ def setup_page_layout():
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span {
         font-family: 'Cormorant Garamond', serif !important;
         font-style: italic !important;
-        font-size: 1.2rem !important;
+        font-size: 1.15rem !important;
         font-weight: 600 !important;
         color: #C9A84C !important;
         letter-spacing: 0.03em !important;
@@ -108,9 +108,9 @@ def setup_page_layout():
     /* 6. DISTINCT ACTIVE (SELECTED) TAB */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[data-active="true"] {
-        background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(201, 168, 76, 0.1) 100%) !important;
+        background: linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(201, 168, 76, 0.08) 100%) !important;
         border: 1px solid rgba(201, 168, 76, 0.65) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
     }
 
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[aria-current="page"] span,
@@ -119,7 +119,7 @@ def setup_page_layout():
         font-weight: 700 !important;
     }
 
-    /* 7. HIDE ALL DEFAULT MATERIAL GLYPHS / SQUARES */
+    /* 7. HIDE ALL DEFAULT MATERIAL GLYPHS / BOXES */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) span[data-testid="stIconMaterial"],
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) .nav-item-marker {
         display: none !important;
@@ -131,9 +131,9 @@ def setup_page_layout():
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a::before {
         content: "";
         display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-right: 8px;
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
         background-color: #C9A84C;
         flex-shrink: 0 !important;
         transition: background-color 0.2s ease;
@@ -148,7 +148,7 @@ def setup_page_layout():
     }
 
     /* Dashboard Icon (Matrix Grid) */
-    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href$="app.py"]::before,
+    div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="app"]::before,
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href="/"]::before {
         -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'/%3E%3C/svg%3E") no-repeat center;
@@ -160,7 +160,7 @@ def setup_page_layout():
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3E%3C/svg%3E") no-repeat center;
     }
 
-    /* Minutes of Meeting Icon (Document Notes) */
+    /* MoM Icon (Document / Notes) */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a[href*="minutes_of_the_meeting"]::before {
         -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
         mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E") no-repeat center;
@@ -168,7 +168,7 @@ def setup_page_layout():
     </style>
     """, unsafe_allow_html=True)
 
-    # 3 Centered Navigation Columns (No empty trailing column needed)
+    # Centered pill layout with shortened "MoM" label
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown('<div class="nav-item-marker"></div>', unsafe_allow_html=True)
@@ -176,7 +176,7 @@ def setup_page_layout():
     with col2:
         st.page_link("pages/2_meeting_details.py", label="Meetings")
     with col3:
-        st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting")
+        st.page_link("pages/1_minutes_of_the_meeting.py", label="MoM")
 
 # Compatibility alias
 single_page_layout = setup_page_layout
