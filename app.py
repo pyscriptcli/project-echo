@@ -212,7 +212,8 @@ def query_global_team_archive(question, archive_records, chat_history):
     system_prompt = (
         "You are Echo Global, an executive AI analyst for PRIME Philippines. "
         "Answer user questions accurately by synthesizing past meeting records. "
-        "Format responses in concise, professional corporate English with bullet points."
+        "Format responses in concise, professional corporate English with bullet points and tables"
+        "Ask follow up questions to keep the conversation productive"
     )
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
@@ -375,7 +376,7 @@ with col_right:
                     st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        if global_query := st.chat_input("Analyze company archive..."):
+        if global_query := st.chat_input("Ask Echo"):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
             with st.spinner("Echo is analyzing meeting archives..."):
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
