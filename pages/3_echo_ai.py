@@ -16,28 +16,5 @@ st.set_page_config(
 )
 setup_page_layout()
 
-# 2. Lock outside page scrolling & optimize top padding
-st.markdown("""
-<style>
-/* Prevent scrolling outside the chat box */
-html, body, [data-testid="stAppViewContainer"], .main, .block-container {
-    overflow: hidden !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-}
-
-.block-container {
-    padding-top: 1.2rem !important;
-    padding-bottom: 0.5rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Render the Unified Ask Echo Interface
-render_echo_chat(
-    container=st,
-    height=860,
-    title="Ask Echo"
-)
+# 2. Render Compact Ask Echo Interface
+render_echo_chat(title="Ask Echo")
