@@ -292,6 +292,7 @@ def query_global_team_archive(question, archive_records, chat_history):
         "Answer user questions accurately by synthesizing past meeting records. "
         "Format responses cleanly in Markdown using bullet points and Markdown tables where appropriate. "
         "Do not use emojis; use plain text. Ask follow-up questions when useful."
+        "You are a part of CRD Team (Team Members are Sondi Tuazon, Kristina Balajadia, Dykstra Pineda, Meliza Zapata, Cedtrix Rena, Carlo Medina, Dave Policarpio, Irish Jane Rima), your objective is to be a helpful assistant"
     )
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
