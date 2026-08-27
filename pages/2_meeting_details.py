@@ -18,7 +18,7 @@ st.set_page_config(
 )
 setup_page_layout()
 
-# Default date filter to "This Month" (shows all meetings within the current month when collapsed)
+# Default date filter to "This Month"
 today = date.today()
 first_day_of_month = today.replace(day=1)
 
@@ -32,12 +32,11 @@ if "gal_search_q" not in st.session_state:
 if "gal_type_f" not in st.session_state:
     st.session_state["gal_type_f"] = "All Meetings"
 if "gal_date_range" not in st.session_state:
-    # Default to current month range: (Start of month, today)
     st.session_state["gal_date_range"] = (first_day_of_month, today)
-if "temp_date_range" not in st.session_state:
-    st.session_state["temp_date_range"] = st.session_state["gal_date_range"]
+if "edit_meeting_details" not in st.session_state:
+    st.session_state["edit_meeting_details"] = False
 
-# 3. Custom CSS & Popover Date Picker Styling
+# 3. Custom CSS & Pure SVG Icon Button Injection
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -72,14 +71,15 @@ h3 {
     display: block;
 }
 
-/* White Card Containers */
+/* 3D Drop Shadow Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
-    box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important; 
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important; 
     padding: 1.5rem !important; 
-    margin-bottom: 1rem !important;
+    margin-bottom: 1.25rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 
 /* Form Inputs */
@@ -97,16 +97,16 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Base Buttons */
 .stButton > button {
-    background-color: #1C1C1C !important; 
+    background-color: #161616 !important; 
     color: #FFFFFF !important; 
     border: none !important; 
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important; 
     font-size: 0.82rem !important; 
-    height: 36px !important; 
-    padding: 0 1.25rem !important;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12) !important; 
+    height: 38px !important; 
+    padding: 0 1.5rem !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
@@ -114,9 +114,20 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .stButton > button:hover { 
     background-color: #D4AF37 !important; 
     color: #161616 !important; 
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Topbar Date Picker Trigger Styling (Matches Mockup) */
+/* Center Vertically & Right-Aligned View Meeting Button */
+.view-btn-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    height: 100% !important;
+    min-height: 80px !important;
+}
+
+/* Topbar Date Picker Trigger Styling */
 div[data-testid="stPopover"] > button {
     background-color: #FFFFFF !important;
     color: #003B6F !important;
@@ -136,19 +147,20 @@ div[data-testid="stPopover"] > button:hover {
     border-color: #00274B !important;
     background-color: #F8FAFC !important;
     color: #00274B !important;
+    transform: none !important;
 }
 
 /* Popover Content Width for Split-Pane Date Picker */
 div[data-testid="stPopoverBody"] {
-    min-width: 580px !important;
-    max-width: 620px !important;
+    min-width: 560px !important;
+    max-width: 600px !important;
     padding: 1.25rem !important;
     background-color: #FFFFFF !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.18) !important;
 }
 
-/* Left Sidebar Quick Preset Buttons */
+/* Preset Buttons Inside Date Popover */
 .stButton > button[key^="preset_"] {
     background-color: transparent !important;
     color: #4A5568 !important;
@@ -167,15 +179,9 @@ div[data-testid="stPopoverBody"] {
 .stButton > button[key^="preset_"]:hover {
     background-color: #EDF2F7 !important;
     color: #1A202C !important;
+    transform: none !important;
 }
 
-.stButton > button[key^="preset_active_"] {
-    border: 1.5px solid #003B6F !important;
-    color: #003B6F !important;
-    font-weight: 600 !important;
-}
-
-/* Date Picker Apply Button (Navy Solid Match) */
 .stButton > button[key="btn_apply_modal_date"] {
     background-color: #003B6F !important;
     color: #FFFFFF !important;
@@ -186,6 +192,7 @@ div[data-testid="stPopoverBody"] {
 .stButton > button[key="btn_apply_modal_date"]:hover {
     background-color: #00284D !important;
     color: #FFFFFF !important;
+    transform: none !important;
 }
 
 /* Back Button Pill */
@@ -194,26 +201,39 @@ div[data-testid="stPopoverBody"] {
     color: #1A2B4C !important;
     border: 1px solid rgba(26, 43, 76, 0.3) !important;
     width: auto !important;
-    min-width: 160px !important;
+    min-width: 170px !important;
 }
 .stButton > button[key="btn_back_gallery"]:hover {
     background-color: #1A2B4C !important;
     color: #FFFFFF !important;
 }
 
+/* Details Action Buttons */
+.stButton > button[key="btn_toggle_edit_details"] {
+    background-color: #F4EAD4 !important;
+    color: #8C6D23 !important;
+    border: 1px solid rgba(201, 168, 76, 0.4) !important;
+    height: 34px !important;
+}
+.stButton > button[key="btn_toggle_edit_details"]:hover {
+    background-color: #D4AF37 !important;
+    color: #161616 !important;
+}
+
 /* Gallery Typography */
 .card-title {
     font-family: 'Playfair Display', serif !important;
     font-style: italic !important;
-    font-size: 1.22rem !important;
+    font-size: 1.25rem !important;
     color: #1A2B4C !important;
-    margin: 0 0 0.2rem 0 !important;
+    margin: 0 0 0.25rem 0 !important;
+    line-height: 1.3 !important;
 }
 
 .card-meta {
     font-size: 0.84rem !important;
     color: #666666 !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.55rem !important;
 }
 
 .card-desc {
@@ -223,7 +243,7 @@ div[data-testid="stPopoverBody"] {
     margin: 0 !important;
 }
 
-/* Tabs */
+/* Tabs Header */
 button[data-baseweb="tab"] {
     background: transparent !important;
     border: none !important;
@@ -242,7 +262,7 @@ div[data-baseweb="tab-highlight"] {
     background-color: #FF4B4B !important;
 }
 
-/* Delete Row Button Styling */
+/* Delete Row SVG Button */
 .stButton > button[key^="del_"] { 
     background-color: #FDF9F9 !important; 
     color: #B23A3A !important; 
@@ -263,8 +283,9 @@ div[data-baseweb="tab-highlight"] {
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") no-repeat center;
 }
 
-/* Save Button Icon */
-.stButton > button[key^="btn_save_"]::before {
+/* Save Icon */
+.stButton > button[key^="btn_save_"]::before,
+.stButton > button[key="btn_save_meta"]::before {
     content: "";
     display: inline-block;
     width: 15px;
@@ -273,6 +294,16 @@ div[data-baseweb="tab-highlight"] {
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+/* SVG Icon in Popover Trigger */
+.cal-svg-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-right: 6px;
+    fill: currentColor;
 }
 </style>
 """
@@ -317,8 +348,8 @@ def categorize_meeting(meeting_item):
 # ==============================================================================
 if st.session_state["view_mode"] == "gallery":
     with st.container(border=True):
-        st.markdown("<h3>Meeting Gallery & Search Hub</h3>", unsafe_allow_html=True)
-        st.caption("Search across meeting topics, filter by category or date range, and inspect complete minutes.")
+        st.markdown("<h3>Meeting Gallery</h3>", unsafe_allow_html=True)
+        st.caption("Search across meeting topics, filter by category or date range, and review meetings.")
         
         # Filter Bar Layout
         f_c1, f_c2, f_c3, f_c4 = st.columns([4.2, 2.3, 2.5, 1.0])
@@ -345,16 +376,14 @@ if st.session_state["view_mode"] == "gallery":
             st.session_state["gal_type_f"] = selected_type
             
         with f_c3:
-            # Format trigger label to match the exact calendar tag layout in image
             dr = st.session_state["gal_date_range"]
             if dr and len(dr) == 2:
-                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')} — {dr[1].strftime('%b %d, %Y')} •"
+                btn_label = f"{dr[0].strftime('%b %d, %Y')} — {dr[1].strftime('%b %d, %Y')} •"
             elif dr and len(dr) == 1:
-                btn_label = f"📅 {dr[0].strftime('%b %d, %Y')} •"
+                btn_label = f"{dr[0].strftime('%b %d, %Y')} •"
             else:
-                btn_label = f"📅 {first_day_of_month.strftime('%b %d, %Y')} — {today.strftime('%b %d, %Y')} •"
+                btn_label = f"{first_day_of_month.strftime('%b %d, %Y')} — {today.strftime('%b %d, %Y')} •"
 
-            # Popover Dialog styled identical to reference image (Presets on Left, Calendar on Right)
             with st.popover(btn_label, use_container_width=True):
                 pop_left, pop_right = st.columns([1.1, 2.3], gap="medium")
                 
@@ -413,12 +442,10 @@ if st.session_state["view_mode"] == "gallery":
         active_dr = st.session_state["gal_date_range"]
 
         for m in meetings:
-            # 1. Type filter
             if active_type != "All Meetings":
                 if categorize_meeting(m) != active_type:
                     continue
             
-            # 2. Date filter (Enforced: Defaults to current month when collapsed)
             if active_dr:
                 m_date_obj = parse_meeting_date(m.get("meeting_date", ""))
                 if not m_date_obj:
@@ -428,7 +455,6 @@ if st.session_state["view_mode"] == "gallery":
                 elif len(active_dr) == 2 and not (active_dr[0] <= m_date_obj <= active_dr[1]):
                     continue
             
-            # 3. Query filter
             if q_clean:
                 searchable_corpus = " ".join([
                     str(m.get("client_name", "")),
@@ -446,7 +472,6 @@ if st.session_state["view_mode"] == "gallery":
             
             filtered_meetings.append(m)
 
-        # Dynamic Search Status Counter
         is_filtered = bool(q_clean or active_type != "All Meetings" or active_dr != (first_day_of_month, today))
         if is_filtered:
             st.caption(f"Showing **{len(filtered_meetings)}** matching meeting archive(s)")
@@ -477,11 +502,13 @@ if st.session_state["view_mode"] == "gallery":
                         st.markdown(f"<p class='card-meta'>Date: {d_val} &bull; {loc_val} &bull; Prepared by: {prep_val}</p>", unsafe_allow_html=True)
                         st.markdown(f"<p class='card-desc'>{preview_text}</p>", unsafe_allow_html=True)
                     with c_act:
-                        st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+                        st.markdown('<div class="view-btn-wrapper">', unsafe_allow_html=True)
                         if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}"):
                             st.session_state["selected_meeting_id"] = m_id_val
                             st.session_state["view_mode"] = "details"
+                            st.session_state["edit_meeting_details"] = False
                             st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # MODE 2: FULL-SCREEN MEETING VIEWER & INSPECTOR
@@ -501,23 +528,76 @@ elif st.session_state["view_mode"] == "details":
     with top_nav1:
         if st.button("← Back to Gallery", key="btn_back_gallery"):
             st.session_state["view_mode"] = "gallery"
+            st.session_state["edit_meeting_details"] = False
             st.rerun()
 
-    # Meeting Metadata Overview
+    # Editable Meeting Metadata Card
     with st.container(border=True):
-        m_head1, m_head2 = st.columns([6.5, 3.5])
+        m_head1, m_head2 = st.columns([7.5, 2.5])
         with m_head1:
             st.markdown(f"<h3>{active_meeting.get('client_name', 'Client Meeting')}</h3>", unsafe_allow_html=True)
             st.caption(f"Meeting ID: `{m_id}`")
         with m_head2:
-            st.write(f"**Date:** {active_meeting.get('meeting_date', 'N/A')}")
-            st.write(f"**Location:** {active_meeting.get('location', 'N/A')}")
+            st.write("<div style='height: 4px;'></div>", unsafe_allow_html=True)
+            if not st.session_state["edit_meeting_details"]:
+                if st.button("Edit Meeting Details", key="btn_toggle_edit_details"):
+                    st.session_state["edit_meeting_details"] = True
+                    st.rerun()
+            else:
+                if st.button("Cancel Edit", key="btn_cancel_edit_details"):
+                    st.session_state["edit_meeting_details"] = False
+                    st.rerun()
 
-        d_c1, d_c2 = st.columns(2)
-        with d_c1:
-            st.write(f"**Prepared By:** {active_meeting.get('prepared_by', 'N/A')}")
-        with d_c2:
-            st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
+        if not st.session_state["edit_meeting_details"]:
+            # Display Mode
+            d_r1_c1, d_r1_c2 = st.columns(2)
+            with d_r1_c1:
+                st.write(f"**Date:** {active_meeting.get('meeting_date', 'N/A')}")
+                st.write(f"**Prepared By:** {active_meeting.get('prepared_by', 'N/A')}")
+            with d_r1_c2:
+                st.write(f"**Location:** {active_meeting.get('location', 'N/A')}")
+                st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
+        else:
+            # Edit Mode
+            e_r1_c1, e_r1_c2 = st.columns(2)
+            with e_r1_c1:
+                edit_client = st.text_input("Client / Company", value=str(active_meeting.get("client_name", "")), key=f"e_client_{m_id}")
+                edit_date = st.text_input("Meeting Date", value=str(active_meeting.get("meeting_date", "")), key=f"e_date_{m_id}")
+                edit_prep = st.text_input("Prepared By", value=str(active_meeting.get("prepared_by", "")), key=f"e_prep_{m_id}")
+            with e_r1_c2:
+                edit_loc = st.text_input("Location", value=str(active_meeting.get("location", "")), key=f"e_loc_{m_id}")
+                edit_conf = st.text_input("Confirmed By", value=str(active_meeting.get("confirmed_by", "")), key=f"e_conf_{m_id}")
+
+            st.write("")
+            sm_c1, sm_c2 = st.columns([7.8, 2.2])
+            with sm_c2:
+                if st.button("Save Meeting Details", key="btn_save_meta"):
+                    with st.spinner("Saving metadata to Supabase..."):
+                        client = get_supabase_client()
+                        if not client:
+                            st.error("Supabase client uninitialized.")
+                        else:
+                            try:
+                                client.table("meeting_archives").update({
+                                    "client_name": edit_client.strip(),
+                                    "meeting_date": edit_date.strip(),
+                                    "location": edit_loc.strip(),
+                                    "prepared_by": edit_prep.strip(),
+                                    "confirmed_by": edit_conf.strip()
+                                }).eq("meeting_id", m_id).execute()
+                                
+                                # Update locally in memory
+                                active_meeting["client_name"] = edit_client.strip()
+                                active_meeting["meeting_date"] = edit_date.strip()
+                                active_meeting["location"] = edit_loc.strip()
+                                active_meeting["prepared_by"] = edit_prep.strip()
+                                active_meeting["confirmed_by"] = edit_conf.strip()
+
+                                st.session_state["edit_meeting_details"] = False
+                                st.success("Meeting details updated successfully!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Metadata update failed: {e}")
 
     # Tabs (Matching Exact Image Styling)
     tab_editor, tab_transcript = st.tabs(["Minutes of Meeting Editor", "Full Transcript"])
