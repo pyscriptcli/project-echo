@@ -1,6 +1,30 @@
+# In components/sidebar.py
 import streamlit as st
 
-def render_custom_sidebar():
+def setup_page_layout():
+    """Hides default UI elements and renders the custom navigation bar."""
+    st.markdown("""
+    <style>
+    header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"], #MainMenu, footer,
+    section[data-testid="stSidebar"], [data-testid="collapsedControl"],
+    button[data-testid="stSidebarCollapseButton"], button[data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+    }
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+        max-width: 100% !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Render your custom horizontal navbar
     col1, col2, col3, _ = st.columns([1.2, 1.2, 2.2, 5.4])
     with col1:
         st.page_link("app.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
