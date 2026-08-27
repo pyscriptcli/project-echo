@@ -59,7 +59,7 @@ def fetch_echo_context():
         st.warning(f"Could not load Echo Context: {e}")
         return {"team": [], "jargon": {}, "projects": []}
 
-def upsert_echo_context(category, key, value, priority=1):
+def upsert_echo_context(category: str, key: str, value: str, priority: int = 1):
     """Adds or updates a context entry in the echo_context table."""
     client = get_supabase_client()
     if not client:
