@@ -32,9 +32,9 @@ st.markdown("""
 #MainMenu { visibility: hidden !important; }
 .block-container { 
     padding-top: 2rem !important; 
-    padding-bottom: 2rem !important;
-    padding-right: 2.5rem !important; 
-    padding-left: 2.5rem !important;
+    padding-bottom: 3.5rem !important;
+    padding-right: 3rem !important; 
+    padding-left: 3rem !important;
     max-width: 100% !important;
 }
 
@@ -43,7 +43,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     background-color: #F6F3EC;
     background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
     background-size: 24px 24px;
-    color: #2D2D2D;
+    color: #1A1A1A;
 }
 
 /* --- Section Typography --- */
@@ -57,7 +57,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 }
 .section-caption {
     font-size: 0.82rem;
-    color: #6C727A;
+    color: #555E68;
     margin-bottom: 1.25rem;
 }
 
@@ -65,22 +65,22 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .kpi-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
+    gap: 2rem;
+    margin-bottom: 2.25rem;
 }
 .kpi-card {
     background: #FFFFFF;
     border-radius: 12px;
-    padding: 1.25rem 1rem;
+    padding: 1.4rem 1rem;
     border: 1px solid rgba(0, 0, 0, 0.07);
-    border-bottom: 3.5px solid #1A2B4C;
+    border-bottom: 3.5px solid #22252A;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
     text-align: center;
     transition: all 0.2s ease;
 }
 .kpi-card:hover {
     transform: translateY(-2px);
-    border-bottom-color: #C9A84C;
+    border-bottom-color: #111315;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 .kpi-title {
@@ -88,7 +88,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #7D8590;
+    color: #555E68;
     margin-bottom: 0.4rem;
 }
 .kpi-value {
@@ -107,14 +107,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 14px !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    padding: 1.75rem !important;
+    padding: 1.85rem !important;
 }
 
 /* --- Buttons --- */
 .stButton > button {
-    background-color: #1A2B4C !important;
+    background-color: #22252A !important;
     color: #FFFFFF !important;
-    border: none !important;
+    border: 1px solid #111315 !important;
     border-radius: 6px !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
@@ -125,7 +125,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    background-color: #C9A84C !important;
+    background-color: #111315 !important;
     color: #FFFFFF !important;
     transform: translateY(-1px);
 }
@@ -148,40 +148,92 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 .gallery-sub { 
     font-size: 0.75rem; 
-    color: #8C827A; 
+    color: #6C727A; 
     margin-bottom: 0.6rem; 
     font-weight: 500;
 }
 .gallery-desc { 
     font-size: 0.82rem; 
-    color: #4A4A4A; 
+    color: #2D2D2D; 
     line-height: 1.5; 
     margin: 0;
 }
 
-/* --- Native Streamlit Chat overrides --- */
+/* --- Chat Overrides & High-Contrast Typography --- */
 div[data-testid="stChatMessage"] {
     background-color: transparent !important;
-    padding: 0.6rem 0 !important;
+    padding: 0.4rem 0 !important;
 }
+
+/* Assistant Message Bubble */
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
     background-color: #FAF8F5 !important;
-    border-left: 3px solid #C9A84C !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left: 4px solid #22252A !important;
     border-radius: 0 10px 10px 0 !important;
-    padding: 0.9rem 1.2rem !important;
-    margin-bottom: 0.75rem !important;
+    padding: 1rem 1.25rem !important;
+    margin-bottom: 1rem !important;
 }
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) div[data-testid="stMarkdownContainer"] * {
+    color: #1A1A1A !important;
+}
+
+/* User Message Bubble */
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
-    background-color: #1A2B4C !important;
+    background-color: #22252A !important;
     border-radius: 12px 12px 2px 12px !important;
-    color: #FFFFFF !important;
-    padding: 0.8rem 1.2rem !important;
-    margin-bottom: 0.75rem !important;
+    padding: 0.85rem 1.25rem !important;
+    margin-bottom: 1rem !important;
     margin-left: auto !important;
-    max-width: 80% !important;
+    max-width: 82% !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
-div[data-testid="stChatMessageAvatarUser"] ~ div[data-testid="stMarkdownContainer"] p {
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) div[data-testid="stMarkdownContainer"] * {
     color: #FFFFFF !important;
+    font-weight: 500 !important;
+}
+
+/* Modern Chat Tables */
+div[data-testid="stChatMessage"] table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0.8rem 0 !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+}
+div[data-testid="stChatMessage"] th {
+    background-color: #F1EFE9 !important;
+    color: #1A2B4C !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    font-size: 0.8rem !important;
+}
+div[data-testid="stChatMessage"] td {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #F3F4F6 !important;
+    color: #2D2D2D !important;
+    font-size: 0.8rem !important;
+}
+
+/* Compact Bottom Date Picker Popover */
+div[data-testid="stPopover"] > button {
+    background-color: #FFFFFF !important;
+    color: #22252A !important;
+    border: 1px solid #D1D5DB !important;
+    border-radius: 6px !important;
+    padding: 0.25rem 0.65rem !important;
+    font-size: 0.76rem !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #22252A !important;
+    background-color: #FAF8F5 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -256,56 +308,7 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 6. Header Filter Bar
-top_left, top_right = st.columns([2.5, 1.5])
-
-with top_right:
-    col_pop, col_reset = st.columns([3, 1])
-    with col_pop:
-        date_label = f"📅 {st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
-        with st.popover(date_label, use_container_width=True):
-            p_col1, p_col2 = st.columns([1, 2])
-            with p_col1:
-                st.caption("PRESETS")
-                if st.button("This Week", use_container_width=True):
-                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
-                    st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
-                    st.rerun()
-                if st.button("Last Week", use_container_width=True):
-                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 7)
-                    st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
-                    st.rerun()
-                if st.button("This Month", use_container_width=True):
-                    st.session_state["start_date"] = today.replace(day=1)
-                    _, last = calendar.monthrange(today.year, today.month)
-                    st.session_state["end_date"] = today.replace(day=last)
-                    st.rerun()
-                if st.button("Last Month", use_container_width=True):
-                    first_this = today.replace(day=1)
-                    last_prev = first_this - datetime.timedelta(days=1)
-                    st.session_state["start_date"] = last_prev.replace(day=1)
-                    st.session_state["end_date"] = last_prev
-                    st.rerun()
-            with p_col2:
-                selected_dates = st.date_input(
-                    "Date Range",
-                    value=(st.session_state["start_date"], st.session_state["end_date"]),
-                    label_visibility="collapsed"
-                )
-                if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-                    if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
-                        st.session_state["start_date"] = selected_dates[0]
-                        st.session_state["end_date"] = selected_dates[1]
-                        st.rerun()
-
-    with col_reset:
-        if st.button("Reset", use_container_width=True):
-            st.session_state["start_date"] = today.replace(day=1)
-            _, last = calendar.monthrange(today.year, today.month)
-            st.session_state["end_date"] = today.replace(day=last)
-            st.rerun()
-
-# 7. KPI Metrics Grid
+# 6. KPI Metrics Grid
 st.markdown(f"""
 <div class="kpi-container">
     <div class="kpi-card"><div class="kpi-title">Meetings (Selected)</div><div class="kpi-value">{total_range_meetings}</div></div>
@@ -315,7 +318,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# 8. Main Content Panels
+# 7. Main Content Panels
 col_left, col_right = st.columns([1, 1.4], gap="large")
 
 with col_left:
@@ -367,3 +370,55 @@ with col_right:
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
             st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
             st.rerun()
+
+# 8. Bottom Date Filter Bar (Compact & Integrated Reset)
+st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+foot_l, foot_r = st.columns([3, 1])
+
+with foot_r:
+    date_label = f"{st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
+    
+    with st.popover(f"Filter: {date_label}", use_container_width=True):
+        p_col1, p_col2 = st.columns([1.1, 1.9])
+        
+        with p_col1:
+            st.caption("PRESETS")
+            if st.button("This Week", key="btn_tw", use_container_width=True):
+                st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
+                st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                st.rerun()
+            if st.button("Last Week", key="btn_lw", use_container_width=True):
+                st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 7)
+                st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                st.rerun()
+            if st.button("This Month", key="btn_tm", use_container_width=True):
+                st.session_state["start_date"] = today.replace(day=1)
+                _, last = calendar.monthrange(today.year, today.month)
+                st.session_state["end_date"] = today.replace(day=last)
+                st.rerun()
+            if st.button("Last Month", key="btn_lm", use_container_width=True):
+                first_this = today.replace(day=1)
+                last_prev = first_this - datetime.timedelta(days=1)
+                st.session_state["start_date"] = last_prev.replace(day=1)
+                st.session_state["end_date"] = last_prev
+                st.rerun()
+                
+            st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+            if st.button("Reset Range", key="btn_reset_inside", use_container_width=True):
+                st.session_state["start_date"] = today.replace(day=1)
+                _, last = calendar.monthrange(today.year, today.month)
+                st.session_state["end_date"] = today.replace(day=last)
+                st.rerun()
+
+        with p_col2:
+            st.caption("CUSTOM RANGE")
+            selected_dates = st.date_input(
+                "Date Range",
+                value=(st.session_state["start_date"], st.session_state["end_date"]),
+                label_visibility="collapsed"
+            )
+            if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+                if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
+                    st.session_state["start_date"] = selected_dates[0]
+                    st.session_state["end_date"] = selected_dates[1]
+                    st.rerun()
