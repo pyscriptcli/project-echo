@@ -27,6 +27,14 @@ import streamlit.components.v1 as components
 # Centralized DB import (Ensure utils/db.py exists as provided earlier)
 from utils.db import get_supabase_client
 
+import streamlit as st
+from components.sidebar import render_custom_sidebar
+
+# ... rest of your page code ...
+
+# Render the sidebar
+render_custom_sidebar()
+
 # 1. Page Configuration (MUST be first)
 st.set_page_config(
     page_title="Project Echo - MoM Generator",
