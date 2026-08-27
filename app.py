@@ -32,7 +32,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 3. Global & Dashboard CSS (Pill Buttons & Architectural Canvas)
+# 3. Global & Dashboard CSS (80px Large Grid, Pill Buttons, Synchronized Height)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -51,22 +51,23 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Warm Ivory Architectural Grid Canvas */
+/* Warm Cream Architectural Large 80px Grid Background */
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F6F2EA !important;
+    background-color: #F5F1E8 !important;
     background-image: 
-        linear-gradient(to right, #E8E2D5 1px, transparent 1px),
-        linear-gradient(to bottom, #E8E2D5 1px, transparent 1px) !important;
-    background-size: 32px 32px !important;
+        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
+    background-size: 80px 80px !important;
+    background-position: 0 0 !important;
     color: #1A1A1A;
 }
 
-/* Synchronize Dashboard Card Containers */
+/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
 .dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     box-shadow: none !important;
     height: calc(100vh - 130px) !important;
     max-height: calc(100vh - 130px) !important;
@@ -100,7 +101,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     margin: 0 0 0.35rem 0 !important;
 }
 
-/* 2x2 KPI Grid */
+/* 2x2 Mini KPI Grid */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -110,7 +111,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
 }
 .kpi-mini-card {
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 0.4rem 0.55rem;
     border: 1px solid rgba(0, 0, 0, 0.07);
     border-left: 3.5px solid #111A2B;
@@ -170,7 +171,7 @@ div[data-testid="stPopover"] > button:hover {
     flex-direction: column !important;
 }
 .left-feed-container > div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.75) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(4px) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-radius: 6px !important;
@@ -183,7 +184,7 @@ div[data-testid="stPopover"] > button:hover {
 .gallery-card {
     background-color: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 0.5rem 0.65rem;
     margin-bottom: 0.25rem;
 }
