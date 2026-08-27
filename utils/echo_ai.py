@@ -33,7 +33,7 @@ CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
 
-/* Prevent outer viewport scrolling */
+/* Prevent outer viewport and page scrolling */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
     padding-top: 0.3rem !important;
@@ -41,7 +41,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Card Container with matching 80px grid background */
+/* Outer Card Container */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -49,16 +49,19 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     padding: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     padding: 0.5rem 0.85rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
 /* Header Alignment */
@@ -70,7 +73,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
     padding-bottom: 6px;
     margin-bottom: 6px;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
 }
 
 .echo-title {
@@ -114,7 +117,7 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Inner Chat Box Container */
+/* Inner Chat Box Container - THE ONLY SCROLLABLE REGION */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -130,6 +133,7 @@ div[data-testid="stButton"] > button:hover {
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding: 0.65rem 0.9rem !important;
     height: 100% !important;
 }
@@ -399,7 +403,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
         # --- Chat Stream Feed ---
         # ==========================================
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-        chat_box = st.container()
+        chat_box = st.container(height=int(height - 130) if height else None)
         st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
