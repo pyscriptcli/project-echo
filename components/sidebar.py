@@ -1,8 +1,10 @@
-# In components/sidebar.py
 import streamlit as st
 
 def setup_page_layout():
-    """Hides default UI elements and renders the custom horizontal navbar with Cormorant Garamond italic labels and custom SVG icons."""
+    """
+    Hides default Streamlit UI elements and renders a custom horizontal 
+    navbar with Cormorant Garamond italic labels and pure SVG icons.
+    """
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&display=swap');
@@ -102,8 +104,8 @@ def setup_page_layout():
     a[data-testid="stPageLink"]::before {
         content: "";
         display: inline-block;
-        width: 17px;
-        height: 17px;
+        width: 18px;
+        height: 18px;
         margin-right: 8px;
         background-color: #C9A84C;
         transition: background-color 0.25s ease;
@@ -138,6 +140,8 @@ def setup_page_layout():
     """, unsafe_allow_html=True)
 
     # Render Horizontal Navbar
+    # The 4th column is left empty to push the nav items to the left, 
+    # or you can adjust the ratios to center them.
     col1, col2, col3, _ = st.columns([1.3, 1.3, 2.2, 5.2])
     with col1:
         st.page_link("app.py", label="Dashboard", use_container_width=True)
