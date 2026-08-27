@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from utils.db import fetch_meeting_archives, get_supabase_client
+from components.sidebar import render_custom_sidebar
 
 # 1. Page Config
 st.set_page_config(
@@ -10,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Custom CSS
+# 2. Custom CSS (Sidebar styling removed - handled globally by app.py)
 CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -33,51 +34,6 @@ h3 {
 .playfair-label {
     font-family: 'Playfair Display', serif !important; font-style: italic !important;
     color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block;
-}
-
-/* Sidebar Styling: Icon-only rail, No collapse button */
-section[data-testid="stSidebar"] {
-    width: 72px !important;
-    min-width: 72px !important;
-    max-width: 72px !important;
-    background-color: #161616 !important; 
-    border-right: 1px solid #2B2B2B !important;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important; 
-    z-index: 999995 !important;
-}
-
-/* Hide collapse chevron button completely */
-button[data-testid="stSidebarCollapseButton"],
-div[data-testid="stSidebarCollapseButton"] { 
-    display: none !important; 
-}
-
-/* Sidebar navigation links */
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
-    width: 48px !important; 
-    height: 48px !important; 
-    padding: 0 !important; 
-    margin: 0 auto 12px auto !important;
-    display: flex !important;
-    align-items: center !important; 
-    justify-content: center !important; 
-    border-radius: 10px !important;
-    background-color: #222222 !important; 
-    border: 1px solid #333333 !important; 
-    transition: all 0.2s ease !important;
-}
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover { 
-    background-color: #D4AF37 !important; 
-}
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] { 
-    display: none !important; 
-}
-section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] { 
-    font-size: 1.5rem !important; 
-    color: #C5A059 !important; 
-}
-section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover span[data-testid="stIconMaterial"] { 
-    color: #161616 !important; 
 }
 
 /* Containers & Inputs */
@@ -131,7 +87,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-# 3. Data Fetching
+# 3. Render Global Sidebar
+render_custom_sidebar()
+
+# 4. SVG Icons (No Emojis)
+TRASH_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
+SAVE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>'
+
+# 5. Data Fetching
 meetings = fetch_meeting_archives(limit=500)
 
 if not meetings:
@@ -145,7 +108,7 @@ def get_iso_date(meeting_item):
 
 meeting_dates = sorted(list({get_iso_date(m) for m in meetings if get_iso_date(m)}), reverse=True)
 
-# 4. Search & Calendar Filter Bar
+# 6. Search & Calendar Filter Bar
 with st.container(border=True):
     st.markdown("<h3>Find & Inspect Meeting</h3>", unsafe_allow_html=True)
     
@@ -160,7 +123,7 @@ with st.container(border=True):
         )
     
     with col_cal:
-        with st.popover(":material/calendar_month:", help="Filter by Date"):
+        with st.popover("📅", help="Filter by Date"):
             st.markdown("**Select Meeting Date**")
             
             if meeting_dates:
@@ -178,7 +141,7 @@ with st.container(border=True):
             st.session_state["selected_meeting_id"] = None
             st.rerun()
 
-# 5. Filtering Logic
+# 7. Filtering Logic
 filtered_meetings = meetings
 
 # Filter by selected date
@@ -234,7 +197,7 @@ if len(filtered_meetings) > 1:
                 st.session_state["selected_meeting_id"] = m.get("meeting_id")
                 st.rerun()
 
-# 6. Meeting Details Card
+# 8. Meeting Details Card
 with st.container(border=True):
     st.markdown("<h3>Meeting Details</h3>", unsafe_allow_html=True)
     d1, d2, d3 = st.columns(3)
@@ -248,7 +211,7 @@ with st.container(border=True):
         st.write(f"**Confirmed by:** {selected_meeting.get('confirmed_by', 'N/A')}")
         st.write(f"**Meeting ID:** `{m_id}`")
 
-# 7. Full Transcript
+# 9. Full Transcript
 raw_transcript = selected_meeting.get("transcript_md", "No transcript stored.")
 with st.expander("Full Transcript (Click to Expand)", expanded=False):
     st.text_area(
@@ -259,7 +222,7 @@ with st.expander("Full Transcript (Click to Expand)", expanded=False):
         label_visibility="collapsed"
     )
 
-# 8. Minutes of Meeting Interactive Editor
+# 10. Minutes of Meeting Interactive Editor
 with st.container(border=True):
     st.markdown("<h3>Minutes of Meeting Editor</h3>", unsafe_allow_html=True)
     st.caption("Edit action items and discussion points inline. Changes are saved to Supabase when you click 'Save All Changes'.")
@@ -297,7 +260,7 @@ with st.container(border=True):
                 st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"pic_{m_id}_{idx}", height=75, label_visibility="collapsed")
             with c_del:
                 st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                if st.button(":material/delete:", key=f"del_{m_id}_{idx}", help="Delete Row"):
+                if st.button(f"{TRASH_ICON} Delete", key=f"del_{m_id}_{idx}", help="Delete Row"):
                     continue
             
             rows_to_keep.append({
@@ -337,7 +300,7 @@ with st.container(border=True):
     st.write("")
     sv_col1, sv_col2 = st.columns([7.5, 2.5])
     with sv_col2:
-        if st.button(":material/save: Save All Changes", key=f"btn_save_{m_id}", type="primary"):
+        if st.button(f"{SAVE_ICON} Save All Changes", key=f"btn_save_{m_id}", type="primary"):
             with st.spinner("Saving to Supabase..."):
                 client = get_supabase_client()
                 if not client:
