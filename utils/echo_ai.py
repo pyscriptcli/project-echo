@@ -3,11 +3,11 @@ import requests
 import json
 import re
 from datetime import datetime
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -29,25 +29,13 @@ SVG_GLOBE_ICON = """
 </svg>
 """
 
-CHAT_COMPACT_CLEAN_CSS = """
+CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
 
-/* Prevent outer viewport scrolling */
-html, body, [data-testid="stAppViewContainer"], .main, .block-container {
-    overflow: hidden !important;
-    padding-top: 0.3rem !important;
-    padding-bottom: 0.3rem !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
-
-/* Match the exact warm architectural grid background */
+/* Card Container with matching grid transparency */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background-color: #FAF8F5 !important;
-    background-image: 
-        linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px) !important;
-    background-size: 30px 30px !important;
+    background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     padding: 0 !important;
@@ -58,34 +46,29 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - 110px) !important;
-    max-height: calc(100vh - 110px) !important;
-    padding: 0.35rem 0.75rem 0.6rem 0.75rem !important;
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
+    padding: 0.5rem 0.85rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Slim Compact Header Row */
-.echo-header-row {
+/* Header Alignment */
+.echo-header-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-bottom: 0.15rem;
-    margin-bottom: 0.25rem;
+    gap: 8px;
+    height: 36px;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
     flex-shrink: 0;
-}
-
-.echo-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 
 .echo-title {
     font-family: 'Playfair Display', Georgia, serif !important;
     font-style: italic !important;
-    font-size: 1.15rem !important;
+    font-size: 1.25rem !important;
     font-weight: 600 !important;
     color: #1A2B4C !important;
     margin: 0 !important;
@@ -93,7 +76,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     letter-spacing: 0.01em !important;
 }
 
-/* Dedicated Scrolling Chat Box */
+/* Inner Chat Box Container */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -103,8 +86,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     padding: 0.65rem 0.9rem !important;
@@ -150,7 +135,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-shrink: 0;
 }
 
-/* AI Assistant Message */
+/* Assistant Message */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
@@ -294,7 +279,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 /* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.3rem !important;
+    padding-top: 0.35rem !important;
     flex-shrink: 0 !important;
 }
 
@@ -313,14 +298,14 @@ div[data-testid="stChatInput"] > div {
 div[data-testid="stChatInput"] textarea {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color: #0F172A !important;
-    font-size: 0.82rem !important;
+    font-size: 0.84rem !important;
 }
 </style>
 """
 
 def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
-    st.markdown(CHAT_COMPACT_CLEAN_CSS, unsafe_allow_html=True)
+    st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
     # State Initializations
     if "global_chat_history" not in st.session_state:
@@ -338,14 +323,11 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
         # Header Row: Logo, Title, and Action Controls
-        h_left, h_mid, h_right = st.columns([0.03, 0.88, 0.09])
+        h_left, h_right = st.columns([0.88, 0.12])
         with h_left:
-            st.markdown(f'<div style="padding-top:1px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
-
-        with h_mid:
             st.markdown(
-                f'<div class="echo-header-row">'
-                f'<div class="echo-title-wrap"><h2 class="echo-title">{title}</h2></div>'
+                f'<div class="echo-header-bar">'
+                f'{SVG_ECHO_LOGO}<span class="echo-title">{title}</span>'
                 f'</div>',
                 unsafe_allow_html=True
             )
@@ -456,7 +438,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                 )
 
             # Source Ingestion Routing
-            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
+            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else [][cite: 1]
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
             answer = _query_echo_backend(
@@ -514,19 +496,19 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> str:
-    """Directly synthesizes sources into markdown."""
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+    """Directly synthesizes sources into markdown without schema parsing errors."""
+    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()[cite: 1]
     if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets."
+        return "DeepSeek API Key is missing in Streamlit Secrets."[cite: 1]
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}[cite: 1]
+    archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"[cite: 1]
 
     if include_knowledge:
-        context_data = fetch_echo_context()
-        team_list = ", ".join(context_data.get('team', []))
-        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-        projects = ", ".join(context_data.get('projects', []))
+        context_data = fetch_echo_context()[cite: 1]
+        team_list = ", ".join(context_data.get('team', []))[cite: 1]
+        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])[cite: 1]
+        projects = ", ".join(context_data.get('projects', []))[cite: 1]
         knowledge_section = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
 ---------------------------------------
@@ -534,7 +516,7 @@ TEAM MEMBERS: {team_list}
 ACTIVE PROJECTS: {projects}
 TECHNICAL JARGON:
 {jargon_list}
-"""
+"""[cite: 1]
     else:
         knowledge_section = ""
 
@@ -560,22 +542,22 @@ CURRENT DATE & TIME: {current_date_str}
         f"{context_string}\n"
     )
 
-    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
-    for msg in chat_history[-6:]:
-        messages.append({"role": msg["role"], "content": msg["content"]})
-    messages.append({"role": "user", "content": question})
+    messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}][cite: 1]
+    for msg in chat_history[-6:]:[cite: 1]
+        messages.append({"role": msg["role"], "content": msg["content"]})[cite: 1]
+    messages.append({"role": "user", "content": question})[cite: 1]
 
     payload = {
-        "model": model_name,
-        "messages": messages,
-        "temperature": 0.2,
+        "model": model_name,[cite: 1]
+        "messages": messages,[cite: 1]
+        "temperature": 0.2,[cite: 1]
         "max_tokens": 1500
     }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
-        if resp.status_code == 200:
-            return resp.json()["choices"][0]["message"]["content"].strip()
-        return f"Service notice ({resp.status_code}): {resp.text}"
-    except Exception as e:
-        return f"Analysis exception: {e}"
+        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)[cite: 1]
+        if resp.status_code == 200:[cite: 1]
+            return resp.json()["choices"][0]["message"]["content"].strip()[cite: 1]
+        return f"Service notice ({resp.status_code}): {resp.text}"[cite: 1]
+    except Exception as e:[cite: 1]
+        return f"Analysis exception: {e}"[cite: 1]
