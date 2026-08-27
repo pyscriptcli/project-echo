@@ -30,7 +30,7 @@ st.markdown("""
 /* --- GLOBAL: Hide Top Bar & Main Menu --- */
 .stApp > header { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: hidden !important; }
-.block-container { padding-top: 2rem !important; padding-right: 2rem !important; }
+.block-container { padding-top: 1.5rem !important; padding-right: 1.5rem !important; padding-left: 1.5rem !important;}
 
 /* --- GLOBAL: Sidebar Styling --- */
 section[data-testid="stSidebar"] {
@@ -41,8 +41,8 @@ section[data-testid="stSidebar"] a[data-testid="stPageLink"] {
     background-color: transparent !important;
     border: none !important;
     border-radius: 6px !important;
-    margin: 0.4rem 0.5rem !important;
-    padding: 0.8rem 1rem !important;
+    margin: 0.2rem 0.5rem !important;
+    padding: 0.6rem 1rem !important;
     transition: all 0.2s ease !important;
 }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
@@ -50,83 +50,82 @@ section[data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
 }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stPageLink-Text"] {
     font-family: 'Cormorant Garamond', serif !important;
-    font-size: 1.4rem !important;
+    font-size: 1.2rem !important;
     font-weight: 600 !important;
     color: #c9a84c !important;
     letter-spacing: 0.03em !important;
 }
 section[data-testid="stSidebar"] a[data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
     color: #c9a84c !important;
-    font-size: 1.6rem !important;
+    font-size: 1.4rem !important;
 }
 
 /* --- DASHBOARD SPECIFIC --- */
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .stApp {
     background-color: #F3EFE6; 
-    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 80px 80px;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
     color: #2D2D2D;
 }
 
 h3 {
     font-family: 'Playfair Display', serif !important;
-    font-style: italic !important; font-weight: 400 !important; 
-    color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important;
+    font-style: italic !important; font-weight: 500 !important; 
+    color: #1A2B4C !important; letter-spacing: 0.01em; margin-bottom: 0.15rem; font-size: 1.15rem !important;
 }
 
-/* 3D KPI Cards - Compact & Bigger Numbers */
+/* 3D KPI Cards - Ultra Compact */
 .kpi-card {
-    background: linear-gradient(145deg, #ffffff, #f5f5f5);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
+    background: linear-gradient(145deg, #ffffff, #f9f9f9);
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
     box-shadow: 
-        0px 10px 15px -3px rgba(0, 0, 0, 0.15), 
-        0px 4px 6px -2px rgba(0, 0, 0, 0.05),
-        inset 0px 2px 0px 0px rgba(255, 255, 255, 1);
-    border: 1px solid rgba(0,0,0,0.08);
-    border-bottom: 4px solid #222222;
+        0px 6px 10px -3px rgba(0, 0, 0, 0.1), 
+        0px 2px 4px -2px rgba(0, 0, 0, 0.05),
+        inset 0px 1px 0px 0px rgba(255, 255, 255, 1);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 3px solid #222222;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 0.5rem;
 }
 .kpi-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 
-        0px 15px 20px -3px rgba(0, 0, 0, 0.2), 
-        0px 4px 6px -2px rgba(0, 0, 0, 0.05),
-        inset 0px 2px 0px 0px rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
     border-bottom-color: #c9a84c;
 }
 .kpi-title {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #666666;
-    margin-bottom: 0.1rem;
+    letter-spacing: 0.5px;
+    color: #777777;
+    margin-bottom: 0rem;
 }
 .kpi-value {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 600;
     color: #1A2B4C;
     margin: 0;
-    text-shadow: 1px 2px 2px rgba(0,0,0,0.08);
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.05);
 }
 
-/* Preset Buttons Styling */
-div[data-testid="stPopover"] button {
-    background-color: #e5e7eb !important;
-    color: #1a1a1a !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
+/* Containers with Depth */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: rgba(255, 255, 255, 0.6) !important; 
+    backdrop-filter: blur(5px);
+    border-radius: 10px !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important; 
+    padding: 1.2rem !important; 
 }
 
-/* Uniform Pill Buttons (General) */
+/* Uniform Pill Buttons */
 .stButton > button {
     background-color: #222222 !important; 
     color: #FFFFFF !important;
@@ -134,39 +133,57 @@ div[data-testid="stPopover"] button {
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.75rem !important;
     letter-spacing: 0.5px; 
-    padding: 0.4rem 1.2rem !important;
-    min-height: 36px !important;
-    height: 36px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    padding: 0.2rem 1rem !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.2s ease !important; 
 }
 .stButton > button:hover {
     background-color: #D4AF37 !important;
     color: #161616 !important;
-    box-shadow: 0 6px 12px rgba(212, 175, 55, 0.2) !important;
     transform: translateY(-1px);
 }
 
-/* Gallery Item Card */
+/* Compact Gallery Item Card */
 .gallery-card {
-    background-color: #FAFAFA;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px;
-    padding: 1.1rem;
-    margin-bottom: 0.85rem;
-    transition: all 0.2s ease;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
 }
-.gallery-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; color: #1A2B4C; margin: 0 0 0.25rem 0; }
-.gallery-sub { font-size: 0.82rem; color: #666; margin-bottom: 0.4rem; }
-.gallery-desc { font-size: 0.86rem; color: #2D2D2D; line-height: 1.4; }
+.gallery-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.05rem; color: #1A2B4C; margin: 0 0 0.1rem 0; }
+.gallery-sub { font-size: 0.75rem; color: #777; margin-bottom: 0.3rem; }
+.gallery-desc { font-size: 0.8rem; color: #333; line-height: 1.3; }
 
-/* Chat Styling */
-.chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; }
-.chat-ai { align-self: flex-start; color: #1A1A1A; padding: 0.2rem; max-width: 95%; font-size: 0.88rem; line-height: 1.5; }
+/* AI Chat Styling - Enhanced for Visual Hierarchy */
+.chat-container { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 0.5rem; padding-bottom: 1rem; }
+.chat-ai { 
+    align-self: flex-start; 
+    background: linear-gradient(to right, #ffffff, #f0f4f8);
+    border-left: 3px solid #D4AF37;
+    color: #1A1A1A; 
+    padding: 0.8rem 1rem; 
+    border-radius: 0 8px 8px 8px;
+    max-width: 92%; 
+    font-size: 0.85rem; 
+    line-height: 1.5; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
-.chat-user { background-color: #F3F4F6; color: #1A1A1A; padding: 0.55rem 0.95rem; border-radius: 14px; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.chat-user { 
+    background-color: #222222; 
+    color: #FFFFFF; 
+    padding: 0.6rem 1rem; 
+    border-radius: 12px 12px 0 12px; 
+    max-width: 80%; 
+    font-size: 0.85rem; 
+    line-height: 1.4; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,11 +228,10 @@ def query_global_team_archive(question, archive_records, chat_history):
 # 6. Fetch Data
 supabase_records = fetch_meeting_archives(limit=100)
 
-# 7. Header & Custom Popover Date Picker (Replicating image_c8959b.png)
+# 7. Header & Custom Popover Date Picker
 top_left, top_right = st.columns([2.5, 1.5])
 
 with top_right:
-    st.write("") # Spacer
     col_pop, col_reset = st.columns([3, 1])
     
     with col_pop:
@@ -296,7 +312,7 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 9. KPI Cards (Compact & 3D Effect)
+# 9. KPI Cards (Ultra Compact)
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Meetings (Selected)</div><div class="kpi-value">{total_range_meetings}</div></div>', unsafe_allow_html=True)
@@ -307,13 +323,12 @@ with kpi3:
 with kpi4:
     st.markdown(f'<div class="kpi-card"><div class="kpi-title">Total External</div><div class="kpi-value">{total_external_meetings}</div></div>', unsafe_allow_html=True)
 
-st.write("")
 
-# 10. Main Split Layout
-col_left, col_right = st.columns(2)
+# 10. Main Split Layout - AI Emphasized Ratio (40/60 Split)
+col_left, col_right = st.columns([1.2, 1.8])
 
 with col_left:
-    with st.container(height=580, border=True):
+    with st.container(height=520, border=True):
         st.markdown('<h3>Recent Meetings</h3>', unsafe_allow_html=True)
         st.caption("Browse archived meetings for the selected date range.")
         
@@ -326,28 +341,32 @@ with col_left:
                 prep = m.get("prepared_by") or "CRD Team"
                 summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
                 
-                with st.container(border=True):
-                    gc1, gc2 = st.columns([7.5, 2.5])
-                    with gc1:
-                        st.markdown(f"<p class='gallery-title'>{client}</p>", unsafe_allow_html=True)
-                        st.markdown(f"<p class='gallery-sub'>Date: {m_date} &bull; {location} &bull; Prep: {prep}</p>", unsafe_allow_html=True)
-                        st.markdown(f"<p class='gallery-desc'>{summary[:120]}...</p>", unsafe_allow_html=True)
-                    with gc2:
-                        st.write("<div style='height: 18px;'></div>", unsafe_allow_html=True)
-                        if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
-                            st.session_state["selected_meeting_id"] = m_id
-                            st.switch_page("pages/2_meeting_details.py")
+                with st.container(border=False):
+                    st.markdown(f"""
+                    <div class="gallery-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <p class='gallery-title'>{client}</p>
+                                <p class='gallery-sub'>{m_date} &bull; {prep}</p>
+                            </div>
+                        </div>
+                        <p class='gallery-desc'>{summary[:90]}...</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("View", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
+                        st.session_state["selected_meeting_id"] = m_id
+                        st.switch_page("pages/2_meeting_details.py")
         else:
             st.info("No meeting archives found for the selected date range.")
 
 with col_right:
-    with st.container(height=580, border=True):
+    with st.container(height=520, border=True):
         st.markdown('<h3>Ask Echo — Global Intelligence</h3>', unsafe_allow_html=True)
-        st.caption("Query all stored meeting transcripts, action items, and client records.")
+        st.caption("Query all stored meeting transcripts, action items, and client records directly.")
 
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         if not st.session_state["global_chat_history"]:
-            st.markdown('<div class="chat-ai">Hello. I am Echo. Ask me any question across your meeting archives.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="chat-ai"><strong>System Online:</strong> Hello. I am Echo. Ask me any question across your entire meeting archive.</div>', unsafe_allow_html=True)
         else:
             for msg in st.session_state["global_chat_history"]:
                 if msg["role"] == "assistant":
@@ -356,9 +375,9 @@ with col_right:
                     st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        if global_query := st.chat_input("Query whole company archive..."):
+        if global_query := st.chat_input("Analyze company archive..."):
             st.session_state["global_chat_history"].append({"role": "user", "content": global_query})
-            with st.spinner("Analyzing meeting archives..."):
+            with st.spinner("Echo is analyzing meeting archives..."):
                 ans = query_global_team_archive(global_query, supabase_records, st.session_state["global_chat_history"])
             st.session_state["global_chat_history"].append({"role": "assistant", "content": ans})
             st.rerun()
