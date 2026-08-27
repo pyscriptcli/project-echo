@@ -3,8 +3,8 @@ import streamlit as st
 
 def setup_page_layout():
     """
-    Renders a full-width luxury top bar across the top of the page
-    with Cormorant Garamond italic labels, SVG icons, and responsive spacing.
+    Renders a true flush edge-to-edge luxury top bar spanning the full screen
+    without top or side padding gaps.
     """
     st.markdown("""
     <style>
@@ -28,26 +28,36 @@ def setup_page_layout():
         width: 0 !important;
     }
 
-    /* 2. RECLAIM PAGE PADDING */
+    /* 2. REMOVE CONTAINER PADDING TO MAKE FLUSH TOP BAR */
     .block-container {
-        padding-top: 1rem !important;
-        padding-left: 2.5rem !important;
-        padding-right: 2.5rem !important;
+        padding-top: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         max-width: 100% !important;
     }
 
-    /* 3. FULL-WIDTH TOPBAR CONTAINER */
+    /* 3. FLUSH EDGE-TO-EDGE TOPBAR CONTAINER */
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) {
         background: #171819 !important;
-        border: 1px solid rgba(201, 168, 76, 0.3) !important;
-        border-radius: 10px !important;
-        padding: 6px 16px !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3) !important;
-        margin-bottom: 1.5rem !important;
+        border-bottom: 1px solid rgba(201, 168, 76, 0.35) !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        padding: 0.65rem 2.5rem !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+        margin-top: 0 !important;
+        margin-bottom: 1.8rem !important;
         align-items: center !important;
         width: 100% !important;
         display: flex !important;
-        gap: 1rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Add normal page padding back to the rest of the page components */
+    div[data-testid="stVerticalBlock"] > div:not(:has(div.nav-item-marker)) {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
     }
 
     /* 4. BASE LINK STYLING */
@@ -81,7 +91,7 @@ def setup_page_layout():
     div[data-testid="stHorizontalBlock"]:has(div.nav-item-marker) a span {
         font-family: 'Cormorant Garamond', serif !important;
         font-style: italic !important;
-        font-size: 1.25rem !important;
+        font-size: 1.22rem !important;
         font-weight: 600 !important;
         color: #C9A84C !important;
         letter-spacing: 0.04em !important;
@@ -161,7 +171,7 @@ def setup_page_layout():
     </style>
     """, unsafe_allow_html=True)
 
-    # Full-width balanced columns
+    # Edge-to-edge balanced column structure
     col1, col2, col3, _ = st.columns([1.6, 1.5, 2.8, 6.1])
     with col1:
         st.markdown('<div class="nav-item-marker"></div>', unsafe_allow_html=True)
