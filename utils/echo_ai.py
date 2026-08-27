@@ -7,7 +7,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -15,14 +15,14 @@ SVG_ECHO_LOGO = """
 """
 
 SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
 </svg>
 """
 
 SVG_GLOBE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -31,14 +31,14 @@ SVG_GLOBE_ICON = """
 
 CHAT_COMPACT_CLEAN_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
 
 /* Prevent outer viewport scrolling */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 /* Match the exact warm architectural grid background */
@@ -58,20 +58,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
-    height: calc(100vh - 120px) !important;
-    max-height: calc(100vh - 120px) !important;
-    padding: 0.5rem 0.85rem !important;
+    height: calc(100vh - 110px) !important;
+    max-height: calc(100vh - 110px) !important;
+    padding: 0.35rem 0.75rem 0.6rem 0.75rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Meeting Details Exact Matched Header */
+/* Slim Compact Header Row */
 .echo-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 0.3rem;
-    margin-bottom: 0.35rem;
+    padding-bottom: 0.15rem;
+    margin-bottom: 0.25rem;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
     flex-shrink: 0;
 }
@@ -79,17 +79,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-title-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .echo-title {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Playfair Display', Georgia, serif !important;
     font-style: italic !important;
-    font-size: 1.25rem !important;
+    font-size: 1.15rem !important;
     font-weight: 600 !important;
     color: #1A2B4C !important;
     margin: 0 !important;
-    line-height: 1.1 !important;
+    line-height: 1 !important;
     letter-spacing: 0.01em !important;
 }
 
@@ -107,7 +107,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     border: 1px solid rgba(0, 0, 0, 0.07) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.65rem 0.9rem !important;
     height: 100% !important;
 }
 
@@ -116,18 +116,18 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.65rem;
 }
 
 .echo-user-bubble {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     background: #111A2B;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37;
-    padding: 0.45rem 0.8rem;
-    border-radius: 12px 2px 12px 12px;
+    padding: 0.4rem 0.75rem;
+    border-radius: 10px 2px 10px 10px;
     max-width: 75%;
     font-size: 0.82rem;
     line-height: 1.45;
@@ -139,8 +139,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-avatar-user {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -155,20 +155,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.75rem;
     background: transparent;
 }
 
 .echo-assistant-header {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 0.2rem;
+    gap: 5px;
+    margin-bottom: 0.15rem;
 }
 
 .echo-avatar-assistant {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -179,18 +179,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-assistant-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #854D0E;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1A2B4C;
 }
 
 .echo-assistant-badge-gold {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     font-size: 0.55rem;
     padding: 1px 4px;
-    border-radius: 3px;
+    border-radius: 2px;
     background: #FEF3C7;
     color: #92400E;
     font-weight: 600;
@@ -198,32 +197,32 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-assistant-body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    padding-left: 26px;
-    color: #1E293B;
-    font-size: 0.84rem;
-    line-height: 1.55;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    padding-left: 23px;
+    color: #374151;
+    font-size: 0.83rem;
+    line-height: 1.5;
 }
 .echo-assistant-body strong {
-    color: #0F172A;
+    color: #111827;
 }
 
 /* Sources Pills */
 .echo-sources-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 0.4rem;
-    padding-left: 26px;
+    gap: 4px;
+    margin-top: 0.35rem;
+    padding-left: 23px;
 }
 .echo-source-pill {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     display: inline-flex;
     align-items: center;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.4);
-    border-radius: 4px;
-    padding: 2px 6px;
+    border-radius: 3px;
+    padding: 1px 5px;
     font-size: 0.68rem;
     color: #854D0E !important;
     text-decoration: none !important;
@@ -238,46 +237,46 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.45rem 0;
+    margin: 0.4rem 0;
     font-size: 0.78rem;
     background: #FFFFFF;
     border-radius: 4px;
     overflow: hidden;
     border: 1px solid #E2E8F0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 .echo-assistant-body th {
-    font-family: 'Cinzel', serif;
     background: #111A2B;
     color: #D4AF37;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 600;
     border: 1px solid #334155;
-    padding: 4px 8px;
+    padding: 4px 7px;
     text-align: left;
 }
 .echo-assistant-body td {
     border: 1px solid #E2E8F0;
-    padding: 4px 8px;
-    color: #334155;
+    padding: 4px 7px;
+    color: #374151;
 }
 
 /* Thinking Indicator */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     padding-left: 0.2rem;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.45rem;
 }
 .echo-thinking-pill {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 2px 8px;
-    border-radius: 4px;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 3px;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.35);
-    font-size: 0.72rem;
+    font-size: 0.70rem;
     color: #854D0E;
     font-weight: 500;
 }
@@ -295,7 +294,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 /* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.35rem !important;
+    padding-top: 0.3rem !important;
     flex-shrink: 0 !important;
 }
 
@@ -306,15 +305,15 @@ div[data-testid="stChatInput"] {
 
 div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.55) !important;
+    border: 1px solid rgba(212, 175, 55, 0.5) !important;
     border-radius: 6px !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
 }
 
 div[data-testid="stChatInput"] textarea {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color: #0F172A !important;
-    font-size: 0.84rem !important;
+    font-size: 0.82rem !important;
 }
 </style>
 """
@@ -338,10 +337,10 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        # Header Row: Logo, Italic Title, and Action Controls
-        h_left, h_mid, h_right = st.columns([0.035, 0.865, 0.10])
+        # Header Row: Logo, Title, and Action Controls
+        h_left, h_mid, h_right = st.columns([0.03, 0.88, 0.09])
         with h_left:
-            st.markdown(f'<div style="padding-top:2px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="padding-top:1px;">{SVG_ECHO_LOGO}</div>', unsafe_allow_html=True)
 
         with h_mid:
             st.markdown(
@@ -355,7 +354,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
             c_settings, c_clr = st.columns(2)
             with c_settings:
                 with st.popover("", icon=":material/settings:", help="Settings"):
-                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     st.session_state["echo_selected_model"] = st.selectbox(
                         "Model",
                         options=["deepseek-chat", "deepseek-reasoner"],
@@ -363,7 +362,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                         label_visibility="collapsed"
                     )
                     st.markdown("---")
-                    st.markdown("<span style='font-family:Cinzel,serif; font-size:0.75rem; font-weight:700; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
                     st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
@@ -386,8 +385,8 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                     '<div class="echo-msg-row-assistant">'
                     '<div class="echo-assistant-header">'
                     f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                    '<span class="echo-assistant-title">ECHO GLOBAL</span>'
-                    '<span class="echo-assistant-badge-gold">EXECUTIVE ANALYST</span>'
+                    '<span class="echo-assistant-title">Echo</span>'
+                    '<span class="echo-assistant-badge-gold">AI</span>'
                     '</div>'
                     '<div class="echo-assistant-body">'
                     'Hi Team, this is Echo, ask me anything...'
@@ -410,8 +409,8 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                             '<div class="echo-msg-row-assistant">'
                             '<div class="echo-assistant-header">'
                             f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                            '<span class="echo-assistant-title">ECHO GLOBAL</span>'
-                            '<span class="echo-assistant-badge-gold">EXECUTIVE ANALYST</span>'
+                            '<span class="echo-assistant-title">Echo</span>'
+                            '<span class="echo-assistant-badge-gold">AI</span>'
                             '</div>'
                             '<div class="echo-assistant-body">',
                             unsafe_allow_html=True
@@ -445,7 +444,7 @@ def render_echo_chat(container=None, height=None, title="Ask Echo", caption=None
                     unsafe_allow_html=True
                 )
                 thinking_placeholder = st.empty()
-                status_text = "Echo is searching the web..." if st.session_state["echo_source_web"] else "Echo is synthesizing..."
+                status_text = "Searching the web..." if st.session_state["echo_source_web"] else "Thinking..."
                 thinking_placeholder.markdown(
                     f'<div class="echo-thinking-wrapper">'
                     f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
@@ -515,7 +514,7 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> str:
-    """Directly synthesizes sources into markdown without fragile JSON serialization."""
+    """Directly synthesizes sources into markdown."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets."
@@ -554,7 +553,7 @@ CURRENT DATE & TIME: {current_date_str}
     )
 
     system_prompt = (
-        "You are Echo Global, an executive AI analyst for PRIME Philippines. "
+        "You are Echo, an AI analyst for PRIME Philippines. "
         f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
         "Synthesize available sources and archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
         f"{citation_rule}\n\n"
