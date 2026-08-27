@@ -3,7 +3,7 @@ import requests
 import json
 import pandas as pd
 import re
-from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context[cite: 1]
+from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
