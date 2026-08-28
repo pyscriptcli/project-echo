@@ -676,6 +676,75 @@ def export_to_pdf(df, meeting_details, other_discussions):
     buffer.seek(0)
     return buffer
 
+def export_to_html_template_2(df, meeting_details, other_discussions):
+    template_path = os.path.join("mom_templates", "mom_template_2.html")
+    
+    fallback_html = """
+    <html><body>
+        <h1>Missing Template File</h1>
+        <p>Please ensure <code>mom_templates/mom_template_2.html</code> exists in your repository.</p>
+    </body></html>
+    """
+    
+    try:
+        with open(template_path, "r", encoding="utf-8") as f:
+            html_str = f.read()
+    except FileNotFoundError:
+        html_str = fallback_html
+
+    # Prepare string variables
+    all_attendees = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
+    attendees_html = "".join([f"<li>{a}</li>" for a in all_attendees if a.strip()])
+
+    action_rows = ""
+    for i, row in df.iterrows():
+        dp = str(row.get('Discussion Points', ''))
+        ap = str(row.get('Action Plan', ''))
+        dd = str(row.get('Indicative Delivery Date', ''))
+        pic = str(row.get('Person-in-charge', ''))
+        action_rows += f"<tr><td>{i+1}</td><td><b>{dp}</b><br/>{ap}</td><td>{pic}</td><td>{dd}</td></tr>"
+        
+    replacements = {
+        "{{Project_Name}}": meeting_details.get("company_name") or "Project Name",
+        "{{Meeting_Date}}": meeting_details.get("date", ""),
+        "{{Meeting_Time}}": meeting_details.get("time_range", ""),
+        "{{Meeting_Venue}}": meeting_details.get("location", ""),
+        "{{Preparer_Name}}": meeting_details.get("prep_name", ""),
+        "{{Preparation_Date}}": datetime.date.today().strftime("%B %d, %Y"),
+        "{{Source_Files}}": "Meeting Transcript / Audio",
+        "{{Committee_Name}}": meeting_details.get("company_name") or "Committee",
+        "{{Meeting_Purpose}}": other_discussions if other_discussions else "To discuss project updates and action plans.",
+        "{{Attendees_List_HTML}}": attendees_html,
+        "{{Action_Plan_Rows_HTML}}": action_rows,
+        # Default placeholders for fields specific to Template 2
+        "{{Schedule_Summary}}": "Refer to the Action Plan for specific timelines.",
+        "{{Schedule_Rows_HTML}}": "",
+        "{{Number_of_Teams}}": "N/A",
+        "{{Team_Names}}": "N/A",
+        "{{Team_Classification_Notes}}": "",
+        "{{Platform_Name}}": "Internal Systems",
+        "{{Tracking_Method}}": "Standard Attendance",
+        "{{Scoring_Observation}}": "N/A",
+        "{{Last_Day_Programme_Rows_HTML}}": "",
+        "{{Programme_Observation}}": "N/A",
+        "{{Previous_Document_Name}}": "Previous MoM",
+        "{{Matters_Arising_Rows_HTML}}": "",
+        "{{Open_Items_Rows_HTML}}": "",
+        "{{Annex_Description}}": "",
+        "{{Annex_Image_URL}}": "",
+        "{{Attendee_1}}": meeting_details.get("prep_name", "Preparer"),
+        "{{Attendee_2}}": "",
+        "{{Attendee_3}}": ""
+    }
+
+    for key, val in replacements.items():
+        html_str = html_str.replace(key, str(val))
+        
+    bio = BytesIO()
+    bio.write(html_str.encode('utf-8'))
+    bio.seek(0)
+    return bio
+
 # 8. UI Layout
 col_upload, col_details = st.columns(2)
 
@@ -972,13 +1041,28 @@ if not st.session_state["df"].empty:
             "conf_name": conf_name.strip(), "conf_desig": conf_desig.strip()
         }
 
+        # Template Selection & Export Section
+        st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
+        template_selection = st.selectbox(
+            "Select MoM Template",
+            options=["Template 1 - Standard Corporate (Word & PDF)", "Template 2 - Event / Project Planning (HTML)"],
+            label_visibility="collapsed"
+        )
+
         exp_col1, exp_col2 = st.columns(2)
-        with exp_col1:
-            doc_bio = export_to_word(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-            st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx")
-        with exp_col2:
-            pdf_bio = export_to_pdf(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-            st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf")
+        if "Template 1" in template_selection:
+            with exp_col1:
+                doc_bio = export_to_word(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx")
+            with exp_col2:
+                pdf_bio = export_to_pdf(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf")
+        else:
+            with exp_col1:
+                html_bio = export_to_html_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download HTML Document (.html)", data=html_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.html", mime="text/html", key="btn_download_html")
+            with exp_col2:
+                st.caption("Template 2 is optimized as an interactive HTML document specifically formatted for structured event and project planning.")
 
         st.write("")
         save_col1, save_col2 = st.columns([8, 2])
