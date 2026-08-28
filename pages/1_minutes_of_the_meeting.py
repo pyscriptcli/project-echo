@@ -116,6 +116,29 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 .chat-ai { align-self: flex-start; background-color: transparent; color: #1A1A1A; padding: 0.2rem; max-width: 95%; font-size: 0.88rem; line-height: 1.5; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
 .chat-user { background-color: #F3F4F6; color: #1A1A1A; padding: 0.55rem 0.95rem; border-radius: 14px; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+/* Evidence & Verification Box */
+.evidence-quote-box {
+    background-color: #F8F9FA;
+    border-left: 3px solid #D4AF37;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    color: #4A5568;
+    margin: 0.4rem 0;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+}
+.badge-confidence {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 6px;
+}
+.badge-high { background-color: #DEF7EC; color: #03543F; }
+.badge-medium { background-color: #FEF08A; color: #713F12; }
+.badge-low { background-color: #FDE8E8; color: #9B1C1C; }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -162,6 +185,11 @@ if "meeting_prep_desig" not in st.session_state: st.session_state["meeting_prep_
 if "meeting_conf_name" not in st.session_state: st.session_state["meeting_conf_name"] = ""
 if "meeting_conf_desig" not in st.session_state: st.session_state["meeting_conf_desig"] = ""
 
+# HITL Specific Session State
+if "user_topics_text" not in st.session_state: st.session_state["user_topics_text"] = ""
+if "matched_evidence_items" not in st.session_state: st.session_state["matched_evidence_items"] = []
+if "hitl_stage" not in st.session_state: st.session_state["hitl_stage"] = "input_topics"
+
 # 7. Core Logic Functions
 def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
     client = get_supabase_client()
@@ -205,7 +233,13 @@ def extract_text_from_file(uploaded_file):
 def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
     if not OPENAI_API_KEY: return None
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
-    files = {"file": (filename, audio_bytes), "model": (None, "gpt-4o-mini-transcribe"), "response_format": (None, "json")}
+    vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
+    files = {
+        "file": (filename, audio_bytes), 
+        "model": (None, "gpt-4o-mini-transcribe"), 
+        "response_format": (None, "json"),
+        "prompt": (None, vocab_prompt)
+    }
     try:
         resp = requests.post(OPENAI_AUDIO_URL, headers=headers, files=files, timeout=180)
         return resp.json().get("text", "") if resp.status_code == 200 else None
@@ -213,7 +247,13 @@ def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
 
 def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
-    files = {"file": (filename, audio_bytes), "model": (None, "whisper-large-v3-turbo"), "response_format": (None, "json")}
+    vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
+    files = {
+        "file": (filename, audio_bytes), 
+        "model": (None, "whisper-large-v3-turbo"), 
+        "response_format": (None, "json"),
+        "prompt": (None, vocab_prompt)
+    }
     try:
         resp = requests.post(GROQ_AUDIO_URL, headers=headers, files=files, timeout=60)
         return resp.json().get("text", "") if resp.status_code == 200 else None
@@ -269,41 +309,12 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
                 try: os.remove(path)
                 except Exception: pass
 
-def normalize_llm_json_to_df(data):
-    items, other_disc = None, ""
-    if isinstance(data, list): items = data
-    elif isinstance(data, dict):
-        for key in ["table_items", "items", "minutes", "table", "data", "discussion_items", "discussions", "action_items"]:
-            if key in data and isinstance(data[key], list) and len(data[key]) > 0:
-                items = data[key]
-                break
-        if items is None:
-            for v in data.values():
-                if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
-                    items = v
-                    break
-            if items is None: items = [data]
-        other_disc = str(data.get("other_discussions", "") or data.get("notes", "") or data.get("summary", ""))
-    if not items or not isinstance(items, list): return None, ""
-    df = pd.DataFrame(items)
-    col_mapping = {}
-    for c in df.columns:
-        c_clean = str(c).lower().replace("_", " ").replace("-", " ")
-        if any(k in c_clean for k in ["discuss", "point", "topic", "milestone"]): col_mapping[c] = "Discussion Points"
-        elif any(k in c_clean for k in ["action", "plan", "step", "deliverable"]): col_mapping[c] = "Action Plan"
-        elif any(k in c_clean for k in ["date", "time", "delivery", "deadline"]): col_mapping[c] = "Indicative Delivery Date"
-        elif any(k in c_clean for k in ["person", "charge", "pic", "assign", "who", "responsible"]): col_mapping[c] = "Person-in-charge"
-    df = df.rename(columns=col_mapping)
-    for col in ["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]:
-        if col not in df.columns: df[col] = ""
-    return df[["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]].drop_duplicates(), other_disc
-
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     system_prompt = (
         "You are Echo, a highly meticulous and rigorous Executive AI Analyst for PRIME Philippines. "
-        "Your objective is to extract exhaustive, precision-grade Minutes of the Meeting (MOM) from raw transcript data with zero hallucination."
+        "Extract meeting metadata into valid JSON with zero hallucination."
     )
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
@@ -319,98 +330,91 @@ Transcript: {transcript[:15000]}"""
     except Exception: pass
     return None
 
-def extract_structured_insights(transcript, engine="AI - DeepSeek"):
-    progress_bar = st.progress(0, text="Initializing MOM extraction (0%)...")
-    time.sleep(0.2)
-    progress_bar.progress(40, text=f"Translating Taglish conversation & extracting with {engine} (40%)...")
-    if engine == "Non-AI - Python Heuristic":
-        time.sleep(0.5)
-        res_df, res_other = heuristic_non_ai_extraction(transcript)
-        progress_bar.progress(100, text="Extraction completed (100%)!")
-        time.sleep(0.2)
-        progress_bar.empty()
-        return res_df, res_other
+# -------------------------------------------------------------
+# HITL LOGIC: User Points -> Match Evidence -> Human Approves
+# -------------------------------------------------------------
+def suggest_discussion_topics_from_transcript(transcript):
+    """Pass 1: Discover high-level topics/milestones from transcript for user curation."""
+    if not DEEPSEEK_API_KEY:
+        return "1. Project Status & Progress\n2. Key Deliverables & Timelines\n3. Client Alignment & Action Items"
+    
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+    system_prompt = "You are Echo, an Executive Analyst. Identify 4-7 primary discussion topics and milestone themes discussed in the meeting transcript. Return concise one-line titles."
+    user_prompt = f"""Extract 4 to 7 key distinct discussion topics discussed in this transcript as valid JSON:
+Schema: {{"topics": ["Topic 1 title", "Topic 2 title", "Topic 3 title"]}}
+Transcript: {transcript[:20000]}"""
+    payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1, "max_tokens": 500}
+    try:
+        resp = requests.post(DEEPSEEK_CHAT_URL, headers=headers, json=payload, timeout=45)
+        if resp.status_code == 200:
+            raw = resp.json()["choices"][0]["message"]["content"].strip()
+            clean = re.sub(r"^```(?:json)?\s*", "", raw)
+            clean = re.sub(r"\s*```$", "", clean).strip()
+            data = json.loads(clean)
+            topics = data.get("topics", [])
+            return "\n".join([f"{i+1}. {t}" for i, t in enumerate(topics)])
+    except Exception: pass
+    return "1. Project Updates\n2. Technical Implementation\n3. Timeline & Target Deadlines\n4. Resource Allocation & Next Steps"
 
+def match_evidence_and_synthesize(transcript, user_topics_str, context_details=""):
+    """Pass 2: AI matches user-defined points against transcript evidence and builds actionable cards."""
     context_data = fetch_echo_context()
     team_list = ", ".join(context_data.get('team', []))
     jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
     projects = ", ".join(context_data.get('projects', []))
 
-    context_string = f"""
-    ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
-    ---------------------------------------
-    TEAM MEMBERS: {team_list}
-    ACTIVE PROJECTS: {projects}
-    TECHNICAL JARGON:
-    {jargon_list}
-
-    INSTRUCTION: Use this knowledge base to correct proper nouns, acronyms, and project names in the transcript. 
-    If the transcript says 'Cool Berneties' but the Knowledge Base says 'Kubernetes', you MUST use 'Kubernetes'.
-    """
-
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     system_prompt = (
-        "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). "
-        "The transcript contains Tagalog, English, and Taglish dialogue. "
-        "Analyze the full conversation context and translate all colloquial, informal, and mixed-language statements into polished, high-level corporate English. "
-        "Synthesize all key agreements, status reports, core discussion points, definitive action plans, indicative delivery timelines, and assigned persons-in-charge. "
-        f"\n\n{context_string}\n"
-        "Output valid JSON only matching the exact schema provided."
+        "You are Echo, Executive AI Analyst for PRIME Philippines. "
+        "Your task is to take the USER-DEFINED DISCUSSION POINTS/TOPICS, locate the EXACT supporting evidence in the transcript, "
+        "and produce formal corporate summaries with concrete deliverables, assignees (mapped to PRIME team/clients), and target deadlines. "
+        "You must cite verbatim quote evidence from the transcript for each point to guarantee zero hallucination."
+        f"\n\nSource Knowledge Base:\nTeam: {team_list}\nProjects: {projects}\nJargon:\n{jargon_list}"
     )
 
-    user_prompt = f"""Synthesize the following meeting transcript into formal, high-level Minutes of Meeting (MOM) formatted as valid JSON:
-Schema: {{"table_items": [{{"Discussion Points": "Formal summary of key milestones, operational updates, or strategic topics discussed", "Action Plan": "Concrete, actionable executive deliverables and next steps (state 'None' if purely informational)", "Indicative Delivery Date": "Specific date, timeline, or 'TBD'", "Person-in-charge": "Designated individual, department (e.g., PRIME Philippines, Client name), or 'Unassigned'"}}], "other_discussions": "High-level summary of peripheral discussions, informal remarks, or general alignment"}}
-Transcript: {transcript[:28000]}"""
-    payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1, "max_tokens": 1800}
+    user_prompt = f"""Match and synthesize evidence for each of the following user discussion points using the meeting transcript:
+
+USER DISCUSSION TOPICS:
+{user_topics_str}
+
+MEETING TRANSCRIPT:
+{transcript[:28000]}
+
+Format output strictly as JSON matching this schema:
+{{
+  "matched_items": [
+    {{
+      "topic_title": "Original or refined point title",
+      "discussion_point": "Polished high-level corporate synthesized summary",
+      "evidence_quote": "Exact 1-2 sentence verbatim quote or excerpt from the transcript",
+      "action_plan": "Specific executable deliverable, or 'None' if purely informational",
+      "indicative_delivery_date": "Target date, time, or 'TBD'",
+      "person_in_charge": "Designated individual (from attendees/CRD team) or 'Unassigned'",
+      "confidence": "High, Medium, or Low"
+    }}
+  ],
+  "other_discussions": "Concise summary of peripheral matters, warm-up banter, or general context"
+}}"""
+
+    payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1, "max_tokens": 2000}
     try:
         resp = requests.post(DEEPSEEK_CHAT_URL, headers=headers, json=payload, timeout=120)
         if resp.status_code == 200:
             res_json = resp.json()
             st.session_state["tokens_used"] += res_json.get("usage", {}).get("total_tokens", len(transcript) // 4)
             st.session_state["last_api_call"] = datetime.datetime.now()
-            raw_text = res_json["choices"][0]["message"]["content"].strip()
-            clean_text = re.sub(r"^```(?:json)?\s*", "", raw_text).strip()
-            clean_text = re.sub(r"\s*```$", "", clean_text).strip()
-            match = re.search(r"\{.*\}", clean_text, re.DOTALL)
-            data = json.loads(match.group(0)) if match else json.loads(clean_text)
-            df, other = normalize_llm_json_to_df(data)
-            progress_bar.progress(100, text="Finalizing Minutes of the Meeting (100%)...")
-            time.sleep(0.3)
-            progress_bar.empty()
-            return df, other
+            raw = res_json["choices"][0]["message"]["content"].strip()
+            clean = re.sub(r"^```(?:json)?\s*", "", raw)
+            clean = re.sub(r"\s*```$", "", clean).strip()
+            data = json.loads(clean)
+            return data.get("matched_items", []), data.get("other_discussions", "")
     except Exception: pass
-    df_fb, other_fb = heuristic_non_ai_extraction(transcript)
-    progress_bar.empty()
-    st.warning("AI completion request could not be completed. The table below was populated using offline Keyword Heuristics.")
-    return df_fb, other_fb
-
-def heuristic_non_ai_extraction(transcript):
-    sentences = re.split(r'(?<=[.!?]) +', transcript)
-    action_keywords = ['send', 'prepare', 'submit', 'update', 'review', 'check', 'email', 'kailangan', 'gagawin', 'ipapasa', 'provide', 'target', 'ipresent', 'kukunin']
-    date_keywords = ['tomorrow', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'q1', 'q2', 'q3', 'q4', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december', 'bukas', 'deadline']
-    table_items, other_discussions = [], []
-    for i in range(0, len(sentences), 3):
-        chunk = sentences[i:i+3]
-        if not chunk: continue
-        chunk_text = " ".join(chunk)
-        has_action = any(kw in chunk_text.lower() for kw in action_keywords)
-        has_date = any(kw in chunk_text.lower() for kw in date_keywords)
-        if has_action or has_date:
-            action_text = " ".join([s for s in chunk if any(kw in s.lower() for kw in action_keywords)])
-            table_items.append({"Discussion Points": chunk[0].strip() + "...", "Action Plan": action_text.strip() if action_text else "Review discussion for actions", "Indicative Delivery Date": "Check transcript (Date mentioned)" if has_date else "TBD", "Person-in-charge": "Unassigned"})
-        else:
-            other_discussions.append(chunk_text)
-    if not table_items:
-        table_items = [{"Discussion Points": "Meeting Overview", "Action Plan": "Please review transcript manually.", "Indicative Delivery Date": "TBD", "Person-in-charge": "Unassigned"}]
-    df = pd.DataFrame(table_items[:10])
-    for col in ["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]:
-        if col not in df.columns: df[col] = ""
-    return df[["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]], "\n\n".join(other_discussions[:4])
+    return [], ""
 
 def ask_deepseek_question(transcript, question, chat_history):
     if not DEEPSEEK_API_KEY: return "DeepSeek API key is missing. Please check your configuration."
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = "You are Ask Echo, an authentic, executive AI assistant for PRIME Philippines. Answer questions based accurately and concisely on the provided meeting transcript. Use subtle, clean Markdown with bullet points where appropriate. If a specific detail is not in the transcript, concisely state that it was not mentioned."
+    system_prompt = "You are Ask Echo, an authentic, executive AI assistant for PRIME Philippines. Answer questions accurately and concisely based on the transcript. If the user asks you to revise an action item, clarify what was mentioned in the audio."
     messages = [{"role": "system", "content": system_prompt}]
     for msg in chat_history[-6:]: messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": f"Transcript:\n{transcript[:22000]}\n\nQuestion: {question}"})
@@ -909,6 +913,21 @@ with col_upload:
                         st.session_state["df"] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
                         st.session_state["other_discussions"] = ""
                         st.session_state["chat_history"] = []
+                        st.session_state["matched_evidence_items"] = []
+                        st.session_state["user_topics_text"] = ""
+                        # Fast metadata auto-extraction on intake
+                        meta = extract_metadata_with_deepseek(transcript)
+                        if meta:
+                            if meta.get("meeting_type") and meta["meeting_type"] in MEETING_TYPE_OPTIONS:
+                                st.session_state["meeting_type"] = meta["meeting_type"]
+                            if meta.get("client_name"): st.session_state["meeting_client_name"] = meta["client_name"]
+                            if meta.get("location"): st.session_state["meeting_location"] = meta["location"]
+                            if meta.get("crd_attendees"):
+                                matched_crd = [c for c in meta["crd_attendees"] if c in CRD_MEMBERS]
+                                if matched_crd: st.session_state["meeting_selected_crd"] = matched_crd
+                            if meta.get("external_attendees"): st.session_state["meeting_ext_attendees"] = meta["external_attendees"]
+                            if meta.get("prepared_by"): st.session_state["meeting_prep_name"] = meta["prepared_by"]
+                            if meta.get("confirmed_by"): st.session_state["meeting_conf_name"] = meta["confirmed_by"]
                         st.rerun()
         with tab_record:
             recorded_audio = st.audio_input("Record audio directly", label_visibility="collapsed")
@@ -929,6 +948,8 @@ with col_upload:
                             st.session_state["df"] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
                             st.session_state["other_discussions"] = ""
                             st.session_state["chat_history"] = []
+                            st.session_state["matched_evidence_items"] = []
+                            st.session_state["user_topics_text"] = ""
                             st.rerun()
         with tab_text:
             uploaded_text_file = st.file_uploader("Upload Document (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"])
@@ -948,6 +969,8 @@ with col_upload:
                     st.session_state["df"] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
                     st.session_state["other_discussions"] = ""
                     st.session_state["chat_history"] = []
+                    st.session_state["matched_evidence_items"] = []
+                    st.session_state["user_topics_text"] = ""
                     st.rerun()
                 else:
                     st.warning("Please upload a file or paste text to proceed.")
@@ -1077,20 +1100,13 @@ if st.session_state["transcript"]:
             st.markdown('<h3 style="margin-top:0.2rem;">Full Transcript</h3>', unsafe_allow_html=True)
             st.text_area("Transcript Content", st.session_state["transcript"], height=380, label_visibility="collapsed")
             st.markdown("<hr style='margin: 0.8rem 0; border-top: 1px solid rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
-            t_col1, t_col2, t_col3 = st.columns(3)
+            t_col1, t_col2 = st.columns(2)
             with t_col1:
-                if st.button("Generate MOM", key="btn_gen_mom"):
-                    extracted_df, other_disc = extract_structured_insights(st.session_state["transcript"], engine=st.session_state["selected_engine"])
-                    if not extracted_df.empty:
-                        st.session_state["df"] = extracted_df
-                        st.session_state["other_discussions"] = other_disc
-                        st.rerun()
-            with t_col2:
                 copy_html = f"""
                 <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#222222;color:#FFFFFF;border:none;border-radius:50px;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.2s ease;box-shadow:0 4px 6px rgba(0,0,0,0.1);}}button:hover{{background-color:#D4AF37;box-shadow:0 6px 12px rgba(212,175,55,0.2);transform:translateY(-1px);}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({json.dumps(st.session_state["transcript"])}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
                 components.html(copy_html, height=36)
-            with t_col3:
+            with t_col2:
                 st.download_button(label="Download", data=st.session_state["transcript"], file_name=f"Transcript_{meeting_date.strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
     with row_right:
         with st.container(height=580, border=True):
@@ -1113,10 +1129,107 @@ if st.session_state["transcript"]:
                 st.session_state["chat_history"].append({"role": "assistant", "content": answer})
                 st.rerun()
 
-# Step 3: Minutes of Meeting Editor (Bug-Free State Logic)
+# -------------------------------------------------------------
+# Step 2.5: HITL Evidence Matching & Verification Pipeline
+# Flow: User Discussion Points -> Transcript -> AI Matches Evidence -> Human Approves
+# -------------------------------------------------------------
+if st.session_state["transcript"]:
+    with st.container(border=True):
+        st.markdown('<h3>Human-in-the-Loop Alignment & Evidence Matching</h3>', unsafe_allow_html=True)
+        st.caption("Define or refine key discussion themes first. Echo will extract verbatim transcript evidence and draft precision action items for your approval.")
+        
+        hitl_tab1, hitl_tab2 = st.tabs(["1. Curate Discussion Topics", "2. Review & Approve Matched Evidence"])
+        
+        with hitl_tab1:
+            c_top_act1, c_top_act2 = st.columns([3, 7])
+            with c_top_act1:
+                if st.button("Suggest Topics from Transcript", key="btn_suggest_topics"):
+                    with st.spinner("Scanning transcript for core milestones & topics..."):
+                        sugg = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
+                        st.session_state["user_topics_text"] = sugg
+                        st.rerun()
+            
+            st.session_state["user_topics_text"] = st.text_area(
+                "Discussion Points / Agenda List (Edit or paste bullet points below):", 
+                value=st.session_state["user_topics_text"], 
+                height=140, 
+                placeholder="1. Q3 Milestone Review\n2. Database Migration to AWS\n3. Front-end Bug Fixes and Delivery Date"
+            )
+            
+            if st.button("Match Transcript Evidence & Synthesize Actions", key="btn_match_evidence"):
+                if not st.session_state["user_topics_text"].strip():
+                    st.warning("Please enter or generate at least one discussion topic first.")
+                else:
+                    with st.spinner("Analyzing transcript evidence and attributing assignees..."):
+                        items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], st.session_state["user_topics_text"])
+                        if items:
+                            for itm in items: itm["approved"] = True
+                            st.session_state["matched_evidence_items"] = items
+                            st.session_state["other_discussions"] = other_disc
+                            st.success(f"Matched evidence for {len(items)} discussion points! Please review in Tab 2.")
+                        else:
+                            st.error("Could not match points against transcript. Please verify transcript contents.")
+        
+        with hitl_tab2:
+            if not st.session_state["matched_evidence_items"]:
+                st.info("No evidence points matched yet. Complete Tab 1 to run the evidence matching engine.")
+            else:
+                st.markdown("<p style='font-size:0.85rem; color:#666;'><i>*Review the verbatim evidence quotes beneath each point. Check or uncheck items to include them in the official MoM.</i></p>", unsafe_allow_html=True)
+                
+                approved_rows = []
+                for idx, item in enumerate(st.session_state["matched_evidence_items"]):
+                    with st.container(border=True):
+                        top_h_col, conf_h_col, chk_h_col = st.columns([6, 2, 2])
+                        with top_h_col:
+                            st.markdown(f"**Point {idx+1}: {item.get('topic_title', 'Discussion Point')}**")
+                        with conf_h_col:
+                            conf = item.get("confidence", "Medium")
+                            conf_class = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
+                            st.markdown(f'<span class="badge-confidence {conf_class}">{conf} Confidence</span>', unsafe_allow_html=True)
+                        with chk_h_col:
+                            item["approved"] = st.checkbox("Approve", value=item.get("approved", True), key=f"chk_app_{idx}")
+                        
+                        # Verbatim Evidence Quote
+                        eq = item.get("evidence_quote", "").strip()
+                        if eq:
+                            st.markdown(f'<div class="evidence-quote-box"><b>Source Evidence:</b> "{eq}"</div>', unsafe_allow_html=True)
+                        
+                        # Editable fields
+                        c1, c2, c3, c4 = st.columns([3.2, 3.2, 1.8, 1.8])
+                        with c1:
+                            new_dp = st.text_area("Discussion Point", value=item.get("discussion_point", ""), key=f"ev_dp_{idx}", height=70)
+                        with c2:
+                            new_ap = st.text_area("Action Plan", value=item.get("action_plan", ""), key=f"ev_ap_{idx}", height=70)
+                        with c3:
+                            new_dd = st.text_area("Delivery Date", value=item.get("indicative_delivery_date", "TBD"), key=f"ev_dd_{idx}", height=70)
+                        with c4:
+                            new_pic = st.text_area("Person-in-charge", value=item.get("person_in_charge", "Unassigned"), key=f"ev_pic_{idx}", height=70)
+                        
+                        if item["approved"]:
+                            approved_rows.append({
+                                "Discussion Points": new_dp,
+                                "Action Plan": new_ap,
+                                "Indicative Delivery Date": new_dd,
+                                "Person-in-charge": new_pic
+                            })
+                
+                st.write("")
+                btn_c1, btn_c2 = st.columns([4, 6])
+                with btn_c1:
+                    if st.button("Apply Approved Points to MoM Table", key="btn_apply_approved"):
+                        if approved_rows:
+                            st.session_state["df"] = pd.DataFrame(approved_rows)
+                            st.session_state["mom_editor_rows"] = approved_rows
+                            st.session_state["_last_df_id"] = id(st.session_state["df"])
+                            st.success("MoM Table populated with approved evidence-backed points!")
+                            st.rerun()
+                        else:
+                            st.warning("Please approve at least one discussion point.")
+
+# Step 3: Minutes of Meeting Editor (Final Card Editor & Export)
 if not st.session_state["df"].empty:
     with st.container(border=True):
-        st.markdown('<h3>Minutes of Meeting Editor</h3>', unsafe_allow_html=True)
+        st.markdown('<h3>Minutes of Meeting Final Editor</h3>', unsafe_allow_html=True)
         st.markdown("<p style='font-size:0.85rem; color:#666; margin-bottom: 0.75rem;'><i>*Note: Each discussion item is rendered as a clean card with auto-wrapping text boxes. Edit fields inline directly.</i></p>", unsafe_allow_html=True)
         
         editor_key = "mom_editor_rows"
