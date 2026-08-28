@@ -25,7 +25,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, ListFlowable, ListItem
 import requests
 import streamlit.components.v1 as components
 
@@ -332,10 +332,7 @@ def extract_structured_insights(transcript, engine="AI - DeepSeek"):
         progress_bar.empty()
         return res_df, res_other
 
-    # 1. Fetch Live Context from Supabase
     context_data = fetch_echo_context()
-
-    # 2. Format it for the AI
     team_list = ", ".join(context_data.get('team', []))
     jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
     projects = ", ".join(context_data.get('projects', []))
@@ -353,8 +350,6 @@ def extract_structured_insights(transcript, engine="AI - DeepSeek"):
     """
 
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-
-    # 3. Update the System Prompt with Live Context
     system_prompt = (
         "You are an expert executive assistant for PRIME Philippines tasked with producing comprehensive, high-level executive Minutes of the Meeting (MOM). "
         "The transcript contains Tagalog, English, and Taglish dialogue. "
@@ -436,7 +431,10 @@ def set_cell_shading(cell, color_hex):
     shd = parse_xml(f'<w:shd xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:fill="{color_hex}"/>')
     cell._tc.get_or_add_tcPr().append(shd)
 
-def export_to_word(df, meeting_details, other_discussions):
+# -------------------------------------------------------------
+# TEMPLATE 1: Standard Corporate (Combined Table)
+# -------------------------------------------------------------
+def export_to_word_template_1(df, meeting_details, other_discussions):
     template_files = ["MOM_Template.docx", "MOM Template.docx"]
     template_path = next((f for f in template_files if os.path.exists(f)), None)
     doc = Document(template_path) if template_path else Document()
@@ -587,7 +585,7 @@ def export_to_word(df, meeting_details, other_discussions):
     bio.seek(0)
     return bio
 
-def export_to_pdf(df, meeting_details, other_discussions):
+def export_to_pdf_template_1(df, meeting_details, other_discussions):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.6 * inch, rightMargin=0.6 * inch, topMargin=0.5 * inch, bottomMargin=0.5 * inch)
     story, styles = [], getSampleStyleSheet()
@@ -676,74 +674,232 @@ def export_to_pdf(df, meeting_details, other_discussions):
     buffer.seek(0)
     return buffer
 
-def export_to_html_template_2(df, meeting_details, other_discussions):
-    template_path = os.path.join("mom_templates", "mom_template_2.html")
+# -------------------------------------------------------------
+# TEMPLATE 2: Detailed General Meeting (Vertical Layout)
+# -------------------------------------------------------------
+def export_to_word_template_2(df, meeting_details, other_discussions):
+    doc = Document()
     
-    fallback_html = """
-    <html><body>
-        <h1>Missing Template File</h1>
-        <p>Please ensure <code>mom_templates/mom_template_2.html</code> exists in your repository.</p>
-    </body></html>
-    """
+    for section in doc.sections:
+        section.top_margin = Inches(0.5)
+        section.bottom_margin = Inches(0.5)
+        section.left_margin = Inches(0.8)
+        section.right_margin = Inches(0.8)
+
+    # Title
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title.paragraph_format.space_after = Pt(2)
+    r_title = p_title.add_run("MINUTES OF THE MEETING")
+    r_title.bold = True
+    r_title.font.name = "Arial"
+    r_title.font.size = Pt(16)
     
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            html_str = f.read()
-    except FileNotFoundError:
-        html_str = fallback_html
+    # Subtitle
+    company_target = meeting_details.get("external_attendees", [])
+    primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "General Meeting"
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_sub.paragraph_format.space_after = Pt(16)
+    r_sub = p_sub.add_run(f"Project / Client: {primary_client_rep}")
+    r_sub.font.name = "Arial"
+    r_sub.font.size = Pt(11)
+    r_sub.font.color.rgb = RGBColor(100, 100, 100)
 
-    # Prepare string variables
-    all_attendees = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
-    attendees_html = "".join([f"<li>{a}</li>" for a in all_attendees if a.strip()])
+    # Meeting Details Grid
+    doc.add_heading('Meeting Details', level=2)
+    details_table = doc.add_table(rows=5, cols=2)
+    details_table.style = 'Table Grid'
+    
+    date_str = meeting_details.get("date", "____________")
+    time_str = meeting_details.get("time_range", "____________")
+    location_str = meeting_details.get('location', '____________')
+    prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
+    
+    details_map = [
+        ("Date", date_str),
+        ("Time", time_str),
+        ("Venue", location_str),
+        ("Prepared by", prep_name),
+        ("Date prepared", datetime.date.today().strftime("%B %d, %Y"))
+    ]
+    
+    for i, (key, val) in enumerate(details_map):
+        cells = details_table.rows[i].cells
+        cells[0].text = key
+        cells[1].text = val
+        cells[0].paragraphs[0].runs[0].font.bold = True
+        for cell in cells:
+            cell.paragraphs[0].runs[0].font.name = "Arial"
+            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
 
-    action_rows = ""
+    doc.add_paragraph() # Spacer
+
+    # Attendees
+    doc.add_heading('Attendees', level=2)
+    all_atts = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
+    for att in all_atts:
+        if att.strip():
+            p_att = doc.add_paragraph(style='List Bullet')
+            r_att = p_att.add_run(att.strip())
+            r_att.font.name = "Arial"
+            r_att.font.size = Pt(10)
+
+    doc.add_paragraph()
+
+    # Purpose / Summary
+    doc.add_heading('Purpose & Summary', level=2)
+    p_purp = doc.add_paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.")
+    p_purp.paragraph_format.space_after = Pt(12)
+    for r in p_purp.runs: r.font.name, r.font.size = "Arial", Pt(10)
+
+    # Discussion Points
+    doc.add_heading('Discussion Points', level=2)
     for i, row in df.iterrows():
-        dp = str(row.get('Discussion Points', ''))
-        ap = str(row.get('Action Plan', ''))
-        dd = str(row.get('Indicative Delivery Date', ''))
-        pic = str(row.get('Person-in-charge', ''))
-        action_rows += f"<tr><td>{i+1}</td><td><b>{dp}</b><br/>{ap}</td><td>{pic}</td><td>{dd}</td></tr>"
-        
-    replacements = {
-        "{{Project_Name}}": meeting_details.get("company_name") or "Project Name",
-        "{{Meeting_Date}}": meeting_details.get("date", ""),
-        "{{Meeting_Time}}": meeting_details.get("time_range", ""),
-        "{{Meeting_Venue}}": meeting_details.get("location", ""),
-        "{{Preparer_Name}}": meeting_details.get("prep_name", ""),
-        "{{Preparation_Date}}": datetime.date.today().strftime("%B %d, %Y"),
-        "{{Source_Files}}": "Meeting Transcript / Audio",
-        "{{Committee_Name}}": meeting_details.get("company_name") or "Committee",
-        "{{Meeting_Purpose}}": other_discussions if other_discussions else "To discuss project updates and action plans.",
-        "{{Attendees_List_HTML}}": attendees_html,
-        "{{Action_Plan_Rows_HTML}}": action_rows,
-        # Default placeholders for fields specific to Template 2
-        "{{Schedule_Summary}}": "Refer to the Action Plan for specific timelines.",
-        "{{Schedule_Rows_HTML}}": "",
-        "{{Number_of_Teams}}": "N/A",
-        "{{Team_Names}}": "N/A",
-        "{{Team_Classification_Notes}}": "",
-        "{{Platform_Name}}": "Internal Systems",
-        "{{Tracking_Method}}": "Standard Attendance",
-        "{{Scoring_Observation}}": "N/A",
-        "{{Last_Day_Programme_Rows_HTML}}": "",
-        "{{Programme_Observation}}": "N/A",
-        "{{Previous_Document_Name}}": "Previous MoM",
-        "{{Matters_Arising_Rows_HTML}}": "",
-        "{{Open_Items_Rows_HTML}}": "",
-        "{{Annex_Description}}": "",
-        "{{Annex_Image_URL}}": "",
-        "{{Attendee_1}}": meeting_details.get("prep_name", "Preparer"),
-        "{{Attendee_2}}": "",
-        "{{Attendee_3}}": ""
-    }
+        p_dp = doc.add_paragraph(style='List Number')
+        r_dp = p_dp.add_run(str(row.get('Discussion Points', '')))
+        r_dp.font.name = "Arial"
+        r_dp.font.size = Pt(10)
 
-    for key, val in replacements.items():
-        html_str = html_str.replace(key, str(val))
-        
+    doc.add_paragraph()
+
+    # Action Plan Table
+    doc.add_heading('Action Plan', level=2)
+    act_table = doc.add_table(rows=len(df)+1, cols=4)
+    act_table.style = 'Table Grid'
+    act_headers = ["#", "Action Plan", "Owner", "Deadline"]
+    col_widths = [Inches(0.5), Inches(3.5), Inches(1.5), Inches(1.5)]
+    
+    for i, header in enumerate(act_headers):
+        cell = act_table.rows[0].cells[i]
+        cell.width, cell.text = col_widths[i], header
+        set_cell_shading(cell, "1A2B4C") # Dark Blue
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        if p.runs: 
+            p.runs[0].font.bold = True
+            p.runs[0].font.color.rgb = RGBColor(255, 255, 255)
+            p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+
+    for i, row in df.iterrows():
+        cells = act_table.rows[i+1].cells
+        cells[0].text, cells[1].text, cells[2].text, cells[3].text = str(i+1), str(row.get("Action Plan", "")), str(row.get("Person-in-charge", "")), str(row.get("Indicative Delivery Date", ""))
+        for c_idx, cell in enumerate(cells):
+            cell.width = col_widths[c_idx]
+            p = cell.paragraphs[0]
+            if c_idx in [0, 2, 3]: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+
+    doc.add_paragraph()
+
+    # Footer
+    p_footer = doc.add_paragraph()
+    p_footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_footer.paragraph_format.space_before = Pt(24)
+    r_footer = p_footer.add_run(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.")
+    r_footer.italic = True
+    r_footer.font.color.rgb = RGBColor(100, 100, 100)
+    r_footer.font.name = "Arial"
+    r_footer.font.size = Pt(8)
+
     bio = BytesIO()
-    bio.write(html_str.encode('utf-8'))
+    doc.save(bio)
     bio.seek(0)
     return bio
+
+def export_to_pdf_template_2(df, meeting_details, other_discussions):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.8 * inch, rightMargin=0.8 * inch, topMargin=0.6 * inch, bottomMargin=0.6 * inch)
+    story, styles = [], getSampleStyleSheet()
+    
+    style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
+    style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#1A2B4C"), spaceBefore=12, spaceAfter=6)
+    style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
+    style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
+    style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
+    style_td_center = ParagraphStyle('TDC2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12, alignment=1)
+    
+    company_target = meeting_details.get("external_attendees", [])
+    primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "General Meeting"
+
+    story.append(Paragraph("MINUTES OF THE MEETING", style_title))
+    story.append(Paragraph(f"Project / Client: {primary_client_rep}", style_subtitle))
+    
+    # Meeting Details
+    story.append(Paragraph("Meeting Details", style_h2))
+    date_str = meeting_details.get("date", "____________")
+    time_str = meeting_details.get("time_range", "____________")
+    location_str = meeting_details.get('location', '____________')
+    prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
+    
+    details_data = [
+        [Paragraph("<b>Date</b>", style_body), Paragraph(date_str, style_body)],
+        [Paragraph("<b>Time</b>", style_body), Paragraph(time_str, style_body)],
+        [Paragraph("<b>Venue</b>", style_body), Paragraph(location_str, style_body)],
+        [Paragraph("<b>Prepared by</b>", style_body), Paragraph(prep_name, style_body)],
+        [Paragraph("<b>Date prepared</b>", style_body), Paragraph(datetime.date.today().strftime("%B %d, %Y"), style_body)]
+    ]
+    t_details = Table(details_data, colWidths=[2 * inch, 4.5 * inch])
+    t_details.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
+    ]))
+    story.append(t_details)
+    story.append(Spacer(1, 10))
+
+    # Attendees
+    story.append(Paragraph("Attendees", style_h2))
+    all_atts = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
+    att_items = [ListItem(Paragraph(a.strip(), style_body)) for a in all_atts if a.strip()]
+    if att_items:
+        story.append(ListFlowable(att_items, bulletType='bullet'))
+    story.append(Spacer(1, 10))
+
+    # Purpose
+    story.append(Paragraph("Purpose & Summary", style_h2))
+    story.append(Paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.", style_body))
+    story.append(Spacer(1, 10))
+
+    # Discussion Points
+    story.append(Paragraph("Discussion Points", style_h2))
+    dp_items = [ListItem(Paragraph(str(row.get('Discussion Points', '')), style_body)) for _, row in df.iterrows()]
+    if dp_items:
+        story.append(ListFlowable(dp_items, bulletType='1'))
+    story.append(Spacer(1, 10))
+
+    # Action Plan
+    story.append(Paragraph("Action Plan", style_h2))
+    act_data = [[Paragraph("<b>#</b>", style_th), Paragraph("<b>Action Plan</b>", style_th), Paragraph("<b>Owner</b>", style_th), Paragraph("<b>Deadline</b>", style_th)]]
+    for i, row in df.iterrows():
+        act_data.append([
+            Paragraph(str(i+1), style_td_center),
+            Paragraph(str(row.get("Action Plan", "")), style_td),
+            Paragraph(str(row.get("Person-in-charge", "")), style_td_center),
+            Paragraph(str(row.get("Indicative Delivery Date", "")), style_td_center)
+        ])
+    
+    t_act = Table(act_data, colWidths=[0.4 * inch, 3.5 * inch, 1.3 * inch, 1.3 * inch], repeatRows=1)
+    t_act.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A2B4C')),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5)
+    ]))
+    story.append(t_act)
+
+    # Footer
+    story.append(Spacer(1, 24))
+    footer_style = ParagraphStyle('Footer2', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8, textColor=colors.grey, alignment=1)
+    story.append(Paragraph(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.", footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
 # 8. UI Layout
 col_upload, col_details = st.columns(2)
@@ -1044,25 +1200,26 @@ if not st.session_state["df"].empty:
         # Template Selection & Export Section
         st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
         template_selection = st.selectbox(
-            "Select MoM Template",
-            options=["Template 1 - Standard Corporate (Word & PDF)", "Template 2 - Event / Project Planning (HTML)"],
+            "Select MoM Template Format",
+            options=["Template 1 - Standard Corporate (Combined Table)", "Template 2 - Detailed General Meeting (Vertical Layout)"],
             label_visibility="collapsed"
         )
 
         exp_col1, exp_col2 = st.columns(2)
         if "Template 1" in template_selection:
             with exp_col1:
-                doc_bio = export_to_word(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx")
+                doc_bio = export_to_word_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_1")
             with exp_col2:
-                pdf_bio = export_to_pdf(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf")
+                pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_1")
         else:
             with exp_col1:
-                html_bio = export_to_html_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download HTML Document (.html)", data=html_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.html", mime="text/html", key="btn_download_html")
+                doc_bio = export_to_word_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_2")
             with exp_col2:
-                st.caption("Template 2 is optimized as an interactive HTML document specifically formatted for structured event and project planning.")
+                pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_2")
 
         st.write("")
         save_col1, save_col2 = st.columns([8, 2])
