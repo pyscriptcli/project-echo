@@ -444,7 +444,7 @@ def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) 
             )
 
         if not write_success:
-            return False, f"Database driver returned False for key: '{k_clean}'"
+            return False, f"Database write returned False for key: '{k_clean}'"
 
         if hasattr(fetch_echo_context, "clear"):
             fetch_echo_context.clear()
