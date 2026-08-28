@@ -41,12 +41,29 @@ CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
 
-/* Prevent outer viewport and page scrolling */
+/* Enable page/container scrolling while hiding scrollbars globally */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
-    overflow: hidden !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important;  /* IE and Edge */
     padding-top: 0.3rem !important;
     padding-bottom: 0.3rem !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar, 
+[data-testid="stAppViewContainer"]::-webkit-scrollbar, 
+.main::-webkit-scrollbar, 
+.block-container::-webkit-scrollbar,
+div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
+.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
 
 /* Outer Card Container */
@@ -56,7 +73,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     border-radius: 8px !important;
     padding: 0 !important;
     box-shadow: none !important;
-    overflow: hidden !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     height: calc(100vh - 130px) !important;
     max-height: calc(100vh - 130px) !important;
 }
@@ -69,7 +89,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     padding: 0.5rem 0.85rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
 }
 
 /* Header Alignment */
@@ -125,7 +144,7 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Inner Chat Box Container */
+/* Inner Chat Box Container - Scrollable without visible scrollbars */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -142,6 +161,8 @@ div[data-testid="stButton"] > button:hover {
     border-radius: 6px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     padding: 0.65rem 0.9rem !important;
     height: 100% !important;
 }
