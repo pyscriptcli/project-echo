@@ -301,7 +301,7 @@ def normalize_llm_json_to_df(data):
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-system_prompt = (
+    system_prompt = (
         "You are Echo, a highly meticulous and rigorous Executive AI Analyst for PRIME Philippines. "
         "Your objective is to extract exhaustive, precision-grade Minutes of the Meeting (MOM) from raw transcript data with zero hallucination. "
         f"Match all internal team attendees strictly against this verified list: {', '.join(CRD_MEMBERS)}. "
@@ -695,7 +695,6 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
         section.left_margin = Inches(0.8)
         section.right_margin = Inches(0.8)
 
-    # Title
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_title.paragraph_format.space_after = Pt(2)
@@ -704,7 +703,6 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     r_title.font.name = "Arial"
     r_title.font.size = Pt(16)
     
-    # Subtitle
     company_target = meeting_details.get("external_attendees", [])
     primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "General Meeting"
     p_sub = doc.add_paragraph()
@@ -715,7 +713,6 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     r_sub.font.size = Pt(11)
     r_sub.font.color.rgb = RGBColor(100, 100, 100)
 
-    # Meeting Details Grid
     doc.add_heading('Meeting Details', level=2)
     details_table = doc.add_table(rows=5, cols=2)
     details_table.style = 'Table Grid'
@@ -730,7 +727,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
         ("Time", time_str),
         ("Venue", location_str),
         ("Prepared by", prep_name),
-        ("Date prepared", datetime.date.today().strftime("%B %d, %Y"))
+        ("Date prepared", datetime.now().strftime("%B %d, %Y"))
     ]
     
     for i, (key, val) in enumerate(details_map):
@@ -742,9 +739,8 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
             cell.paragraphs[0].runs[0].font.name = "Arial"
             cell.paragraphs[0].runs[0].font.size = Pt(9.5)
 
-    doc.add_paragraph() # Spacer
+    doc.add_paragraph()
 
-    # Attendees
     doc.add_heading('Attendees', level=2)
     all_atts = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
     for att in all_atts:
@@ -756,13 +752,11 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
 
     doc.add_paragraph()
 
-    # Purpose / Summary
     doc.add_heading('Purpose & Summary', level=2)
     p_purp = doc.add_paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.")
     p_purp.paragraph_format.space_after = Pt(12)
     for r in p_purp.runs: r.font.name, r.font.size = "Arial", Pt(10)
 
-    # Discussion Points
     doc.add_heading('Discussion Points', level=2)
     for i, row in df.iterrows():
         p_dp = doc.add_paragraph(style='List Number')
@@ -772,7 +766,6 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
 
     doc.add_paragraph()
 
-    # Action Plan Table
     doc.add_heading('Action Plan', level=2)
     act_table = doc.add_table(rows=len(df)+1, cols=4)
     act_table.style = 'Table Grid'
@@ -782,7 +775,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     for i, header in enumerate(act_headers):
         cell = act_table.rows[0].cells[i]
         cell.width, cell.text = col_widths[i], header
-        set_cell_shading(cell, "1A2B4C") # Dark Blue
+        set_cell_shading(cell, "1A2B4C")
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         if p.runs: 
@@ -801,7 +794,6 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
 
     doc.add_paragraph()
 
-    # Footer
     p_footer = doc.add_paragraph()
     p_footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_footer.paragraph_format.space_before = Pt(24)
@@ -835,7 +827,6 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     story.append(Paragraph("MINUTES OF THE MEETING", style_title))
     story.append(Paragraph(f"Project / Client: {primary_client_rep}", style_subtitle))
     
-    # Meeting Details
     story.append(Paragraph("Meeting Details", style_h2))
     date_str = meeting_details.get("date", "____________")
     time_str = meeting_details.get("time_range", "____________")
@@ -847,7 +838,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
         [Paragraph("<b>Time</b>", style_body), Paragraph(time_str, style_body)],
         [Paragraph("<b>Venue</b>", style_body), Paragraph(location_str, style_body)],
         [Paragraph("<b>Prepared by</b>", style_body), Paragraph(prep_name, style_body)],
-        [Paragraph("<b>Date prepared</b>", style_body), Paragraph(datetime.date.today().strftime("%B %d, %Y"), style_body)]
+        [Paragraph("<b>Date prepared</b>", style_body), Paragraph(datetime.now().strftime("%B %d, %Y"), style_body)]
     ]
     t_details = Table(details_data, colWidths=[2 * inch, 4.5 * inch])
     t_details.setStyle(TableStyle([
@@ -859,7 +850,6 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     story.append(t_details)
     story.append(Spacer(1, 10))
 
-    # Attendees
     story.append(Paragraph("Attendees", style_h2))
     all_atts = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
     att_items = [ListItem(Paragraph(a.strip(), style_body)) for a in all_atts if a.strip()]
@@ -867,19 +857,16 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
         story.append(ListFlowable(att_items, bulletType='bullet'))
     story.append(Spacer(1, 10))
 
-    # Purpose
     story.append(Paragraph("Purpose & Summary", style_h2))
     story.append(Paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.", style_body))
     story.append(Spacer(1, 10))
 
-    # Discussion Points
     story.append(Paragraph("Discussion Points", style_h2))
     dp_items = [ListItem(Paragraph(str(row.get('Discussion Points', '')), style_body)) for _, row in df.iterrows()]
     if dp_items:
         story.append(ListFlowable(dp_items, bulletType='1'))
     story.append(Spacer(1, 10))
 
-    # Action Plan
     story.append(Paragraph("Action Plan", style_h2))
     act_data = [[Paragraph("<b>#</b>", style_th), Paragraph("<b>Action Plan</b>", style_th), Paragraph("<b>Owner</b>", style_th), Paragraph("<b>Deadline</b>", style_th)]]
     for i, row in df.iterrows():
@@ -901,7 +888,6 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     ]))
     story.append(t_act)
 
-    # Footer
     story.append(Spacer(1, 24))
     footer_style = ParagraphStyle('Footer2', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8, textColor=colors.grey, alignment=1)
     story.append(Paragraph(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.", footer_style))
