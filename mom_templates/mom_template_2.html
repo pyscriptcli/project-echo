@@ -3,100 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minutes of the Meeting Template</title>
+    <title>Minutes of the Meeting</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-        :root {
-            --primary-color: #1A2B4C;
-            --secondary-color: #D4AF37;
-            --text-main: #334155;
-            --border-color: #E2E8F0;
-            --bg-light: #F8FAFC;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--text-main);
-            line-height: 1.6;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000000;
+            line-height: 1.5;
             margin: 0;
-            padding: 0;
-            background-color: #F1F5F9;
+            padding: 2rem;
+            background-color: #FFFFFF;
         }
 
         .document-container {
-            max-width: 850px;
-            margin: 2rem auto;
-            background: #FFFFFF;
-            padding: 3rem 4rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border-top: 6px solid var(--primary-color);
+            max-width: 816px; /* Standard letter width approximation */
+            margin: 0 auto;
         }
 
         h1 {
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            margin-bottom: 0.2rem;
-            font-weight: 700;
-        }
-
-        h2 {
-            color: var(--primary-color);
-            font-size: 1.4rem;
-            border-bottom: 2px solid var(--bg-light);
-            padding-bottom: 0.5rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .subtitle {
-            font-size: 1.2rem;
-            color: #64748B;
-            font-weight: 500;
+            font-size: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .topic {
+            font-size: 1.15rem;
+            margin-top: 0;
             margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 1rem;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 1.5rem;
-            font-size: 0.9rem;
         }
 
         th, td {
-            border: 1px solid var(--border-color);
-            padding: 10px 14px;
+            border: 1px solid #000000;
+            padding: 6px 10px;
             text-align: left;
             vertical-align: top;
         }
 
         th {
-            background-color: var(--primary-color);
-            color: #FFFFFF;
-            font-weight: 600;
+            font-weight: bold;
+            background-color: #FFFFFF;
         }
 
-        tr:nth-child(even) {
-            background-color: var(--bg-light);
+        .details-table td:first-child {
+            width: 25%;
+            font-weight: normal;
         }
 
-        ul, ol {
+        .attendees-list {
+            list-style-type: none;
+            padding-left: 0;
             margin-top: 0.5rem;
             margin-bottom: 1.5rem;
-            padding-left: 1.5rem;
         }
 
-        li {
-            margin-bottom: 0.4rem;
+        .attendees-list li {
+            margin-bottom: 0.25rem;
         }
 
         .footer-note {
-            margin-top: 3rem;
-            font-size: 0.85rem;
-            color: #64748B;
-            text-align: center;
-            border-top: 1px solid var(--border-color);
-            padding-top: 1rem;
+            margin-top: 2rem;
+            font-size: 1rem;
         }
     </style>
 </head>
@@ -105,52 +95,83 @@
     <div class="document-container">
         <h1>Minutes of the Meeting</h1>
         <div class="subtitle">{{Project_Name}}</div>
+        <div class="topic">{{Meeting_Topic}}</div>
 
         <h2>Meeting Details</h2>
-        <table>
+        <table class="details-table">
             <tbody>
                 <tr>
-                    <td style="width: 25%; font-weight: 600;">Date</td>
+                    <td>Date</td>
                     <td>{{Meeting_Date}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 600;">Time</td>
+                    <td>Time</td>
                     <td>{{Meeting_Time}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 600;">Venue</td>
+                    <td>Venue</td>
                     <td>{{Meeting_Venue}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 600;">Prepared by</td>
+                    <td>Prepared by</td>
                     <td>{{Preparer_Name}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 600;">Date prepared</td>
+                    <td>Date prepared</td>
                     <td>{{Preparation_Date}}</td>
                 </tr>
                 <tr>
-                    <td style="font-weight: 600;">Source</td>
+                    <td>Source</td>
                     <td>{{Source_Files}}</td>
                 </tr>
             </tbody>
         </table>
 
         <h2>Attendees</h2>
-        <ul>
+        <p>{{Committee_Name}}</p>
+        <ul class="attendees-list">
             <li>{{Attendee_1}} (minutes prepared by)</li>
-            <li>{{Attendee_2}}</li>
-            <li>{{Attendee_3}}</li>
             {{Attendees_List_HTML}}
         </ul>
 
-        <h2>Purpose & Summary</h2>
+        <h2>Purpose</h2>
         <p>{{Meeting_Purpose}}</p>
 
-        <h2>Discussion Points</h2>
-        <ol>
-            {{Discussion_Points_HTML}}
-        </ol>
+        <h2>Decisions Agreed</h2>
+        <div>
+            {{Decisions_Agreed_HTML}}
+        </div>
+
+        <h2>Matters Arising</h2>
+        <p>These minutes materially supersede the prior plan. The differences are not cosmetic, and the previous workbook should not be circulated until it is reconciled.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Item</th>
+                    <th style="width: 35%;">Previous Document States</th>
+                    <th style="width: 40%;">These Minutes State</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{Matters_Arising_Rows_HTML}}
+            </tbody>
+        </table>
+
+        <h2>Open Items for Confirmation</h2>
+        <p>The following items remain open.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 40%;">Item</th>
+                    <th style="width: 35%;">Why It Matters</th>
+                    <th style="width: 20%;">Owner</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{Open_Items_Rows_HTML}}
+            </tbody>
+        </table>
 
         <h2>Action Plan</h2>
         <table>
@@ -167,10 +188,7 @@
             </tbody>
         </table>
 
-        <div class="footer-note">
-            Prepared for circulation to {{Committee_Name}}. Please return corrections before this is treated as the agreed record.
-        </div>
-
+        <p class="footer-note">Owners and deadlines are marked as to be confirmed where the meeting notes did not record them.<br>Prepared for circulation to the {{Committee_Name}}. Please return corrections before this is treated as the agreed record.</p>
     </div>
 
 </body>
