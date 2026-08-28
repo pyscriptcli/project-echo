@@ -2,7 +2,11 @@ import streamlit as st
 import requests
 import json
 import re
+import base64
+import io
 import pandas as pd
+from pypdf import PdfReader
+from PIL import Image
 from datetime import datetime
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
@@ -41,18 +45,16 @@ CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
 
-/* Enable page/container scrolling while hiding scrollbars globally */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     padding-top: 0.3rem !important;
     padding-bottom: 0.3rem !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Hide scrollbar for Chrome, Safari, and Opera */
 html::-webkit-scrollbar, 
 body::-webkit-scrollbar, 
 [data-testid="stAppViewContainer"]::-webkit-scrollbar, 
@@ -66,7 +68,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
     background: transparent !important;
 }
 
-/* Outer Card Container - Constrained Width & Height, Centered */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -93,7 +94,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     box-sizing: border-box !important;
 }
 
-/* Header Alignment */
 .echo-header-bar {
     display: flex;
     align-items: center;
@@ -116,22 +116,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     letter-spacing: 0.01em !important;
 }
 
-/* Header Controls Pill Buttons */
-div[data-testid="stPopover"] > button {
-    background-color: #111A2B !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 20px !important;
-    padding: 0.1rem 0.45rem !important;
-    height: 26px !important;
-    min-height: 26px !important;
-    transition: all 0.2s ease !important;
-}
-div[data-testid="stPopover"] > button:hover {
-    border-color: #F1C40F !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
-}
-
+div[data-testid="stPopover"] > button,
 div[data-testid="stButton"] > button {
     background-color: #111A2B !important;
     color: #D4AF37 !important;
@@ -139,14 +124,16 @@ div[data-testid="stButton"] > button {
     border-radius: 20px !important;
     height: 26px !important;
     min-height: 26px !important;
+    padding: 0.1rem 0.45rem !important;
     transition: all 0.2s ease !important;
 }
+
+div[data-testid="stPopover"] > button:hover,
 div[data-testid="stButton"] > button:hover {
     border-color: #F1C40F !important;
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Inner Chat Box Container - Compact Scrollable */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -169,7 +156,6 @@ div[data-testid="stButton"] > button:hover {
     height: 100% !important;
 }
 
-/* User Message Bubble */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
@@ -208,7 +194,6 @@ div[data-testid="stButton"] > button:hover {
     flex-shrink: 0;
 }
 
-/* Assistant Message */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
@@ -265,7 +250,6 @@ div[data-testid="stButton"] > button:hover {
     color: #111827;
 }
 
-/* Sources Pills */
 .echo-sources-container {
     display: flex;
     flex-wrap: wrap;
@@ -293,7 +277,6 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
 }
 
-/* Tables */
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
@@ -319,7 +302,6 @@ div[data-testid="stButton"] > button:hover {
     color: #374151;
 }
 
-/* Thinking Indicator */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
@@ -352,7 +334,6 @@ div[data-testid="stButton"] > button:hover {
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Inline Candidate Prompt Card */
 .echo-context-candidate-card {
     background: #FFFFFF;
     border: 1px solid #D4AF37;
@@ -362,7 +343,6 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
-/* Docked Bottom Chat Input */
 .echo-input-dock {
     padding-top: 0.3rem !important;
     flex-shrink: 0 !important;
@@ -389,42 +369,132 @@ div[data-testid="stChatInput"] textarea {
 </style>
 """
 
+def _extract_text_from_pdf(uploaded_file) -> str:
+    """Extracts raw text streams across pages of an uploaded PDF."""
+    try:
+        reader = PdfReader(uploaded_file)
+        text_content = []
+        for i, page in enumerate(reader.pages):
+            page_text = page.extract_text()
+            if page_text:
+                text_content.append(f"--- Page {i+1} ---\n{page_text}")
+        return "\n\n".join(text_content)
+    except Exception as e:
+        st.error(f"Failed to read PDF file: {e}")
+        return ""
+
+def _encode_image_to_base64(uploaded_file) -> tuple:
+    """Validates and encodes image file to a base64 Data URL string."""
+    try:
+        image = Image.open(uploaded_file)
+        fmt = image.format.lower() if image.format else "jpeg"
+        if fmt == "jpg":
+            fmt = "jpeg"
+        buffered = io.BytesIO()
+        image.save(buffered, format=image.format if image.format else "JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return f"data:image/{fmt};base64,{img_str}", image
+    except Exception as e:
+        st.error(f"Failed to process image: {e}")
+        return None, None
+
+def _get_existing_keys_set() -> set:
+    """Gathers all registered (category, normalized_key) tuples from the knowledge database."""
+    try:
+        data = fetch_echo_context()
+        keys_set = set()
+        for cat, val in data.items():
+            if isinstance(val, dict):
+                for k in val.keys():
+                    keys_set.add((cat.lower(), str(k).strip().lower()))
+            elif isinstance(val, list):
+                for item in val:
+                    keys_set.add((cat.lower(), str(item).strip().lower()))
+        return keys_set
+    except Exception:
+        return set()
+
 @st.dialog("Echo Context Manager", width="large")
 def render_context_popup_dialog():
-    """Modal popup for manual and AI-assisted context knowledge additions."""
+    """Modal popup for multimodal (Text, PDF, Vision/Image) and manual context additions."""
     if "extracted_context_df" not in st.session_state:
         st.session_state["extracted_context_df"] = None
 
     mode = st.radio(
         "Mode",
-        options=["AI Smart Extraction", "Manual Row Entry"],
+        options=["Multimodal AI Extraction (Text/PDF/Vision)", "Manual Row Entry"],
         horizontal=True,
         label_visibility="collapsed"
     )
 
-    if mode == "AI Smart Extraction":
-        raw_text = st.text_area(
-            "Raw Context / Knowledge Dump",
-            height=140,
-            placeholder="Paste raw unstructured notes, custom tables, logs, property records, or specs here..."
+    if mode == "Multimodal AI Extraction (Text/PDF/Vision)":
+        source_type = st.segmented_control(
+            "Input Format",
+            options=["Text Notes", "PDF Document", "Image / Vision Scan"],
+            default="Text Notes"
         )
-        c_act1, c_act2 = st.columns([1.5, 1])
-        with c_act1:
-            if st.button("Extract Structured Knowledge", key="btn_dlg_run_ai", type="primary", use_container_width=True):
-                if raw_text.strip():
-                    with st.spinner("Extracting structured knowledge entries..."):
-                        extracted = _extract_context_with_ai(raw_text)
-                        if extracted:
-                            st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
-                            st.rerun()
-                        else:
-                            st.error("No actionable knowledge items or entities identified.")
-                else:
-                    st.warning("Please supply context text.")
-        with c_act2:
-            if st.button("Reset Draft Table", key="btn_dlg_reset", use_container_width=True):
-                st.session_state["extracted_context_df"] = None
-                st.rerun()
+
+        extracted = []
+        if source_type == "Text Notes":
+            raw_text = st.text_area(
+                "Raw Context / Knowledge Dump",
+                height=130,
+                placeholder="Paste raw unstructured notes, tables, specs, or logs here..."
+            )
+            c1, c2 = st.columns([1.5, 1])
+            with c1:
+                if st.button("Extract Knowledge", key="btn_run_text_ext", type="primary", use_container_width=True):
+                    if raw_text.strip():
+                        with st.spinner("Extracting structured records..."):
+                            extracted = _extract_context_with_ai(raw_text=raw_text)
+                    else:
+                        st.warning("Please supply context notes.")
+            with c2:
+                if st.button("Reset Staged Table", key="btn_rst_text_ext", use_container_width=True):
+                    st.session_state["extracted_context_df"] = None
+                    st.rerun()
+
+        elif source_type == "PDF Document":
+            pdf_file = st.file_uploader("Upload PDF Document", type=["pdf"], key="dlg_pdf_uploader")
+            c1, c2 = st.columns([1.5, 1])
+            with c1:
+                if st.button("Parse & Extract PDF", key="btn_run_pdf_ext", type="primary", use_container_width=True):
+                    if pdf_file is not None:
+                        with st.spinner("Reading and structuring PDF content..."):
+                            pdf_text = _extract_text_from_pdf(pdf_file)
+                            if pdf_text.strip():
+                                extracted = _extract_context_with_ai(raw_text=pdf_text)
+                            else:
+                                st.error("No extractable text stream found in PDF.")
+                    else:
+                        st.warning("Please upload a PDF file first.")
+            with c2:
+                if st.button("Reset Staged Table", key="btn_rst_pdf_ext", use_container_width=True):
+                    st.session_state["extracted_context_df"] = None
+                    st.rerun()
+
+        elif source_type == "Image / Vision Scan":
+            img_file = st.file_uploader("Upload Image/Scan/Blueprint", type=["png", "jpg", "jpeg", "webp"], key="dlg_img_uploader")
+            if img_file:
+                st.image(img_file, caption="Scan Preview", use_container_width=True)
+            c1, c2 = st.columns([1.5, 1])
+            with c1:
+                if st.button("Scan with Vision AI", key="btn_run_vision_ext", type="primary", use_container_width=True):
+                    if img_file is not None:
+                        with st.spinner("Analyzing image visual data with DeepSeek Vision..."):
+                            img_data_url, _ = _encode_image_to_base64(img_file)
+                            if img_data_url:
+                                extracted = _extract_context_with_ai(image_data_url=img_data_url)
+                    else:
+                        st.warning("Please upload an image.")
+            with c2:
+                if st.button("Reset Staged Table", key="btn_rst_vis_ext", use_container_width=True):
+                    st.session_state["extracted_context_df"] = None
+                    st.rerun()
+
+        if extracted:
+            st.session_state["extracted_context_df"] = pd.DataFrame(extracted)
+            st.rerun()
 
     else:
         m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns([1.2, 1.5, 2.5, 0.8, 1])
@@ -476,29 +546,52 @@ def render_context_popup_dialog():
             key="dlg_data_editor"
         )
 
+        dedup_col1, dedup_col2 = st.columns([1.5, 1])
+        with dedup_col1:
+            overwrite_duplicates = st.checkbox("Overwrite Existing Duplicate Keys in Database", value=True)
+        with dedup_col2:
+            pass
+
         if st.button("Commit to Echo Knowledge Base", key="btn_dlg_commit", type="primary", use_container_width=True):
             saved = 0
-            with st.spinner("Saving knowledge records..."):
+            skipped = 0
+            existing_records = _get_existing_keys_set()
+            
+            with st.spinner("Validating duplicate keys & saving knowledge records..."):
                 for _, row in edited_df.iterrows():
                     if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
+                        cat_clean = str(row['category']).strip().lower()
+                        key_clean = str(row['key']).strip()
+                        record_tuple = (cat_clean, key_clean.lower())
+
+                        if not overwrite_duplicates and record_tuple in existing_records:
+                            skipped += 1
+                            continue
+
                         if upsert_echo_context(
                             category=str(row['category']),
-                            key=str(row['key']),
+                            key=key_clean,
                             value=str(row['value']),
                             priority=int(row['priority']) if pd.notna(row['priority']) else 2
                         ):
                             saved += 1
+                            existing_records.add(record_tuple)
+                            
             if saved > 0:
-                st.success(f"Saved {saved} record(s) to Echo Knowledge Base.")
+                msg = f"Saved {saved} record(s) to Echo Knowledge Base."
+                if skipped > 0:
+                    msg += f" (Skipped {skipped} existing duplicate entry/entries)."
+                st.success(msg)
                 st.session_state["extracted_context_df"] = None
                 st.rerun()
+            elif skipped > 0:
+                st.warning(f"All {skipped} staged item(s) are duplicates already in the database.")
 
 
 def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
-    # State Initializations
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model" not in st.session_state:
@@ -517,7 +610,6 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        # Header Row: Logo, Title, and Action Controls
         h_left, h_right = st.columns([0.88, 0.12])
         with h_left:
             st.markdown(
@@ -555,9 +647,6 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     st.session_state["knowledge_proposal"] = None
                     st.rerun()
 
-        # ==========================================
-        # --- Chat Stream Feed ---
-        # ==========================================
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
         chat_box = st.container(height=safe_scroll_height)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -610,7 +699,6 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                             
                         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Inline Knowledge Candidate Proposal
         if st.session_state["knowledge_proposal"]:
             prop = st.session_state["knowledge_proposal"]
             val_display = str(prop.get("value", ""))
@@ -632,24 +720,30 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 kp_col1, kp_col2 = st.columns([0.5, 0.5])
                 with kp_col1:
                     if st.button("Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
-                        upsert_echo_context(
-                            category=prop["category"],
-                            key=prop["key"],
-                            value=str(prop["value"]),
-                            priority=prop.get("priority", 2)
-                        )
-                        st.session_state["global_chat_history"].append({
-                            "role": "assistant",
-                            "content": f"Confirmed: `{prop['key']}` registered into Echo Knowledge Base."
-                        })
-                        st.session_state["knowledge_proposal"] = None
-                        st.rerun()
+                        existing_records = _get_existing_keys_set()
+                        cat_clean = str(prop["category"]).strip().lower()
+                        key_clean = str(prop["key"]).strip()
+                        
+                        if (cat_clean, key_clean.lower()) in existing_records:
+                            st.warning(f"Key `{key_clean}` already exists in `{cat_clean}` category.")
+                        else:
+                            upsert_echo_context(
+                                category=prop["category"],
+                                key=key_clean,
+                                value=str(prop["value"]),
+                                priority=prop.get("priority", 2)
+                            )
+                            st.session_state["global_chat_history"].append({
+                                "role": "assistant",
+                                "content": f"Confirmed: `{key_clean}` registered into Echo Knowledge Base."
+                            })
+                            st.session_state["knowledge_proposal"] = None
+                            st.rerun()
                 with kp_col2:
                     if st.button("Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
                         st.session_state["knowledge_proposal"] = None
                         st.rerun()
 
-        # Docked Bottom Chat Input
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
         active_prompt = st.chat_input("Ask Echo...")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -677,7 +771,6 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     unsafe_allow_html=True
                 )
 
-            # Source Ingestion Routing
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
             
@@ -730,8 +823,8 @@ def _perform_web_search(query: str) -> tuple:
     return ("\n".join(text_snippets), sources)
 
 
-def _extract_context_with_ai(raw_text: str) -> list:
-    """Invokes LLM extraction schema with JSON chunking/recovery for unstructured and tabular data."""
+def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
+    """Invokes LLM extraction schema with multimodal image scanning and JSON chunking/recovery."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         st.error("DeepSeek API Key configuration missing.")
@@ -740,18 +833,26 @@ def _extract_context_with_ai(raw_text: str) -> list:
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
-        "Analyze the input text and extract all entities, properties, procedures, definitions, or table records. "
+        "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
         "For complex, tabular, or scouting logs that have varying schemas, assign 'category': 'knowledge', 'key': [Main Entity Name or Code], "
         "and 'value': a compact JSON string capturing all available key-value pairs (e.g. {\"location\": \"...\", \"rate\": 100, \"contact\": \"...\"}). "
         "For team members, jargon, or projects, assign 'category' to 'team', 'jargon', or 'projects' respectively with a string or JSON 'value'. "
         "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
     )
 
+    if image_data_url:
+        user_content = [
+            {"type": "text", "text": "Extract all structured information, entity attributes, numbers, and diagrams from this image."},
+            {"type": "image_url", "image_url": {"url": image_data_url}}
+        ]
+    else:
+        user_content = raw_text[:20000]
+
     payload = {
         "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": raw_text[:20000]}
+            {"role": "user", "content": user_content}
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.1,
@@ -781,7 +882,6 @@ def _extract_context_with_ai(raw_text: str) -> list:
                     except Exception:
                         pass
                 
-                # Regex item recovery
                 item_matches = re.findall(
                     r'\{\s*"category"\s*:\s*"([^"]+)"\s*,\s*"key"\s*:\s*"([^"]+)"\s*,\s*"value"\s*:\s*(?:\"(.*?)\"|(\{.*?\}))\s*(?:,\s*"priority"\s*:\s*(\d+))?\s*\}',
                     cleaned,
