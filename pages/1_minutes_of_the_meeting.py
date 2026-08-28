@@ -313,7 +313,7 @@ def extract_metadata_with_deepseek(transcript):
         "4. DELIVERY TIMELINES: Record only verbatim dates or specific timeframes mentioned. Otherwise, explicitly state 'TBD (Confirm with transcript)'.\n"
         "5. DECISIONS MADE IN 'other_discussions': Consolidate all formal agreements, ratified proposals, approved budgets, and final consensus items under the 'other_discussions' field as a dedicated '### Decisions Made' section. Include unresolved items under '### Open Items'.\n"
         "6. TONE & SYNTAX: Convert colloquial Taglish/informal dialogue into polished, high-level corporate English while preserving exact technical specifications, figures, and property details.\n\n"
-        "You must output ONLY a valid, parseable JSON object matching the requested schema without conversational commentary or code-block wrappers outside the JSON format."
+        "You must output ONLY a valid, parseable JSON object matching the requested schema without conversational commentary or code-block wrappers outside the JSON format. make sure to acknowledge additional prompt in the transcript added by the user for outlines and other discussion points"
     )
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
