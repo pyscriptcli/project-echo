@@ -370,7 +370,6 @@ div[data-testid="stChatInput"] textarea {
 """
 
 def _extract_text_from_pdf(uploaded_file) -> str:
-    """Extracts raw text streams across pages of an uploaded PDF."""
     try:
         reader = PdfReader(uploaded_file)
         text_content = []
@@ -384,7 +383,6 @@ def _extract_text_from_pdf(uploaded_file) -> str:
         return ""
 
 def _encode_image_to_base64(uploaded_file) -> tuple:
-    """Validates and encodes image file to a base64 Data URL string."""
     try:
         image = Image.open(uploaded_file)
         fmt = image.format.lower() if image.format else "jpeg"
@@ -398,28 +396,137 @@ def _encode_image_to_base64(uploaded_file) -> tuple:
         st.error(f"Failed to process image: {e}")
         return None, None
 
-def _get_existing_keys_set() -> set:
-    """Gathers all registered (category, normalized_key) tuples from the knowledge database."""
+def _get_existing_knowledge_map() -> dict:
+    """Retrieves full existing map structured as {(category, key_lower): original_value}."""
     try:
         data = fetch_echo_context()
-        keys_set = set()
+        knowledge_map = {}
         for cat, val in data.items():
+            cat_clean = cat.lower().strip()
             if isinstance(val, dict):
-                for k in val.keys():
-                    keys_set.add((cat.lower(), str(k).strip().lower()))
+                for k, v in val.items():
+                    knowledge_map[(cat_clean, str(k).lower().strip())] = (str(k).strip(), str(v))
             elif isinstance(val, list):
                 for item in val:
-                    keys_set.add((cat.lower(), str(item).strip().lower()))
-        return keys_set
+                    knowledge_map[(cat_clean, str(item).lower().strip())] = (str(item).strip(), str(item))
+        return knowledge_map
     except Exception:
-        return set()
+        return {}
+
+def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
+    """Partitions staged rows into new items and duplicate conflicts with existing DB entries."""
+    existing_map = _get_existing_knowledge_map()
+    clean_rows = []
+    conflicts = []
+
+    for idx, row in candidate_df.iterrows():
+        if pd.isna(row.get('category')) or pd.isna(row.get('key')) or pd.isna(row.get('value')):
+            continue
+            
+        cat = str(row['category']).strip()
+        key = str(row['key']).strip()
+        val = str(row['value']).strip()
+        prio = int(row['priority']) if pd.notna(row.get('priority')) else 2
+        lookup_key = (cat.lower(), key.lower())
+
+        if lookup_key in existing_map:
+            orig_key, orig_val = existing_map[lookup_key]
+            conflicts.append({
+                "category": cat,
+                "key": key,
+                "current_value": orig_val,
+                "new_value": val,
+                "priority": prio,
+                "resolution": "Keep Current"
+            })
+        else:
+            clean_rows.append({
+                "category": cat,
+                "key": key,
+                "value": val,
+                "priority": prio
+            })
+
+    return clean_rows, conflicts
 
 @st.dialog("Echo Context Manager", width="large")
 def render_context_popup_dialog():
-    """Modal popup for multimodal (Text, PDF, Vision/Image) and manual context additions."""
+    """Modal popup for multimodal inputs and duplicate-aware database commits."""
     if "extracted_context_df" not in st.session_state:
         st.session_state["extracted_context_df"] = None
+    if "detected_conflicts" not in st.session_state:
+        st.session_state["detected_conflicts"] = None
+    if "clean_staged_rows" not in st.session_state:
+        st.session_state["clean_staged_rows"] = []
 
+    # If conflicts require resolution, present the duplicate resolution screen
+    if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
+        st.markdown("<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>⚠️ Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
+        st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
+
+        b_c1, b_c2, _ = st.columns([1, 1, 2])
+        with b_c1:
+            if st.button("Set All to Overwrite", key="btn_all_overwrite", use_container_width=True):
+                for item in st.session_state["detected_conflicts"]:
+                    item["resolution"] = "Overwrite with New"
+                st.rerun()
+        with b_c2:
+            if st.button("Set All to Keep Current", key="btn_all_keep", use_container_width=True):
+                for item in st.session_state["detected_conflicts"]:
+                    item["resolution"] = "Keep Current"
+                st.rerun()
+
+        for idx, item in enumerate(st.session_state["detected_conflicts"]):
+            with st.container(border=True):
+                c_lbl, c_res = st.columns([3, 1.5])
+                with c_lbl:
+                    st.markdown(f"**Key:** `{item['key']}` | **Category:** `{item['category']}`")
+                    v_col1, v_col2 = st.columns(2)
+                    with v_col1:
+                        st.markdown("<span style='font-size:0.75rem; color:#64748B;'>Current Value:</span>", unsafe_allow_html=True)
+                        st.code(item['current_value'][:200] + ("..." if len(item['current_value']) > 200 else ""), language="json")
+                    with v_col2:
+                        st.markdown("<span style='font-size:0.75rem; color:#854D0E;'>New Incoming Value:</span>", unsafe_allow_html=True)
+                        st.code(item['new_value'][:200] + ("..." if len(item['new_value']) > 200 else ""), language="json")
+                with c_res:
+                    res_choice = st.radio(
+                        "Action",
+                        options=["Keep Current", "Overwrite with New", "Skip Item"],
+                        index=["Keep Current", "Overwrite with New", "Skip Item"].index(item["resolution"]),
+                        key=f"res_radio_{idx}"
+                    )
+                    item["resolution"] = res_choice
+
+        btn_act1, btn_act2 = st.columns(2)
+        with btn_act1:
+            if st.button("Confirm Resolution & Save to DB", type="primary", use_container_width=True):
+                saved_count = 0
+                # 1. Commit non-conflicting clean rows
+                for row in st.session_state["clean_staged_rows"]:
+                    if upsert_echo_context(row['category'], row['key'], row['value'], row['priority']):
+                        saved_count += 1
+                
+                # 2. Commit resolved conflict rows
+                for item in st.session_state["detected_conflicts"]:
+                    if item["resolution"] == "Overwrite with New":
+                        if upsert_echo_context(item['category'], item['key'], item['new_value'], item['priority']):
+                            saved_count += 1
+
+                st.success(f"Successfully saved and resolved {saved_count} record(s).")
+                st.session_state["detected_conflicts"] = None
+                st.session_state["clean_staged_rows"] = []
+                st.session_state["extracted_context_df"] = None
+                st.rerun()
+
+        with btn_act2:
+            if st.button("Cancel & Back to Staging", use_container_width=True):
+                st.session_state["detected_conflicts"] = None
+                st.session_state["clean_staged_rows"] = []
+                st.rerun()
+
+        return
+
+    # Standard Extraction / Entry Mode
     mode = st.radio(
         "Mode",
         options=["Multimodal AI Extraction (Text/PDF/Vision)", "Manual Row Entry"],
@@ -546,46 +653,23 @@ def render_context_popup_dialog():
             key="dlg_data_editor"
         )
 
-        dedup_col1, dedup_col2 = st.columns([1.5, 1])
-        with dedup_col1:
-            overwrite_duplicates = st.checkbox("Overwrite Existing Duplicate Keys in Database", value=True)
-        with dedup_col2:
-            pass
-
-        if st.button("Commit to Echo Knowledge Base", key="btn_dlg_commit", type="primary", use_container_width=True):
-            saved = 0
-            skipped = 0
-            existing_records = _get_existing_keys_set()
+        if st.button("Validate & Commit to Knowledge Base", key="btn_dlg_commit", type="primary", use_container_width=True):
+            clean_rows, conflicts = _check_duplicates_against_db(edited_df)
             
-            with st.spinner("Validating duplicate keys & saving knowledge records..."):
-                for _, row in edited_df.iterrows():
-                    if pd.notna(row['category']) and pd.notna(row['key']) and pd.notna(row['value']):
-                        cat_clean = str(row['category']).strip().lower()
-                        key_clean = str(row['key']).strip()
-                        record_tuple = (cat_clean, key_clean.lower())
-
-                        if not overwrite_duplicates and record_tuple in existing_records:
-                            skipped += 1
-                            continue
-
-                        if upsert_echo_context(
-                            category=str(row['category']),
-                            key=key_clean,
-                            value=str(row['value']),
-                            priority=int(row['priority']) if pd.notna(row['priority']) else 2
-                        ):
-                            saved += 1
-                            existing_records.add(record_tuple)
-                            
-            if saved > 0:
-                msg = f"Saved {saved} record(s) to Echo Knowledge Base."
-                if skipped > 0:
-                    msg += f" (Skipped {skipped} existing duplicate entry/entries)."
-                st.success(msg)
-                st.session_state["extracted_context_df"] = None
+            if conflicts:
+                st.session_state["detected_conflicts"] = conflicts
+                st.session_state["clean_staged_rows"] = clean_rows
                 st.rerun()
-            elif skipped > 0:
-                st.warning(f"All {skipped} staged item(s) are duplicates already in the database.")
+            else:
+                saved = 0
+                with st.spinner("Saving knowledge records to persistent store..."):
+                    for row in clean_rows:
+                        if upsert_echo_context(row['category'], row['key'], row['value'], row['priority']):
+                            saved += 1
+                if saved > 0:
+                    st.success(f"Successfully saved {saved} new record(s) to Echo Knowledge Base.")
+                    st.session_state["extracted_context_df"] = None
+                    st.rerun()
 
 
 def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None, subtitle=None):
@@ -720,12 +804,12 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 kp_col1, kp_col2 = st.columns([0.5, 0.5])
                 with kp_col1:
                     if st.button("Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
-                        existing_records = _get_existing_keys_set()
+                        existing_map = _get_existing_knowledge_map()
                         cat_clean = str(prop["category"]).strip().lower()
                         key_clean = str(prop["key"]).strip()
                         
-                        if (cat_clean, key_clean.lower()) in existing_records:
-                            st.warning(f"Key `{key_clean}` already exists in `{cat_clean}` category.")
+                        if (cat_clean, key_clean.lower()) in existing_map:
+                            st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
                         else:
                             upsert_echo_context(
                                 category=prop["category"],
@@ -796,7 +880,6 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
 
 
 def _perform_web_search(query: str) -> tuple:
-    """Fetches web context and clean source objects."""
     sources = []
     text_snippets = []
     try:
@@ -824,7 +907,6 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
-    """Invokes LLM extraction schema with multimodal image scanning and JSON chunking/recovery."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         st.error("DeepSeek API Key configuration missing.")
@@ -907,7 +989,6 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
 
 
 def _normalize_extracted_items(items: list) -> list:
-    """Ensures nested JSON values inside item objects are cleanly stringified for database storage."""
     normalized = []
     for item in items:
         if isinstance(item, dict) and "key" in item and "value" in item:
@@ -931,7 +1012,6 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> tuple:
-    """Synthesizes sources while detecting potential context knowledge additions."""
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
     if not api_key:
         return "DeepSeek API Key is missing in Streamlit Secrets.", None
