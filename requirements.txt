@@ -28,3 +28,8 @@ requests
 supabase
 reportlab
 PyPDF2==3.0.1
+pypdf>=4.0.0
+requests>=2.31.0
+pandas>=2.0.0
+pypdf>=4.0.0
+pillow>=10.0.0
