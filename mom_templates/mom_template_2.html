@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minutes of the Meeting Template</title>
+    <title>Minutes of the Meeting</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -97,15 +97,6 @@
             margin-bottom: 0.4rem;
         }
 
-        .observation-note {
-            background-color: #FEF3C7;
-            border-left: 4px solid #F59E0B;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.85rem;
-            color: #92400E;
-        }
-
         .footer-note {
             margin-top: 3rem;
             font-size: 0.85rem;
@@ -114,21 +105,13 @@
             border-top: 1px solid var(--border-color);
             padding-top: 1rem;
         }
-
-        .annex-image {
-            width: 100%;
-            height: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-top: 1rem;
-        }
     </style>
 </head>
 <body>
 
     <div class="document-container">
         <h1>Minutes of the Meeting</h1>
-        <div class="subtitle">{{Project_Name}} - Planning and Format Confirmation</div>
+        <div class="subtitle">{{Project_Name}}</div>
 
         <h2>Meeting Details</h2>
         <table>
@@ -161,98 +144,20 @@
         </table>
 
         <h2>Attendees</h2>
-        <p><strong>{{Committee_Name}}</strong></p>
         <ul>
             <li>{{Attendee_1}} (minutes prepared by)</li>
             <li>{{Attendee_2}}</li>
             <li>{{Attendee_3}}</li>
-            <!-- Add dynamic list injection here in backend -->
             {{Attendees_List_HTML}}
         </ul>
 
-        <h2>Purpose</h2>
+        <h2>Purpose & Summary</h2>
         <p>{{Meeting_Purpose}}</p>
 
-        <h2>Decisions Agreed</h2>
-
-        <h3>Schedule</h3>
-        <p>{{Schedule_Summary}}</p>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 25%;">Date</th>
-                    <th style="width: 45%;">Activity</th>
-                    <th style="width: 30%;">Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{Schedule_Rows_HTML}}
-            </tbody>
-        </table>
-
-        <h3>Teams & Bracketing</h3>
-        <ul>
-            <li>There will be {{Number_of_Teams}} teams, namely {{Team_Names}}.</li>
-            <li>{{Team_Classification_Notes}}</li>
-            <li>All sports brackets will be created and published on {{Platform_Name}}.</li>
-        </ul>
-
-        <h3>Scoring and Attendance</h3>
-        <ul>
-            <li>Game results are weighted and are carried into the final tally.</li>
-            <li>Attendance carries points, and late arrival incurs a deduction.</li>
-            <li>Attendance is captured by {{Tracking_Method}}.</li>
-        </ul>
-        <div class="observation-note">
-            <strong>Observation:</strong> {{Scoring_Observation}}
-        </div>
-
-        <h3>Last Day Programme</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 25%;">Time</th>
-                    <th style="width: 45%;">Activity</th>
-                    <th style="width: 30%;">Note</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{Last_Day_Programme_Rows_HTML}}
-            </tbody>
-        </table>
-        <div class="observation-note">
-            <strong>Observation:</strong> {{Programme_Observation}}
-        </div>
-
-        <h2>Matters Arising (Superseded Information)</h2>
-        <p>These minutes materially supersede the plan held in <code>{{Previous_Document_Name}}</code>. The differences are not cosmetic, and the workbook should not be circulated until it is reconciled.</p>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 25%;">Item</th>
-                    <th style="width: 35%;">Previous Document States</th>
-                    <th style="width: 40%;">These Minutes State</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{Matters_Arising_Rows_HTML}}
-            </tbody>
-        </table>
-
-        <h2>Open Items for Confirmation</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 40%;">Item</th>
-                    <th style="width: 35%;">Why It Matters</th>
-                    <th style="width: 20%;">Owner</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{Open_Items_Rows_HTML}}
-            </tbody>
-        </table>
+        <h2>Discussion Points</h2>
+        <ol>
+            {{Discussion_Points_HTML}}
+        </ol>
 
         <h2>Action Plan</h2>
         <table>
@@ -270,12 +175,8 @@
         </table>
 
         <div class="footer-note">
-            Prepared for circulation to the {{Committee_Name}}. Please return corrections before this is treated as the agreed record.
+            Prepared for circulation to {{Committee_Name}}. Please return corrections before this is treated as the agreed record.
         </div>
-
-        <h2 style="page-break-before: always;">Annex A. Event Flowchart</h2>
-        <p>{{Annex_Description}}</p>
-        <img src="{{Annex_Image_URL}}" alt="Event Flowchart" class="annex-image">
 
     </div>
 
