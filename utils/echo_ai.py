@@ -402,7 +402,7 @@ def _get_existing_knowledge_map() -> dict:
         data = fetch_echo_context()
         knowledge_map = {}
         for cat, val in data.items():
-            cat_clean = cat.lower().strip()
+            cat_clean = str(cat).lower().strip()
             if isinstance(val, dict):
                 for k, v in val.items():
                     knowledge_map[(cat_clean, str(k).lower().strip())] = (str(k).strip(), str(v))
@@ -412,6 +412,39 @@ def _get_existing_knowledge_map() -> dict:
         return knowledge_map
     except Exception:
         return {}
+
+def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> bool:
+    """Executes the DB upsert and actively queries the DB back to guarantee successful write."""
+    try:
+        c_clean = str(category).strip()
+        k_clean = str(key).strip()
+        v_clean = str(value).strip()
+        p_clean = int(priority)
+
+        # 1. Execute DB write
+        write_success = upsert_echo_context(
+            category=c_clean,
+            key=k_clean,
+            value=v_clean,
+            priority=p_clean
+        )
+        
+        if not write_success:
+            return False
+            
+        # 2. Actively verify from DB state
+        latest_data = fetch_echo_context()
+        cat_data = latest_data.get(c_clean, {})
+        
+        if isinstance(cat_data, dict):
+            return k_clean in cat_data
+        elif isinstance(cat_data, list):
+            return k_clean in cat_data
+            
+        return False
+    except Exception as e:
+        print(f"Safe upsert failed: {e}")
+        return False
 
 def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
     """Partitions staged rows into new items and duplicate conflicts with existing DB entries."""
@@ -501,18 +534,29 @@ def render_context_popup_dialog():
         with btn_act1:
             if st.button("Confirm Resolution & Save to DB", type="primary", use_container_width=True):
                 saved_count = 0
-                # 1. Commit non-conflicting clean rows
-                for row in st.session_state["clean_staged_rows"]:
-                    if upsert_echo_context(row['category'], row['key'], row['value'], row['priority']):
-                        saved_count += 1
+                failed_count = 0
                 
-                # 2. Commit resolved conflict rows
-                for item in st.session_state["detected_conflicts"]:
-                    if item["resolution"] == "Overwrite with New":
-                        if upsert_echo_context(item['category'], item['key'], item['new_value'], item['priority']):
+                with st.spinner("Writing and actively verifying records..."):
+                    # 1. Commit non-conflicting clean rows
+                    for row in st.session_state["clean_staged_rows"]:
+                        if _safe_upsert_and_verify(row['category'], row['key'], row['value'], row['priority']):
                             saved_count += 1
+                        else:
+                            failed_count += 1
+                    
+                    # 2. Commit resolved conflict rows
+                    for item in st.session_state["detected_conflicts"]:
+                        if item["resolution"] == "Overwrite with New":
+                            if _safe_upsert_and_verify(item['category'], item['key'], item['new_value'], item['priority']):
+                                saved_count += 1
+                            else:
+                                failed_count += 1
 
-                st.success(f"Successfully saved and resolved {saved_count} record(s).")
+                if failed_count > 0:
+                    st.error(f"Failed to verify {failed_count} records during write.")
+                if saved_count > 0:
+                    st.success(f"Successfully saved and verified {saved_count} record(s).")
+                    
                 st.session_state["detected_conflicts"] = None
                 st.session_state["clean_staged_rows"] = []
                 st.session_state["extracted_context_df"] = None
@@ -588,7 +632,7 @@ def render_context_popup_dialog():
             with c1:
                 if st.button("Scan with Vision AI", key="btn_run_vision_ext", type="primary", use_container_width=True):
                     if img_file is not None:
-                        with st.spinner("Analyzing image visual data with DeepSeek Vision..."):
+                        with st.spinner("Analyzing image visual data with AI..."):
                             img_data_url, _ = _encode_image_to_base64(img_file)
                             if img_data_url:
                                 extracted = _extract_context_with_ai(image_data_url=img_data_url)
@@ -662,12 +706,18 @@ def render_context_popup_dialog():
                 st.rerun()
             else:
                 saved = 0
-                with st.spinner("Saving knowledge records to persistent store..."):
+                failed = 0
+                with st.spinner("Saving and actively verifying records..."):
                     for row in clean_rows:
-                        if upsert_echo_context(row['category'], row['key'], row['value'], row['priority']):
+                        if _safe_upsert_and_verify(row['category'], row['key'], row['value'], row['priority']):
                             saved += 1
+                        else:
+                            failed += 1
+                
+                if failed > 0:
+                    st.error(f"Failed to save {failed} record(s). Check DB connection logs.")
                 if saved > 0:
-                    st.success(f"Successfully saved {saved} new record(s) to Echo Knowledge Base.")
+                    st.success(f"Successfully saved and verified {saved} new record(s).")
                     st.session_state["extracted_context_df"] = None
                     st.rerun()
 
@@ -811,16 +861,17 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                         if (cat_clean, key_clean.lower()) in existing_map:
                             st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
                         else:
-                            upsert_echo_context(
-                                category=prop["category"],
-                                key=key_clean,
-                                value=str(prop["value"]),
-                                priority=prop.get("priority", 2)
-                            )
-                            st.session_state["global_chat_history"].append({
-                                "role": "assistant",
-                                "content": f"Confirmed: `{key_clean}` registered into Echo Knowledge Base."
-                            })
+                            if _safe_upsert_and_verify(prop["category"], key_clean, str(prop["value"]), prop.get("priority", 2)):
+                                st.session_state["global_chat_history"].append({
+                                    "role": "assistant",
+                                    "content": f"Confirmed: `{key_clean}` verified and saved to Echo Knowledge Base."
+                                })
+                            else:
+                                st.session_state["global_chat_history"].append({
+                                    "role": "assistant",
+                                    "content": f"Error: Failed to register `{key_clean}`. Please verify DB connection logs."
+                                })
+                                
                             st.session_state["knowledge_proposal"] = None
                             st.rerun()
                 with kp_col2:
@@ -907,45 +958,63 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-    if not api_key:
-        st.error("DeepSeek API Key configuration missing.")
-        return []
-
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    """Routes image inputs to a vision-capable model and text/PDFs to DeepSeek."""
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
         "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
         "For complex, tabular, or scouting logs that have varying schemas, assign 'category': 'knowledge', 'key': [Main Entity Name or Code], "
-        "and 'value': a compact JSON string capturing all available key-value pairs (e.g. {\"location\": \"...\", \"rate\": 100, \"contact\": \"...\"}). "
+        "and 'value': a compact JSON string capturing all available key-value pairs. "
         "For team members, jargon, or projects, assign 'category' to 'team', 'jargon', or 'projects' respectively with a string or JSON 'value'. "
         "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
     )
 
     if image_data_url:
-        user_content = [
-            {"type": "text", "text": "Extract all structured information, entity attributes, numbers, and diagrams from this image."},
-            {"type": "image_url", "image_url": {"url": image_data_url}}
-        ]
-    else:
-        user_content = raw_text[:20000]
+        api_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
+        if not api_key:
+            st.error("OpenAI API Key is required for image/vision scanning (DeepSeek API does not support images).")
+            return []
 
-    payload = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content}
-        ],
-        "response_format": {"type": "json_object"},
-        "temperature": 0.1,
-        "max_tokens": 8000
-    }
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
+                        {"type": "image_url", "image_url": {"url": image_data_url}}
+                    ]
+                }
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+            "max_tokens": 4000
+        }
+    else:
+        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+        if not api_key:
+            st.error("DeepSeek API Key configuration missing.")
+            return []
+
+        url = "https://api.deepseek.com/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": raw_text[:20000]}
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+            "max_tokens": 8000
+        }
 
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=90)
+        resp = requests.post(url, headers=headers, json=payload, timeout=90)
         if resp.status_code == 200:
             raw_content = resp.json()["choices"][0]["message"]["content"].strip()
-            
             cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
             cleaned = re.sub(r"^```\s*", "", cleaned, flags=re.MULTILINE).strip()
 
