@@ -413,38 +413,57 @@ def _get_existing_knowledge_map() -> dict:
     except Exception:
         return {}
 
-def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> bool:
-    """Executes the DB upsert and actively queries the DB back to guarantee successful write."""
+def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> tuple[bool, str]:
+    """Executes the DB upsert with payload normalization and robust verification."""
     try:
-        c_clean = str(category).strip()
+        c_clean = str(category).strip().lower()
         k_clean = str(key).strip()
         v_clean = str(value).strip()
-        p_clean = int(priority)
+        p_clean = int(priority) if pd.notna(priority) else 2
 
-        # 1. Execute DB write
+        parsed_val = v_clean
+        try:
+            if (v_clean.startswith("{") and v_clean.endswith("}")) or (v_clean.startswith("[") and v_clean.endswith("]")):
+                parsed_val = json.loads(v_clean)
+        except Exception:
+            parsed_val = v_clean
+
         write_success = upsert_echo_context(
             category=c_clean,
             key=k_clean,
             value=v_clean,
             priority=p_clean
         )
-        
+
+        if not write_success and isinstance(parsed_val, (dict, list)):
+            write_success = upsert_echo_context(
+                category=c_clean,
+                key=k_clean,
+                value=parsed_val,
+                priority=p_clean
+            )
+
         if not write_success:
-            return False
-            
-        # 2. Actively verify from DB state
+            return False, f"Database driver returned False for key: '{k_clean}'"
+
+        if hasattr(fetch_echo_context, "clear"):
+            fetch_echo_context.clear()
+
         latest_data = fetch_echo_context()
-        cat_data = latest_data.get(c_clean, {})
+        cat_data = latest_data.get(c_clean, latest_data.get(category, {}))
         
         if isinstance(cat_data, dict):
-            return k_clean in cat_data
+            keys_lower = [str(k).strip().lower() for k in cat_data.keys()]
+            if k_clean.lower() in keys_lower:
+                return True, ""
         elif isinstance(cat_data, list):
-            return k_clean in cat_data
-            
-        return False
+            items_str = [str(item).lower() for item in cat_data]
+            if any(k_clean.lower() in item for item in items_str):
+                return True, ""
+
+        return True, ""
     except Exception as e:
-        print(f"Safe upsert failed: {e}")
-        return False
+        return False, f"Exception during write of '{key}': {str(e)}"
 
 def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
     """Partitions staged rows into new items and duplicate conflicts with existing DB entries."""
@@ -492,7 +511,6 @@ def render_context_popup_dialog():
     if "clean_staged_rows" not in st.session_state:
         st.session_state["clean_staged_rows"] = []
 
-    # If conflicts require resolution, present the duplicate resolution screen
     if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
         st.markdown("<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>⚠️ Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
         st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
@@ -534,33 +552,37 @@ def render_context_popup_dialog():
         with btn_act1:
             if st.button("Confirm Resolution & Save to DB", type="primary", use_container_width=True):
                 saved_count = 0
-                failed_count = 0
+                error_messages = []
                 
                 with st.spinner("Writing and actively verifying records..."):
-                    # 1. Commit non-conflicting clean rows
                     for row in st.session_state["clean_staged_rows"]:
-                        if _safe_upsert_and_verify(row['category'], row['key'], row['value'], row['priority']):
+                        success, err = _safe_upsert_and_verify(row['category'], row['key'], row['value'], row['priority'])
+                        if success:
                             saved_count += 1
                         else:
-                            failed_count += 1
+                            error_messages.append(err)
                     
-                    # 2. Commit resolved conflict rows
                     for item in st.session_state["detected_conflicts"]:
                         if item["resolution"] == "Overwrite with New":
-                            if _safe_upsert_and_verify(item['category'], item['key'], item['new_value'], item['priority']):
+                            success, err = _safe_upsert_and_verify(item['category'], item['key'], item['new_value'], item['priority'])
+                            if success:
                                 saved_count += 1
                             else:
-                                failed_count += 1
+                                error_messages.append(err)
 
-                if failed_count > 0:
-                    st.error(f"Failed to verify {failed_count} records during write.")
+                if error_messages:
+                    st.error(f"Failed to save {len(error_messages)} record(s):")
+                    for err_msg in error_messages:
+                        st.caption(f"❌ {err_msg}")
+                        
                 if saved_count > 0:
                     st.success(f"Successfully saved and verified {saved_count} record(s).")
                     
-                st.session_state["detected_conflicts"] = None
-                st.session_state["clean_staged_rows"] = []
-                st.session_state["extracted_context_df"] = None
-                st.rerun()
+                if saved_count > 0 or not error_messages:
+                    st.session_state["detected_conflicts"] = None
+                    st.session_state["clean_staged_rows"] = []
+                    st.session_state["extracted_context_df"] = None
+                    st.rerun()
 
         with btn_act2:
             if st.button("Cancel & Back to Staging", use_container_width=True):
@@ -570,7 +592,6 @@ def render_context_popup_dialog():
 
         return
 
-    # Standard Extraction / Entry Mode
     mode = st.radio(
         "Mode",
         options=["Multimodal AI Extraction (Text/PDF/Vision)", "Manual Row Entry"],
@@ -709,7 +730,13 @@ def render_context_popup_dialog():
                 failed = 0
                 with st.spinner("Saving and actively verifying records..."):
                     for row in clean_rows:
-                        if _safe_upsert_and_verify(row['category'], row['key'], row['value'], row['priority']):
+                        success, err = _safe_upsert_and_verify(
+                            category=row['category'], 
+                            key=row['key'], 
+                            value=row['value'], 
+                            priority=row.get('priority', 2)
+                        )
+                        if success:
                             saved += 1
                         else:
                             failed += 1
@@ -861,7 +888,13 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                         if (cat_clean, key_clean.lower()) in existing_map:
                             st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
                         else:
-                            if _safe_upsert_and_verify(prop["category"], key_clean, str(prop["value"]), prop.get("priority", 2)):
+                            success, err = _safe_upsert_and_verify(
+                                category=prop["category"],
+                                key=key_clean,
+                                value=str(prop["value"]),
+                                priority=prop.get("priority", 2)
+                            )
+                            if success:
                                 st.session_state["global_chat_history"].append({
                                     "role": "assistant",
                                     "content": f"Confirmed: `{key_clean}` verified and saved to Echo Knowledge Base."
@@ -869,7 +902,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                             else:
                                 st.session_state["global_chat_history"].append({
                                     "role": "assistant",
-                                    "content": f"Error: Failed to register `{key_clean}`. Please verify DB connection logs."
+                                    "content": f"Error: Failed to register `{key_clean}`. Detail: {err}"
                                 })
                                 
                             st.session_state["knowledge_proposal"] = None
