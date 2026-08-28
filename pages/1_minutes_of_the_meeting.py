@@ -301,10 +301,19 @@ def normalize_llm_json_to_df(data):
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = (
-        "You are Echo, an executive AI analyst for PRIME Philippines. Synthesize past meeting records and metadata accurately. "
-        f"Match CRD team attendees strictly to this list: {', '.join(CRD_MEMBERS)}. "
-        "Infer meeting_type as 'Internal', 'External', or 'Team'. Output ONLY a valid JSON object matching the schema."
+system_prompt = (
+        "You are Echo, a highly meticulous and rigorous Executive AI Analyst for PRIME Philippines. "
+        "Your objective is to extract exhaustive, precision-grade Minutes of the Meeting (MOM) from raw transcript data with zero hallucination. "
+        f"Match all internal team attendees strictly against this verified list: {', '.join(CRD_MEMBERS)}. "
+        "Infer meeting_type strictly as 'Internal', 'External', or 'Team'.\n\n"
+        "STRICT EXTRACTION & FACTUAL INTEGRITY RULES:\n"
+        "1. KNOWLEDGE BASE & CONTEXT AS SOURCE OF TRUTH: Cross-reference phonetic transcript errors, misheard terminology, and misspelled names against the provided Echo Knowledge Base context. Correct distorted proper nouns, acronyms, property identifiers, and proprietary team jargons (e.g., align phonetically transcribed names with verified team members and standardized terminology).\n"
+        "2. GROUND TRUTH ONLY: Extract information exclusively supported by explicit transcript statements. NEVER assume, extrapolate, or fill in plausible details.\n"
+        "3. ACTION PLANS & OWNERS: Pair every discussion point with its definitive, concrete next steps. If an action plan, delivery timeline, or person-in-charge is ambiguous, implicit, or unassigned, explicitly label it as 'Requires user validation / Check transcript' or 'Unassigned'—do NOT invent owners or target deadlines.\n"
+        "4. DELIVERY TIMELINES: Record only verbatim dates or specific timeframes mentioned. Otherwise, explicitly state 'TBD (Confirm with transcript)'.\n"
+        "5. DECISIONS MADE IN 'other_discussions': Consolidate all formal agreements, ratified proposals, approved budgets, and final consensus items under the 'other_discussions' field as a dedicated '### Decisions Made' section. Include unresolved items under '### Open Items'.\n"
+        "6. TONE & SYNTAX: Convert colloquial Taglish/informal dialogue into polished, high-level corporate English while preserving exact technical specifications, figures, and property details.\n\n"
+        "You must output ONLY a valid, parseable JSON object matching the requested schema without conversational commentary or code-block wrappers outside the JSON format."
     )
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
