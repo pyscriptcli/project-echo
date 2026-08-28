@@ -66,7 +66,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
     background: transparent !important;
 }
 
-/* Outer Card Container */
+/* Outer Card Container - Constrained Width & Height, Centered */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -77,8 +77,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
+    max-width: 960px !important;
+    margin: 0 auto !important;
+    height: calc(100vh - 170px) !important;
+    max-height: calc(100vh - 170px) !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
@@ -86,7 +88,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     height: 100% !important;
     max-height: 100% !important;
-    padding: 0.5rem 0.85rem !important;
+    padding: 0.45rem 0.75rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
@@ -96,17 +98,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
+    height: 34px;
     border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
     flex-shrink: 0 !important;
 }
 
 .echo-title {
     font-family: 'Playfair Display', Georgia, serif !important;
     font-style: italic !important;
-    font-size: 1.25rem !important;
+    font-size: 1.15rem !important;
     font-weight: 600 !important;
     color: #1A2B4C !important;
     margin: 0 !important;
@@ -120,9 +122,9 @@ div[data-testid="stPopover"] > button {
     color: #D4AF37 !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    padding: 0.15rem 0.5rem !important;
-    height: 28px !important;
-    min-height: 28px !important;
+    padding: 0.1rem 0.45rem !important;
+    height: 26px !important;
+    min-height: 26px !important;
     transition: all 0.2s ease !important;
 }
 div[data-testid="stPopover"] > button:hover {
@@ -135,8 +137,8 @@ div[data-testid="stButton"] > button {
     color: #D4AF37 !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    height: 28px !important;
-    min-height: 28px !important;
+    height: 26px !important;
+    min-height: 26px !important;
     transition: all 0.2s ease !important;
 }
 div[data-testid="stButton"] > button:hover {
@@ -144,7 +146,7 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Inner Chat Box Container - Scrollable without visible scrollbars */
+/* Inner Chat Box Container - Compact Scrollable */
 .echo-chat-box-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -163,7 +165,7 @@ div[data-testid="stButton"] > button:hover {
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    padding: 0.65rem 0.9rem !important;
+    padding: 0.5rem 0.75rem !important;
     height: 100% !important;
 }
 
@@ -174,7 +176,7 @@ div[data-testid="stButton"] > button:hover {
     align-items: flex-start;
     gap: 6px;
     width: 100%;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.55rem;
 }
 
 .echo-user-bubble {
@@ -182,11 +184,11 @@ div[data-testid="stButton"] > button:hover {
     background: #111A2B;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37;
-    padding: 0.4rem 0.75rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 10px 2px 10px 10px;
     max-width: 75%;
-    font-size: 0.82rem;
-    line-height: 1.45;
+    font-size: 0.80rem;
+    line-height: 1.4;
     word-break: break-word;
 }
 .echo-user-bubble p {
@@ -195,8 +197,8 @@ div[data-testid="stButton"] > button:hover {
 }
 
 .echo-avatar-user {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -211,7 +213,7 @@ div[data-testid="stButton"] > button:hover {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.65rem;
     background: transparent;
 }
 
@@ -219,12 +221,12 @@ div[data-testid="stButton"] > button:hover {
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.12rem;
 }
 
 .echo-avatar-assistant {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
@@ -236,14 +238,14 @@ div[data-testid="stButton"] > button:hover {
 
 .echo-assistant-title {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: #1A2B4C;
 }
 
 .echo-assistant-badge-gold {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 0.55rem;
+    font-size: 0.52rem;
     padding: 1px 4px;
     border-radius: 2px;
     background: #FEF3C7;
@@ -254,10 +256,10 @@ div[data-testid="stButton"] > button:hover {
 
 .echo-assistant-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    padding-left: 23px;
+    padding-left: 21px;
     color: #374151;
-    font-size: 0.83rem;
-    line-height: 1.5;
+    font-size: 0.80rem;
+    line-height: 1.45;
 }
 .echo-assistant-body strong {
     color: #111827;
@@ -268,8 +270,8 @@ div[data-testid="stButton"] > button:hover {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    margin-top: 0.35rem;
-    padding-left: 23px;
+    margin-top: 0.3rem;
+    padding-left: 21px;
 }
 .echo-source-pill {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
@@ -278,8 +280,8 @@ div[data-testid="stButton"] > button:hover {
     background: #111A2B;
     border: 1px solid #D4AF37;
     border-radius: 12px;
-    padding: 1px 7px;
-    font-size: 0.68rem;
+    padding: 1px 6px;
+    font-size: 0.65rem;
     color: #D4AF37 !important;
     text-decoration: none !important;
     font-weight: 500;
@@ -295,8 +297,8 @@ div[data-testid="stButton"] > button:hover {
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.4rem 0;
-    font-size: 0.78rem;
+    margin: 0.35rem 0;
+    font-size: 0.75rem;
     background: #FFFFFF;
     border-radius: 4px;
     overflow: hidden;
@@ -308,12 +310,12 @@ div[data-testid="stButton"] > button:hover {
     color: #D4AF37;
     font-weight: 600;
     border: 1px solid #334155;
-    padding: 4px 7px;
+    padding: 3px 6px;
     text-align: left;
 }
 .echo-assistant-body td {
     border: 1px solid #E2E8F0;
-    padding: 4px 7px;
+    padding: 3px 6px;
     color: #374151;
 }
 
@@ -323,24 +325,24 @@ div[data-testid="stButton"] > button:hover {
     align-items: center;
     gap: 5px;
     padding-left: 0.2rem;
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.4rem;
 }
 .echo-thinking-pill {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 7px;
+    padding: 2px 6px;
     border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid rgba(212, 175, 55, 0.35);
-    font-size: 0.70rem;
+    font-size: 0.68rem;
     color: #854D0E;
     font-weight: 500;
 }
 .echo-pulse-dot {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     background-color: #D4AF37;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
@@ -355,14 +357,14 @@ div[data-testid="stButton"] > button:hover {
     background: #FFFFFF;
     border: 1px solid #D4AF37;
     border-radius: 6px;
-    padding: 0.45rem 0.65rem;
-    margin-top: 0.35rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    padding: 0.4rem 0.6rem;
+    margin-top: 0.3rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
 /* Docked Bottom Chat Input */
 .echo-input-dock {
-    padding-top: 0.35rem !important;
+    padding-top: 0.3rem !important;
     flex-shrink: 0 !important;
 }
 
@@ -376,13 +378,13 @@ div[data-testid="stChatInput"] > div {
     border: 1px solid rgba(212, 175, 55, 0.55) !important;
     border-radius: 20px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-    padding: 2px 8px !important;
+    padding: 1px 7px !important;
 }
 
 div[data-testid="stChatInput"] textarea {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color: #0F172A !important;
-    font-size: 0.84rem !important;
+    font-size: 0.80rem !important;
 }
 </style>
 """
@@ -492,7 +494,7 @@ def render_context_popup_dialog():
                 st.rerun()
 
 
-def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None, subtitle=None):
+def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
@@ -510,7 +512,7 @@ def render_echo_chat(container=None, height=620, title="Ask Echo", caption=None,
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
 
-    safe_scroll_height = max(300, int(height) - 130) if height else 500
+    safe_scroll_height = max(260, int(height) - 150) if height else 420
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
