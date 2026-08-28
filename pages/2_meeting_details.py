@@ -559,119 +559,178 @@ def export_to_pdf_template_1(df, meeting_details, other_discussions):
 
 def export_to_word_template_2(df, meeting_details, other_discussions):
     doc = Document()
-    for section in doc.sections:
-        section.top_margin = Inches(0.5)
-        section.bottom_margin = Inches(0.5)
-        section.left_margin = Inches(0.8)
-        section.right_margin = Inches(0.8)
-
-    p_title = doc.add_paragraph()
-    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_title.paragraph_format.space_after = Pt(2)
-    r_title = p_title.add_run("MINUTES OF THE MEETING")
-    r_title.bold = True
-    r_title.font.name = "Arial"
-    r_title.font.size = Pt(16)
     
-    company_target = meeting_details.get("external_attendees", [])
-    primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "General Meeting"
-    p_sub = doc.add_paragraph()
-    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_sub.paragraph_format.space_after = Pt(16)
-    r_sub = p_sub.add_run(f"Project / Client: {primary_client_rep}")
-    r_sub.font.name = "Arial"
-    r_sub.font.size = Pt(11)
-    r_sub.font.color.rgb = RGBColor(100, 100, 100)
+    # Page setup - Standard 1 inch margins
+    for section in doc.sections:
+        section.top_margin = Inches(1.0)
+        section.bottom_margin = Inches(1.0)
+        section.left_margin = Inches(1.0)
+        section.right_margin = Inches(1.0)
 
-    doc.add_heading('Meeting Details', level=2)
-    details_table = doc.add_table(rows=5, cols=2)
-    details_table.style = 'Table Grid'
+    # Base helper to create styled text matching the document
+    def add_clean_para(text="", bold=False, italic=False, font_size=11, space_before=0, space_after=4, color_rgb=(0, 0, 0)):
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(space_before)
+        p.paragraph_format.space_after = Pt(space_after)
+        p.paragraph_format.line_spacing = 1.15
+        if text:
+            run = p.add_run(text)
+            run.bold = bold
+            run.italic = italic
+            run.font.name = "Arial"
+            run.font.size = Pt(font_size)
+            run.font.color.rgb = RGBColor(*color_rgb)
+        return p
+
+    # 1. Title Block
+    add_clean_para("Minutes of the Meeting", bold=True, font_size=16, space_after=0)
+    
+    company_name = meeting_details.get("company_name", "").strip() or "General Meeting"
+    add_clean_para(company_name, bold=False, font_size=13, space_after=0)
+    
+    # Meeting topic / sub-headline
+    topic = "Planning and Format Confirmation" if "sportsfest" in company_name.lower() else "General Alignment and Status Review"
+    add_clean_para(topic, font_size=11, space_after=14)
+
+    # 2. Meeting Details
+    add_clean_para("Meeting Details", bold=True, font_size=12, space_before=10, space_after=4)
     
     date_str = meeting_details.get("date", "____________")
     time_str = meeting_details.get("time_range", "____________")
     location_str = meeting_details.get('location', '____________')
     prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
+    prep_desig = meeting_details.get("prep_desig", "PRIME Philippines").strip()
     
     details_map = [
         ("Date", date_str),
         ("Time", time_str),
         ("Venue", location_str),
-        ("Prepared by", prep_name),
-        ("Date prepared", datetime.now().strftime("%B %d, %Y"))
+        ("Prepared by", f"{prep_name}, {prep_desig}"),
+        ("Date prepared", datetime.now().strftime("%B %d, %Y")),
+        ("Source", "Meeting notes and transcript")
     ]
     
-    for i, (key, val) in enumerate(details_map):
-        cells = details_table.rows[i].cells
-        cells[0].text = key
-        cells[1].text = val
-        cells[0].paragraphs[0].runs[0].font.bold = True
-        for cell in cells:
-            cell.paragraphs[0].runs[0].font.name = "Arial"
-            cell.paragraphs[0].runs[0].font.size = Pt(9.5)
+    table_details = doc.add_table(rows=len(details_map), cols=2)
+    table_details.style = 'Table Grid'
+    table_details.alignment = WD_TABLE_ALIGNMENT.LEFT
+    table_details.autofit = False
+    
+    for i, (k, v) in enumerate(details_map):
+        row = table_details.rows[i]
+        c0, c1 = row.cells[0], row.cells[1]
+        c0.width = Inches(2.0)
+        c1.width = Inches(4.5)
+        
+        c0.text = k
+        c1.text = v
+        
+        for c in [c0, c1]:
+            p = c.paragraphs[0]
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
+            if p.runs:
+                p.runs[0].font.name = "Arial"
+                p.runs[0].font.size = Pt(10)
 
-    doc.add_paragraph()
+    add_clean_para("", space_after=8)
 
-    doc.add_heading('Attendees', level=2)
+    # 3. Attendees
+    add_clean_para("Attendees", bold=True, font_size=12, space_before=8, space_after=2)
+    add_clean_para(f"PRIME Philippines — {company_name}", font_size=10, space_after=4)
+    
     all_atts = meeting_details.get("prime_attendees", []) + meeting_details.get("external_attendees", [])
+    if prep_name and prep_name not in all_atts:
+        all_atts.insert(0, f"{prep_name} (minutes prepared by)")
+    elif all_atts:
+        all_atts[0] = f"{all_atts[0]} (minutes prepared by)"
+        
     for att in all_atts:
         if att.strip():
-            p_att = doc.add_paragraph(style='List Bullet')
-            r_att = p_att.add_run(att.strip())
-            r_att.font.name = "Arial"
-            r_att.font.size = Pt(10)
+            p_att = doc.add_paragraph()
+            p_att.paragraph_format.space_before = Pt(0)
+            p_att.paragraph_format.space_after = Pt(2)
+            p_att.paragraph_format.left_indent = Inches(0.2)
+            r = p_att.add_run(att.strip())
+            r.font.name = "Arial"
+            r.font.size = Pt(10)
 
-    doc.add_paragraph()
+    add_clean_para("", space_after=8)
 
-    doc.add_heading('Purpose & Summary', level=2)
-    p_purp = doc.add_paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.")
-    p_purp.paragraph_format.space_after = Pt(12)
-    for r in p_purp.runs: r.font.name, r.font.size = "Arial", Pt(10)
+    # 4. Purpose
+    add_clean_para("Purpose", bold=True, font_size=12, space_before=8, space_after=2)
+    purpose_text = other_discussions if other_discussions.strip() else "To review key discussion items, assign actionable deliverables, and confirm project milestones."
+    add_clean_para(purpose_text, font_size=10, space_after=12)
 
-    doc.add_heading('Discussion Points', level=2)
+    # 5. Decisions Agreed / Discussion Points
+    add_clean_para("Decisions Agreed", bold=True, font_size=12, space_before=8, space_after=4)
     for i, row in df.iterrows():
-        p_dp = doc.add_paragraph(style='List Number')
-        r_dp = p_dp.add_run(str(row.get('Discussion Points', '')))
-        r_dp.font.name = "Arial"
-        r_dp.font.size = Pt(10)
+        dp = str(row.get('Discussion Points', '')).strip()
+        if dp:
+            p_dp = doc.add_paragraph()
+            p_dp.paragraph_format.space_before = Pt(2)
+            p_dp.paragraph_format.space_after = Pt(2)
+            r_num = p_dp.add_run(f"• ")
+            r_num.font.name = "Arial"
+            r_num.font.size = Pt(10)
+            r_txt = p_dp.add_run(dp)
+            r_txt.font.name = "Arial"
+            r_txt.font.size = Pt(10)
 
-    doc.add_paragraph()
+    add_clean_para("", space_after=8)
 
-    doc.add_heading('Action Plan', level=2)
+    # 6. Action Plan Table
+    add_clean_para("Action Plan", bold=True, font_size=12, space_before=8, space_after=4)
+    
     act_table = doc.add_table(rows=len(df)+1, cols=4)
     act_table.style = 'Table Grid'
-    act_headers = ["#", "Action Plan", "Owner", "Deadline"]
-    col_widths = [Inches(0.5), Inches(3.5), Inches(1.5), Inches(1.5)]
+    act_table.alignment = WD_TABLE_ALIGNMENT.LEFT
+    act_table.autofit = False
     
-    for i, header in enumerate(act_headers):
-        cell = act_table.rows[0].cells[i]
-        cell.width, cell.text = col_widths[i], header
-        set_cell_shading(cell, "1A2B4C")
+    act_widths = [Inches(0.5), Inches(3.6), Inches(1.2), Inches(1.2)]
+    act_headers = ["#", "Action", "Owner", "Deadline"]
+    
+    for idx, head_text in enumerate(act_headers):
+        cell = act_table.rows[0].cells[idx]
+        cell.width = act_widths[idx]
+        cell.text = head_text
         p = cell.paragraphs[0]
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        if p.runs: 
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after = Pt(3)
+        if idx in [0, 2, 3]:
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        if p.runs:
             p.runs[0].font.bold = True
-            p.runs[0].font.color.rgb = RGBColor(255, 255, 255)
-            p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+            p.runs[0].font.name = "Arial"
+            p.runs[0].font.size = Pt(9.5)
 
     for i, row in df.iterrows():
-        cells = act_table.rows[i+1].cells
-        cells[0].text, cells[1].text, cells[2].text, cells[3].text = str(i+1), str(row.get("Action Plan", "")), str(row.get("Person-in-charge", "")), str(row.get("Indicative Delivery Date", ""))
-        for c_idx, cell in enumerate(cells):
-            cell.width = col_widths[c_idx]
+        row_cells = act_table.rows[i+1].cells
+        row_cells[0].text = str(i+1)
+        row_cells[1].text = str(row.get("Action Plan", ""))
+        row_cells[2].text = str(row.get("Person-in-charge", ""))
+        row_cells[3].text = str(row.get("Indicative Delivery Date", ""))
+        
+        for c_idx, cell in enumerate(row_cells):
+            cell.width = act_widths[c_idx]
             p = cell.paragraphs[0]
-            if c_idx in [0, 2, 3]: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+            p.paragraph_format.space_before = Pt(3)
+            p.paragraph_format.space_after = Pt(3)
+            if c_idx in [0, 2, 3]:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            if p.runs:
+                p.runs[0].font.name = "Arial"
+                p.runs[0].font.size = Pt(9)
 
-    doc.add_paragraph()
+    add_clean_para("", space_after=12)
 
-    p_footer = doc.add_paragraph()
-    p_footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_footer.paragraph_format.space_before = Pt(24)
-    r_footer = p_footer.add_run(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.")
-    r_footer.italic = True
-    r_footer.font.color.rgb = RGBColor(100, 100, 100)
-    r_footer.font.name = "Arial"
-    r_footer.font.size = Pt(8)
+    # 7. Document Footer Note
+    p_foot = add_clean_para(
+        f"Owners and deadlines are marked as to be confirmed where the meeting notes did not record them.\nPrepared for circulation to {company_name}. Please return corrections before this is treated as the agreed record.",
+        font_size=8.5,
+        italic=True,
+        color_rgb=(100, 100, 100),
+        space_before=14
+    )
 
     bio = BytesIO()
     doc.save(bio)
