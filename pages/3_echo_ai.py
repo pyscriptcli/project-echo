@@ -19,6 +19,27 @@ setup_page_layout()
 # 2. Large Architectural Grid Canvas (Matching Meeting Gallery)
 st.markdown("""
 <style>
+/* Enable vertical scrolling on root viewports */
+html, body, [data-testid="stAppViewContainer"], .stApp, .main, .block-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important;  /* IE and Edge */
+}
+
+/* Hide scrollbars across WebKit browsers (Chrome, Safari, Edge) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+[data-testid="stAppViewContainer"]::-webkit-scrollbar,
+.stApp::-webkit-scrollbar,
+.main::-webkit-scrollbar,
+.block-container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
 [data-testid="stAppViewContainer"], .stApp {
     background-color: #F5F1E8 !important;
     background-image: 
@@ -26,11 +47,9 @@ st.markdown("""
         linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
     background-size: 80px 80px !important;
     background-position: 0 0 !important;
-    overflow: hidden !important;
 }
 
 .main, .block-container {
-    overflow: hidden !important;
     padding-top: 1rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 2rem !important;
