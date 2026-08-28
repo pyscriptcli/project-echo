@@ -745,7 +745,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     '<span class="echo-assistant-badge-gold">AI</span>'
                     '</div>'
                     '<div class="echo-assistant-body">'
-                    'Hi Team, this is Echo, ask me anything...'
+                    'Hi Team, I am Echo, CRD's AI Assistant ask me anything...'
                     '</div>'
                     '</div>',
                     unsafe_allow_html=True
