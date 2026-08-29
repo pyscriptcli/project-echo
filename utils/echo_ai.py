@@ -41,44 +41,26 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-SVG_PLUS_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-</svg>
-"""
-
-SVG_SETTINGS_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="3"></circle>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-</svg>
-"""
-
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
 
-/* Main container styling */
 .main .block-container {
     padding: 0 !important;
     max-width: 100% !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Hide Streamlit branding */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
-/* Clean chat container */
 .echo-main-container {
     max-width: 900px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
-/* Modern header - like ChatGPT/Claude */
 .echo-modern-header {
     display: flex;
     align-items: center;
@@ -111,7 +93,6 @@ header {visibility: hidden;}
     gap: 12px;
 }
 
-/* Model selector - clean dropdown */
 .model-selector-container {
     position: relative;
 }
@@ -121,52 +102,19 @@ header {visibility: hidden;}
     border: 1px solid rgba(212, 175, 55, 0.2) !important;
     border-radius: 8px !important;
     padding: 8px 12px !important;
-    min-width: 200px !important;
+    min-width: 220px !important;
     transition: all 0.2s ease !important;
-}
-
-.model-selector-container > div:hover {
-    border-color: #D4AF37 !important;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1) !important;
 }
 
 .model-selector-container label {
     display: none !important;
 }
 
-.model-selector-container span {
-    color: #1A2B4C !important;
-    font-size: 0.85rem !important;
-    font-weight: 500 !important;
-}
-
-/* Upload button - clean style */
 .upload-button-container {
     display: flex;
     align-items: center;
 }
 
-.upload-button-container button {
-    background: transparent !important;
-    border: 1px solid rgba(212, 175, 55, 0.3) !important;
-    border-radius: 8px !important;
-    padding: 8px 14px !important;
-    color: #1A2B4C !important;
-    font-size: 0.85rem !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    display: flex;
-    align-items: center;
-    gap: 6px !important;
-}
-
-.upload-button-container button:hover {
-    background: rgba(212, 175, 55, 0.05) !important;
-    border-color: #D4AF37 !important;
-}
-
-/* Settings button */
 .settings-button-container button {
     background: transparent !important;
     border: 1px solid rgba(212, 175, 55, 0.2) !important;
@@ -178,16 +126,8 @@ header {visibility: hidden;}
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    color: #1A2B4C !important;
 }
 
-.settings-button-container button:hover {
-    border-color: #D4AF37 !important;
-    background: rgba(212, 175, 55, 0.05) !important;
-}
-
-/* Chat area */
 .echo-chat-area {
     min-height: 400px;
     max-height: calc(100vh - 350px);
@@ -196,13 +136,6 @@ header {visibility: hidden;}
     margin-bottom: 20px;
 }
 
-.echo-chat-area div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-}
-
-/* Welcome message */
 .echo-welcome {
     text-align: center;
     padding: 60px 20px;
@@ -218,12 +151,6 @@ header {visibility: hidden;}
     font-weight: 600;
 }
 
-.echo-welcome p {
-    font-size: 1rem;
-    color: #94A3B8;
-}
-
-/* Message styling */
 .echo-message {
     margin-bottom: 24px;
     display: flex;
@@ -290,15 +217,6 @@ header {visibility: hidden;}
     border-bottom-left-radius: 4px;
 }
 
-.echo-message-content p {
-    margin: 0 0 10px 0;
-}
-
-.echo-message-content p:last-child {
-    margin-bottom: 0;
-}
-
-/* Sources */
 .echo-sources {
     display: flex;
     flex-wrap: wrap;
@@ -319,15 +237,8 @@ header {visibility: hidden;}
     color: #D4AF37 !important;
     text-decoration: none !important;
     font-weight: 500;
-    transition: all 0.2s ease;
 }
 
-.echo-source-pill:hover {
-    background: #D4AF37;
-    color: #111A2B !important;
-}
-
-/* Input area - modern style */
 .echo-input-area {
     position: sticky;
     bottom: 0;
@@ -337,38 +248,6 @@ header {visibility: hidden;}
     margin-top: auto;
 }
 
-.echo-input-container {
-    background: #FFFFFF;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 16px;
-    padding: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
-}
-
-.echo-input-container:focus-within {
-    border-color: #D4AF37;
-    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
-}
-
-.echo-input-container textarea {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.95rem !important;
-    line-height: 1.5 !important;
-    padding: 12px 16px !important;
-    border: none !important;
-    background: transparent !important;
-    resize: none !important;
-    min-height: 56px !important;
-    max-height: 200px !important;
-}
-
-.echo-input-container textarea:focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-/* Thinking indicator */
 .echo-thinking {
     display: flex;
     align-items: center;
@@ -390,20 +269,14 @@ header {visibility: hidden;}
     animation: echo-pulse 1.4s infinite ease-in-out both;
 }
 
-.echo-pulse-dot:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.echo-pulse-dot:nth-child(3) {
-    animation-delay: 0.4s;
-}
+.echo-pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+.echo-pulse-dot:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes echo-pulse {
     0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
     40% { transform: scale(1); opacity: 1; }
 }
 
-/* Knowledge proposal card */
 .echo-knowledge-card {
     background: #FFFFFF;
     border: 1px solid #D4AF37;
@@ -438,60 +311,6 @@ header {visibility: hidden;}
     color: #1A2B4C;
     border: 1px solid rgba(212, 175, 55, 0.2);
 }
-
-/* Popover styling */
-div[data-testid="stPopover"] {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-    padding: 16px !important;
-}
-
-div[data-testid="stPopover"] h3 {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #854D0E;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.3);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 175, 55, 0.5);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .echo-modern-header {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-    }
-    
-    .echo-header-controls {
-        justify-content: space-between;
-    }
-    
-    .echo-message-content {
-        max-width: 90%;
-    }
-}
 </style>
 """
 
@@ -523,7 +342,6 @@ def _encode_image_to_base64(uploaded_file) -> tuple:
         return None, None
 
 def _get_existing_knowledge_map() -> dict:
-    """Retrieves full existing map structured as {(category, key_lower): original_value}."""
     try:
         data = fetch_echo_context()
         knowledge_map = {}
@@ -540,7 +358,6 @@ def _get_existing_knowledge_map() -> dict:
         return {}
 
 def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> tuple[bool, str]:
-    """Executes the DB upsert with payload normalization and robust verification."""
     try:
         c_clean = str(category).strip().lower()
         k_clean = str(key).strip()
@@ -592,7 +409,6 @@ def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) 
         return False, f"Exception during write of '{key}': {str(e)}"
 
 def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
-    """Partitions staged rows into new items and duplicate conflicts with existing DB entries."""
     existing_map = _get_existing_knowledge_map()
     clean_rows = []
     conflicts = []
@@ -629,7 +445,6 @@ def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
 
 @st.dialog("Echo Context Manager", width="large")
 def render_context_popup_dialog():
-    """Modal popup for multimodal inputs and duplicate-aware database commits."""
     if "extracted_context_df" not in st.session_state:
         st.session_state["extracted_context_df"] = None
     if "detected_conflicts" not in st.session_state:
@@ -882,7 +697,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model" not in st.session_state:
-        st.session_state["echo_selected_model"] = "qwen/qwen-2.5-72b-instruct"
+        st.session_state["echo_selected_model"] = "qwen/qwen2.5-vl-72b-instruct"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -894,12 +709,10 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
     if "uploaded_files" not in st.session_state:
         st.session_state["uploaded_files"] = []
 
-    safe_scroll_height = max(260, int(height) - 150) if height else 420
-
     with target.container():
         st.markdown('<div class="echo-main-container">', unsafe_allow_html=True)
 
-        # Modern Header - Like ChatGPT/Claude
+        # Header
         st.markdown(
             '<div class="echo-modern-header">'
             '<div class="echo-header-left">'
@@ -909,14 +722,15 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             unsafe_allow_html=True
         )
         
-        # Model Selector
+        # Multimodal Model Selector
         st.markdown('<div class="model-selector-container">', unsafe_allow_html=True)
         st.session_state["echo_selected_model"] = st.selectbox(
             "Model",
             options=[
-                "deepseek-chat",
-                "deepseek/deepseek-v4-flash-vision-exp",
-                "deepseek-reasoner",
+                "qwen/qwen2.5-vl-72b-instruct",
+                "google/gemini-2.0-flash-001",
+                "openai/gpt-4o-mini",
+                "deepseek/deepseek-chat"
             ],
             index=0,
             label_visibility="collapsed",
@@ -924,22 +738,22 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         )
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Upload Button
+        # Header File Upload
         st.markdown('<div class="upload-button-container">', unsafe_allow_html=True)
         uploaded_file = st.file_uploader(
             "Upload",
-            type=["pdf", "png", "jpg", "jpeg", "webp", "txt", "doc", "docx"],
+            type=["pdf", "png", "jpg", "jpeg", "webp", "txt"],
             accept_multiple_files=False,
             key="header_file_uploader",
             label_visibility="collapsed"
         )
         st.markdown('</div>', unsafe_allow_html=True)
         
-        if uploaded_file:
-            st.session_state["uploaded_files"].append(uploaded_file)
-            st.toast(f"📎 Uploaded: {uploaded_file.name}", icon="✅")
+        if uploaded_file and uploaded_file not in st.session_state["uploaded_files"]:
+            st.session_state["uploaded_files"] = [uploaded_file]
+            st.toast(f"📎 Attached for next prompt: {uploaded_file.name}", icon="✅")
         
-        # Settings Button with Popover
+        # Settings Popover
         st.markdown('<div class="settings-button-container">', unsafe_allow_html=True)
         with st.popover("⚙️", help="Settings"):
             st.markdown("### ⚙️ Settings")
@@ -959,6 +773,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         if st.button("🗑️", key="btn_clear_global_chat", help="Clear conversation"):
             st.session_state["global_chat_history"] = []
             st.session_state["knowledge_proposal"] = None
+            st.session_state["uploaded_files"] = []
             st.rerun()
         
         st.markdown('</div></div></div>', unsafe_allow_html=True)
@@ -974,7 +789,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     '<div class="echo-welcome">'
                     f'{SVG_ECHO_LOGO}'
                     '<h2>Welcome to Echo</h2>'
-                    '<p>Your AI assistant for PRIME Philippines. Ask me anything about meetings, projects, or company knowledge.</p>'
+                    '<p>Your AI assistant for PRIME Philippines. Ask me anything or attach an image/PDF.</p>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -1032,7 +847,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     key_clean = str(prop["key"]).strip()
                     
                     if (cat_clean, key_clean.lower()) in existing_map:
-                        st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
+                        st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`.")
                     else:
                         success, err = _safe_upsert_and_verify(
                             category=prop["category"],
@@ -1064,9 +879,13 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
-            st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
+            attached_files = st.session_state.get("uploaded_files", [])
+            display_prompt = active_prompt
+            if attached_files:
+                display_prompt += f" _(Attached: {', '.join([f.name for f in attached_files])})_"
+            
+            st.session_state["global_chat_history"].append({"role": "user", "content": display_prompt})
 
-            # Show thinking indicator
             with chat_box:
                 st.markdown(
                     '<div class="echo-thinking">'
@@ -1090,10 +909,13 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 chat_history=st.session_state["global_chat_history"],
                 web_context=web_context,
                 model_name=st.session_state["echo_selected_model"],
-                include_knowledge=st.session_state["echo_source_knowledge"]
+                include_knowledge=st.session_state["echo_source_knowledge"],
+                uploaded_files=attached_files
             )
             
-            # Remove thinking indicator and add response
+            # Clear uploaded files after processing
+            st.session_state["uploaded_files"] = []
+            
             st.session_state["global_chat_history"].append({
                 "role": "assistant",
                 "content": answer,
@@ -1113,17 +935,14 @@ def _perform_web_search(query: str) -> tuple:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         resp = requests.post(url, data={"q": query}, headers=headers, timeout=10)
         if resp.status_code == 200:
-            titles = re.findall(r'<a class="result__url"[^>]*>(.*?)</a>', resp.text)
             snippets = re.findall(r'<a class="result__snippet[^>]*>(.*?)</a>', resp.text, re.DOTALL)
             urls = re.findall(r'<a class="result__url[^>]*href="([^"]+)"', resp.text)
             
             for i in range(min(4, len(snippets))):
                 clean_snippet = re.sub(r'<.*?>', '', snippets[i]).strip()
                 link = urls[i] if i < len(urls) else "#"
-                raw_title = re.sub(r'<.*?>', '', titles[i]).strip() if i < len(titles) else f"Source {i+1}"
-                
                 domain = re.sub(r'^https?://(www\.)?', '', link).split('/')[0]
-                pill_title = domain if domain else raw_title[:20]
+                pill_title = domain if domain else f"Source {i+1}"
 
                 sources.append({"title": pill_title, "url": link})
                 text_snippets.append(f"[{i+1}] {clean_snippet} (URL: {link})")
@@ -1132,8 +951,7 @@ def _perform_web_search(query: str) -> tuple:
     return ("\n".join(text_snippets), sources)
 
 
-def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, extraction_model: str = "qwen/qwen-image-3-pro") -> list:
-    """Routes image inputs to a vision-capable model and text/PDFs to DeepSeek or OpenRouter."""
+def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, extraction_model: str = "qwen/qwen2.5-vl-72b-instruct") -> list:
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
         "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
@@ -1143,81 +961,37 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, ext
         "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
     )
 
-    is_openrouter = "/" in extraction_model or extraction_model.endswith(":free")
-
-    if is_openrouter:
-        api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
-        if not api_key:
-            st.error("OpenRouter API Key is required for this extraction model.")
-            return []
+    api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
+    if not api_key:
+        st.error("OpenRouter API Key is required for multimodal extraction.")
+        return []
         
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://echo.prime.ph",
-            "X-Title": "Echo AI"
-        }
-        
-        if image_data_url:
-            user_content = [
-                {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
-                {"type": "image_url", "image_url": {"url": image_data_url}}
-            ]
-        else:
-            user_content = raw_text[:20000]
-
-        payload = {
-            "model": extraction_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.1,
-            "max_tokens": 4000
-        }
-        
-    elif image_data_url:
-        api_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
-        if not api_key:
-            st.error("OpenAI API Key is required for image/vision scanning.")
-            return []
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
-                        {"type": "image_url", "image_url": {"url": image_data_url}}
-                    ]
-                }
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.1,
-            "max_tokens": 4000
-        }
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://echo.prime.ph",
+        "X-Title": "Echo AI"
+    }
+    
+    if image_data_url:
+        user_content = [
+            {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
+            {"type": "image_url", "image_url": {"url": image_data_url}}
+        ]
     else:
-        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-        if not api_key:
-            st.error("DeepSeek API Key configuration missing.")
-            return []
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-        payload = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": raw_text[:20000]}
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.1,
-            "max_tokens": 8000
-        }
+        user_content = raw_text[:20000]
+
+    payload = {
+        "model": extraction_model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.1,
+        "max_tokens": 4000
+    }
 
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=90)
@@ -1240,24 +1014,6 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, ext
                         return _normalize_extracted_items(parsed.get("items", []))
                     except Exception:
                         pass
-                
-                item_matches = re.findall(
-                    r'\{\s*"category"\s*:\s*"([^"]+)"\s*,\s*"key"\s*:\s*"([^"]+)"\s*,\s*"value"\s*:\s*(?:\"(.*?)\"|(\{.*?\}))\s*(?:,\s*"priority"\s*:\s*(\d+))?\s*\}',
-                    cleaned,
-                    re.DOTALL
-                )
-                if item_matches:
-                    fallback_items = []
-                    for cat, key, val_str, val_obj, prio in item_matches:
-                        val = val_str if val_str else val_obj
-                        fallback_items.append({
-                            "category": cat,
-                            "key": key,
-                            "value": val,
-                            "priority": int(prio) if prio else 2
-                        })
-                    return fallback_items
-
         st.error(f"Extraction service error ({resp.status_code}): {resp.text}")
         return []
     except Exception as e:
@@ -1286,28 +1042,21 @@ def _query_echo_backend(
     archive_records: list, 
     chat_history: list, 
     web_context: str = "",
-    model_name: str = "qwen/qwen-2.5-72b-instruct",
-    include_knowledge: bool = True
+    model_name: str = "qwen/qwen2.5-vl-72b-instruct",
+    include_knowledge: bool = True,
+    uploaded_files: list = None
 ) -> tuple:
-    is_openrouter = "/" in model_name or model_name.endswith(":free")
-    
-    if is_openrouter:
-        api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
-        if not api_key:
-            return "OpenRouter API Key is missing in Streamlit Secrets. Please add it to `.streamlit/secrets.toml`.", None
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://echo.prime.ph",
-            "X-Title": "Echo AI"
-        }
-    else:
-        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-        if not api_key:
-            return "DeepSeek API Key is missing in Streamlit Secrets.", None
-        url = "https://api.deepseek.com/chat/completions"
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
+    if not api_key:
+        return "OpenRouter API Key is missing in Streamlit Secrets.", None
+        
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://echo.prime.ph",
+        "X-Title": "Echo AI"
+    }
 
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
 
@@ -1340,16 +1089,10 @@ CURRENT DATE & TIME: {current_date_str}
 {web_section}
 """
 
-    citation_rule = (
-        "Incorporate web facts smoothly into the response. Link structures are managed by the UI pills."
-        if web_context else ""
-    )
-
     system_prompt = (
         "You are Echo, an executive AI analyst for PRIME Philippines. "
         f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
         "Synthesize available sources, structured knowledge, and meeting archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
-        f"{citation_rule}\n\n"
         "Determine if the user input defines a new team member role, acronym, project specification, property update, or general entity that should be preserved in the persistent Knowledge Base. "
         "Always respond in JSON format matching the schema:\n"
         "{\n"
@@ -1360,9 +1103,26 @@ CURRENT DATE & TIME: {current_date_str}
     )
 
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
+    
+    # Add previous chat history (text-only)
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
-    messages.append({"role": "user", "content": question})
+        
+    # Build multimodal content for the active prompt if files exist
+    if uploaded_files:
+        user_content = [{"type": "text", "text": question}]
+        for f in uploaded_files:
+            file_type = f.name.split('.')[-1].lower()
+            if file_type in ['png', 'jpg', 'jpeg', 'webp']:
+                img_data_url, _ = _encode_image_to_base64(f)
+                if img_data_url:
+                    user_content.append({"type": "image_url", "image_url": {"url": img_data_url}})
+            elif file_type == 'pdf':
+                pdf_text = _extract_text_from_pdf(f)
+                user_content.append({"type": "text", "text": f"\n\n[ATTACHED PDF CONTENT ({f.name})]:\n{pdf_text[:12000]}"})
+        messages.append({"role": "user", "content": user_content})
+    else:
+        messages.append({"role": "user", "content": question})
 
     payload = {
         "model": model_name,
