@@ -787,7 +787,15 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     st.session_state["echo_selected_model"] = st.selectbox(
                         "Model",
-                        options=["deepseek-chat", "deepseek-reasoner"],
+                        options=[
+                            "deepseek-chat", 
+                            "deepseek-reasoner",
+                            "minimax/minimax-m3:free",
+                            "google/gemma-4-31b-it:free",
+                            "thinkingmachines/inkling:free",
+                            "meta-llama/llama-3.1-8b-instruct:free",
+                            "google/gemini-flash-1.5"
+                        ],
                         index=0,
                         label_visibility="collapsed"
                     )
@@ -990,8 +998,8 @@ def _perform_web_search(query: str) -> tuple:
     return ("\n".join(text_snippets), sources)
 
 
-def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
-    """Routes image inputs to a vision-capable model and text/PDFs to DeepSeek."""
+def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, extraction_model: str = "google/gemini-flash-1.5") -> list:
+    """Routes image inputs to a vision-capable model and text/PDFs to DeepSeek or OpenRouter."""
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
         "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
@@ -1001,12 +1009,48 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
         "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
     )
 
-    if image_data_url:
+    is_openrouter = "/" in extraction_model or extraction_model.endswith(":free")
+
+    if is_openrouter:
+        api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
+        if not api_key:
+            st.error("OpenRouter API Key is required for this extraction model.")
+            return []
+        
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://echo.prime.ph",
+            "X-Title": "Echo AI"
+        }
+        
+        # OpenRouter supports vision in models like gemini-flash-1.5
+        if image_data_url:
+            user_content = [
+                {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
+                {"type": "image_url", "image_url": {"url": image_data_url}}
+            ]
+        else:
+            user_content = raw_text[:20000]
+
+        payload = {
+            "model": extraction_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+            "max_tokens": 4000
+        }
+        
+    elif image_data_url:
+        # Fallback to existing OpenAI logic for vision
         api_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
         if not api_key:
-            st.error("OpenAI API Key is required for image/vision scanning (DeepSeek API does not support images).")
+            st.error("OpenAI API Key is required for image/vision scanning.")
             return []
-
         url = "https://api.openai.com/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
@@ -1026,11 +1070,11 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
             "max_tokens": 4000
         }
     else:
+        # Fallback to existing DeepSeek logic for text
         api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
         if not api_key:
             st.error("DeepSeek API Key configuration missing.")
             return []
-
         url = "https://api.deepseek.com/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
@@ -1114,11 +1158,27 @@ def _query_echo_backend(
     model_name: str = "deepseek-chat",
     include_knowledge: bool = True
 ) -> tuple:
-    api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-    if not api_key:
-        return "DeepSeek API Key is missing in Streamlit Secrets.", None
+    # Detect if it's an OpenRouter model
+    is_openrouter = "/" in model_name or model_name.endswith(":free")
+    
+    if is_openrouter:
+        api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
+        if not api_key:
+            return "OpenRouter API Key is missing in Streamlit Secrets. Please add it to `.streamlit/secrets.toml`.", None
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://echo.prime.ph", # Recommended by OpenRouter for ranking
+            "X-Title": "Echo AI"
+        }
+    else:
+        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+        if not api_key:
+            return "DeepSeek API Key is missing in Streamlit Secrets.", None
+        url = "https://api.deepseek.com/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
 
     if include_knowledge:
@@ -1178,14 +1238,12 @@ CURRENT DATE & TIME: {current_date_str}
         "model": model_name,
         "messages": messages,
         "temperature": 0.2,
-        "max_tokens": 2000
+        "max_tokens": 2000,
+        "response_format": {"type": "json_object"}
     }
 
-    if model_name == "deepseek-chat":
-        payload["response_format"] = {"type": "json_object"}
-
     try:
-        resp = requests.post("https://api.deepseek.com/chat/completions", headers=headers, json=payload, timeout=60)
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
         if resp.status_code == 200:
             raw_content = resp.json()["choices"][0]["message"]["content"].strip()
             cleaned = re.sub(r"^```json\s*", "", raw_content, flags=re.MULTILINE)
