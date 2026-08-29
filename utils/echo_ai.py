@@ -8,6 +8,7 @@ import pandas as pd
 from pypdf import PdfReader
 from PIL import Image
 from datetime import datetime
+import docx
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
@@ -56,12 +57,13 @@ SVG_FILE_ICON = """
 </svg>
 """
 
-# Model Dictionary Mapping
 MODEL_REGISTRY = {
     "⚡ Fast - deepseek chat": "deepseek/deepseek-chat",
     "🧠 Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
-    "👁️ Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
+    "👁 Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
 }
+
+ALLOWED_ATTACHMENT_TYPES = ["png", "jpg", "jpeg", "webp", "pdf", "docx", "doc", "txt", "csv"]
 
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
@@ -102,7 +104,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     -ms-overflow-style: none !important;
     max-width: 960px !important;
     margin: 0 auto !important;
-    height: calc(100vh - 120px) !important; /* Increased Height */
+    height: calc(100vh - 120px) !important;
     max-height: calc(100vh - 120px) !important;
 }
 
@@ -138,20 +140,24 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     letter-spacing: 0.01em !important;
 }
 
-div[data-testid="stPopover"] > button,
-div[data-testid="stButton"] > button {
+.echo-top-controls div[data-testid="stPopover"] > button,
+.echo-top-controls div[data-testid="stButton"] > button {
     background-color: #111A2B !important;
     color: #D4AF37 !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-    padding: 0.1rem 0.45rem !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 0.55rem !important;
     transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
 }
 
-div[data-testid="stPopover"] > button:hover,
-div[data-testid="stButton"] > button:hover {
+.echo-top-controls div[data-testid="stPopover"] > button:hover,
+.echo-top-controls div[data-testid="stButton"] > button:hover {
     border-color: #F1C40F !important;
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
@@ -365,81 +371,92 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
-/* --- Input Dock with Inline Popover Icon & Upgraded Send Button --- */
-.echo-input-dock {
-    position: relative !important;
-    padding-top: 0.3rem !important;
-    flex-shrink: 0 !important;
-    display: flex;
-    align-items: flex-end;
-}
-
-div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) {
-    position: absolute !important;
-    z-index: 999 !important;
-    bottom: 8px !important;
-    left: 8px !important; 
-    width: 32px !important;
-}
-
-div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button {
-    background: transparent !important;
-    border: none !important;
-    color: #64748B !important;
-    padding: 0 !important;
-    height: 32px !important;
-    min-height: 32px !important;
-    width: 32px !important;
-    box-shadow: none !important;
-    display: flex !important;
+div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     align-items: center !important;
-    justify-content: center !important;
+    margin-top: 0.35rem !important;
+    gap: 8px !important;
 }
 
-div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button:hover {
-    color: #D4AF37 !important;
-    background: rgba(212, 175, 55, 0.1) !important;
-    border-radius: 50% !important;
-}
-
-div[data-testid="stChatInput"] {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+.echo-input-col-target div[data-testid="stChatInput"] {
     width: 100% !important;
+    margin: 0 !important;
 }
 
-div[data-testid="stChatInput"] > div {
+.echo-input-col-target div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
     border: 1px solid rgba(212, 175, 55, 0.55) !important;
     border-radius: 20px !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
-    padding: 2px 7px !important;
-    padding-left: 42px !important; /* Make room for the absolute inline attach button */
+    padding: 2px 8px !important;
+    min-height: 40px !important;
 }
 
-div[data-testid="stChatInput"] textarea {
+.echo-input-col-target div[data-testid="stChatInput"] textarea {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color: #0F172A !important;
     font-size: 0.85rem !important;
-    padding-top: 10px !important;
 }
 
-/* Upgrade Native Send Button */
-div[data-testid="stChatInput"] button {
+.echo-input-col-target div[data-testid="stChatInput"] button {
     background-color: rgba(212, 175, 55, 0.15) !important;
     color: #D4AF37 !important;
     border-radius: 50% !important;
     transition: all 0.2s ease-in-out !important;
 }
 
-div[data-testid="stChatInput"] button:hover {
+.echo-input-col-target div[data-testid="stChatInput"] button:hover {
     background-color: #D4AF37 !important;
     color: #FFFFFF !important;
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
-div[data-testid="stChatInput"] button svg {
-    fill: currentColor !important;
+.echo-attach-col-target div[data-testid="stPopover"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+}
+
+.echo-attach-col-target div[data-testid="stPopover"] > button {
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.1rem !important;
+    background: #111A2B !important;
+    border: 1px solid #D4AF37 !important;
+    color: #D4AF37 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+    margin: 0 !important;
+}
+
+.echo-attach-col-target div[data-testid="stPopover"] > button:hover {
+    border-color: #F1C40F !important;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+}
+
+.echo-attached-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 4px;
+    padding: 0 4px;
+}
+
+.echo-attached-tag {
+    font-size: 0.68rem;
+    color: #854D0E;
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
+    border-radius: 10px;
+    padding: 1px 7px;
+    display: inline-flex;
+    align-items: center;
 }
 </style>
 """
@@ -455,6 +472,23 @@ def _extract_text_from_pdf(uploaded_file) -> str:
         return "\n\n".join(text_content)
     except Exception as e:
         st.error(f"Failed to read PDF file: {e}")
+        return ""
+
+def _extract_text_from_docx(uploaded_file) -> str:
+    try:
+        doc = docx.Document(uploaded_file)
+        full_text = []
+        for p in doc.paragraphs:
+            if p.text.strip():
+                full_text.append(p.text.strip())
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if row_text:
+                    full_text.append(" | ".join(row_text))
+        return "\n".join(full_text)
+    except Exception as e:
+        st.error(f"Failed to read DOCX document: {e}")
         return ""
 
 def _encode_image_to_base64(uploaded_file) -> tuple:
@@ -583,7 +617,7 @@ def render_context_popup_dialog():
         st.session_state["clean_staged_rows"] = []
 
     if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
-        st.markdown(f"<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>{SVG_ALERT_ICON}Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>{SVG_ALERT_ICON} Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
         st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
 
         b_c1, b_c2, _ = st.columns([1, 1, 2])
@@ -665,15 +699,15 @@ def render_context_popup_dialog():
 
     mode = st.radio(
         "Mode",
-        options=["Multimodal AI Extraction (Text/PDF/Vision)", "Manual Row Entry"],
+        options=["Multimodal AI Extraction (Text/PDF/DOCX/Vision)", "Manual Row Entry"],
         horizontal=True,
         label_visibility="collapsed"
     )
 
-    if mode == "Multimodal AI Extraction (Text/PDF/Vision)":
+    if mode == "Multimodal AI Extraction (Text/PDF/DOCX/Vision)":
         source_type = st.segmented_control(
             "Input Format",
-            options=["Text Notes", "PDF Document", "Image / Vision Scan"],
+            options=["Text Notes", "Document (PDF / DOCX)", "Image / Vision Scan"],
             default="Text Notes"
         )
 
@@ -697,22 +731,26 @@ def render_context_popup_dialog():
                     st.session_state["extracted_context_df"] = None
                     st.rerun()
 
-        elif source_type == "PDF Document":
-            pdf_file = st.file_uploader("Upload PDF Document", type=["pdf"], key="dlg_pdf_uploader")
+        elif source_type == "Document (PDF / DOCX)":
+            doc_file = st.file_uploader("Upload PDF or Word Document", type=["pdf", "docx", "doc"], key="dlg_doc_uploader")
             c1, c2 = st.columns([1.5, 1])
             with c1:
-                if st.button("Parse & Extract PDF", key="btn_run_pdf_ext", type="primary", use_container_width=True):
-                    if pdf_file is not None:
-                        with st.spinner("Reading and structuring PDF content..."):
-                            pdf_text = _extract_text_from_pdf(pdf_file)
-                            if pdf_text.strip():
-                                extracted = _extract_context_with_ai(raw_text=pdf_text)
+                if st.button("Parse & Extract Document", key="btn_run_doc_ext", type="primary", use_container_width=True):
+                    if doc_file is not None:
+                        with st.spinner("Reading and structuring document content..."):
+                            if doc_file.name.lower().endswith(".pdf"):
+                                doc_text = _extract_text_from_pdf(doc_file)
                             else:
-                                st.error("No extractable text stream found in PDF.")
+                                doc_text = _extract_text_from_docx(doc_file)
+
+                            if doc_text.strip():
+                                extracted = _extract_context_with_ai(raw_text=doc_text)
+                            else:
+                                st.error("No extractable text stream found in document.")
                     else:
-                        st.warning("Please upload a PDF file first.")
+                        st.warning("Please upload a document file first.")
             with c2:
-                if st.button("Reset Staged Table", key="btn_rst_pdf_ext", use_container_width=True):
+                if st.button("Reset Staged Table", key="btn_rst_doc_ext", use_container_width=True):
                     st.session_state["extracted_context_df"] = None
                     st.rerun()
 
@@ -820,7 +858,16 @@ def render_context_popup_dialog():
                     st.rerun()
 
 
+def _handle_inline_file_upload():
+    new_files = st.session_state.get("echo_chat_dock_uploader", [])
+    if new_files:
+        st.session_state["echo_ui_uploaded_files"] = new_files
+
+
 def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None, subtitle=None):
+    """
+    Renders the unified Echo executive chat workspace with full multi-format file attachment support.
+    """
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
@@ -836,7 +883,6 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
         st.session_state["echo_source_web"] = False
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
-        
     if "echo_ui_uploaded_files" not in st.session_state:
         st.session_state["echo_ui_uploaded_files"] = []
 
@@ -845,7 +891,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        h_left, h_right = st.columns([0.88, 0.12])
+        h_left, h_right = st.columns([0.86, 0.14])
         with h_left:
             st.markdown(
                 f'<div class="echo-header-bar">'
@@ -853,17 +899,22 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 f'</div>',
                 unsafe_allow_html=True
             )
+            if subtitle:
+                st.caption(subtitle)
+            if caption:
+                st.caption(caption)
 
         with h_right:
+            st.markdown('<div class="echo-top-controls">', unsafe_allow_html=True)
             c_settings, c_clr = st.columns(2)
             with c_settings:
-                with st.popover("", icon=":material/settings:", help="Settings"):
+                with st.popover("⚙", help="Settings"):
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     
                     model_options = [
                         "⚡ Fast - deepseek chat",
                         "🧠 Thinking - deepseek reasoning",
-                        "👁️ Vision - qwen vl"
+                        "👁 Vision - qwen vl"
                     ]
                     current_model = st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
                     if current_model not in model_options:
@@ -888,10 +939,12 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         render_context_popup_dialog()
 
             with c_clr:
-                if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
+                if st.button("🗑", key="btn_clear_global_chat", help="Reset conversation"):
                     st.session_state["global_chat_history"] = []
                     st.session_state["knowledge_proposal"] = None
+                    st.session_state["echo_ui_uploaded_files"] = []
                     st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
         chat_box = st.container(height=safe_scroll_height)
@@ -997,20 +1050,35 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         st.session_state["knowledge_proposal"] = None
                         st.rerun()
 
-        st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
-        
-        with st.popover("", icon=":material/attach_file:", help="Open attachment menu"):
-            st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>UPLOAD FILES</span>", unsafe_allow_html=True)
-            st.session_state["echo_ui_uploaded_files"] = st.file_uploader(
-                "Attach Documents or Images",
-                type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "csv"],
-                accept_multiple_files=True,
-                key="echo_chat_inline_uploader",
-                label_visibility="collapsed"
-            )
-            
-        active_prompt = st.chat_input("Ask Echo...")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Display staged attachments tags above input bar
+        if st.session_state["echo_ui_uploaded_files"]:
+            tags_html = '<div class="echo-attached-tags">'
+            for f in st.session_state["echo_ui_uploaded_files"]:
+                tags_html += f'<span class="echo-attached-tag">{SVG_FILE_ICON} {f.name}</span>'
+            tags_html += '</div>'
+            st.markdown(tags_html, unsafe_allow_html=True)
+
+        # Single Row: Chat Input & Circular Attachment Trigger
+        input_col, attach_col = st.columns([0.94, 0.06])
+
+        with input_col:
+            st.markdown('<div class="echo-input-col-target">', unsafe_allow_html=True)
+            active_prompt = st.chat_input("Ask Echo...")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with attach_col:
+            st.markdown('<div class="echo-attach-col-target">', unsafe_allow_html=True)
+            with st.popover("📎", help="Attach Documents / Scans"):
+                st.markdown("<span style='font-size:0.80rem; font-weight:600; color:#1A2B4C;'>Upload Attachments</span>", unsafe_allow_html=True)
+                st.file_uploader(
+                    "Upload files",
+                    type=ALLOWED_ATTACHMENT_TYPES,
+                    accept_multiple_files=True,
+                    key="echo_chat_dock_uploader",
+                    label_visibility="collapsed",
+                    on_change=_handle_inline_file_upload
+                )
+            st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
             attached_files_list = st.session_state["echo_ui_uploaded_files"] if st.session_state["echo_ui_uploaded_files"] else []
@@ -1062,6 +1130,8 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 uploaded_files=attached_files_list
             )
             
+            st.session_state["echo_ui_uploaded_files"] = []
+            
             thinking_placeholder.empty()
             st.session_state["global_chat_history"].append({
                 "role": "assistant",
@@ -1104,7 +1174,7 @@ def _perform_web_search(query: str) -> tuple:
 def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
-        "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
+        "Analyze the input (text, PDF content, DOCX content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
         "For complex, tabular, or scouting logs that have varying schemas, assign 'category': 'knowledge', 'key': [Main Entity Name or Code], "
         "and 'value': a compact JSON string capturing all available key-value pairs. "
         "For team members, jargon, or projects, assign 'category' to 'team', 'jargon', or 'projects' respectively with a string or JSON 'value'. "
@@ -1300,9 +1370,16 @@ CURRENT DATE & TIME: {current_date_str}
                 img_url, _ = _encode_image_to_base64(f)
                 if img_url:
                     user_content_blocks.append({"type": "image_url", "image_url": {"url": img_url}})
-            elif f.type == "application/pdf":
+            elif f.type == "application/pdf" or f.name.lower().endswith(".pdf"):
                 pdf_extracted = _extract_text_from_pdf(f)
                 user_content_blocks.append({"type": "text", "text": f"\n\n[PDF Attachment Content ({f.name})]:\n{pdf_extracted}"})
+            elif (
+                f.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                or f.type == "application/msword" 
+                or f.name.lower().endswith((".docx", ".doc"))
+            ):
+                docx_extracted = _extract_text_from_docx(f)
+                user_content_blocks.append({"type": "text", "text": f"\n\n[DOCX Attachment Content ({f.name})]:\n{docx_extracted}"})
             else:
                 try:
                     f_text = f.read().decode("utf-8")
