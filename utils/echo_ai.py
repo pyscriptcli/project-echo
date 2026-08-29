@@ -9,6 +9,7 @@ from pypdf import PdfReader
 from PIL import Image
 from datetime import datetime
 import docx
+from rapidfuzz import process, fuzz
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
 # --- Pure SVG Icon Assets ---
@@ -513,60 +514,45 @@ def _get_existing_knowledge_map() -> dict:
             cat_clean = str(cat).lower().strip()
             if isinstance(val, dict):
                 for k, v in val.items():
-                    knowledge_map[(cat_clean, str(k).lower().strip())] = (str(k).strip(), str(v))
+                    val_str = json.dumps(v) if isinstance(v, (dict, list)) else str(v)
+                    knowledge_map[(cat_clean, str(k).lower().strip())] = (str(k).strip(), val_str)
             elif isinstance(val, list):
                 for item in val:
-                    knowledge_map[(cat_clean, str(item).lower().strip())] = (str(item).strip(), str(item))
+                    item_str = json.dumps(item) if isinstance(item, (dict, list)) else str(item)
+                    knowledge_map[(cat_clean, item_str.lower().strip())] = (item_str.strip(), item_str)
         return knowledge_map
     except Exception:
         return {}
 
-def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> tuple[bool, str]:
+def _safe_upsert_and_verify(category: str, key: str, value: any, priority: int) -> tuple[bool, str]:
     try:
         c_clean = str(category).strip().lower()
         k_clean = str(key).strip()
-        v_clean = str(value).strip()
         p_clean = int(priority) if pd.notna(priority) else 2
 
-        parsed_val = v_clean
-        try:
-            if (v_clean.startswith("{") and v_clean.endswith("}")) or (v_clean.startswith("[") and v_clean.endswith("]")):
-                parsed_val = json.loads(v_clean)
-        except Exception:
-            parsed_val = v_clean
+        # Standardize structured values for Supabase write
+        if isinstance(value, (dict, list)):
+            v_payload = json.dumps(value)
+        else:
+            v_str = str(value).strip()
+            if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                try:
+                    parsed = json.loads(v_str)
+                    v_payload = json.dumps(parsed)
+                except Exception:
+                    v_payload = v_str
+            else:
+                v_payload = v_str
 
         write_success = upsert_echo_context(
             category=c_clean,
             key=k_clean,
-            value=v_clean,
+            value=v_payload,
             priority=p_clean
         )
 
-        if not write_success and isinstance(parsed_val, (dict, list)):
-            write_success = upsert_echo_context(
-                category=c_clean,
-                key=k_clean,
-                value=parsed_val,
-                priority=p_clean
-            )
-
         if not write_success:
             return False, f"Database write returned False for key: '{k_clean}'"
-
-        if hasattr(fetch_echo_context, "clear"):
-            fetch_echo_context.clear()
-
-        latest_data = fetch_echo_context()
-        cat_data = latest_data.get(c_clean, latest_data.get(category, {}))
-        
-        if isinstance(cat_data, dict):
-            keys_lower = [str(k).strip().lower() for k in cat_data.keys()]
-            if k_clean.lower() in keys_lower:
-                return True, ""
-        elif isinstance(cat_data, list):
-            items_str = [str(item).lower() for item in cat_data]
-            if any(k_clean.lower() in item for item in items_str):
-                return True, ""
 
         return True, ""
     except Exception as e:
@@ -864,6 +850,91 @@ def _handle_inline_file_upload():
         st.session_state["echo_ui_uploaded_files"] = new_files
 
 
+def _get_context_lookup_corpus() -> dict[str, str]:
+    corpus = {}
+    try:
+        context_data = fetch_echo_context()
+        
+        # 1. Team Members
+        for member in context_data.get("team", []):
+            member_str = json.dumps(member) if isinstance(member, (dict, list)) else str(member)
+            if len(member_str.strip()) > 2:
+                corpus[member_str.strip()] = f"{member_str.strip()} (Team Member)"
+                for part in member_str.strip().split():
+                    if len(part) > 2:
+                        corpus[part] = f"{member_str.strip()} (Team Member)"
+
+        # 2. Technical Jargon & Acronyms
+        for term in context_data.get("jargon", {}).keys():
+            if len(str(term).strip()) > 1:
+                corpus[str(term).strip()] = f"{str(term).strip()} (Jargon/Acronym)"
+
+        # 3. Active Projects
+        for proj in context_data.get("projects", []):
+            proj_str = json.dumps(proj) if isinstance(proj, (dict, list)) else str(proj)
+            if len(proj_str.strip()) > 2:
+                corpus[proj_str.strip()] = f"{proj_str.strip()} (Project)"
+
+        # 4. Enterprise Knowledge
+        for key in context_data.get("knowledge", {}).keys():
+            if len(str(key).strip()) > 2:
+                corpus[str(key).strip()] = f"{str(key).strip()} (Knowledge Entity)"
+    except Exception:
+        pass
+    return corpus
+
+
+def _fuzzy_align_query(question: str, threshold: int = 82) -> tuple[str, list[str]]:
+    corpus = _get_context_lookup_corpus()
+    if not corpus or not question.strip():
+        return question, []
+
+    known_keys = list(corpus.keys())
+    tokens = re.findall(r"\b[A-Za-z0-9\-\./_]+\b", question)
+    
+    candidates = []
+    n = len(tokens)
+    for length in [3, 2, 1]:
+        for i in range(n - length + 1):
+            phrase = " ".join(tokens[i : i + length])
+            if len(phrase) >= 3:
+                candidates.append(phrase)
+
+    matched_replacements = []
+    seen_targets = set()
+
+    for candidate in candidates:
+        if candidate.lower() in {"the", "and", "for", "with", "what", "where", "who", "when", "how", "list", "show"}:
+            continue
+
+        match = process.extractOne(
+            candidate,
+            known_keys,
+            scorer=fuzz.token_sort_ratio,
+            score_cutoff=threshold
+        )
+
+        if match:
+            best_term, score, _ = match
+            canonical_repr = corpus[best_term]
+
+            if canonical_repr not in seen_targets:
+                if candidate.lower() != best_term.lower():
+                    matched_replacements.append(f"'{candidate}' -> '{best_term}' ({score:.0f}% match)")
+                seen_targets.add(canonical_repr)
+
+    if matched_replacements:
+        context_hints = "\n".join([f"- {r}" for r in matched_replacements])
+        enhanced_prompt = (
+            f"{question}\n\n"
+            f"[SYSTEM NOTE: Fuzzy entity alignment resolved these intended names/terms from Knowledge Base:\n"
+            f"{context_hints}]"
+        )
+        return enhanced_prompt, matched_replacements
+
+    return question, []
+
+
 def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None, subtitle=None):
     """
     Renders the unified Echo executive chat workspace with full multi-format file attachment support.
@@ -1029,7 +1100,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                             success, err = _safe_upsert_and_verify(
                                 category=prop["category"],
                                 key=key_clean,
-                                value=str(prop["value"]),
+                                value=prop["value"],
                                 priority=prop.get("priority", 2)
                             )
                             if success:
@@ -1295,6 +1366,9 @@ def _query_echo_backend(
     include_knowledge: bool = True,
     uploaded_files: list = None
 ) -> tuple:
+    # 1. Fuzzy Context Alignment using Knowledge Base Corpus
+    aligned_question, corrections = _fuzzy_align_query(question)
+
     openrouter_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
     deepseek_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 
@@ -1313,10 +1387,10 @@ def _query_echo_backend(
 
     if include_knowledge:
         context_data = fetch_echo_context()
-        team_list = ", ".join(context_data.get('team', []))
-        jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-        projects = ", ".join(context_data.get('projects', []))
-        knowledge_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('knowledge', {}).items()])
+        team_list = ", ".join([json.dumps(m) if isinstance(m, (dict, list)) else str(m) for m in context_data.get('team', [])])
+        jargon_list = "\n".join([f"- {k}: {json.dumps(v) if isinstance(v, (dict, list)) else v}" for k, v in context_data.get('jargon', {}).items()])
+        projects = ", ".join([json.dumps(p) if isinstance(p, (dict, list)) else str(p) for p in context_data.get('projects', [])])
+        knowledge_list = "\n".join([f"- {k}: {json.dumps(v) if isinstance(v, (dict, list)) else v}" for k, v in context_data.get('knowledge', {}).items()])
 
         knowledge_section = f"""
 ECHO KNOWLEDGE BASE (SOURCE OF TRUTH):
@@ -1364,7 +1438,7 @@ CURRENT DATE & TIME: {current_date_str}
         messages.append({"role": msg["role"], "content": msg["content"]})
 
     if uploaded_files:
-        user_content_blocks = [{"type": "text", "text": question}]
+        user_content_blocks = [{"type": "text", "text": aligned_question}]
         for f in uploaded_files:
             if f.type.startswith("image/"):
                 img_url, _ = _encode_image_to_base64(f)
@@ -1388,7 +1462,7 @@ CURRENT DATE & TIME: {current_date_str}
                     pass
         messages.append({"role": "user", "content": user_content_blocks})
     else:
-        messages.append({"role": "user", "content": question})
+        messages.append({"role": "user", "content": aligned_question})
 
     payload = {
         "model": model_name.replace("deepseek/", "") if "api.deepseek.com" in api_url else model_name,
