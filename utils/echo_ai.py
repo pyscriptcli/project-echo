@@ -12,7 +12,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -20,14 +20,14 @@ SVG_ECHO_LOGO = """
 """
 
 SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
 </svg>
 """
 
 SVG_GLOBE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -35,443 +35,462 @@ SVG_GLOBE_ICON = """
 """
 
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
 """
 
 SVG_PLUS_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <line x1="12" y1="5" x2="12" y2="19"></line>
     <line x1="5" y1="12" x2="19" y2="12"></line>
 </svg>
 """
 
-SVG_UPLOAD_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="17 8 12 3 7 8"></polyline>
-    <line x1="12" y1="3" x2="12" y2="15"></line>
+SVG_SETTINGS_ICON = """
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
 </svg>
 """
 
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
 
-html, body, [data-testid="stAppViewContainer"], .main, .block-container {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    padding-top: 0.3rem !important;
-    padding-bottom: 0.3rem !important;
+/* Main container styling */
+.main .block-container {
+    padding: 0 !important;
+    max-width: 100% !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-html::-webkit-scrollbar, 
-body::-webkit-scrollbar, 
-[data-testid="stAppViewContainer"]::-webkit-scrollbar, 
-.main::-webkit-scrollbar, 
-.block-container::-webkit-scrollbar,
-div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
-.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    background: transparent !important;
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Clean chat container */
+.echo-main-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background-color: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    max-width: 960px !important;
-    margin: 0 auto !important;
-    height: calc(100vh - 170px) !important;
-    max-height: calc(100vh - 170px) !important;
-}
-
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    padding: 0.45rem 0.75rem !important;
-    gap: 0 !important;
-    box-sizing: border-box !important;
-}
-
-.echo-header-bar {
+/* Modern header - like ChatGPT/Claude */
+.echo-modern-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 42px;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    padding: 0 0.75rem;
-    margin-bottom: 4px;
-    flex-shrink: 0 !important;
-    gap: 8px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    margin-bottom: 20px;
+    background: transparent;
 }
 
 .echo-header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex: 1;
+    gap: 12px;
 }
 
 .echo-title {
     font-family: 'Playfair Display', Georgia, serif !important;
-    font-style: italic !important;
-    font-size: 1.15rem !important;
-    font-weight: 600 !important;
-    color: #1A2B4C !important;
-    margin: 0 !important;
-    line-height: 1 !important;
-    letter-spacing: 0.01em !important;
+    font-style: italic;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1A2B4C;
+    margin: 0;
+    letter-spacing: -0.02em;
 }
 
-.echo-header-right {
+.echo-header-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
-.echo-model-dropdown {
-    min-width: 120px;
+/* Model selector - clean dropdown */
+.model-selector-container {
+    position: relative;
 }
 
-div[data-testid="stSelectbox"] > div {
-    min-width: 120px !important;
+.model-selector-container > div {
+    background: #F8FAFC !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    min-width: 200px !important;
+    transition: all 0.2s ease !important;
 }
 
-div[data-testid="stSelectbox"] label {
+.model-selector-container > div:hover {
+    border-color: #D4AF37 !important;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1) !important;
+}
+
+.model-selector-container label {
     display: none !important;
 }
 
-div[data-testid="stSelectbox"] > div[data-baseweb="select"] {
-    background: #111A2B !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 6px !important;
-    height: 32px !important;
-    min-height: 32px !important;
-}
-
-div[data-testid="stSelectbox"] > div[data-baseweb="select"] span {
-    color: #D4AF37 !important;
-    font-size: 0.80rem !important;
+.model-selector-container span {
+    color: #1A2B4C !important;
+    font-size: 0.85rem !important;
     font-weight: 500 !important;
 }
 
-.echo-upload-btn {
+/* Upload button - clean style */
+.upload-button-container {
+    display: flex;
+    align-items: center;
+}
+
+.upload-button-container button {
     background: transparent !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 6px !important;
-    height: 32px !important;
-    min-height: 32px !important;
-    padding: 0 10px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 8px 14px !important;
+    color: #1A2B4C !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
-    color: #D4AF37 !important;
-    font-size: 0.80rem !important;
-    font-weight: 500 !important;
+    display: flex;
+    align-items: center;
+    gap: 6px !important;
 }
 
-.echo-upload-btn:hover {
-    background: rgba(212, 175, 55, 0.1) !important;
-    border-color: #F1C40F !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+.upload-button-container button:hover {
+    background: rgba(212, 175, 55, 0.05) !important;
+    border-color: #D4AF37 !important;
 }
 
-.echo-settings-btn {
-    background: #111A2B !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 6px !important;
-    height: 32px !important;
-    min-height: 32px !important;
-    width: 32px !important;
+/* Settings button */
+.settings-button-container button {
+    background: transparent !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 8px !important;
+    width: 38px !important;
+    height: 38px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
+    color: #1A2B4C !important;
 }
 
-.echo-settings-btn:hover {
-    border-color: #F1C40F !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+.settings-button-container button:hover {
+    border-color: #D4AF37 !important;
+    background: rgba(212, 175, 55, 0.05) !important;
 }
 
-.echo-clear-btn {
+/* Chat area */
+.echo-chat-area {
+    min-height: 400px;
+    max-height: calc(100vh - 350px);
+    overflow-y: auto;
+    padding: 10px 0;
+    margin-bottom: 20px;
+}
+
+.echo-chat-area div[data-testid="stVerticalBlockBorderWrapper"] {
     background: transparent !important;
     border: none !important;
-    color: #64748B !important;
-    cursor: pointer !important;
-    padding: 4px !important;
-    transition: all 0.2s ease !important;
+    padding: 0 !important;
 }
 
-.echo-clear-btn:hover {
-    color: #D4AF37 !important;
+/* Welcome message */
+.echo-welcome {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748B;
 }
 
-.echo-chat-box-container {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+.echo-welcome h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-size: 2rem;
+    color: #1A2B4C;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
-.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    border-radius: 6px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    padding: 0.5rem 0.75rem !important;
-    height: 100% !important;
+.echo-welcome p {
+    font-size: 1rem;
+    color: #94A3B8;
 }
 
-.echo-msg-row-user {
+/* Message styling */
+.echo-message {
+    margin-bottom: 24px;
     display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-    gap: 6px;
-    width: 100%;
-    margin-bottom: 0.55rem;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
 }
 
-.echo-user-bubble {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    background: #111A2B;
-    color: #FFFFFF !important;
-    border: 1px solid #D4AF37;
-    padding: 0.35rem 0.65rem;
-    border-radius: 10px 2px 10px 10px;
-    max-width: 75%;
-    font-size: 0.80rem;
-    line-height: 1.4;
-    word-break: break-word;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-.echo-user-bubble p {
-    color: #FFFFFF !important;
-    margin: 0;
+
+.echo-message-user {
+    justify-content: flex-end;
+}
+
+.echo-message-assistant {
+    justify-content: flex-start;
+}
+
+.echo-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 0.85rem;
 }
 
 .echo-avatar-user {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.echo-msg-row-assistant {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin-bottom: 0.65rem;
-    background: transparent;
-}
-
-.echo-assistant-header {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 0.12rem;
+    color: #D4AF37;
 }
 
 .echo-avatar-assistant {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
     background: #111A2B;
     border: 1px solid #D4AF37;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    color: #D4AF37;
 }
 
-.echo-assistant-title {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #1A2B4C;
+.echo-message-content {
+    max-width: 75%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.6;
 }
 
-.echo-assistant-badge-gold {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 0.52rem;
-    padding: 1px 4px;
-    border-radius: 2px;
-    background: #FEF3C7;
-    color: #92400E;
-    font-weight: 600;
-    border: 0.5px solid #FDE68A;
+.echo-message-user .echo-message-content {
+    background: #111A2B;
+    color: #FFFFFF;
+    border: 1px solid #D4AF37;
+    border-bottom-right-radius: 4px;
 }
 
-.echo-assistant-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    padding-left: 21px;
-    color: #374151;
-    font-size: 0.80rem;
-    line-height: 1.45;
-}
-.echo-assistant-body strong {
-    color: #111827;
+.echo-message-assistant .echo-message-content {
+    background: #F8FAFC;
+    color: #1E293B;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-bottom-left-radius: 4px;
 }
 
-.echo-sources-container {
+.echo-message-content p {
+    margin: 0 0 10px 0;
+}
+
+.echo-message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Sources */
+.echo-sources {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 0.3rem;
-    padding-left: 21px;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
 }
+
 .echo-source-pill {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     display: inline-flex;
     align-items: center;
     background: #111A2B;
     border: 1px solid #D4AF37;
-    border-radius: 12px;
-    padding: 1px 6px;
-    font-size: 0.65rem;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
     color: #D4AF37 !important;
     text-decoration: none !important;
     font-weight: 500;
     transition: all 0.2s ease;
 }
+
 .echo-source-pill:hover {
-    border-color: #F1C40F;
-    color: #FFFFFF !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+    background: #D4AF37;
+    color: #111A2B !important;
 }
 
-.echo-assistant-body table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.35rem 0;
-    font-size: 0.75rem;
+/* Input area - modern style */
+.echo-input-area {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 20px 0;
+    border-top: 1px solid rgba(212, 175, 55, 0.1);
+    margin-top: auto;
+}
+
+.echo-input-container {
     background: #FFFFFF;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid #E2E8F0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
-.echo-assistant-body th {
-    background: #111A2B;
-    color: #D4AF37;
-    font-weight: 600;
-    border: 1px solid #334155;
-    padding: 3px 6px;
-    text-align: left;
-}
-.echo-assistant-body td {
-    border: 1px solid #E2E8F0;
-    padding: 3px 6px;
-    color: #374151;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
 
-.echo-thinking-wrapper {
+.echo-input-container:focus-within {
+    border-color: #D4AF37;
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
+}
+
+.echo-input-container textarea {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    padding: 12px 16px !important;
+    border: none !important;
+    background: transparent !important;
+    resize: none !important;
+    min-height: 56px !important;
+    max-height: 200px !important;
+}
+
+.echo-input-container textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Thinking indicator */
+.echo-thinking {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding-left: 0.2rem;
-    margin-bottom: 0.4rem;
-}
-.echo-thinking-pill {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    border-radius: 12px;
+    gap: 8px;
+    padding: 12px 18px;
     background: #F8FAFC;
-    border: 1px solid rgba(212, 175, 55, 0.35);
-    font-size: 0.68rem;
-    color: #854D0E;
-    font-weight: 500;
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+    color: #64748B;
 }
+
 .echo-pulse-dot {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
     background-color: #D4AF37;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
 }
+
+.echo-pulse-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.echo-pulse-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
 @keyframes echo-pulse {
-    0%, 80%, 100% { transform: scale(0); opacity: 0.2; }
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
     40% { transform: scale(1); opacity: 1; }
 }
 
-.echo-context-candidate-card {
+/* Knowledge proposal card */
+.echo-knowledge-card {
     background: #FFFFFF;
     border: 1px solid #D4AF37;
-    border-radius: 6px;
-    padding: 0.4rem 0.6rem;
-    margin-top: 0.3rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
 }
 
-.echo-input-dock {
-    padding-top: 0.3rem !important;
-    flex-shrink: 0 !important;
+.echo-knowledge-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #854D0E;
+    margin-bottom: 10px;
 }
 
-div[data-testid="stChatInput"] {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+.echo-knowledge-card-body {
+    font-size: 0.9rem;
+    color: #1F2937;
+    margin-bottom: 14px;
+    line-height: 1.5;
 }
 
-div[data-testid="stChatInput"] > div {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.55) !important;
-    border-radius: 20px !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-    padding: 1px 7px !important;
+.echo-knowledge-card code {
+    background: #F8FAFC;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #1A2B4C;
+    border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-div[data-testid="stChatInput"] textarea {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    color: #0F172A !important;
-    font-size: 0.80rem !important;
-}
-
+/* Popover styling */
 div[data-testid="stPopover"] {
     background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.3) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    padding: 16px !important;
 }
 
-div[data-testid="stPopover"] button[kind="secondary"] {
-    background: transparent !important;
-    border: none !important;
-    color: #1A2B4C !important;
+div[data-testid="stPopover"] h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #854D0E;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .echo-modern-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .echo-header-controls {
+        justify-content: space-between;
+    }
+    
+    .echo-message-content {
+        max-width: 90%;
+    }
 }
 </style>
 """
@@ -877,20 +896,21 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
 
     safe_scroll_height = max(260, int(height) - 150) if height else 420
 
-    with target.container(border=True):
-        st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
+    with target.container():
+        st.markdown('<div class="echo-main-container">', unsafe_allow_html=True)
 
-        # New Header Layout
+        # Modern Header - Like ChatGPT/Claude
         st.markdown(
-            '<div class="echo-header-bar">'
+            '<div class="echo-modern-header">'
             '<div class="echo-header-left">'
             f'{SVG_ECHO_LOGO}<span class="echo-title">{title}</span>'
             '</div>'
-            '<div class="echo-header-right">',
+            '<div class="echo-header-controls">',
             unsafe_allow_html=True
         )
         
-        # Model Selector Dropdown
+        # Model Selector
+        st.markdown('<div class="model-selector-container">', unsafe_allow_html=True)
         st.session_state["echo_selected_model"] = st.selectbox(
             "Model",
             options=[
@@ -901,64 +921,64 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 "deepseek-chat",
                 "deepseek-reasoner",
                 "meta-llama/llama-3.1-8b-instruct:free",
-                "minimax/minimax-m3:free",
-                "google/gemma-4-31b-it:free",
-                "thinkingmachines/inkling:free"
             ],
             index=0,
             label_visibility="collapsed",
             key="model_selector_header"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Upload Button
+        st.markdown('<div class="upload-button-container">', unsafe_allow_html=True)
         uploaded_file = st.file_uploader(
-            "",
+            "Upload",
             type=["pdf", "png", "jpg", "jpeg", "webp", "txt", "doc", "docx"],
             accept_multiple_files=False,
             key="header_file_uploader",
             label_visibility="collapsed"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if uploaded_file:
             st.session_state["uploaded_files"].append(uploaded_file)
-            st.success(f"Uploaded: {uploaded_file.name}")
+            st.toast(f"📎 Uploaded: {uploaded_file.name}", icon="✅")
         
-        # Settings Button
-        with st.popover("", icon="️"):
-            st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
+        # Settings Button with Popover
+        st.markdown('<div class="settings-button-container">', unsafe_allow_html=True)
+        with st.popover("️", help="Settings"):
+            st.markdown("### ⚙️ Settings")
+            st.markdown("---")
+            st.markdown("**Data Sources**")
             st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
             st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
             st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
             
             st.markdown("---")
-            st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
+            st.markdown("**Knowledge Management**")
             if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
                 render_context_popup_dialog()
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Clear Button
-        if st.button("️", key="btn_clear_global_chat", help="Reset conversation"):
+        if st.button("🗑️", key="btn_clear_global_chat", help="Clear conversation"):
             st.session_state["global_chat_history"] = []
             st.session_state["knowledge_proposal"] = None
             st.rerun()
         
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div></div></div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
-        chat_box = st.container(height=safe_scroll_height)
+        # Chat Area
+        st.markdown('<div class="echo-chat-area">', unsafe_allow_html=True)
+        chat_box = st.container()
         st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
             if not st.session_state["global_chat_history"]:
                 st.markdown(
-                    '<div class="echo-msg-row-assistant">'
-                    '<div class="echo-assistant-header">'
-                    f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                    '<span class="echo-assistant-title">Echo</span>'
-                    '<span class="echo-assistant-badge-gold">AI</span>'
-                    '</div>'
-                    '<div class="echo-assistant-body">'
-                    'Hi Team, this is Echo, ask me anything...'
-                    '</div>'
+                    '<div class="echo-welcome">'
+                    f'{SVG_ECHO_LOGO}'
+                    '<h2>Welcome to Echo</h2>'
+                    '<p>Your AI assistant for PRIME Philippines. Ask me anything about meetings, projects, or company knowledge.</p>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -966,111 +986,102 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 for msg in st.session_state["global_chat_history"]:
                     if msg["role"] == "user":
                         st.markdown(
-                            f'<div class="echo-msg-row-user">'
-                            f'<div class="echo-user-bubble">{msg["content"]}</div>'
-                            f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
+                            f'<div class="echo-message echo-message-user">'
+                            f'<div class="echo-message-content">{msg["content"]}</div>'
+                            f'<div class="echo-avatar echo-avatar-user">You</div>'
                             f'</div>',
                             unsafe_allow_html=True
                         )
                     else:
                         st.markdown(
-                            '<div class="echo-msg-row-assistant">'
-                            '<div class="echo-assistant-header">'
-                            f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                            '<span class="echo-assistant-title">Echo</span>'
-                            '<span class="echo-assistant-badge-gold">AI</span>'
-                            '</div>'
-                            '<div class="echo-assistant-body">',
+                            '<div class="echo-message echo-message-assistant">'
+                            f'<div class="echo-avatar echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                            f'<div class="echo-message-content">{msg["content"]}</div>'
+                            '</div>',
                             unsafe_allow_html=True
                         )
-                        st.markdown(msg["content"])
-                        st.markdown('</div>', unsafe_allow_html=True)
                         
                         if msg.get("sources"):
-                            sources_html = '<div class="echo-sources-container">'
+                            sources_html = '<div class="echo-sources">'
                             for src in msg["sources"]:
                                 sources_html += f'<a href="{src["url"]}" target="_blank" class="echo-source-pill">{SVG_GLOBE_ICON}{src["title"]}</a>'
                             sources_html += '</div>'
                             st.markdown(sources_html, unsafe_allow_html=True)
-                            
-                        st.markdown('</div>', unsafe_allow_html=True)
 
+        # Knowledge Proposal Card
         if st.session_state["knowledge_proposal"]:
             prop = st.session_state["knowledge_proposal"]
             val_display = str(prop.get("value", ""))
             if len(val_display) > 180:
                 val_display = val_display[:180] + "..."
                 
-            with st.container():
-                st.markdown(
-                    f'<div class="echo-context-candidate-card">'
-                    f'<div style="font-size:0.75rem; font-weight:600; color:#854D0E; margin-bottom:2px;">'
-                    f'{SVG_BRAIN_ICON} Knowledge Base Candidate Identified'
-                    f'</div>'
-                    f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:6px;">'
-                    f'Save <b>{prop.get("key")}</b> [<i>{prop.get("category")}</i>] to Knowledge Base?<br/>'
-                    f'<code style="font-size:0.72rem; color:#1A2B4C;">{val_display}</code>'
-                    f'</div></div>',
-                    unsafe_allow_html=True
-                )
-                kp_col1, kp_col2 = st.columns([0.5, 0.5])
-                with kp_col1:
-                    if st.button("Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
-                        existing_map = _get_existing_knowledge_map()
-                        cat_clean = str(prop["category"]).strip().lower()
-                        key_clean = str(prop["key"]).strip()
-                        
-                        if (cat_clean, key_clean.lower()) in existing_map:
-                            st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
+            st.markdown(
+                f'<div class="echo-knowledge-card">'
+                f'<div class="echo-knowledge-card-header">'
+                f'{SVG_BRAIN_ICON}Knowledge Base Candidate'
+                f'</div>'
+                f'<div class="echo-knowledge-card-body">'
+                f'Save <b>{prop.get("key")}</b> [<i>{prop.get("category")}</i>] to Knowledge Base?<br/>'
+                f'<code>{val_display}</code>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            
+            kp_col1, kp_col2 = st.columns(2)
+            with kp_col1:
+                if st.button("✅ Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
+                    existing_map = _get_existing_knowledge_map()
+                    cat_clean = str(prop["category"]).strip().lower()
+                    key_clean = str(prop["key"]).strip()
+                    
+                    if (cat_clean, key_clean.lower()) in existing_map:
+                        st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
+                    else:
+                        success, err = _safe_upsert_and_verify(
+                            category=prop["category"],
+                            key=key_clean,
+                            value=str(prop["value"]),
+                            priority=prop.get("priority", 2)
+                        )
+                        if success:
+                            st.session_state["global_chat_history"].append({
+                                "role": "assistant",
+                                "content": f"✅ Confirmed: `{key_clean}` verified and saved to Echo Knowledge Base."
+                            })
                         else:
-                            success, err = _safe_upsert_and_verify(
-                                category=prop["category"],
-                                key=key_clean,
-                                value=str(prop["value"]),
-                                priority=prop.get("priority", 2)
-                            )
-                            if success:
-                                st.session_state["global_chat_history"].append({
-                                    "role": "assistant",
-                                    "content": f"Confirmed: `{key_clean}` verified and saved to Echo Knowledge Base."
-                                })
-                            else:
-                                st.session_state["global_chat_history"].append({
-                                    "role": "assistant",
-                                    "content": f"Error: Failed to register `{key_clean}`. Detail: {err}"
-                                })
-                                
-                            st.session_state["knowledge_proposal"] = None
-                            st.rerun()
-                with kp_col2:
-                    if st.button("Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
+                            st.session_state["global_chat_history"].append({
+                                "role": "assistant",
+                                "content": f"❌ Error: Failed to register `{key_clean}`. Detail: {err}"
+                            })
+                            
                         st.session_state["knowledge_proposal"] = None
                         st.rerun()
+            with kp_col2:
+                if st.button("❌ Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
+                    st.session_state["knowledge_proposal"] = None
+                    st.rerun()
 
-        st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
-        active_prompt = st.chat_input("Ask Echo...")
+        # Input Area
+        st.markdown('<div class="echo-input-area">', unsafe_allow_html=True)
+        active_prompt = st.chat_input("Ask Echo anything...", key="echo_chat_input")
         st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
             st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
 
+            # Show thinking indicator
             with chat_box:
                 st.markdown(
-                    f'<div class="echo-msg-row-user">'
-                    f'<div class="echo-user-bubble">{active_prompt}</div>'
-                    f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-                thinking_placeholder = st.empty()
-                status_text = "Searching the web..." if st.session_state["echo_source_web"] else "Thinking..."
-                thinking_placeholder.markdown(
-                    f'<div class="echo-thinking-wrapper">'
-                    f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                    f'<div class="echo-thinking-pill">'
-                    f'<div class="echo-pulse-dot"></div> {status_text}'
-                    f'</div>'
-                    f'</div>',
+                    '<div class="echo-thinking">'
+                    f'<div class="echo-avatar echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                    '<div style="display: flex; align-items: center; gap: 6px;">'
+                    '<div class="echo-pulse-dot"></div>'
+                    '<div class="echo-pulse-dot"></div>'
+                    '<div class="echo-pulse-dot"></div>'
+                    '</div>'
+                    '<span>Thinking...</span>'
+                    '</div>',
                     unsafe_allow_html=True
                 )
 
@@ -1086,7 +1097,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 include_knowledge=st.session_state["echo_source_knowledge"]
             )
             
-            thinking_placeholder.empty()
+            # Remove thinking indicator and add response
             st.session_state["global_chat_history"].append({
                 "role": "assistant",
                 "content": answer,
@@ -1152,7 +1163,6 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, ext
             "X-Title": "Echo AI"
         }
         
-        # OpenRouter supports vision in models like gemini-flash-1.5
         if image_data_url:
             user_content = [
                 {"type": "text", "text": "Extract all structured knowledge and data records from this image."},
@@ -1173,7 +1183,6 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, ext
         }
         
     elif image_data_url:
-        # Fallback to existing OpenAI logic for vision
         api_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
         if not api_key:
             st.error("OpenAI API Key is required for image/vision scanning.")
@@ -1197,7 +1206,6 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None, ext
             "max_tokens": 4000
         }
     else:
-        # Fallback to existing DeepSeek logic for text
         api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
         if not api_key:
             st.error("DeepSeek API Key configuration missing.")
@@ -1285,7 +1293,6 @@ def _query_echo_backend(
     model_name: str = "qwen/qwen-2.5-72b-instruct",
     include_knowledge: bool = True
 ) -> tuple:
-    # Detect if it's an OpenRouter model
     is_openrouter = "/" in model_name or model_name.endswith(":free")
     
     if is_openrouter:
@@ -1296,7 +1303,7 @@ def _query_echo_backend(
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://echo.prime.ph", # Recommended by OpenRouter for ranking
+            "HTTP-Referer": "https://echo.prime.ph",
             "X-Title": "Echo AI"
         }
     else:
