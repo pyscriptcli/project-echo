@@ -10,24 +10,15 @@ from PIL import Image
 from datetime import datetime
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 
-# --- Pure SVG Icon Assets ---
+# --- Pure SVG Icon Assets (Claude Aesthetic) ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
-    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-    <polyline points="2 17 12 22 22 17"></polyline>
-    <polyline points="2 12 12 17 22 12"></polyline>
-</svg>
-"""
-
-SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-    <circle cx="12" cy="7" r="4"></circle>
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#CC6B49" stroke="none" style="margin-top: 4px;">
+    <path d="M12 0C12 5.5 16.5 10 22 10C16.5 10 12 14.5 12 20C12 14.5 7.5 10 2 10C7.5 10 12 5.5 12 0Z" />
 </svg>
 """
 
 SVG_GLOBE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -35,281 +26,160 @@ SVG_GLOBE_ICON = """
 """
 
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CC6B49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
 """
 
-CHAT_COMPACT_ALIGNED_CSS = """
+CLAUDE_UI_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap');
 
+/* Main Background */
+.stApp {
+    background-color: #FAF9F5 !important;
+}
+
+/* Main Container Width */
 .main .block-container {
+    max-width: 820px !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    padding-top: 1.5rem !important;
+    color: #1A1A1A !important;
+}
+
+/* Hide Default Header/Footer */
+header[data-testid="stHeader"] { background: transparent !important; display: none !important; }
+#MainMenu, footer { visibility: hidden; }
+
+/* File Uploader minimal styling */
+[data-testid="stFileUploader"] {
     padding: 0 !important;
-    max-width: 100% !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
-
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-
-.echo-main-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.echo-modern-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-    margin-bottom: 20px;
-    background: transparent;
-}
-
-.echo-header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.echo-title {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    font-style: italic;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #1A2B4C;
-    margin: 0;
-    letter-spacing: -0.02em;
-}
-
-.echo-header-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.model-selector-container {
-    position: relative;
-}
-
-.model-selector-container > div {
-    background: #F8FAFC !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    border-radius: 8px !important;
-    padding: 8px 12px !important;
-    min-width: 220px !important;
-    transition: all 0.2s ease !important;
-}
-
-.model-selector-container label {
-    display: none !important;
-}
-
-.upload-button-container {
-    display: flex;
-    align-items: center;
-}
-
-.settings-button-container button {
+[data-testid="stFileUploader"] section {
+    padding: 2px 8px !important;
     background: transparent !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border: 1px dashed rgba(0,0,0,0.15) !important;
+}
+[data-testid="stFileUploader"] section > div > div > span {
+    font-size: 0.8rem !important;
+}
+
+/* Selectbox */
+[data-baseweb="select"] > div {
+    background: transparent !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
     border-radius: 8px !important;
-    width: 38px !important;
-    height: 38px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
+    box-shadow: none !important;
+}
+[data-baseweb="select"] span {
+    font-weight: 500 !important;
+    color: #2D2D2D !important;
 }
 
-.echo-chat-area {
-    min-height: 400px;
-    max-height: calc(100vh - 350px);
-    overflow-y: auto;
-    padding: 10px 0;
-    margin-bottom: 20px;
-}
-
-.echo-welcome {
-    text-align: center;
-    padding: 60px 20px;
-    color: #64748B;
-}
-
-.echo-welcome h2 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-style: italic;
-    font-size: 2rem;
-    color: #1A2B4C;
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.echo-message {
-    margin-bottom: 24px;
+/* User Message Bubble */
+.claude-msg-user {
     display: flex;
-    gap: 12px;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.echo-message-user {
     justify-content: flex-end;
+    margin: 24px 0;
+}
+.claude-msg-user-content {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 14px 20px;
+    max-width: 85%;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #1A1A1A;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
-.echo-message-assistant {
-    justify-content: flex-start;
-}
-
-.echo-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+/* Welcome Screen */
+.welcome-screen {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    font-weight: 600;
-    font-size: 0.85rem;
+    min-height: 40vh;
+}
+.welcome-title {
+    font-family: 'Newsreader', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    color: #1A1A1A;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+.welcome-subtitle {
+    font-size: 1.05rem;
+    color: #666;
+    font-weight: 400;
 }
 
-.echo-avatar-user {
-    background: #111A2B;
-    border: 1px solid #D4AF37;
-    color: #D4AF37;
+/* Chat Input Container */
+.stChatInputContainer {
+    padding-bottom: 24px !important;
+    background: transparent !important;
+}
+.stChatInputContainer > div {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04) !important;
+}
+.stChatInputContainer > div:focus-within {
+    border-color: #CC6B49 !important;
+    box-shadow: 0 4px 12px rgba(204,107,73,0.1) !important;
 }
 
-.echo-avatar-assistant {
-    background: #111A2B;
-    border: 1px solid #D4AF37;
-    color: #D4AF37;
-}
-
-.echo-message-content {
-    max-width: 75%;
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-}
-
-.echo-message-user .echo-message-content {
-    background: #111A2B;
-    color: #FFFFFF;
-    border: 1px solid #D4AF37;
-    border-bottom-right-radius: 4px;
-}
-
-.echo-message-assistant .echo-message-content {
-    background: #F8FAFC;
-    color: #1E293B;
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-bottom-left-radius: 4px;
-}
-
-.echo-sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(212, 175, 55, 0.15);
-}
-
-.echo-source-pill {
+/* Source Pills */
+.claude-source-pill {
     display: inline-flex;
     align-items: center;
-    background: #111A2B;
-    border: 1px solid #D4AF37;
-    border-radius: 16px;
+    background: #F4F3ED;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 6px;
     padding: 4px 10px;
     font-size: 0.75rem;
-    color: #D4AF37 !important;
+    color: #555 !important;
     text-decoration: none !important;
-    font-weight: 500;
+    margin-right: 6px;
+    margin-top: 8px;
+    transition: all 0.2s;
+}
+.claude-source-pill:hover {
+    background: #EAE8E0;
+    color: #1A1A1A !important;
 }
 
-.echo-input-area {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    padding: 20px 0;
-    border-top: 1px solid rgba(212, 175, 55, 0.1);
-    margin-top: auto;
+/* Thinking Indicator */
+.claude-thinking {
+    color: #666;
+    font-size: 0.95rem;
+    font-style: italic;
+    margin-top: 8px;
 }
 
-.echo-thinking {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 18px;
-    background: #F8FAFC;
-    border-radius: 12px;
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    margin-bottom: 20px;
-    font-size: 0.85rem;
-    color: #64748B;
-}
-
-.echo-pulse-dot {
-    width: 6px;
-    height: 6px;
-    background-color: #D4AF37;
-    border-radius: 50%;
-    animation: echo-pulse 1.4s infinite ease-in-out both;
-}
-
-.echo-pulse-dot:nth-child(2) { animation-delay: 0.2s; }
-.echo-pulse-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes echo-pulse {
-    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-    40% { transform: scale(1); opacity: 1; }
-}
-
-.echo-knowledge-card {
+/* Knowledge Card */
+.claude-knowledge-card {
     background: #FFFFFF;
-    border: 1px solid #D4AF37;
+    border: 1px solid #EAE8E0;
     border-radius: 12px;
     padding: 16px;
-    margin: 16px 0;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
+    margin: 24px 0 24px 45px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
-
-.echo-knowledge-card-header {
+.claude-knowledge-card-header {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #CC6B49;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #854D0E;
-    margin-bottom: 10px;
-}
-
-.echo-knowledge-card-body {
-    font-size: 0.9rem;
-    color: #1F2937;
-    margin-bottom: 14px;
-    line-height: 1.5;
-}
-
-.echo-knowledge-card code {
-    background: #F8FAFC;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    color: #1A2B4C;
-    border: 1px solid rgba(212, 175, 55, 0.2);
 }
 </style>
 """
@@ -453,7 +323,7 @@ def render_context_popup_dialog():
         st.session_state["clean_staged_rows"] = []
 
     if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
-        st.markdown("<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>⚠️ Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.95rem; font-weight:600; color:#CC6B49;'>⚠️ Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
         st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
 
         b_c1, b_c2, _ = st.columns([1, 1, 2])
@@ -475,10 +345,10 @@ def render_context_popup_dialog():
                     st.markdown(f"**Key:** `{item['key']}` | **Category:** `{item['category']}`")
                     v_col1, v_col2 = st.columns(2)
                     with v_col1:
-                        st.markdown("<span style='font-size:0.75rem; color:#64748B;'>Current Value:</span>", unsafe_allow_html=True)
+                        st.markdown("<span style='font-size:0.75rem; color:#666;'>Current Value:</span>", unsafe_allow_html=True)
                         st.code(item['current_value'][:200] + ("..." if len(item['current_value']) > 200 else ""), language="json")
                     with v_col2:
-                        st.markdown("<span style='font-size:0.75rem; color:#854D0E;'>New Incoming Value:</span>", unsafe_allow_html=True)
+                        st.markdown("<span style='font-size:0.75rem; color:#CC6B49;'>New Incoming Value:</span>", unsafe_allow_html=True)
                         st.code(item['new_value'][:200] + ("..." if len(item['new_value']) > 200 else ""), language="json")
                 with c_res:
                     res_choice = st.radio(
@@ -690,14 +560,14 @@ def render_context_popup_dialog():
                     st.rerun()
 
 
-def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None, subtitle=None):
+def render_echo_chat(container=None, height=520, title="Echo AI", caption=None, subtitle=None):
     target = container if container else st
-    st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
+    st.markdown(CLAUDE_UI_CSS, unsafe_allow_html=True)
 
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model" not in st.session_state:
-        st.session_state["echo_selected_model"] = "qwen/qwen2.5-vl-72b-instruct"
+        st.session_state["echo_selected_model"] = "deepseek/deepseek-chat"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -710,86 +580,59 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         st.session_state["uploaded_files"] = []
 
     with target.container():
-        st.markdown('<div class="echo-main-container">', unsafe_allow_html=True)
-
-        # Header
-        st.markdown(
-            '<div class="echo-modern-header">'
-            '<div class="echo-header-left">'
-            f'{SVG_ECHO_LOGO}<span class="echo-title">{title}</span>'
-            '</div>'
-            '<div class="echo-header-controls">',
-            unsafe_allow_html=True
-        )
+        # Claude-style Header using pure Streamlit columns
+        st.markdown("<h2 style='font-family: Newsreader, serif; font-style: italic; color: #1A1A1A; font-weight: 500; font-size: 1.8rem; margin-bottom: -5px; padding-left: 5px;'>✨ Echo</h2>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 0; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 24px;'/>", unsafe_allow_html=True)
         
-        # Multimodal Model Selector
-        st.markdown('<div class="model-selector-container">', unsafe_allow_html=True)
-        st.session_state["echo_selected_model"] = st.selectbox(
-            "Model",
-            options=[
-                "qwen/qwen2.5-vl-72b-instruct",
-                "google/gemini-2.0-flash-001",
-                "openai/gpt-4o-mini",
-                "deepseek/deepseek-chat"
-            ],
-            index=0,
-            label_visibility="collapsed",
-            key="model_selector_header"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Header File Upload
-        st.markdown('<div class="upload-button-container">', unsafe_allow_html=True)
-        uploaded_file = st.file_uploader(
-            "Upload",
-            type=["pdf", "png", "jpg", "jpeg", "webp", "txt"],
-            accept_multiple_files=False,
-            key="header_file_uploader",
-            label_visibility="collapsed"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if uploaded_file and uploaded_file not in st.session_state["uploaded_files"]:
-            st.session_state["uploaded_files"] = [uploaded_file]
-            st.toast(f"📎 Attached for next prompt: {uploaded_file.name}", icon="✅")
-        
-        # Settings Popover
-        st.markdown('<div class="settings-button-container">', unsafe_allow_html=True)
-        with st.popover("⚙️", help="Settings"):
-            st.markdown("### ⚙️ Settings")
-            st.markdown("---")
-            st.markdown("**Data Sources**")
-            st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
-            st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
-            st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
-            
-            st.markdown("---")
-            st.markdown("**Knowledge Management**")
-            if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
-                render_context_popup_dialog()
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Clear Button
-        if st.button("🗑️", key="btn_clear_global_chat", help="Clear conversation"):
-            st.session_state["global_chat_history"] = []
-            st.session_state["knowledge_proposal"] = None
-            st.session_state["uploaded_files"] = []
-            st.rerun()
-        
-        st.markdown('</div></div></div>', unsafe_allow_html=True)
+        hc1, hc2, hc3, hc4 = st.columns([2.5, 1, 0.5, 0.5], gap="small", vertical_alignment="center")
+        with hc1:
+            st.session_state["echo_selected_model"] = st.selectbox(
+                "Model",
+                options=[
+                    "deepseek/deepseek-chat",
+                    "minimax/minimax-01",
+                    "qwen/qwen2.5-vl-72b-instruct",
+                    "google/gemini-2.0-flash-001",
+                    "openai/gpt-4o-mini"
+                ],
+                index=0,
+                label_visibility="collapsed"
+            )
+        with hc2:
+            uploaded_file = st.file_uploader(
+                "Upload",
+                type=["pdf", "png", "jpg", "jpeg", "webp", "txt"],
+                accept_multiple_files=False,
+                label_visibility="collapsed"
+            )
+            if uploaded_file and uploaded_file not in st.session_state["uploaded_files"]:
+                st.session_state["uploaded_files"] = [uploaded_file]
+                st.toast(f"📎 Attached: {uploaded_file.name}", icon="✅")
+        with hc3:
+            with st.popover("⚙️"):
+                st.markdown("**Data Sources**")
+                st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
+                st.session_state["echo_source_knowledge"] = st.checkbox("Knowledge Base", value=st.session_state["echo_source_knowledge"])
+                st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
+                if st.button("Open Context Manager", use_container_width=True):
+                    render_context_popup_dialog()
+        with hc4:
+            if st.button("🗑️", help="Clear chat"):
+                st.session_state["global_chat_history"] = []
+                st.session_state["knowledge_proposal"] = None
+                st.session_state["uploaded_files"] = []
+                st.rerun()
 
         # Chat Area
-        st.markdown('<div class="echo-chat-area">', unsafe_allow_html=True)
         chat_box = st.container()
-        st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
             if not st.session_state["global_chat_history"]:
                 st.markdown(
-                    '<div class="echo-welcome">'
+                    '<div class="welcome-screen">'
                     f'{SVG_ECHO_LOGO}'
-                    '<h2>Welcome to Echo</h2>'
-                    '<p>Your AI assistant for PRIME Philippines. Ask me anything or attach an image/PDF.</p>'
+                    '<h2 class="welcome-title">Good morning</h2>'
+                    '<p class="welcome-subtitle">How can Echo assist you today?</p>'
                     '</div>',
                     unsafe_allow_html=True
                 )
@@ -797,27 +640,24 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 for msg in st.session_state["global_chat_history"]:
                     if msg["role"] == "user":
                         st.markdown(
-                            f'<div class="echo-message echo-message-user">'
-                            f'<div class="echo-message-content">{msg["content"]}</div>'
-                            f'<div class="echo-avatar echo-avatar-user">You</div>'
+                            f'<div class="claude-msg-user">'
+                            f'<div class="claude-msg-user-content">{msg["content"]}</div>'
                             f'</div>',
                             unsafe_allow_html=True
                         )
                     else:
-                        st.markdown(
-                            '<div class="echo-message echo-message-assistant">'
-                            f'<div class="echo-avatar echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                            f'<div class="echo-message-content">{msg["content"]}</div>'
-                            '</div>',
-                            unsafe_allow_html=True
-                        )
-                        
-                        if msg.get("sources"):
-                            sources_html = '<div class="echo-sources">'
-                            for src in msg["sources"]:
-                                sources_html += f'<a href="{src["url"]}" target="_blank" class="echo-source-pill">{SVG_GLOBE_ICON}{src["title"]}</a>'
-                            sources_html += '</div>'
-                            st.markdown(sources_html, unsafe_allow_html=True)
+                        # Flush left layout natively using Streamlit to preserve Markdown parsing
+                        col_avatar, col_text = st.columns([0.6, 10], gap="small")
+                        with col_avatar:
+                            st.markdown(SVG_ECHO_LOGO, unsafe_allow_html=True)
+                        with col_text:
+                            st.markdown(msg["content"])
+                            if msg.get("sources"):
+                                sources_html = '<div style="display:flex; flex-wrap:wrap; margin-top:8px;">'
+                                for src in msg["sources"]:
+                                    sources_html += f'<a href="{src["url"]}" target="_blank" class="claude-source-pill">{SVG_GLOBE_ICON}{src["title"]}</a>'
+                                sources_html += '</div>'
+                                st.markdown(sources_html, unsafe_allow_html=True)
 
         # Knowledge Proposal Card
         if st.session_state["knowledge_proposal"]:
@@ -827,21 +667,20 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 val_display = val_display[:180] + "..."
                 
             st.markdown(
-                f'<div class="echo-knowledge-card">'
-                f'<div class="echo-knowledge-card-header">'
+                f'<div class="claude-knowledge-card">'
+                f'<div class="claude-knowledge-card-header">'
                 f'{SVG_BRAIN_ICON}Knowledge Base Candidate'
                 f'</div>'
-                f'<div class="echo-knowledge-card-body">'
+                f'<div style="font-size:0.95rem; color:#1A1A1A; margin-bottom:12px;">'
                 f'Save <b>{prop.get("key")}</b> [<i>{prop.get("category")}</i>] to Knowledge Base?<br/>'
-                f'<code>{val_display}</code>'
-                f'</div>'
+                f'<code style="background:rgba(0,0,0,0.04); padding:2px 6px; border-radius:4px; font-size:0.85rem;">{val_display}</code>'
                 f'</div>',
                 unsafe_allow_html=True
             )
             
-            kp_col1, kp_col2 = st.columns(2)
+            kp_col1, kp_col2, _ = st.columns([2, 2, 8])
             with kp_col1:
-                if st.button("✅ Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
+                if st.button("✅ Save", key="btn_confirm_auto_prop", use_container_width=True):
                     existing_map = _get_existing_knowledge_map()
                     cat_clean = str(prop["category"]).strip().lower()
                     key_clean = str(prop["key"]).strip()
@@ -872,11 +711,10 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 if st.button("❌ Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
                     st.session_state["knowledge_proposal"] = None
                     st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Input Area
-        st.markdown('<div class="echo-input-area">', unsafe_allow_html=True)
         active_prompt = st.chat_input("Ask Echo anything...", key="echo_chat_input")
-        st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
             attached_files = st.session_state.get("uploaded_files", [])
@@ -887,28 +725,27 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             st.session_state["global_chat_history"].append({"role": "user", "content": display_prompt})
 
             with chat_box:
-                st.markdown(
-                    '<div class="echo-thinking">'
-                    f'<div class="echo-avatar echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
-                    '<div style="display: flex; align-items: center; gap: 6px;">'
-                    '<div class="echo-pulse-dot"></div>'
-                    '<div class="echo-pulse-dot"></div>'
-                    '<div class="echo-pulse-dot"></div>'
-                    '</div>'
-                    '<span>Thinking...</span>'
-                    '</div>',
-                    unsafe_allow_html=True
-                )
+                col_av, col_tx = st.columns([0.6, 10], gap="small")
+                with col_av:
+                    st.markdown(SVG_ECHO_LOGO, unsafe_allow_html=True)
+                with col_tx:
+                    st.markdown('<div class="claude-thinking">Thinking...</div>', unsafe_allow_html=True)
 
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
+            
+            # --- AUTO-ROUTING MULTIMODAL LOGIC ---
+            target_model = st.session_state["echo_selected_model"]
+            if attached_files and any(f.name.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')) for f in attached_files):
+                # Dynamically override chosen text model if an image is provided
+                target_model = "qwen/qwen2.5-vl-72b-instruct"
             
             answer, proposed_fact = _query_echo_backend(
                 question=active_prompt,
                 archive_records=archives,
                 chat_history=st.session_state["global_chat_history"],
                 web_context=web_context,
-                model_name=st.session_state["echo_selected_model"],
+                model_name=target_model,
                 include_knowledge=st.session_state["echo_source_knowledge"],
                 uploaded_files=attached_files
             )
@@ -1042,7 +879,7 @@ def _query_echo_backend(
     archive_records: list, 
     chat_history: list, 
     web_context: str = "",
-    model_name: str = "qwen/qwen2.5-vl-72b-instruct",
+    model_name: str = "deepseek/deepseek-chat",
     include_knowledge: bool = True,
     uploaded_files: list = None
 ) -> tuple:
@@ -1104,7 +941,7 @@ CURRENT DATE & TIME: {current_date_str}
 
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
     
-    # Add previous chat history (text-only)
+    # Add previous chat history (text-only representation for history)
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
         
