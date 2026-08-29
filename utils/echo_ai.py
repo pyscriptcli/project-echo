@@ -58,9 +58,9 @@ SVG_FILE_ICON = """
 
 # Model Dictionary Mapping
 MODEL_REGISTRY = {
-    "Fast - deepseek chat": "deepseek/deepseek-chat",
-    "Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
-    "Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
+    "⚡ Fast - deepseek chat": "deepseek/deepseek-chat",
+    "🧠 Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
+    "👁️ Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
 }
 
 CHAT_COMPACT_ALIGNED_CSS = """
@@ -370,6 +370,33 @@ div[data-testid="stButton"] > button:hover {
     flex-shrink: 0 !important;
 }
 
+/* --- Inline Paperclip Attachment Button CSS --- */
+div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) {
+    position: relative !important;
+    z-index: 999 !important;
+    top: 36px !important; 
+    left: 12px !important; 
+    margin-bottom: -35px !important; 
+    width: 32px !important;
+}
+
+div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button {
+    background: transparent !important;
+    border: none !important;
+    color: #64748B !important;
+    padding: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    width: 30px !important;
+    box-shadow: none !important;
+}
+
+div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button:hover {
+    color: #D4AF37 !important;
+    background: rgba(212, 175, 55, 0.1) !important;
+    border-radius: 50% !important;
+}
+
 div[data-testid="stChatInput"] {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
@@ -381,6 +408,7 @@ div[data-testid="stChatInput"] > div {
     border-radius: 20px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
     padding: 1px 7px !important;
+    padding-left: 44px !important; /* Make room for absolute attach button */
 }
 
 div[data-testid="stChatInput"] textarea {
@@ -774,7 +802,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model_label" not in st.session_state:
-        st.session_state["echo_selected_model_label"] = "Fast - deepseek chat"
+        st.session_state["echo_selected_model_label"] = "⚡ Fast - deepseek chat"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -783,6 +811,9 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         st.session_state["echo_source_web"] = False
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
+        
+    if "echo_ui_uploaded_files" not in st.session_state:
+        st.session_state["echo_ui_uploaded_files"] = []
 
     safe_scroll_height = max(260, int(height) - 150) if height else 420
 
@@ -806,23 +837,16 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                     st.session_state["echo_selected_model_label"] = st.selectbox(
                         "Model",
                         options=[
-                            "Fast - deepseek chat",
-                            "Thinking - deepseek reasoning",
-                            "Vision - qwen vl"
+                            "⚡ Fast - deepseek chat",
+                            "🧠 Thinking - deepseek reasoning",
+                            "👁️ Vision - qwen vl"
                         ],
-                        index=["Fast - deepseek chat", "Thinking - deepseek reasoning", "Vision - qwen vl"].index(
-                            st.session_state.get("echo_selected_model_label", "Fast - deepseek chat")
+                        index=["⚡ Fast - deepseek chat", "🧠 Thinking - deepseek reasoning", "👁️ Vision - qwen vl"].index(
+                            st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
                         ),
                         label_visibility="collapsed"
                     )
-                    st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>ATTACHMENTS</span>", unsafe_allow_html=True)
-                    uploaded_files = st.file_uploader(
-                        "Upload Attachments",
-                        type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "csv"],
-                        accept_multiple_files=True,
-                        key="echo_chat_uploader"
-                    )
+                    
                     st.markdown("---")
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
@@ -945,11 +969,22 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                         st.rerun()
 
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
+        
+        with st.popover("", icon=":material/attach_file:", help="Open attachment menu"):
+            st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>UPLOAD FILES</span>", unsafe_allow_html=True)
+            st.session_state["echo_ui_uploaded_files"] = st.file_uploader(
+                "Attach Documents or Images",
+                type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "csv"],
+                accept_multiple_files=True,
+                key="echo_chat_inline_uploader",
+                label_visibility="collapsed"
+            )
+            
         active_prompt = st.chat_input("Ask Echo...")
         st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
-            attached_files_list = uploaded_files if ('uploaded_files' in locals() and uploaded_files) else []
+            attached_files_list = st.session_state["echo_ui_uploaded_files"] if st.session_state["echo_ui_uploaded_files"] else []
             prompt_content_display = active_prompt
             if attached_files_list:
                 file_names = ", ".join([f.name for f in attached_files_list])
@@ -980,8 +1015,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
 
-            # --- Multimodal Model Auto-Routing Logic ---
-            selected_label = st.session_state.get("echo_selected_model_label", "Fast - deepseek chat")
+            selected_label = st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
             default_model = MODEL_REGISTRY.get(selected_label, "deepseek/deepseek-chat")
 
             if attached_files_list:
@@ -1230,7 +1264,6 @@ CURRENT DATE & TIME: {current_date_str}
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
 
-    # Prepare multimodal user payload if files exist
     if uploaded_files:
         user_content_blocks = [{"type": "text", "text": question}]
         for f in uploaded_files:
