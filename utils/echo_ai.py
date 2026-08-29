@@ -791,10 +791,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                             "deepseek-chat", 
                             "deepseek-reasoner",
                             "minimax/minimax-m3:free",
-                            "google/gemma-4-31b-it:free",
-                            "thinkingmachines/inkling:free",
-                            "meta-llama/llama-3.1-8b-instruct:free",
-                            "google/gemini-flash-1.5"
+                            "inclusionai/ling-3.0-flash-fin:free",
                         ],
                         index=0,
                         label_visibility="collapsed"
