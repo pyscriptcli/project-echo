@@ -102,8 +102,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     -ms-overflow-style: none !important;
     max-width: 960px !important;
     margin: 0 auto !important;
-    height: calc(100vh - 170px) !important;
-    max-height: calc(100vh - 170px) !important;
+    height: calc(100vh - 120px) !important; /* Increased Height */
+    max-height: calc(100vh - 120px) !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
@@ -365,18 +365,20 @@ div[data-testid="stButton"] > button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
+/* --- Input Dock with Inline Popover Icon & Upgraded Send Button --- */
 .echo-input-dock {
+    position: relative !important;
     padding-top: 0.3rem !important;
     flex-shrink: 0 !important;
+    display: flex;
+    align-items: flex-end;
 }
 
-/* --- Inline Paperclip Attachment Button CSS --- */
 div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) {
-    position: relative !important;
+    position: absolute !important;
     z-index: 999 !important;
-    top: 36px !important; 
-    left: 12px !important; 
-    margin-bottom: -35px !important; 
+    bottom: 8px !important;
+    left: 8px !important; 
     width: 32px !important;
 }
 
@@ -385,10 +387,13 @@ div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button 
     border: none !important;
     color: #64748B !important;
     padding: 0 !important;
-    height: 30px !important;
-    min-height: 30px !important;
-    width: 30px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    width: 32px !important;
     box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button:hover {
@@ -400,21 +405,41 @@ div[data-testid="stPopover"]:has(button[title="Open attachment menu"]) > button:
 div[data-testid="stChatInput"] {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+    width: 100% !important;
 }
 
 div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
     border: 1px solid rgba(212, 175, 55, 0.55) !important;
     border-radius: 20px !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-    padding: 1px 7px !important;
-    padding-left: 44px !important; /* Make room for absolute attach button */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+    padding: 2px 7px !important;
+    padding-left: 42px !important; /* Make room for the absolute inline attach button */
 }
 
 div[data-testid="stChatInput"] textarea {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     color: #0F172A !important;
-    font-size: 0.80rem !important;
+    font-size: 0.85rem !important;
+    padding-top: 10px !important;
+}
+
+/* Upgrade Native Send Button */
+div[data-testid="stChatInput"] button {
+    background-color: rgba(212, 175, 55, 0.15) !important;
+    color: #D4AF37 !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+div[data-testid="stChatInput"] button:hover {
+    background-color: #D4AF37 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+}
+
+div[data-testid="stChatInput"] button svg {
+    fill: currentColor !important;
 }
 </style>
 """
@@ -795,7 +820,7 @@ def render_context_popup_dialog():
                     st.rerun()
 
 
-def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None, subtitle=None):
+def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None, subtitle=None):
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
 
@@ -815,7 +840,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
     if "echo_ui_uploaded_files" not in st.session_state:
         st.session_state["echo_ui_uploaded_files"] = []
 
-    safe_scroll_height = max(260, int(height) - 150) if height else 420
+    safe_scroll_height = max(400, int(height) - 130) if height else 520
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
@@ -834,16 +859,20 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             with c_settings:
                 with st.popover("", icon=":material/settings:", help="Settings"):
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
+                    
+                    model_options = [
+                        "⚡ Fast - deepseek chat",
+                        "🧠 Thinking - deepseek reasoning",
+                        "👁️ Vision - qwen vl"
+                    ]
+                    current_model = st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
+                    if current_model not in model_options:
+                        current_model = "⚡ Fast - deepseek chat"
+                        
                     st.session_state["echo_selected_model_label"] = st.selectbox(
                         "Model",
-                        options=[
-                            "⚡ Fast - deepseek chat",
-                            "🧠 Thinking - deepseek reasoning",
-                            "👁️ Vision - qwen vl"
-                        ],
-                        index=["⚡ Fast - deepseek chat", "🧠 Thinking - deepseek reasoning", "👁️ Vision - qwen vl"].index(
-                            st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
-                        ),
+                        options=model_options,
+                        index=model_options.index(current_model),
                         label_visibility="collapsed"
                     )
                     
