@@ -41,28 +41,6 @@ SVG_BRAIN_ICON = """
 </svg>
 """
 
-SVG_ALERT_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854D0E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
-    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-    <line x1="12" y1="9" x2="12" y2="13"></line>
-    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-</svg>
-"""
-
-SVG_FILE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-    <polyline points="14 2 14 8 20 8"></polyline>
-</svg>
-"""
-
-# Model Dictionary Mapping
-MODEL_REGISTRY = {
-    "Fast - deepseek chat": "deepseek/deepseek-chat",
-    "Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
-    "Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
-}
-
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
@@ -419,6 +397,7 @@ def _encode_image_to_base64(uploaded_file) -> tuple:
         return None, None
 
 def _get_existing_knowledge_map() -> dict:
+    """Retrieves full existing map structured as {(category, key_lower): original_value}."""
     try:
         data = fetch_echo_context()
         knowledge_map = {}
@@ -435,6 +414,7 @@ def _get_existing_knowledge_map() -> dict:
         return {}
 
 def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) -> tuple[bool, str]:
+    """Executes the DB upsert with payload normalization and robust verification."""
     try:
         c_clean = str(category).strip().lower()
         k_clean = str(key).strip()
@@ -486,6 +466,7 @@ def _safe_upsert_and_verify(category: str, key: str, value: str, priority: int) 
         return False, f"Exception during write of '{key}': {str(e)}"
 
 def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
+    """Partitions staged rows into new items and duplicate conflicts with existing DB entries."""
     existing_map = _get_existing_knowledge_map()
     clean_rows = []
     conflicts = []
@@ -522,6 +503,7 @@ def _check_duplicates_against_db(candidate_df: pd.DataFrame) -> tuple:
 
 @st.dialog("Echo Context Manager", width="large")
 def render_context_popup_dialog():
+    """Modal popup for multimodal inputs and duplicate-aware database commits."""
     if "extracted_context_df" not in st.session_state:
         st.session_state["extracted_context_df"] = None
     if "detected_conflicts" not in st.session_state:
@@ -530,7 +512,7 @@ def render_context_popup_dialog():
         st.session_state["clean_staged_rows"] = []
 
     if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
-        st.markdown(f"<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>{SVG_ALERT_ICON}Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
         st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
 
         b_c1, b_c2, _ = st.columns([1, 1, 2])
@@ -591,7 +573,7 @@ def render_context_popup_dialog():
                 if error_messages:
                     st.error(f"Failed to save {len(error_messages)} record(s):")
                     for err_msg in error_messages:
-                        st.caption(f"[Error] {err_msg}")
+                        st.caption(f"- {err_msg}")
                         
                 if saved_count > 0:
                     st.success(f"Successfully saved and verified {saved_count} record(s).")
@@ -773,8 +755,8 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
 
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
-    if "echo_selected_model_label" not in st.session_state:
-        st.session_state["echo_selected_model_label"] = "Fast - deepseek chat"
+    if "echo_selected_model" not in st.session_state:
+        st.session_state["echo_selected_model"] = "deepseek/deepseek-chat"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -783,6 +765,8 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
         st.session_state["echo_source_web"] = False
     if "knowledge_proposal" not in st.session_state:
         st.session_state["knowledge_proposal"] = None
+    if "uploaded_files" not in st.session_state:
+        st.session_state["uploaded_files"] = None
 
     safe_scroll_height = max(260, int(height) - 150) if height else 420
 
@@ -803,26 +787,18 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             with c_settings:
                 with st.popover("", icon=":material/settings:", help="Settings"):
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
-                    st.session_state["echo_selected_model_label"] = st.selectbox(
+                    model_options = {
+                        "Fast - deepseek chat": "deepseek/deepseek-chat",
+                        "Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
+                        "Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
+                    }
+                    selected_label = st.selectbox(
                         "Model",
-                        options=[
-                            "Fast - deepseek chat",
-                            "Thinking - deepseek reasoning",
-                            "Vision - qwen vl"
-                        ],
-                        index=["Fast - deepseek chat", "Thinking - deepseek reasoning", "Vision - qwen vl"].index(
-                            st.session_state.get("echo_selected_model_label", "Fast - deepseek chat")
-                        ),
+                        options=list(model_options.keys()),
+                        index=0,
                         label_visibility="collapsed"
                     )
-                    st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>ATTACHMENTS</span>", unsafe_allow_html=True)
-                    uploaded_files = st.file_uploader(
-                        "Upload Attachments",
-                        type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "csv"],
-                        accept_multiple_files=True,
-                        key="echo_chat_uploader"
-                    )
+                    st.session_state["echo_selected_model"] = model_options[selected_label]
                     st.markdown("---")
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
@@ -838,6 +814,7 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                 if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
                     st.session_state["global_chat_history"] = []
                     st.session_state["knowledge_proposal"] = None
+                    st.session_state["uploaded_files"] = None
                     st.rerun()
 
         st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
@@ -945,22 +922,60 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
                         st.rerun()
 
         st.markdown('<div class="echo-input-dock">', unsafe_allow_html=True)
+        # File upload area for attachments
+        uploaded_files = st.file_uploader(
+            "Attach files",
+            type=["png", "jpg", "jpeg", "webp", "pdf", "txt", "csv", "xlsx"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+            key="echo_file_uploader"
+        )
         active_prompt = st.chat_input("Ask Echo...")
         st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
-            attached_files_list = uploaded_files if ('uploaded_files' in locals() and uploaded_files) else []
-            prompt_content_display = active_prompt
-            if attached_files_list:
-                file_names = ", ".join([f.name for f in attached_files_list])
-                prompt_content_display = f"{SVG_FILE_ICON} [{file_names}]<br/>{active_prompt}"
+            st.session_state["global_chat_history"].append({"role": "user", "content": active_prompt})
 
-            st.session_state["global_chat_history"].append({"role": "user", "content": prompt_content_display})
+            # Determine if files are present for auto-routing
+            files_attached = uploaded_files is not None and len(uploaded_files) > 0
+            if files_attached:
+                effective_model = "qwen/qwen2.5-vl-72b-instruct"
+            else:
+                effective_model = st.session_state["echo_selected_model"]
+
+            # Process attachments
+            image_data_urls = []
+            file_text = ""
+            if files_attached:
+                for file in uploaded_files:
+                    if file.type.startswith("image/"):
+                        img_data_url, _ = _encode_image_to_base64(file)
+                        if img_data_url:
+                            image_data_urls.append(img_data_url)
+                    elif file.type == "application/pdf":
+                        pdf_text = _extract_text_from_pdf(file)
+                        if pdf_text:
+                            file_text += f"\n\n--- PDF Content ---\n{pdf_text}"
+                    else:  # txt, csv, xlsx
+                        try:
+                            if file.name.endswith(".csv"):
+                                df = pd.read_csv(file)
+                                file_text += f"\n\n--- CSV Content ---\n{df.to_string()}"
+                            elif file.name.endswith(".xlsx"):
+                                df = pd.read_excel(file)
+                                file_text += f"\n\n--- Excel Content ---\n{df.to_string()}"
+                            else:
+                                content = file.getvalue().decode("utf-8")
+                                file_text += f"\n\n--- Text File Content ---\n{content}"
+                        except Exception as e:
+                            st.warning(f"Could not read file {file.name}: {e}")
+
+            # If any attachments were images but no file_text, we still have image_data_urls
 
             with chat_box:
                 st.markdown(
                     f'<div class="echo-msg-row-user">'
-                    f'<div class="echo-user-bubble">{prompt_content_display}</div>'
+                    f'<div class="echo-user-bubble">{active_prompt}</div>'
                     f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
                     f'</div>',
                     unsafe_allow_html=True
@@ -979,24 +994,16 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
 
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
-
-            # --- Multimodal Model Auto-Routing Logic ---
-            selected_label = st.session_state.get("echo_selected_model_label", "Fast - deepseek chat")
-            default_model = MODEL_REGISTRY.get(selected_label, "deepseek/deepseek-chat")
-
-            if attached_files_list:
-                target_model = "qwen/qwen2.5-vl-72b-instruct"
-            else:
-                target_model = default_model
-
+            
             answer, proposed_fact = _query_echo_backend(
                 question=active_prompt,
                 archive_records=archives,
                 chat_history=st.session_state["global_chat_history"],
                 web_context=web_context,
-                model_name=target_model,
+                model_name=effective_model,
                 include_knowledge=st.session_state["echo_source_knowledge"],
-                uploaded_files=attached_files_list
+                image_data_urls=image_data_urls if image_data_urls else None,
+                file_text=file_text if file_text else ""
             )
             
             thinking_placeholder.empty()
@@ -1008,6 +1015,8 @@ def render_echo_chat(container=None, height=520, title="Ask Echo", caption=None,
             if proposed_fact:
                 st.session_state["knowledge_proposal"] = proposed_fact
 
+            # Clear uploaded files after processing
+            st.session_state["echo_file_uploader"] = []
             st.rerun()
 
 
@@ -1039,6 +1048,7 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
+    """Routes image inputs to a vision-capable model and text/PDFs to DeepSeek."""
     system_prompt = (
         "You are an enterprise data extraction engine for PRIME Philippines. "
         "Analyze the input (text, PDF content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
@@ -1049,15 +1059,15 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
     )
 
     if image_data_url:
-        api_key = str(st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))).strip()
+        api_key = str(st.secrets.get("OPENAI_API_KEY", "")).strip()
         if not api_key:
-            st.error("API Key is required for vision scanning.")
+            st.error("OpenAI API Key is required for image/vision scanning (DeepSeek API does not support images).")
             return []
 
-        url = "https://openrouter.ai/api/v1/chat/completions" if "OPENROUTER_API_KEY" in st.secrets else "https://api.openai.com/v1/chat/completions"
+        url = "https://api.openai.com/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
-            "model": "qwen/qwen2.5-vl-72b-instruct" if "OPENROUTER_API_KEY" in st.secrets else "gpt-4o-mini",
+            "model": "gpt-4o-mini",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {
@@ -1073,15 +1083,15 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
             "max_tokens": 4000
         }
     else:
-        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", st.secrets.get("OPENROUTER_API_KEY", ""))).strip()
+        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
         if not api_key:
-            st.error("API Key configuration missing.")
+            st.error("DeepSeek API Key configuration missing.")
             return []
 
-        url = "https://api.deepseek.com/chat/completions" if "DEEPSEEK_API_KEY" in st.secrets else "https://openrouter.ai/api/v1/chat/completions"
+        url = "https://api.deepseek.com/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
-            "model": "deepseek-chat" if "DEEPSEEK_API_KEY" in st.secrets else "deepseek/deepseek-chat",
+            "model": "deepseek-chat",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": raw_text[:20000]}
@@ -1160,22 +1170,37 @@ def _query_echo_backend(
     web_context: str = "",
     model_name: str = "deepseek/deepseek-chat",
     include_knowledge: bool = True,
-    uploaded_files: list = None
+    image_data_urls: list = None,
+    file_text: str = ""
 ) -> tuple:
-    openrouter_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
-    deepseek_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-
-    if "qwen" in model_name or "openrouter" in model_name or ("/" in model_name and openrouter_key):
-        api_key = openrouter_key if openrouter_key else deepseek_key
+    # Determine API based on model
+    if model_name.startswith("qwen/"):
+        api_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
+        if not api_key:
+            return "OpenRouter API Key is missing for Vision model. Please configure OPENROUTER_API_KEY in secrets.", None
         api_url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        # Build multimodal user message
+        user_content = []
+        text_part = f"{question}\n\nAttached file text:\n{file_text}" if file_text else question
+        user_content.append({"type": "text", "text": text_part})
+        if image_data_urls:
+            for img_url in image_data_urls:
+                user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+        user_message = {"role": "user", "content": user_content}
     else:
-        api_key = deepseek_key if deepseek_key else openrouter_key
-        api_url = "https://api.deepseek.com/chat/completions" if deepseek_key else "https://openrouter.ai/api/v1/chat/completions"
+        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+        if not api_key:
+            return "DeepSeek API Key is missing in Streamlit Secrets.", None
+        api_url = "https://api.deepseek.com/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        # For DeepSeek, use plain text user message
+        full_question = f"{question}\n\nAttached file text:\n{file_text}" if file_text else question
+        user_message = {"role": "user", "content": full_question}
 
-    if not api_key:
-        return "API Key configuration missing. Please verify Streamlit Secrets.", None
-
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
 
     if include_knowledge:
@@ -1229,36 +1254,20 @@ CURRENT DATE & TIME: {current_date_str}
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append(user_message)
 
-    # Prepare multimodal user payload if files exist
-    if uploaded_files:
-        user_content_blocks = [{"type": "text", "text": question}]
-        for f in uploaded_files:
-            if f.type.startswith("image/"):
-                img_url, _ = _encode_image_to_base64(f)
-                if img_url:
-                    user_content_blocks.append({"type": "image_url", "image_url": {"url": img_url}})
-            elif f.type == "application/pdf":
-                pdf_extracted = _extract_text_from_pdf(f)
-                user_content_blocks.append({"type": "text", "text": f"\n\n[PDF Attachment Content ({f.name})]:\n{pdf_extracted}"})
-            else:
-                try:
-                    f_text = f.read().decode("utf-8")
-                    user_content_blocks.append({"type": "text", "text": f"\n\n[Attachment Content ({f.name})]:\n{f_text}"})
-                except Exception:
-                    pass
-        messages.append({"role": "user", "content": user_content_blocks})
-    else:
-        messages.append({"role": "user", "content": question})
+    # For OpenRouter Qwen, model name stays as is; for DeepSeek, strip prefix if needed
+    if model_name.startswith("deepseek/"):
+        model_name = model_name.split("/")[1]
 
     payload = {
-        "model": model_name.replace("deepseek/", "") if "api.deepseek.com" in api_url else model_name,
+        "model": model_name,
         "messages": messages,
         "temperature": 0.2,
         "max_tokens": 2000
     }
 
-    if "reasoner" not in model_name and "vl" not in model_name:
+    if model_name == "deepseek-chat":
         payload["response_format"] = {"type": "json_object"}
 
     try:
