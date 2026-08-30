@@ -70,11 +70,13 @@ def get_current_user():
     """Return the current user dict or None."""
     return st.session_state.get("user", None)
 
+# -------------------------------------------------------------------
+# Updated function to redirect to login page instead of showing error
+# -------------------------------------------------------------------
 def require_auth():
-    """If not authenticated, stop execution with a message."""
+    """If not authenticated, redirect to the main app (login page)."""
     if not is_authenticated():
-        st.error("Please log in to access this page.")
-        st.stop()
+        st.switch_page("app.py")  # Redirects to main page
 
 # -------------------------------------------------------------------
 # Admin management functions
