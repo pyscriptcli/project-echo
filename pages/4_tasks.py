@@ -79,8 +79,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 8px !important;
 }
 
-/* Primary Buttons */
-.stButton > button[kind="primary"], .stButton > button[kind="secondary"] {
+/* Buttons */
+.stButton > button {
     background-color: #161616 !important; 
     color: #FFFFFF !important; 
     border: none !important; 
@@ -94,29 +94,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
-.stButton > button[kind="primary"]:hover, .stButton > button[kind="secondary"]:hover { 
+.stButton > button:hover { 
     background-color: #D4AF37 !important; 
     color: #161616 !important; 
     transform: translateY(-1px) !important;
     box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
-}
-
-/* Tertiary Buttons (Emoji Icons - NO COLOR) */
-.stButton > button[kind="tertiary"] {
-    background-color: transparent !important;
-    color: #161616 !important;
-    border: none !important;
-    box-shadow: none !important;
-    font-size: 1.2rem !important;
-    padding: 0.25rem !important;
-    min-width: 30px !important;
-    height: 30px !important;
-}
-.stButton > button[kind="tertiary"]:hover {
-    background-color: rgba(0,0,0,0.05) !important;
-    color: #161616 !important;
-    box-shadow: none !important;
-    transform: scale(1.1) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -174,38 +156,54 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 7. Modal Function for Viewing Task Details
-@st.dialog("Task Details")
-def show_task_details(task_data, all_meetings):
-    tab1, tab2 = st.tabs(["📝 Full Details", "📅 Meeting Origin"])
+# ---------------------------------------------------------
+# 6.5 THE MODAL (st.dialog) - Native Popup
+# ---------------------------------------------------------
+@st.dialog("Task Details", width="large")
+def open_task_details():
+    task = st.session_state.get('selected_task')
+    if not task:
+        st.warning("No task selected.")
+        if st.button("Close", use_container_width=True):
+            st.rerun()
+        return
+
+    # Find meeting details for the origin tab
+    meeting_id = task.get('meeting_id')
+    meeting_details = next((m for m in meetings if m.get('meeting_id') == meeting_id), None)
+
+    tab1, tab2 = st.tabs(["📋 Task Details", "📅 Meeting Origin"])
     
     with tab1:
-        st.write(f"**Title:** {task_data.get('title')}")
-        st.write(f"**Description:** {task_data.get('description') or 'No description provided.'}")
-        st.write(f"**Assignee:** {task_data.get('assignee') or 'Unassigned'}")
-        st.write(f"**Due Date:** {task_data.get('due_date') or 'No due date'}")
-        st.write(f"**Current Status:** {task_data.get('status')}")
-        st.write(f"**Task ID:** {task_data.get('id')}")
-    
-    with tab2:
-        # Find the related meeting
-        meeting_id = task_data.get('meeting_id')
-        related_meeting = next((m for m in all_meetings if m.get('meeting_id') == meeting_id), None)
-        
-        if related_meeting:
-            st.write(f"**Client Name:** {related_meeting.get('client_name')}")
-            st.write(f"**Meeting Date:** {related_meeting.get('meeting_date')}")
-            st.write(f"**Prepared By:** {related_meeting.get('prepared_by')}")
-            st.write("**Summary:**")
-            st.markdown(related_meeting.get('summary_md', 'No summary available.'))
-        else:
-            st.info(f"No origin meeting found for ID: {meeting_id}")
+        st.markdown(f"### {task['title']}")
+        st.caption(f"**Task ID:** {task['id']}")
+        st.markdown("---")
+        st.markdown(f"**Status:** `{task['status']}`")
+        st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
+        st.markdown(f"**Due Date:** {task.get('due_date', 'No date set')}")
+        st.markdown(f"**Full Description:**")
+        st.write(task.get('description', 'No description provided.'))
 
-# 8. Page layout
+    with tab2:
+        if meeting_details:
+            st.markdown(f"### {meeting_details.get('client_name', 'Meeting Record')}")
+            st.caption(f"**Date:** {meeting_details.get('meeting_date')}")
+            st.caption(f"**Prepared By:** {meeting_details.get('prepared_by')}")
+            st.markdown("---")
+            st.markdown("**Meeting Summary:**")
+            st.write(meeting_details.get('summary_md', 'No summary available.'))
+        else:
+            st.info("This task is not linked to a specific meeting.")
+    
+    if st.button("Close", use_container_width=True, key="close_modal_btn"):
+        st.session_state.pop('selected_task', None)
+        st.rerun()
+
+# 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
 
-# 9. Tabs: Board View | Import from Meeting | New Task
+# 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
 # ---------------- Board Tab (SINGLE ROW COMPACT CARDS) ----------------
@@ -218,8 +216,8 @@ with tab_board:
             task_id = task['id']
             
             with st.container(border=True):
-                # Split row into 5 columns: Title, Assignee, Due, Status, Actions
-                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 3])
+                # Split row into 5 columns: Title, Assignee, Due, Status, Actions (View/Update/Delete)
+                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 1.8, 3.5])
                 
                 with c1:
                     st.markdown(f"**{task['title']}**")
@@ -235,10 +233,10 @@ with tab_board:
                     st.caption(task['due_date'] or "N/A")
                 
                 with c4:
-                    # Selectbox with hidden label to keep it in one line
+                    # Selectbox with hidden label
                     status_options = ["todo", "in_progress", "done"]
                     current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    st.selectbox(
+                    new_status = st.selectbox(
                         "Status", 
                         status_options, 
                         index=current_index, 
@@ -247,25 +245,29 @@ with tab_board:
                     )
                 
                 with c5:
-                    # Three tiny columns for the emoji actions
+                    # Three tiny columns for View, Update, and Delete
                     b1, b2, b3 = st.columns(3)
-                    with b1:
-                        if st.button("👁️", key=f"view_{task_id}", type="tertiary", help="View Details"):
-                            show_task_details(task, meetings)
                     
-                    with b2:
-                        if st.button("✏️", key=f"update_{task_id}", type="tertiary", help="Update Status"):
-                            # Grab the current selectbox value to update
-                            new_status = st.session_state.get(f"status_{task_id}")
-                            update_task_status(task_id, new_status)
+                    with b1:
+                        if st.button("View", key=f"view_{task_id}", use_container_width=True):
+                            st.session_state['selected_task'] = task
                             st.rerun()
                     
+                    with b2:
+                        if st.button("Update", key=f"upd_{task_id}", use_container_width=True):
+                            update_task_status(task_id, new_status)
+                            st.rerun()
+                            
                     with b3:
-                        if st.button("🗑️", key=f"delete_{task_id}", type="tertiary", help="Delete Task"):
+                        if st.button("Del", key=f"del_{task_id}", use_container_width=True):
                             delete_task(task_id)
                             st.rerun()
 
-# ---------------- Import from Meeting Tab ----------------
+# Trigger the modal if the session state is set
+if 'selected_task' in st.session_state:
+    open_task_details()
+
+# ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -311,7 +313,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ----------------
+# ---------------- New Task Tab (Unchanged) ----------------
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
