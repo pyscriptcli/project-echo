@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 from utils.db import fetch_meeting_archives
 from utils.echo_ai import render_echo_chat
 from components.sidebar import setup_page_layout
-from utils.auth import init_supabase, login, logout, is_authenticated  # new import
+from utils.auth import init_supabase, login, logout, is_authenticated
 
 # 1. Page Configuration
 st.set_page_config(
@@ -57,27 +57,28 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
-.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"],
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
+/* --------------- IMPORTANT LAYOUT FIXES --------------- */
+
+/* Force both columns' containers to align perfectly */
+[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
+    overflow: hidden !important;
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
-    overflow: hidden !important;
-    padding: 0 !important;
+    padding: 0.5rem 0.85rem !important;
 }
 
-.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    padding: 0.5rem 0.85rem !important;
-    gap: 0 !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
+/* Make the left meeting feed scrollable inside the box */
+.left-feed-scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
 }
 
 /* Section Headings */
@@ -157,24 +158,6 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Left Column Inner Feed Auto-Scroll */
-.left-feed-container {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-.left-feed-container > div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(4px) !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    border-radius: 6px !important;
-    overflow-y: auto !important;
-    padding: 0.5rem 0.75rem !important;
-    height: 100% !important;
-}
-
 /* Meeting Cards */
 .gallery-card {
     background-color: #FFFFFF;
@@ -204,7 +187,7 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
 }
 
-/* Charcoal Black & Gold Accent Pill Buttons (Deep charcoal with gold accent) */
+/* Charcoal Black & Gold Accent Pill Buttons */
 .stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
@@ -223,30 +206,30 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
-/* Authentication - Left Aligned, Bigger Title */
+/* Login Page Styling */
 .login-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 4rem; /* Larger */
+    font-size: 4rem;
     font-weight: 600;
     color: #1A2B4C;
     margin-bottom: 0.5rem;
     line-height: 1.1;
-    text-align: left; /* Left aligned */
+    text-align: left;
 }
 .login-subtitle {
     font-size: 0.9rem;
     color: #6C727A;
     margin-bottom: 1.5rem;
     font-style: italic;
-    text-align: left; /* Left aligned */
+    text-align: left;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # 4. Authentication Check
 if not is_authenticated():
-    # Add CSS to vertically and horizontally center the login form
+    # Center the login form
     st.markdown("""
     <style>
     [data-testid="stMainBlockContainer"] {
@@ -254,18 +237,16 @@ if not is_authenticated():
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 100vh; /* Force full viewport height */
+        height: 100vh;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Use a 3-column layout where the middle column holds the form
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown('<p class="login-title">Project Echo</p>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle">Sign in to access your dashboard</p>', unsafe_allow_html=True)
         
-        # Blank text fields by default (value="")
         email = st.text_input("Email", value="")
         password = st.text_input("Password", type="password", value="")
         
@@ -289,7 +270,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# 6. Session State Initialization (same as before)
+# 6. Session State Initialization
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
@@ -302,7 +283,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data (same as before)
+# 7. Fetch and Filter Data
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -331,12 +312,12 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Dashboard Grid Composition (same as before)
+# 8. Dashboard Grid Composition
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
 # Left Column (Overview, Date Filter, Feed)
 with col_left:
-    st.markdown('<div class="dashboard-left-card">', unsafe_allow_html=True)
+    # Using a single, unified bordered container for the left column
     with st.container(border=True):
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
@@ -408,34 +389,33 @@ with col_left:
                         st.session_state["end_date"] = selected_dates[1]
                         st.rerun()
 
+        # Recent Meetings Section - forced to scroll within the container
+        st.markdown('<div class="left-feed-scroll">', unsafe_allow_html=True)
         st.markdown('<p class="section-title">Recent Meetings</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Filtered meeting archives.</p>', unsafe_allow_html=True)
         
-        st.markdown('<div class="left-feed-container">', unsafe_allow_html=True)
-        with st.container():
-            if filtered_records:
-                for idx, m in enumerate(filtered_records):
-                    m_id = m.get("meeting_id") or f"MOM-{idx}"
-                    client = m.get("client_name") or "Meeting Record"
-                    m_date = str(m.get("meeting_date", "N/A"))[:10]
-                    prep = m.get("prepared_by") or "CRD Team"
-                    summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-                    
-                    st.markdown(f"""
-                    <div class="gallery-card">
-                        <p class="gallery-title">{client}</p>
-                        <p class="gallery-sub">{m_date} &bull; {prep}</p>
-                        <p class="gallery-desc">{summary[:85]}...</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
-                        st.session_state["selected_meeting_id"] = m_id
-                        st.switch_page("pages/2_meeting_details.py")
-            else:
-                st.info("No records found.")
+        if filtered_records:
+            for idx, m in enumerate(filtered_records):
+                m_id = m.get("meeting_id") or f"MOM-{idx}"
+                client = m.get("client_name") or "Meeting Record"
+                m_date = str(m.get("meeting_date", "N/A"))[:10]
+                prep = m.get("prepared_by") or "CRD Team"
+                summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+                
+                st.markdown(f"""
+                <div class="gallery-card">
+                    <p class="gallery-title">{client}</p>
+                    <p class="gallery-sub">{m_date} &bull; {prep}</p>
+                    <p class="gallery-desc">{summary[:85]}...</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
+                    st.session_state["selected_meeting_id"] = m_id
+                    st.switch_page("pages/2_meeting_details.py")
+        else:
+            st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Right Column (Ask Echo AI Plugin)
 with col_right:
