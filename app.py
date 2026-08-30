@@ -16,7 +16,7 @@ from utils.auth import init_supabase, login, logout, is_authenticated  # new imp
 st.set_page_config(
     page_title="Project Echo - Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed"  # <-- changed to collapsed
+    initial_sidebar_state="collapsed"
 )
 
 # 2. Initialize Supabase client (cached)
@@ -38,7 +38,7 @@ st.markdown("""
 /* Full-width main content with compact padding */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 1rem !important; /* Reduced top padding for compactness */
+    padding-top: 1rem !important;
     padding-bottom: 0.5rem !important;
     padding-right: 1.5rem !important;
     padding-left: 1.5rem !important;
@@ -223,44 +223,44 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
-/* Authentication - No login card box, compact layout */
+/* Authentication - No login card box, compact layout, centered text */
 .login-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 3rem; /* Bigger title */
+    font-size: 3rem;
     font-weight: 600;
     color: #1A2B4C;
     margin-bottom: 0.5rem;
     line-height: 1.1;
+    text-align: center; /* Centered */
 }
 .login-subtitle {
     font-size: 0.9rem;
     color: #6C727A;
     margin-bottom: 1.5rem;
-    font-style: italic; /* Italic subtitle */
+    font-style: italic;
+    text-align: center; /* Centered */
 }
 </style>
 """, unsafe_allow_html=True)
 
 # 4. Authentication Check
 if not is_authenticated():
-    # Render login form (centered, no div card)
-    col1, col2, col3 = st.columns([1, 1.5, 1])
+    # Render login form in a perfect 3x3 layout (content in the center 1/3)
+    col1, col2, col3 = st.columns(3) 
     with col2:
         st.markdown('<p class="login-title">Project Echo</p>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle">Sign in to access your dashboard</p>', unsafe_allow_html=True)
         email = st.text_input("Email", placeholder="your@email.com")
         password = st.text_input("Password", type="password", placeholder="••••••••")
-        col_btn1, col_btn2 = st.columns([1, 1])
-        with col_btn1:
-            if st.button("Sign In", use_container_width=True):
-                if login(email, password):
-                    st.success("Logged in successfully!")
-                    st.rerun()
-                else:
-                    st.error("Invalid credentials. Please try again.")
-        with col_btn2:
-            st.markdown("")  # placeholder for potential "Forgot password" later
+        
+        # Single button to fill the width of the middle column
+        if st.button("Sign In", use_container_width=True):
+            if login(email, password):
+                st.success("Logged in successfully!")
+                st.rerun()
+            else:
+                st.error("Invalid credentials. Please try again.")
     st.stop()
 
 # 5. If authenticated, proceed with original layout
