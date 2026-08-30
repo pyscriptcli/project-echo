@@ -22,13 +22,18 @@ st.set_page_config(
 # 2. Initialize Supabase client
 supabase = init_supabase()
 
-# 3. Global & Dashboard CSS (Includes Login Styles & Original Sync Layout)
+# 3. Global & Dashboard CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Canvas & Margins */
 .stApp > header { display: none !important; visibility: hidden !important; }
+[data-testid="stHeader"] { display: none !important; }
+[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stStatusWidget"] { display: none !important; }
+[data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
@@ -52,8 +57,13 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
+/* Force horizontal block columns to align to top without extra margins */
+[data-testid="stHorizontalBlock"] {
+    align-items: flex-start !important; 
+}
+
 /* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
-.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope),
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -63,9 +73,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     max-height: calc(100vh - 130px) !important;
     overflow: hidden !important;
     padding: 0 !important;
+    margin-top: 0 !important;
 }
 
-.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
@@ -279,7 +290,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# 6. Session State Initialization
+# 6. Session State Initialization[cite: 1]
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
@@ -292,7 +303,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data
+# 7. Fetch and Filter Data[cite: 1]
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -321,13 +332,15 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Dashboard Grid Composition
+# 8. Dashboard Grid Composition[cite: 1]
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
-# Left Column (Overview, Date Filter, Feed)
+# Left Column (Overview, Date Filter, Feed)[cite: 1]
 with col_left:
-    st.markdown('<div class="dashboard-left-card">', unsafe_allow_html=True)
     with st.container(border=True):
+        # Adding the scoping element inside the container to trigger perfect synchronization
+        st.markdown('<div class="dashboard-left-card-scope"></div>', unsafe_allow_html=True)
+        
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
         
@@ -425,8 +438,7 @@ with col_left:
             else:
                 st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Ask Echo AI Plugin)
+# Right Column (Ask Echo AI Plugin)[cite: 1]
 with col_right:
     render_echo_chat(title="Ask Echo")
