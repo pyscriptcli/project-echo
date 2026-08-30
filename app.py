@@ -27,7 +27,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Hide Streamlit chrome (header, toolbar, sidebar, status) */
+/* Hide Streamlit chrome */
 [data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
@@ -35,18 +35,17 @@ st.markdown("""
 [data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
-/* Full-width main content */
+/* Full-width main viewport & clean grid background */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 1rem !important;
+    padding-top: 0.85rem !important;
     padding-bottom: 0.5rem !important;
-    padding-right: 1.5rem !important;
-    padding-left: 1.5rem !important;
+    padding-right: 1.25rem !important;
+    padding-left: 1.25rem !important;
     max-width: 100% !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Warm Cream Architectural Large 80px Grid Background */
 [data-testid="stAppViewContainer"], .stApp {
     background-color: #F5F1E8 !important;
     background-image: 
@@ -57,28 +56,49 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-/* --------------- IMPORTANT LAYOUT FIXES --------------- */
+/* --------------- COLUMN & CONTAINER ALIGNMENT --------------- */
 
-/* Force both columns' containers to align perfectly */
-[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
-    overflow: hidden !important;
-    background-color: transparent !important;
+/* Equalize column flex height */
+[data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+    gap: 1.25rem !important;
+}
+
+[data-testid="stColumn"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100vh - 85px) !important;
+}
+
+/* Standardize bordered containers in both columns */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
+    height: 100% !important;
+    max-height: 100% !important;
+    background-color: rgba(255, 255, 255, 0.45) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    padding: 0.5rem 0.85rem !important;
+    padding: 0.75rem 0.9rem !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
-/* Make the left meeting feed scrollable inside the box */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Scrollable feed inside the left container */
 .left-feed-scroll {
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
     margin-top: 0.5rem;
-    padding-top: 0.5rem;
+    padding-top: 0.6rem;
+    padding-right: 0.25rem;
 }
 
 /* Section Headings */
@@ -87,28 +107,28 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-style: italic !important;
     font-weight: 600 !important;
     color: #1A2B4C !important;
-    font-size: 1.05rem !important;
+    font-size: 1.1rem !important;
     margin: 0 !important;
     line-height: 1.2 !important;
 }
 .section-caption {
     font-size: 0.72rem;
     color: #6C727A;
-    margin: 0 0 0.35rem 0 !important;
+    margin: 0 0 0.4rem 0 !important;
 }
 
 /* 2x2 Mini KPI Grid */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.35rem;
-    margin-bottom: 0.35rem;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
     flex-shrink: 0;
 }
 .kpi-mini-card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 4px;
-    padding: 0.4rem 0.55rem;
+    padding: 0.45rem 0.6rem;
     border: 1px solid rgba(0, 0, 0, 0.07);
     border-left: 3.5px solid #111A2B;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -139,7 +159,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 
 /* Date Picker Popover Pill */
 div[data-testid="stPopover"] {
-    margin-bottom: 0.4rem !important;
+    margin-bottom: 0.35rem !important;
     flex-shrink: 0 !important;
 }
 div[data-testid="stPopover"] > button {
@@ -163,13 +183,13 @@ div[data-testid="stPopover"] > button:hover {
     background-color: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 4px;
-    padding: 0.5rem 0.65rem;
-    margin-bottom: 0.25rem;
+    padding: 0.55rem 0.7rem;
+    margin-bottom: 0.35rem;
 }
 .gallery-title { 
     font-family: 'Playfair Display', serif; 
     font-style: italic; 
-    font-size: 0.88rem; 
+    font-size: 0.9rem; 
     font-weight: 600; 
     color: #1A2B4C; 
     margin: 0 0 0.1rem 0; 
@@ -177,7 +197,7 @@ div[data-testid="stPopover"] > button:hover {
 .gallery-sub { 
     font-size: 0.65rem; 
     color: #6C727A; 
-    margin-bottom: 0.2rem; 
+    margin-bottom: 0.25rem; 
     font-weight: 500;
 }
 .gallery-desc { 
@@ -187,18 +207,18 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
 }
 
-/* Charcoal Black & Gold Accent Pill Buttons */
+/* Action Buttons */
 .stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    font-size: 0.8rem !important;
-    padding: 0.5rem 1rem !important;
-    min-height: 45px !important;
-    height: 45px !important;
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.8rem !important;
+    min-height: 34px !important;
+    height: 34px !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 0.2rem;
 }
 .stButton > button:hover {
     border-color: #F1C40F !important;
@@ -229,7 +249,6 @@ div[data-testid="stPopover"] > button:hover {
 
 # 4. Authentication Check
 if not is_authenticated():
-    # Center the login form
     st.markdown("""
     <style>
     [data-testid="stMainBlockContainer"] {
@@ -260,10 +279,9 @@ if not is_authenticated():
                 st.error("Invalid credentials. Please try again.")
     st.stop()
 
-# 5. If authenticated, proceed with original layout
+# 5. Page Layout Setup
 setup_page_layout()
 
-# Add logout button in sidebar (after navigation)
 with st.sidebar:
     st.markdown("---")
     if st.button("Logout", key="logout_btn"):
@@ -317,7 +335,6 @@ col_left, col_right = st.columns([1, 2.3], gap="small")
 
 # Left Column (Overview, Date Filter, Feed)
 with col_left:
-    # Using a single, unified bordered container for the left column
     with st.container(border=True):
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
@@ -389,7 +406,7 @@ with col_left:
                         st.session_state["end_date"] = selected_dates[1]
                         st.rerun()
 
-        # Recent Meetings Section - forced to scroll within the container
+        # Recent Meetings Scrollable Feed
         st.markdown('<div class="left-feed-scroll">', unsafe_allow_html=True)
         st.markdown('<p class="section-title">Recent Meetings</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Filtered meeting archives.</p>', unsafe_allow_html=True)
