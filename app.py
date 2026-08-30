@@ -196,12 +196,12 @@ div[data-testid="stPopover"] > button {
 }
 
 /* ===== CALENDAR SPECIFIC ===== */
-/* Segmented control */
+/* Segmented control (monochrome) */
 .segmented-control-container {
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(0,0,0,0.04);
+    gap: 2px;
+    background: rgba(0,0,0,0.05);
     border-radius: 24px;
     padding: 4px;
     width: max-content;
@@ -210,21 +210,24 @@ div[data-testid="stPopover"] > button {
     background: transparent;
     border: none;
     border-radius: 20px;
-    padding: 6px 16px;
+    padding: 6px 14px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #6C727A;
+    color: #1A2B4C; /* monochrome dark */
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Inter', sans-serif;
 }
+.segmented-btn:hover {
+    background: rgba(0,0,0,0.08);
+}
 .segmented-btn.active {
     background: #FFFFFF;
     color: #1A2B4C;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Navigation buttons */
+/* Navigation buttons (monochrome) */
 .nav-btn {
     background: #FFFFFF !important;
     border: 1px solid rgba(0,0,0,0.1) !important;
@@ -246,39 +249,32 @@ div[data-testid="stPopover"] > button {
     box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
 }
 .today-btn {
-    background: #111A2B !important;
-    color: #fff !important;
-    border: 1px solid #111A2B !important;
+    background: #FFFFFF !important;
+    color: #1A2B4C !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
     border-radius: 20px !important;
     font-size: 0.72rem !important;
     padding: 0.25rem 0.9rem !important;
     height: 32px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 .today-btn:hover {
-    background: #2C3A5A !important;
+    background: #F0EEE6 !important;
 }
 
-/* Search input */
-.search-wrapper {
-    background: #FFFFFF;
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 24px;
-    padding: 0.3rem 0.9rem;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+/* Month picker button */
+.month-btn {
+    background: #FFFFFF !important;
+    color: #1A2B4C !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    border-radius: 20px !important;
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.9rem !important;
+    height: 32px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
-.search-wrapper input {
-    border: none;
-    background: transparent;
-    font-size: 0.75rem;
-    color: #1A2B4C;
-    outline: none;
-    width: 100%;
-}
-.search-wrapper input::placeholder {
-    color: #9CA3AF;
+.month-btn:hover {
+    background: #F0EEE6 !important;
 }
 
 /* Month Grid */
@@ -439,8 +435,7 @@ if "cal_view" not in st.session_state:
     st.session_state["cal_view"] = "Month"
 if "cal_focus_date" not in st.session_state:
     st.session_state["cal_focus_date"] = today
-if "cal_search" not in st.session_state:
-    st.session_state["cal_search"] = ""
+# No search state anymore
 
 # 7. Fetch Data & Extract Actions
 supabase_records = fetch_meeting_archives(limit=100)
@@ -598,30 +593,29 @@ with col_right:
         st.markdown('<div class="sync-height-scope"></div>', unsafe_allow_html=True)
         
         # 1. Calendar Header Controls
-        header_row = st.columns([1, 1, 1, 2])
+        header_row = st.columns([1.5, 1, 1, 1])
         
         # Title
         with header_row[0]:
             st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         
-        # Segmented control (Day/Week/Month)
+        # Segmented control (Day/Week/Month) - monochrome
         with header_row[1]:
-            # Use streamlit columns for segmented control
+            # Use three buttons styled as segmented control via CSS
             seg_cols = st.columns(3, gap="small")
             view_labels = ["Day", "Week", "Month"]
             for idx, opt in enumerate(view_labels):
                 with seg_cols[idx]:
-                    # Add active styling via CSS
                     is_active = (st.session_state["cal_view"] == opt)
-                    btn_label = f"● {opt}" if is_active else opt
-                    if st.button(btn_label, key=f"view_{opt.lower()}"):
+                    # Add active class via CSS selector by key
+                    if st.button(opt, key=f"view_{opt.lower()}"):
                         st.session_state["cal_view"] = opt
                         st.rerun()
-            # Style as segmented control
+            # Apply segmented control styling to the buttons' container
             st.markdown("""
             <style>
             div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) {
-                background: rgba(0,0,0,0.04);
+                background: rgba(0,0,0,0.05);
                 border-radius: 24px;
                 padding: 4px;
                 width: max-content;
@@ -629,25 +623,25 @@ with col_right:
             div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button {
                 background: transparent !important;
                 border: none !important;
-                color: #6C727A !important;
+                color: #1A2B4C !important;
                 font-size: 0.75rem !important;
                 font-weight: 600 !important;
                 padding: 6px 14px !important;
                 border-radius: 20px !important;
+                box-shadow: none !important;
             }
+            /* Active state: add subtle background */
             div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button:hover {
-                background: #FFFFFF !important;
-                color: #1A2B4C !important;
+                background: rgba(0,0,0,0.08) !important;
             }
             </style>
             """, unsafe_allow_html=True)
         
-        # Navigation buttons
+        # Navigation buttons (prev, today, next) + month picker
         with header_row[2]:
             nav_cols = st.columns(3, gap="small")
             with nav_cols[0]:
                 if st.button("◀", key="cal_prev", help="Previous"):
-                    # navigation logic
                     if st.session_state["cal_view"] == "Day":
                         st.session_state["cal_focus_date"] -= datetime.timedelta(days=1)
                     elif st.session_state["cal_view"] == "Week":
@@ -675,11 +669,17 @@ with col_right:
                             st.session_state["cal_focus_date"] = st.session_state["cal_focus_date"].replace(month=st.session_state["cal_focus_date"].month+1)
                     st.rerun()
         
-        # Search box
+        # Month picker
         with header_row[3]:
-            st.markdown('<div class="search-wrapper">', unsafe_allow_html=True)
-            st.text_input("Search", key="cal_search", placeholder="Search tasks...", label_visibility="collapsed")
-            st.markdown('</div>', unsafe_allow_html=True)
+            month_label = st.session_state["cal_focus_date"].strftime("%B %Y")
+            with st.popover(month_label, use_container_width=False):
+                # Inside popover, a date input to select any date in the month
+                selected_date = st.date_input("Pick a date", value=st.session_state["cal_focus_date"].replace(day=1), 
+                                             min_value=datetime.date(2000,1,1), max_value=datetime.date(2100,12,31))
+                if selected_date != st.session_state["cal_focus_date"].replace(day=1):
+                    # Set focus date to the first of the selected month
+                    st.session_state["cal_focus_date"] = selected_date.replace(day=1)
+                    st.rerun()
         
         # 2. Period label
         if st.session_state["cal_view"] == "Day":
@@ -691,31 +691,18 @@ with col_right:
         else:
             period_label = st.session_state["cal_focus_date"].strftime("%B %Y")
         
-        # Count events in current period (after search filter)
-        search_term = st.session_state["cal_search"].strip().lower()
-        filtered_events_by_date = {}
-        if search_term:
-            for date_str, events in calendar_events_by_date.items():
-                filtered = []
-                for evt in events:
-                    if search_term in evt["title"].lower() or search_term in evt["owner"].lower():
-                        filtered.append(evt)
-                if filtered:
-                    filtered_events_by_date[date_str] = filtered
-        else:
-            filtered_events_by_date = calendar_events_by_date
-        
+        # Count events in current period
         total_events = 0
         if st.session_state["cal_view"] == "Day":
-            total_events = len(filtered_events_by_date.get(st.session_state["cal_focus_date"].strftime("%Y-%m-%d"), []))
+            total_events = len(calendar_events_by_date.get(st.session_state["cal_focus_date"].strftime("%Y-%m-%d"), []))
         elif st.session_state["cal_view"] == "Week":
             week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday() + 1) if st.session_state["cal_focus_date"].weekday() != 6 else st.session_state["cal_focus_date"]
             for i in range(7):
                 d_str = (week_start + datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-                total_events += len(filtered_events_by_date.get(d_str, []))
+                total_events += len(calendar_events_by_date.get(d_str, []))
         else:
             focus = st.session_state["cal_focus_date"]
-            for d_str, events in filtered_events_by_date.items():
+            for d_str, events in calendar_events_by_date.items():
                 d = datetime.datetime.strptime(d_str, "%Y-%m-%d").date()
                 if d.year == focus.year and d.month == focus.month:
                     total_events += len(events)
@@ -740,7 +727,7 @@ with col_right:
         if st.session_state["cal_view"] == "Day":
             # ----- DAY VIEW -----
             day_str = st.session_state["cal_focus_date"].strftime("%Y-%m-%d")
-            events = filtered_events_by_date.get(day_str, [])
+            events = calendar_events_by_date.get(day_str, [])
             if events:
                 for evt in events:
                     st.markdown(f"""
@@ -764,7 +751,6 @@ with col_right:
         
         elif st.session_state["cal_view"] == "Week":
             # ----- WEEK VIEW (Sunday-first) -----
-            # Calculate week start (Sunday)
             if st.session_state["cal_focus_date"].weekday() == 6:  # Sunday
                 week_start = st.session_state["cal_focus_date"]
             else:
@@ -783,10 +769,10 @@ with col_right:
                 with day_cols[i]:
                     # Day Header
                     if is_today:
-                        bg_color = "#D4AF37"  # Gold for today
+                        bg_color = "#D4AF37"
                         text_color = "#111A2B"
                     elif is_weekend:
-                        bg_color = "#111A2B"  # Navy for weekends
+                        bg_color = "#111A2B"
                         text_color = "#FFFFFF"
                     else:
                         bg_color = "#FFFFFF"
@@ -801,10 +787,9 @@ with col_right:
                     """, unsafe_allow_html=True)
                     
                     # Events
-                    events = filtered_events_by_date.get(curr_date_str, [])
+                    events = calendar_events_by_date.get(curr_date_str, [])
                     if events:
                         for evt in events:
-                            # Adjust event card for weekend background
                             card_bg = "#FFFFFF" if not is_weekend else "rgba(255,255,255,0.1)"
                             text_color = "#1A2B4C" if not is_weekend else "#FFFFFF"
                             st.markdown(f"""
@@ -833,7 +818,7 @@ with col_right:
             
             # Build HTML grid
             month_html = '<div class="month-grid">'
-            # Day headers (Sunday first)
+            # Day headers
             day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
             for name in day_names:
                 is_weekend = (name in ["Sun", "Sat"])
@@ -852,7 +837,7 @@ with col_right:
                         continue
                     
                     date_str = date_val.strftime("%Y-%m-%d")
-                    events = filtered_events_by_date.get(date_str, [])
+                    events = calendar_events_by_date.get(date_str, [])
                     is_today = (date_val == today)
                     cell_class = "month-cell"
                     if is_today:
@@ -861,15 +846,12 @@ with col_right:
                         cell_class += " weekend"
                     
                     month_html += f'<div class="{cell_class}">'
-                    # Day number
                     num_color = "#FFFFFF" if is_weekend else "#1A2B4C"
                     month_html += f'<div class="month-day-num" style="color:{num_color};">{date_val.day}</div>'
                     
-                    # Show up to 2 events
                     display_events = events[:2]
                     for evt in display_events:
                         title_short = evt["title"][:18] + "..." if len(evt["title"]) > 18 else evt["title"]
-                        # For weekend cells, adjust event styling
                         if is_weekend:
                             month_html += f'<div class="month-event" style="background: rgba(255,255,255,0.12); color:#FFFFFF;"><span class="month-event-dot" style="background:{evt["hex_color"]}"></span>{title_short}</div>'
                         else:
