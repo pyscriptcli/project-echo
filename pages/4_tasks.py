@@ -153,13 +153,26 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         st.error(f"Failed to add task: {e}")
         return False
 
-def update_task_status(task_id, new_status):
+# Update function to track WHO and WHEN
+def update_task_status(task_id, new_status, username):
     if not supabase:
         return
     try:
-        supabase.table("tasks").update({"status": new_status, "updated_at": "now()"}).eq("id", task_id).execute()
+        supabase.table("tasks").update({
+            "status": new_status,
+            "status_updated_by": username,
+            "status_updated_at": "now()",
+            "updated_at": "now()"
+        }).eq("id", task_id).execute()
     except Exception as e:
         st.error(f"Failed to update status: {e}")
+
+# Callback for immediate status change
+def handle_status_change(task_id):
+    new_status = st.session_state.get(f"status_{task_id}")
+    # Get current logged-in username from session state
+    username = st.session_state.get("user", {}).get("username", "System")
+    update_task_status(task_id, new_status, username)
 
 def delete_task(task_id):
     if not supabase:
@@ -173,7 +186,7 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The Purely Read-Only View Modal (Native)
+# 6.5 The View Modal (Now includes Who and When)
 @st.dialog("Task Details", width="medium")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -187,7 +200,6 @@ def open_task_details():
     meeting_id = task.get('meeting_id')
     meeting_details = next((m for m in meetings if m.get('meeting_id') == meeting_id), None)
 
-    # Monochrome tabs
     tab1, tab2 = st.tabs(["Task Details", "Meeting Origin"])
     
     with tab1:
@@ -195,8 +207,11 @@ def open_task_details():
         st.caption(f"ID: {task['id']}")
         st.markdown("---")
         
+        # Who and When
         st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
         st.markdown(f"**Due Date:** {task.get('due_date', 'No date set')}")
+        st.markdown(f"**Status Updated By:** {task.get('status_updated_by', 'N/A')}")
+        st.markdown(f"**Status Updated At:** {task.get('status_updated_at', 'Never')}")
         
         st.markdown("**Description:**")
         st.write(task.get('description', 'No description provided.'))
@@ -220,10 +235,10 @@ def open_task_details():
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
 
-# 8. Tabs (Monochrome / Plain Text)
+# 8. Tabs
 tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
-# ---------------- Board Tab (Status Dropdown OUTSIDE Modal) ----------------
+# ---------------- Board Tab (Instant Status Change) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -234,14 +249,12 @@ with tab_board:
         for task in tasks:
             task_id = task['id']
             
-            # Add class based on status for colored left border
             card_class = f"task-{task.get('status', 'todo')}"
             
             with st.container(border=True):
-                # Injecting class for the colored border
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Split row into 5 columns: Title, Assignee, Due, Status, Actions
+                # Columns: Title, Assignee, Due, Status (Instant), Actions
                 c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2.5, 2])
                 
                 with c1:
@@ -269,32 +282,26 @@ with tab_board:
                         st.caption("N/A")
                 
                 with c4:
-                    # Status Dropdown (Outside modal) + Save Button
                     current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    new_status = st.selectbox(
+                    # Dropdown with on_change for immediate update (No Update button)
+                    st.selectbox(
                         "Status", 
                         status_options, 
                         index=current_index, 
                         key=f"status_{task_id}",
                         label_visibility="collapsed",
-                        format_func=lambda x: status_map[x]
+                        format_func=lambda x: status_map[x],
+                        on_change=handle_status_change,
+                        args=(task_id,)
                     )
-                    if st.button("Update", icon=":material/save:", key=f"upd_{task_id}", use_container_width=True):
-                        update_task_status(task_id, new_status)
-                        st.rerun()
                 
                 with c5:
-                    # Monochrome Material Icon Buttons
                     b1, b2 = st.columns(2)
-                    
                     with b1:
-                        # View Button (Opens read-only native modal)
                         if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
                             st.session_state['selected_task'] = task
                             st.rerun()
-                            
                     with b2:
-                        # Delete Button
                         if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
                             delete_task(task_id)
                             st.rerun()
@@ -303,7 +310,7 @@ with tab_board:
 if 'selected_task' in st.session_state:
     open_task_details()
 
-# ---------------- Import from Meeting Tab (Unchanged) ----------------
+# ---------------- Import from Meeting Tab ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -349,7 +356,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab (Unchanged) ----------------
+# ---------------- New Task Tab ----------------
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
