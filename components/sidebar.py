@@ -24,7 +24,8 @@ def setup_page_layout():
     """, unsafe_allow_html=True)
 
     # Render your custom horizontal navbar with EQUAL width columns
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    # Updated to 5 columns to include the new Tasks page
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
     
     with col1:
         st.page_link("app.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
@@ -34,3 +35,6 @@ def setup_page_layout():
         st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting", icon=":material/edit_note:", use_container_width=True)
     with col4:
         st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
+    with col5:
+        # Make sure to create this file in your 'pages' folder: pages/tasks.py (or pages/4_tasks.py)
+        st.page_link("pages/tasks.py", label="Tasks", icon=":material/checklist:", use_container_width=True)
