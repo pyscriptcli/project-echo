@@ -170,9 +170,7 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The Modal Functions (st.dialog) - Native Streamlit Modals
-
-# View Dialog
+# 6.5 The Combined Modal Function (View + Update)
 @st.dialog("Task Details", width="large")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -192,8 +190,37 @@ def open_task_details():
         st.markdown(f"### {task['title']}")
         st.caption(f"**Task ID:** {task['id']}")
         st.markdown("---")
+        
+        # Status & Due Date Update Section (Native UI)
+        status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
+        status_options = list(status_map.keys())
+        current_status = task.get('status', 'todo')
+        current_index = status_options.index(current_status) if current_status in status_options else 0
+
+        # Parse existing due date
+        existing_due_date = task.get('due_date')
+        if existing_due_date:
+            try:
+                existing_due_date = datetime.strptime(existing_due_date[:10], "%Y-%m-%d").date()
+            except:
+                existing_due_date = None
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**Status**")
+            new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x], label_visibility="collapsed")
+        with col2:
+            st.markdown("**Due Date**")
+            new_due_date = st.date_input("Due Date", value=existing_due_date, label_visibility="collapsed")
+
+        if st.button("Save Changes", use_container_width=True):
+            update_task_status(task['id'], new_status, new_due_date)
+            st.session_state.pop('selected_task', None)
+            st.success("Task updated successfully!")
+            st.rerun()
+
+        st.markdown("---")
         st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
-        st.markdown(f"**Due Date:** {task.get('due_date', 'No date set')}")
         st.markdown(f"**Full Description:**")
         st.write(task.get('description', 'No description provided.'))
 
@@ -212,50 +239,6 @@ def open_task_details():
         st.session_state.pop('selected_task', None)
         st.rerun()
 
-# Update Dialog (Now includes Due Date Picker)
-@st.dialog("Update Task", width="small")
-def open_update_dialog():
-    task = st.session_state.get('update_task')
-    if not task:
-        st.warning("No task selected.")
-        if st.button("Close", use_container_width=True):
-            st.session_state.pop('update_task', None)
-            st.rerun()
-        return
-
-    status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
-    status_options = list(status_map.keys())
-
-    current_status = task.get('status', 'todo')
-    current_index = status_options.index(current_status) if current_status in status_options else 0
-
-    # Parse existing due date
-    existing_due_date = task.get('due_date')
-    if existing_due_date:
-        try:
-            existing_due_date = datetime.strptime(existing_due_date[:10], "%Y-%m-%d").date()
-        except:
-            existing_due_date = None
-
-    st.markdown(f"### {task['title']}")
-    st.markdown("---")
-
-    # Native Status Dropdown (No colors, clean text)
-    new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x])
-    
-    # Native Date Picker
-    new_due_date = st.date_input("Due Date", value=existing_due_date)
-
-    if st.button("Save Changes", use_container_width=True):
-        update_task_status(task['id'], new_status, new_due_date)
-        st.session_state.pop('update_task', None)
-        st.success("Task updated successfully!")
-        st.rerun()
-        
-    if st.button("Cancel", use_container_width=True):
-        st.session_state.pop('update_task', None)
-        st.rerun()
-
 # 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
@@ -263,7 +246,7 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
-# ---------------- Board Tab (Best Practices: Single Row, Compact, Native) ----------------
+# ---------------- Board Tab ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -271,7 +254,6 @@ with tab_board:
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
 
-        # Loop through tasks and render a single-row card for each
         for task in tasks:
             task_id = task['id']
             
@@ -282,8 +264,8 @@ with tab_board:
                 # Injecting class for the colored border
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Split row into 5 columns: Title, Assignee, Due, Status, Actions (Monochrome Icons)
-                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 2.5])
+                # Split row into 4 columns: Title, Assignee, Due, Actions
+                c1, c2, c3, c4 = st.columns([3, 1.5, 1.5, 2])
                 
                 with c1:
                     st.markdown(f"**{task['title']}**")
@@ -296,7 +278,6 @@ with tab_board:
                 
                 with c3:
                     st.markdown("**Due Date**")
-                    # Best Practice: Red text if overdue
                     due_date_str = task.get('due_date', None)
                     if due_date_str:
                         try:
@@ -311,40 +292,23 @@ with tab_board:
                         st.caption("N/A")
                 
                 with c4:
-                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    st.selectbox(
-                        "Status", 
-                        status_options, 
-                        index=current_index, 
-                        key=f"status_{task_id}",
-                        label_visibility="collapsed",
-                        format_func=lambda x: status_map[x]
-                    )
-                
-                with c5:
-                    # Monochrome Material Icon Buttons (No colors)
-                    b1, b2, b3 = st.columns(3)
+                    # Monochrome Material Icon Buttons
+                    b1, b2 = st.columns(2)
                     
                     with b1:
+                        # View and Update functionality combined
                         if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
                             st.session_state['selected_task'] = task
                             st.rerun()
-                    
-                    with b2:
-                        if st.button("Update", icon=":material/edit:", key=f"upd_{task_id}", use_container_width=True):
-                            st.session_state['update_task'] = task
-                            st.rerun()
                             
-                    with b3:
+                    with b2:
                         if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
                             delete_task(task_id)
                             st.rerun()
 
-# Trigger Modals if session state is set
+# Trigger Modal if session state is set
 if 'selected_task' in st.session_state:
     open_task_details()
-elif 'update_task' in st.session_state:
-    open_update_dialog()
 
 # ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
