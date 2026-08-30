@@ -197,18 +197,19 @@ div[data-testid="stPopover"] > button {
 
 /* ===== CALENDAR SPECIFIC ===== */
 /* Segmented control */
-.segmented-control {
+.segmented-control-container {
     display: flex;
-    background: rgba(0,0,0,0.05);
-    border-radius: 20px;
-    padding: 3px;
-    gap: 2px;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 24px;
+    padding: 4px;
     width: max-content;
 }
 .segmented-btn {
     background: transparent;
     border: none;
-    border-radius: 17px;
+    border-radius: 20px;
     padding: 6px 16px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -225,7 +226,7 @@ div[data-testid="stPopover"] > button {
 
 /* Navigation buttons */
 .nav-btn {
-    background: rgba(255,255,255,0.7) !important;
+    background: #FFFFFF !important;
     border: 1px solid rgba(0,0,0,0.1) !important;
     color: #1A2B4C !important;
     border-radius: 50% !important;
@@ -237,11 +238,11 @@ div[data-testid="stPopover"] > button {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     transition: all 0.2s !important;
 }
 .nav-btn:hover {
-    background: #FFFFFF !important;
+    background: #F0EEE6 !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
 }
 .today-btn {
@@ -250,18 +251,23 @@ div[data-testid="stPopover"] > button {
     border: 1px solid #111A2B !important;
     border-radius: 20px !important;
     font-size: 0.72rem !important;
-    padding: 0.2rem 0.8rem !important;
+    padding: 0.25rem 0.9rem !important;
     height: 32px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+.today-btn:hover {
+    background: #2C3A5A !important;
 }
 
 /* Search input */
 .search-wrapper {
-    background: rgba(255,255,255,0.7);
+    background: #FFFFFF;
     border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 20px;
-    padding: 0.3rem 0.8rem;
+    border-radius: 24px;
+    padding: 0.3rem 0.9rem;
     display: flex;
     align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 .search-wrapper input {
     border: none;
@@ -275,7 +281,7 @@ div[data-testid="stPopover"] > button {
     color: #9CA3AF;
 }
 
-/* Calendar Month Grid */
+/* Month Grid */
 .month-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -291,6 +297,11 @@ div[data-testid="stPopover"] > button {
     color: #6C727A;
     padding: 8px 0;
     border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.month-day-header.weekend {
+    color: #FFFFFF;
+    background: #111A2B;
+    border-radius: 6px 6px 0 0;
 }
 .month-cell {
     background: #FFFFFF;
@@ -309,11 +320,28 @@ div[data-testid="stPopover"] > button {
 .month-cell.today {
     border-color: #111A2B;
     border-width: 2px;
+    background: #FDFCFA;
 }
 .month-cell.dim {
     background: rgba(0,0,0,0.02);
     border: none;
-    pointer-events: none;
+}
+.month-cell.weekend {
+    background: #111A2B;
+    border-color: #111A2B;
+}
+.month-cell.weekend .month-day-num {
+    color: #FFFFFF;
+}
+.month-cell.weekend .month-event {
+    background: rgba(255,255,255,0.12);
+    color: #FFFFFF;
+}
+.month-cell.weekend .month-event-dot {
+    background: #D4AF37 !important; /* Gold accent for weekends */
+}
+.month-cell.weekend .month-more {
+    color: rgba(255,255,255,0.7);
 }
 .month-day-num {
     font-family: 'Playfair Display', serif;
@@ -345,6 +373,27 @@ div[data-testid="stPopover"] > button {
     font-size: 0.6rem;
     color: #6C727A;
     padding-left: 5px;
+}
+
+/* Week view adjustments */
+.weekday-header {
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.weekday-header.weekend {
+    background: #111A2B;
+    color: #FFFFFF;
+}
+.weekday-header.normal {
+    background: #FFFFFF;
+    color: #1A2B4C;
+    border: 1px solid rgba(0,0,0,0.06);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -493,7 +542,8 @@ with col_left:
             with p_col1:
                 st.caption("PRESETS")
                 if st.button("This Week", key="btn_tw", use_container_width=True):
-                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
+                    # Week starts Sunday
+                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday() + 1) if today.weekday() != 6 else today
                     st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
                     st.rerun()
                 if st.button("Last Month", key="btn_lm", use_container_width=True):
@@ -552,41 +602,28 @@ with col_right:
         
         # Title
         with header_row[0]:
-            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.6rem;">Action Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         
         # Segmented control (Day/Week/Month)
         with header_row[1]:
-            # We'll use a custom HTML segmented control with buttons
-            cal_view = st.session_state["cal_view"]
-            seg_html = """
-            <div class="segmented-control">
-            """
-            for opt in ["Day", "Week", "Month"]:
-                active = "active" if cal_view == opt else ""
-                seg_html += f'<button class="segmented-btn {active}" onclick="window.location.href=?view={opt}">{opt}</button>'
-            seg_html += "</div>"
-            # Since onclick won't work in Streamlit, we'll use actual buttons in a row
-            # We'll use a different approach: three buttons with CSS
-            btn_cols = st.columns(3, gap="small")
-            with btn_cols[0]:
-                if st.button("Day", key="view_day", help="Day view"):
-                    st.session_state["cal_view"] = "Day"
-                    st.rerun()
-            with btn_cols[1]:
-                if st.button("Week", key="view_week", help="Week view"):
-                    st.session_state["cal_view"] = "Week"
-                    st.rerun()
-            with btn_cols[2]:
-                if st.button("Month", key="view_month", help="Month view"):
-                    st.session_state["cal_view"] = "Month"
-                    st.rerun()
-            # Style the buttons as segmented control via CSS
+            # Use streamlit columns for segmented control
+            seg_cols = st.columns(3, gap="small")
+            view_labels = ["Day", "Week", "Month"]
+            for idx, opt in enumerate(view_labels):
+                with seg_cols[idx]:
+                    # Add active styling via CSS
+                    is_active = (st.session_state["cal_view"] == opt)
+                    btn_label = f"● {opt}" if is_active else opt
+                    if st.button(btn_label, key=f"view_{opt.lower()}"):
+                        st.session_state["cal_view"] = opt
+                        st.rerun()
+            # Style as segmented control
             st.markdown("""
             <style>
             div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) {
-                background: rgba(0,0,0,0.05);
-                border-radius: 20px;
-                padding: 3px;
+                background: rgba(0,0,0,0.04);
+                border-radius: 24px;
+                padding: 4px;
                 width: max-content;
             }
             div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button {
@@ -595,10 +632,10 @@ with col_right:
                 color: #6C727A !important;
                 font-size: 0.75rem !important;
                 font-weight: 600 !important;
-                padding: 6px 16px !important;
-                border-radius: 17px !important;
+                padding: 6px 14px !important;
+                border-radius: 20px !important;
             }
-            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]:hover) button {
+            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button:hover {
                 background: #FFFFFF !important;
                 color: #1A2B4C !important;
             }
@@ -648,7 +685,7 @@ with col_right:
         if st.session_state["cal_view"] == "Day":
             period_label = st.session_state["cal_focus_date"].strftime("%A, %B %d, %Y")
         elif st.session_state["cal_view"] == "Week":
-            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday())
+            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday() + 1) if st.session_state["cal_focus_date"].weekday() != 6 else st.session_state["cal_focus_date"]
             week_end = week_start + datetime.timedelta(days=6)
             period_label = f"{week_start.strftime('%b %d')} – {week_end.strftime('%b %d, %Y')}"
         else:
@@ -672,7 +709,7 @@ with col_right:
         if st.session_state["cal_view"] == "Day":
             total_events = len(filtered_events_by_date.get(st.session_state["cal_focus_date"].strftime("%Y-%m-%d"), []))
         elif st.session_state["cal_view"] == "Week":
-            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday())
+            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday() + 1) if st.session_state["cal_focus_date"].weekday() != 6 else st.session_state["cal_focus_date"]
             for i in range(7):
                 d_str = (week_start + datetime.timedelta(days=i)).strftime("%Y-%m-%d")
                 total_events += len(filtered_events_by_date.get(d_str, []))
@@ -726,20 +763,34 @@ with col_right:
                 """, unsafe_allow_html=True)
         
         elif st.session_state["cal_view"] == "Week":
-            # ----- WEEK VIEW -----
-            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday())
+            # ----- WEEK VIEW (Sunday-first) -----
+            # Calculate week start (Sunday)
+            if st.session_state["cal_focus_date"].weekday() == 6:  # Sunday
+                week_start = st.session_state["cal_focus_date"]
+            else:
+                week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday() + 1)
+            
             day_cols = st.columns(7, gap="small")
+            day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
             for i in range(7):
                 curr_date = week_start + datetime.timedelta(days=i)
                 curr_date_str = curr_date.strftime("%Y-%m-%d")
-                day_name = curr_date.strftime("%a")
+                day_name = day_names[i]
                 day_num = curr_date.strftime("%d")
+                is_weekend = (i == 0 or i == 6)
+                is_today = (curr_date == today)
                 
                 with day_cols[i]:
                     # Day Header
-                    is_today = (curr_date == today)
-                    bg_color = "#111A2B" if is_today else "#FFFFFF"
-                    text_color = "#FFFFFF" if is_today else "#1A2B4C"
+                    if is_today:
+                        bg_color = "#D4AF37"  # Gold for today
+                        text_color = "#111A2B"
+                    elif is_weekend:
+                        bg_color = "#111A2B"  # Navy for weekends
+                        text_color = "#FFFFFF"
+                    else:
+                        bg_color = "#FFFFFF"
+                        text_color = "#1A2B4C"
                     border = "none" if is_today else "1px solid rgba(0,0,0,0.08)"
                     
                     st.markdown(f"""
@@ -753,13 +804,16 @@ with col_right:
                     events = filtered_events_by_date.get(curr_date_str, [])
                     if events:
                         for evt in events:
+                            # Adjust event card for weekend background
+                            card_bg = "#FFFFFF" if not is_weekend else "rgba(255,255,255,0.1)"
+                            text_color = "#1A2B4C" if not is_weekend else "#FFFFFF"
                             st.markdown(f"""
-                            <div style='background: #FFFFFF; border: 1px solid rgba(0,0,0,0.06); border-left: 3px solid {evt["hex_color"]}; border-radius: 6px; padding: 0.6rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.1s;'>
+                            <div style='background: {card_bg}; border: 1px solid rgba(0,0,0,0.06); border-left: 3px solid {evt["hex_color"]}; border-radius: 6px; padding: 0.6rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);'>
                                 <div style='font-size: 0.65rem; color: {evt["hex_color"]}; font-weight: 700; margin-bottom: 0.2rem;'>{evt["time"]}</div>
-                                <div style='font-size: 0.75rem; color: #1A2B4C; font-weight: 600; line-height: 1.3; margin-bottom: 0.4rem;'>{evt["title"]}</div>
+                                <div style='font-size: 0.75rem; color: {text_color}; font-weight: 600; line-height: 1.3; margin-bottom: 0.4rem;'>{evt["title"]}</div>
                                 <div style='display:flex; justify-content:space-between; align-items:center;'>
                                     <span style='font-size: 0.6rem; color: #6C727A; background:#F3F4F6; padding:0.1rem 0.4rem; border-radius:12px;'>Assigned</span>
-                                    <span style='font-size: 0.65rem; color: #1A2B4C; font-weight:500;'>{evt["owner"][:10]}</span>
+                                    <span style='font-size: 0.65rem; color: {text_color}; font-weight:500;'>{evt["owner"][:10]}</span>
                                 </div>
                             </div>
                             """, unsafe_allow_html=True)
@@ -771,23 +825,30 @@ with col_right:
                         """, unsafe_allow_html=True)
         
         elif st.session_state["cal_view"] == "Month":
-            # ----- MONTH VIEW (CSS Grid) -----
+            # ----- MONTH VIEW (Sunday-first) -----
             focus = st.session_state["cal_focus_date"]
-            cal = calendar.Calendar(firstweekday=0)  # Monday start
+            cal = calendar.Calendar(firstweekday=6)  # Sunday first
+            
             month_days = cal.monthdatescalendar(focus.year, focus.month)
             
             # Build HTML grid
             month_html = '<div class="month-grid">'
-            # Day headers
-            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            # Day headers (Sunday first)
+            day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
             for name in day_names:
-                month_html += f'<div class="month-day-header">{name}</div>'
+                is_weekend = (name in ["Sun", "Sat"])
+                header_class = "month-day-header weekend" if is_weekend else "month-day-header"
+                month_html += f'<div class="{header_class}">{name}</div>'
             
             # Weeks
             for week in month_days:
-                for date_val in week:
+                for idx, date_val in enumerate(week):
+                    is_weekend = (idx == 0 or idx == 6)
                     if date_val.month != focus.month:
-                        month_html += '<div class="month-cell dim"></div>'
+                        cell_class = "month-cell dim"
+                        if is_weekend:
+                            cell_class = "month-cell dim weekend"
+                        month_html += f'<div class="{cell_class}"></div>'
                         continue
                     
                     date_str = date_val.strftime("%Y-%m-%d")
@@ -796,18 +857,27 @@ with col_right:
                     cell_class = "month-cell"
                     if is_today:
                         cell_class += " today"
+                    if is_weekend:
+                        cell_class += " weekend"
                     
                     month_html += f'<div class="{cell_class}">'
-                    month_html += f'<div class="month-day-num">{date_val.day}</div>'
+                    # Day number
+                    num_color = "#FFFFFF" if is_weekend else "#1A2B4C"
+                    month_html += f'<div class="month-day-num" style="color:{num_color};">{date_val.day}</div>'
                     
                     # Show up to 2 events
                     display_events = events[:2]
                     for evt in display_events:
                         title_short = evt["title"][:18] + "..." if len(evt["title"]) > 18 else evt["title"]
-                        month_html += f'<div class="month-event"><span class="month-event-dot" style="background:{evt["hex_color"]}"></span>{title_short}</div>'
+                        # For weekend cells, adjust event styling
+                        if is_weekend:
+                            month_html += f'<div class="month-event" style="background: rgba(255,255,255,0.12); color:#FFFFFF;"><span class="month-event-dot" style="background:{evt["hex_color"]}"></span>{title_short}</div>'
+                        else:
+                            month_html += f'<div class="month-event"><span class="month-event-dot" style="background:{evt["hex_color"]}"></span>{title_short}</div>'
                     
                     if len(events) > 2:
-                        month_html += f'<div class="month-more">+{len(events)-2} more</div>'
+                        more_color = "#FFFFFF" if is_weekend else "#6C727A"
+                        month_html += f'<div class="month-more" style="color:{more_color};">+{len(events)-2} more</div>'
                     
                     month_html += '</div>'
             
