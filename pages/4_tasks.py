@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS (Native UI, Monochrome Icons, Best Practices)
+# 4. Custom CSS (Compact Native UI, Monochrome)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -62,7 +62,7 @@ h3 {
     font-size: 1.35rem !important;
 }
 
-/* Best Practice: Colored left borders based on status */
+/* Compact Task Cards */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 8px !important;
@@ -88,7 +88,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 8px !important;
 }
 
-/* Monochrome Buttons - extremely compact */
+/* Compact Monochrome Buttons */
 .stButton > button {
     background-color: transparent !important; 
     color: #161616 !important; 
@@ -102,12 +102,20 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
-
-/* Hover effect: darker background */
 .stButton > button:hover { 
     background-color: rgba(0, 0, 0, 0.05) !important; 
     color: #111A2B !important; 
     border: 1px solid #D4AF37 !important; 
+}
+
+/* Compact Modal Styling */
+[data-testid="stDialog"] div[data-testid="stVerticalBlock"] {
+    gap: 0.25rem !important;
+    padding: 0.5rem !important;
+}
+[data-testid="stDialog"] h3 {
+    margin-bottom: 0.2rem !important;
+    font-size: 1.1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -170,8 +178,8 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The Combined Modal Function (View + Update)
-@st.dialog("Task Details", width="large")
+# 6.5 The Combined Modal Function (Compact & Minimal)
+@st.dialog("Task Details", width="medium")
 def open_task_details():
     task = st.session_state.get('selected_task')
     if not task:
@@ -184,14 +192,14 @@ def open_task_details():
     meeting_id = task.get('meeting_id')
     meeting_details = next((m for m in meetings if m.get('meeting_id') == meeting_id), None)
 
-    tab1, tab2 = st.tabs(["📋 Task Details", "📅 Meeting Origin"])
+    # Monochrome tabs (no colored emojis)
+    tab1, tab2 = st.tabs(["Task Details", "Meeting Origin"])
     
     with tab1:
-        st.markdown(f"### {task['title']}")
-        st.caption(f"**Task ID:** {task['id']}")
-        st.markdown("---")
+        st.markdown(f"**{task['title']}**")
+        st.caption(f"ID: {task['id']}")
         
-        # Status & Due Date Update Section (Native UI)
+        # Status & Due Date Update Section
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
         current_status = task.get('status', 'todo')
@@ -221,16 +229,16 @@ def open_task_details():
 
         st.markdown("---")
         st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
-        st.markdown(f"**Full Description:**")
+        st.markdown(f"**Description:**")
         st.write(task.get('description', 'No description provided.'))
 
     with tab2:
         if meeting_details:
-            st.markdown(f"### {meeting_details.get('client_name', 'Meeting Record')}")
-            st.caption(f"**Date:** {meeting_details.get('meeting_date')}")
-            st.caption(f"**Prepared By:** {meeting_details.get('prepared_by')}")
+            st.markdown(f"**{meeting_details.get('client_name', 'Meeting Record')}**")
+            st.caption(f"Date: {meeting_details.get('meeting_date')}")
+            st.caption(f"Prepared By: {meeting_details.get('prepared_by')}")
             st.markdown("---")
-            st.markdown("**Meeting Summary:**")
+            st.markdown("**Summary:**")
             st.write(meeting_details.get('summary_md', 'No summary available.'))
         else:
             st.info("This task is not linked to a specific meeting.")
@@ -243,8 +251,8 @@ def open_task_details():
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
 
-# 8. Tabs: Board View | Import from Meeting | New Task
-tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
+# 8. Tabs (Monochrome / Plain Text)
+tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
 # ---------------- Board Tab ----------------
 with tab_board:
@@ -257,7 +265,7 @@ with tab_board:
         for task in tasks:
             task_id = task['id']
             
-            # Best Practice: Add class based on status for colored left border
+            # Add class based on status for colored left border
             card_class = f"task-{task.get('status', 'todo')}"
             
             with st.container(border=True):
@@ -296,7 +304,7 @@ with tab_board:
                     b1, b2 = st.columns(2)
                     
                     with b1:
-                        # View and Update functionality combined
+                        # View and Update combined
                         if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
                             st.session_state['selected_task'] = task
                             st.rerun()
