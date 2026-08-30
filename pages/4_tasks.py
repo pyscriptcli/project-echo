@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS (reuse design system & hide Streamlit chrome)
+# 4. Custom CSS (Compact Card Layout)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -62,14 +62,14 @@ h3 {
     font-size: 1.35rem !important;
 }
 
-/* Task Cards - Force background and shadow */
+/* Compact Container/Task Cards (Reduced padding for 1-row look) */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
-    border-radius: 12px !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
-    padding: 1rem 1.5rem !important; 
-    margin-bottom: 1rem !important;
+    padding: 0.25rem 0.5rem !important; 
+    margin-bottom: 0.5rem !important;
 }
 
 /* Form inputs */
@@ -87,9 +87,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important; 
-    font-size: 0.82rem !important; 
-    height: 38px !important; 
-    padding: 0 1.5rem !important;
+    font-size: 0.75rem !important; 
+    height: 30px !important; 
+    padding: 0 0.75rem !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
@@ -100,11 +100,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transform: translateY(-1px) !important;
     box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
 }
-
-/* Status badge colors */
-.status-todo { color: #E67E22; font-weight: 600; }
-.status-inprogress { color: #2980B9; font-weight: 600; }
-.status-done { color: #27AE60; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -168,55 +163,55 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
-# ---------------- Board Tab (CARDS VIEW) ----------------
+# ---------------- Board Tab (SINGLE ROW COMPACT CARDS) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
     else:
-        # Loop through tasks and render a card for each
+        # Loop through tasks and render a single-row card for each
         for task in tasks:
-            # Unique keys to prevent Streamlit widget ID collisions
             task_id = task['id']
             
             with st.container(border=True):
-                # Title & Status
-                st.markdown(f"#### {task['title']}")
+                # Split row into 5 columns: Title, Assignee, Due, Status, Actions
+                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 2])
                 
-                # Colored Status Badge
-                status_color = {"todo": "orange", "in_progress": "blue", "done": "green"}
-                color = status_color.get(task['status'], "gray")
-                st.markdown(
-                    f"<span style='color:{color}; font-weight: 700; text-transform: uppercase;'>{task['status'].replace('_', ' ')}</span>", 
-                    unsafe_allow_html=True
-                )
-
-                # Details
-                st.caption(f"Assignee: {task['assignee']} | Due: {task['due_date']} | Source: {task['meeting_id']}")
-                st.write(task['description'])
-
-                st.markdown("---")
-                
-                # Update and Delete Buttons side-by-side inside the card
-                c1, c2 = st.columns([2, 1])
                 with c1:
-                    status_options = ["todo", "in_progress", "done"]
-                    # Get the current index, or default to 0 if not found
-                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    
-                    new_status = st.selectbox(
-                        "Update Status", 
-                        status_options, 
-                        index=current_index, 
-                        key=f"status_{task_id}"
-                    )
-                    if st.button("Apply Update", key=f"update_{task_id}"):
-                        update_task_status(task_id, new_status)
-                        st.rerun()
+                    st.markdown(f"**{task['title']}**")
+                    desc = task['description'] or ""
+                    st.caption(desc[:50] + "..." if len(desc) > 50 else desc)
                 
                 with c2:
-                    if st.button("Delete Task", key=f"delete_{task_id}"):
-                        delete_task(task_id)
-                        st.rerun()
+                    st.markdown("**Assignee**")
+                    st.caption(task['assignee'] or "N/A")
+                
+                with c3:
+                    st.markdown("**Due Date**")
+                    st.caption(task['due_date'] or "N/A")
+                
+                with c4:
+                    # Selectbox with hidden label to keep it in one line
+                    status_options = ["todo", "in_progress", "done"]
+                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
+                    new_status = st.selectbox(
+                        "Status", 
+                        status_options, 
+                        index=current_index, 
+                        key=f"status_{task_id}",
+                        label_visibility="collapsed"
+                    )
+                
+                with c5:
+                    # Two tiny columns for the actions
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button("Update", key=f"update_{task_id}"):
+                            update_task_status(task_id, new_status)
+                            st.rerun()
+                    with b2:
+                        if st.button("Delete", key=f"delete_{task_id}"):
+                            delete_task(task_id)
+                            st.rerun()
 
 # ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
