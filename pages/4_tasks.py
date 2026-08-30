@@ -1,14 +1,15 @@
-# pages/tasks.py
+# pages/4_tasks.py (or pages/tasks.py)
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime  # Fixed missing import
 import pandas as pd
 
 from utils.auth import require_auth
 from utils.db import get_supabase_client, fetch_meeting_archives
+from components.sidebar import setup_page_layout  # Added custom nav bar import
 
 # 1. Page config (must be first)
 st.set_page_config(
@@ -17,13 +18,28 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Authentication check
+# 2. Render the custom navigation bar
+setup_page_layout()
+
+# 3. Authentication check
 require_auth()
 
-# 3. Custom CSS (reuse design system)
+# 4. Custom CSS (reuse design system & hide Streamlit chrome)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+
+/* Hide Streamlit chrome */
+header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
+[data-testid="stStatusWidget"], #MainMenu, footer,
+section[data-testid="stSidebar"], [data-testid="collapsedControl"],
+button[data-testid="stSidebarCollapseButton"], button[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarNav"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+}
 
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 
@@ -33,7 +49,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     background-size: 80px 80px;
     color: #2D2D2D;
 }
-.stApp > header { display: none !important; }
+
 .block-container { padding-top: 1.5rem !important; padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
 
 h3 {
@@ -101,7 +117,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Helper functions for Supabase tasks
+# 5. Helper functions for Supabase tasks
 supabase = get_supabase_client()
 
 def fetch_tasks():
@@ -154,15 +170,15 @@ def delete_task(task_id):
     except Exception as e:
         st.error(f"Failed to delete task: {e}")
 
-# 5. Fetch data
+# 6. Fetch data
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)  # for import
 
-# 6. Page layout
+# 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
 
-# 7. Tabs: Board View | Import from Meeting | New Task
+# 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
 # ---------------- Board Tab ----------------
