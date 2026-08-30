@@ -2,23 +2,26 @@ import sys
 import os
 import calendar
 import datetime
-import textwrap
 import streamlit as st
 
+# Add root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 from utils.db import fetch_meeting_archives
 from components.sidebar import setup_page_layout
 from utils.auth import init_supabase, login, logout, is_authenticated
 
+# 1. Page Configuration
 st.set_page_config(
-    page_title="Project Echo - Calendar",
+    page_title="Project Echo - Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# 2. Initialize Supabase client
 supabase = init_supabase()
 
+# 3. Global & Dashboard CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -53,23 +56,25 @@ header[data-testid="stHeader"],
     gap: 1.5rem !important;
 }
 
-/* Left Panel - Native Streamlit Targeting */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.left-panel-scope) {
+/* Synchronize Outer Containers */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) {
     background: transparent !important;
-    border: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 8px !important;
     box-shadow: none !important;
     height: calc(100vh - 80px) !important;
     overflow: hidden !important;
     padding: 0 !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.left-panel-scope) > div[data-testid="stVerticalBlock"] {
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
     gap: 0.8rem !important;
 }
 
+/* Left Panel Specifics */
 .left-card {
     background: rgba(255,255,255,0.95);
     border: 1px solid rgba(0,0,0,0.08);
@@ -84,6 +89,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.left-panel-scope) > div[dat
     overflow-y: auto;
     min-height: 0;
     margin-bottom: 0.5rem;
+}
+
+/* Calendar Scroll Area */
+.cal-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 /* Typography */
@@ -157,255 +173,6 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.left-panel-scope) > div[dat
     margin: 0;
 }
 
-/* Make Right Column Borderless for Custom Native UI */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    height: calc(100vh - 80px) !important;
-    padding: 0 !important;
-}
-
-/* Calendar Header */
-.cal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.8rem;
-}
-.cal-title-text {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #1B1B1B;
-    margin: 0;
-}
-.btn-add {
-    background: #FF6B4A;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.6rem 1.4rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(255,107,74,0.3);
-    transition: background-color 0.2s;
-}
-.btn-add:hover { background: #E85A3A; }
-
-/* Calendar App Container */
-.cal-app {
-    display: flex;
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    height: calc(100vh - 140px);
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-
-/* Calendar Sidebar */
-.cal-sidebar {
-    width: 260px;
-    border-right: 1px solid #E5E7EB;
-    padding: 1.2rem;
-    display: flex;
-    flex-direction: column;
-    background: #FAFAFA;
-    overflow-y: auto;
-    flex-shrink: 0;
-}
-.cal-dropdown {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.6rem 0.8rem;
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-.mini-cal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-    margin-bottom: 0.8rem;
-    font-size: 0.9rem;
-}
-.mini-cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.2rem;
-    text-align: center;
-    font-size: 0.75rem;
-    color: #6B7280;
-    margin-bottom: 1.5rem;
-}
-.mini-cal-day { font-weight: 600; padding: 0.2rem; color: #374151; }
-.mini-cal-date { padding: 0.3rem 0; cursor: pointer; border-radius: 50%; color: #4B5563; }
-.mini-cal-date.active { background: #FF6B4A; color: #fff; font-weight: 600; }
-.mini-cal-date.dim { color: #D1D5DB; }
-.my-schedule-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #1B1B1B;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.schedule-list { list-style: none; padding: 0; margin: 0; }
-.schedule-item {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
-    color: #4B5563;
-    margin-bottom: 0.8rem;
-}
-.schedule-item input { margin-right: 0.6rem; accent-color: #FF6B4A; transform: scale(1.1); }
-
-/* Calendar Main */
-.cal-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
-}
-.cal-main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #E5E7EB;
-    flex-shrink: 0;
-}
-.cal-nav { font-size: 1.25rem; font-weight: 600; color: #111827; }
-.cal-view-toggles {
-    display: flex;
-    background: #F3F4F6;
-    border-radius: 8px;
-    padding: 0.2rem;
-}
-.cal-view-toggles button {
-    border: none;
-    background: transparent;
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #4B5563;
-    cursor: pointer;
-}
-.cal-view-toggles button.active { background: #1F2937; color: #fff; }
-
-/* Timetable */
-.cal-timetable {
-    flex: 1;
-    display: flex;
-    overflow-y: auto;
-    overflow-x: hidden;
-    position: relative;
-}
-.cal-time-axis {
-    width: 60px;
-    border-right: 1px solid #E5E7EB;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    background: #fff;
-}
-.cal-time-slot {
-    height: 60px;
-    border-bottom: 1px solid #F3F4F6;
-    position: relative;
-}
-.cal-time-label {
-    position: absolute;
-    top: -8px;
-    right: 8px;
-    font-size: 0.7rem;
-    color: #9CA3AF;
-    font-weight: 500;
-}
-.cal-days-grid {
-    flex: 1;
-    display: flex;
-    min-width: 0;
-}
-.cal-day-col {
-    flex: 1;
-    border-right: 1px solid #E5E7EB;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-.cal-day-header {
-    text-align: center;
-    padding: 0.8rem 0;
-    border-bottom: 1px solid #E5E7EB;
-    height: 60px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-shrink: 0;
-    background: #fff;
-}
-.cal-day-name { font-size: 0.85rem; font-weight: 600; color: #111827; }
-.cal-day-sub { font-size: 0.65rem; color: #9CA3AF; margin-top: 0.1rem; }
-.cal-day-body {
-    flex: 1;
-    position: relative;
-    background-image: linear-gradient(to bottom, #F9FAFB 1px, transparent 1px);
-    background-size: 100% 60px;
-    min-height: 540px;
-}
-
-/* Events */
-.cal-event {
-    position: absolute;
-    left: 4px;
-    right: 4px;
-    border-radius: 6px;
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    border-left: 3px solid transparent;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    overflow: hidden;
-    z-index: 10;
-}
-.evt-time { font-weight: 600; margin-bottom: 0.15rem; font-size: 0.7rem; }
-.evt-title { color: #1F2937; line-height: 1.2; font-weight: 500; }
-.evt-avatars { margin-top: auto; display: flex; justify-content: flex-end; }
-.avatar {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    margin-left: -6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.5rem;
-    font-weight: 600;
-    color: #fff;
-}
-
-.bg-orange { background: #FEF2EB; border-left-color: #FF6B4A; }
-.bg-orange .evt-time { color: #FF6B4A; }
-.bg-blue { background: #EEF2FF; border-left-color: #6366F1; }
-.bg-blue .evt-time { color: #6366F1; }
-.bg-red { background: #FEF2F2; border-left-color: #EF4444; }
-.bg-red .evt-time { color: #EF4444; }
-.bg-green { background: #ECFDF5; border-left-color: #10B981; }
-.bg-green .evt-time { color: #10B981; }
-
 /* Streamlit popovers and buttons */
 div[data-testid="stPopover"] { margin-bottom: 0 !important; }
 div[data-testid="stPopover"] > button {
@@ -430,7 +197,7 @@ div[data-testid="stPopover"] > button {
 </style>
 """, unsafe_allow_html=True)
 
-# Auth Check
+# 4. Auth Check
 if not is_authenticated():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
@@ -446,6 +213,7 @@ if not is_authenticated():
                 st.error("Invalid credentials.")
     st.stop()
 
+# 5. Page Layout Setup
 setup_page_layout()
 
 with st.sidebar:
@@ -454,7 +222,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# Session State
+# 6. Session State
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
@@ -465,7 +233,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# Fetch Data
+# 7. Fetch Data & Extract Actions
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -473,12 +241,16 @@ total_range_meetings = 0
 total_internal_meetings = 0
 total_external_meetings = 0
 filtered_records = []
+
 calendar_events_by_date = {}
-theme_colors = ["bg-orange", "bg-blue", "bg-green", "bg-red"]
+# Modern accent colors for the calendar tasks
+hex_colors = ["#FF6B4A", "#6366F1", "#10B981", "#EF4444"]
 c_idx = 0
 
 for m in supabase_records:
     m_date_raw = str(m.get("meeting_date", ""))
+    
+    # Left Column metrics
     try:
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d").date()
         if st.session_state["start_date"] <= parsed_d <= st.session_state["end_date"]:
@@ -495,6 +267,7 @@ for m in supabase_records:
     except Exception:
         pass
 
+    # Right Column Calendar tasks
     raw = m.get("raw_payload", {}) or {}
     details = raw.get("meeting_details", {}) if isinstance(raw, dict) else {}
     items = details.get("action_items", [])
@@ -502,10 +275,10 @@ for m in supabase_records:
         items = details.get("discussion_points", [])
 
     for item in items:
-        # Prioritize delivery_date/due_date over meeting date
+        # Map to delivery date, fallback to meeting date
         date_val = item.get("delivery_date") or item.get("due_date") or m_date_raw[:10]
-        if not date_val:
-            continue
+        if not date_val: continue
+        
         try:
             d_str = datetime.datetime.strptime(date_val[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
         except:
@@ -517,7 +290,7 @@ for m in supabase_records:
         if d_str not in calendar_events_by_date:
             calendar_events_by_date[d_str] = []
 
-        # Stagger overlapping events aesthetically 
+        # Assign a staggered mock time for UI purposes
         hour = 8 + (len(calendar_events_by_date[d_str]) * 2) % 8
         am_pm = "AM" if hour < 12 else "PM"
         disp_hour = hour if hour <= 12 else hour - 12
@@ -525,53 +298,18 @@ for m in supabase_records:
         calendar_events_by_date[d_str].append({
             "title": title,
             "owner": owner,
-            "color": theme_colors[c_idx % len(theme_colors)],
-            "time": f"{disp_hour}:00{am_pm}",
-            "top_px": (hour - 8) * 60,
-            "height_px": 80 if len(title) > 20 else 60
+            "hex_color": hex_colors[c_idx % len(hex_colors)],
+            "time": f"{disp_hour}:00 {am_pm}"
         })
         c_idx += 1
 
-# Build Calendar HTML
-week_start = today - datetime.timedelta(days=today.weekday() + 1)
-if today.weekday() == 6:
-    week_start = today
-
-day_columns_html = ""
-for i in range(7):
-    curr_date = week_start + datetime.timedelta(days=i)
-    curr_date_str = curr_date.strftime("%Y-%m-%d")
-    day_name = curr_date.strftime("%b %-d")
-
-    events_html = ""
-    for evt in calendar_events_by_date.get(curr_date_str, []):
-        owner_initial = evt['owner'][0].upper() if evt['owner'] else "T"
-        events_html += f"""
-        <div class="cal-event {evt['color']}" style="top:{evt['top_px']}px;height:{evt['height_px']}px;">
-            <div class="evt-time">{evt['time']}</div>
-            <div class="evt-title">{evt['title'][:45]}{'...' if len(evt['title']) > 45 else ''}</div>
-            <div class="evt-avatars">
-                <div class="avatar" style="background:#4B5563;">{owner_initial}</div>
-            </div>
-        </div>"""
-
-    day_columns_html += f"""
-    <div class="cal-day-col">
-        <div class="cal-day-header">
-            <div class="cal-day-name">{day_name}</div>
-        </div>
-        <div class="cal-day-body">
-            {events_html}
-        </div>
-    </div>"""
-
-# Layout
+# 8. Dashboard Layout
 col_left, col_right = st.columns([1, 2.5])
 
-# LEFT COLUMN (Restored safe Streamlit Scoping)
+# ----- LEFT COLUMN -----
 with col_left:
     with st.container(border=False):
-        st.markdown('<div class="left-panel-scope"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sync-height-scope"></div>', unsafe_allow_html=True)
         
         # KPI Card
         st.markdown(f"""
@@ -644,77 +382,72 @@ with col_left:
             st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# RIGHT COLUMN (HTML Indentation Removed)
+# ----- RIGHT COLUMN (Native Calendar) -----
 with col_right:
     with st.container(border=False):
-        st.markdown('<div class="custom-calendar-scope"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sync-height-scope"></div>', unsafe_allow_html=True)
         
-        calendar_html = textwrap.dedent(f"""
-<div class="cal-header">
-    <h1 class="cal-title-text">Calendar</h1>
-    <button class="btn-add">+ Add New Schedule</button>
-</div>
-
-<div class="cal-app">
-    <div class="cal-sidebar">
-        <div class="cal-dropdown">
-            <span>📅 All Calendar</span>
-            <span style="color:#9CA3AF;font-size:0.7rem;">▼</span>
-        </div>
-        <div class="mini-cal-header">
-            <span>{today.strftime('%B %Y')}</span>
+        # Calendar Header
+        st.markdown(f"""
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding: 0 0.5rem;">
             <div>
-                <span style="color:#9CA3AF;cursor:pointer;margin-right:8px;">&lt;</span>
-                <span style="color:#9CA3AF;cursor:pointer;">&gt;</span>
+                <h2 style="font-family:'Playfair Display', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Action Items Calendar</h2>
+                <p style="color:#6C727A; font-size:0.8rem; margin:0;">Tasks synced directly from meeting minutes by delivery date.</p>
+            </div>
+            <div style="font-weight:600; color:#1A2B4C; font-size:1.1rem; background:rgba(255,255,255,0.7); padding: 0.4rem 1rem; border-radius:20px; border:1px solid rgba(0,0,0,0.05);">
+                Week of {today.strftime('%b %d, %Y')}
             </div>
         </div>
-        <div class="mini-cal-grid">
-            <div class="mini-cal-day">Sun</div><div class="mini-cal-day">Mon</div><div class="mini-cal-day">Tue</div><div class="mini-cal-day">Wed</div><div class="mini-cal-day">Thu</div><div class="mini-cal-day">Fri</div><div class="mini-cal-day">Sat</div>
-            <div class="mini-cal-date dim">26</div><div class="mini-cal-date dim">27</div><div class="mini-cal-date dim">28</div><div class="mini-cal-date dim">29</div><div class="mini-cal-date dim">30</div><div class="mini-cal-date dim">31</div><div class="mini-cal-date">1</div>
-            <div class="mini-cal-date">2</div><div class="mini-cal-date">3</div><div class="mini-cal-date">4</div><div class="mini-cal-date">5</div><div class="mini-cal-date">6</div><div class="mini-cal-date">7</div><div class="mini-cal-date">8</div>
-            <div class="mini-cal-date">9</div><div class="mini-cal-date">10</div><div class="mini-cal-date">11</div><div class="mini-cal-date">12</div><div class="mini-cal-date">13</div><div class="mini-cal-date">14</div><div class="mini-cal-date">15</div>
-            <div class="mini-cal-date">16</div><div class="mini-cal-date">17</div><div class="mini-cal-date">18</div><div class="mini-cal-date">19</div><div class="mini-cal-date">20</div><div class="mini-cal-date">21</div><div class="mini-cal-date">22</div>
-            <div class="mini-cal-date active">23</div><div class="mini-cal-date">24</div><div class="mini-cal-date">25</div><div class="mini-cal-date">26</div><div class="mini-cal-date">27</div><div class="mini-cal-date">28</div><div class="mini-cal-date">29</div>
-        </div>
-        <hr style="border:0;border-top:1px solid #E5E7EB;margin-bottom:1.5rem;">
-        <div class="my-schedule-title">My Schedule <span style="color:#9CA3AF;font-size:0.7rem;">▼</span></div>
-        <ul class="schedule-list">
-            <li class="schedule-item"><input type="checkbox" checked> Schedule Meeting</li>
-            <li class="schedule-item"><input type="checkbox" checked> Project Review</li>
-            <li class="schedule-item"><input type="checkbox" checked> Online Meeting</li>
-            <li class="schedule-item"><input type="checkbox"> Recess Break</li>
-            <li class="schedule-item"><input type="checkbox"> Coffee Date</li>
-            <li class="schedule-item"><input type="checkbox"> Other</li>
-        </ul>
-    </div>
-    
-    <div class="cal-main">
-        <div class="cal-main-header">
-            <div class="cal-nav">&lt; {today.strftime('%B')} &gt;</div>
-            <div class="cal-view-toggles">
-                <button>Day</button>
-                <button class="active">Week</button>
-                <button>Month</button>
-            </div>
-        </div>
-        <div class="cal-timetable">
-            <div class="cal-time-axis">
-                <div class="cal-time-slot" style="height:60px;"></div>
-                <div class="cal-time-slot"><span class="cal-time-label">9AM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">10AM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">11AM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">12PM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">1PM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">2PM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">3PM</span></div>
-                <div class="cal-time-slot"><span class="cal-time-label">4PM</span></div>
-            </div>
-            <div class="cal-days-grid">
-                {day_columns_html}
-            </div>
-        </div>
-    </div>
-</div>
-        """)
+        """, unsafe_allow_html=True)
         
-        st.markdown(calendar_html, unsafe_allow_html=True)
+        # 7-Day Grid Container (Scrollable)
+        st.markdown('<div class="cal-scroll-area">', unsafe_allow_html=True)
+        
+        # Native Streamlit Columns for 7 Days
+        day_cols = st.columns(7, gap="small")
+        
+        week_start = today - datetime.timedelta(days=today.weekday() + 1)
+        if today.weekday() == 6: week_start = today
+        
+        for i in range(7):
+            curr_date = week_start + datetime.timedelta(days=i)
+            curr_date_str = curr_date.strftime("%Y-%m-%d")
+            day_name = curr_date.strftime("%a")
+            day_num = curr_date.strftime("%d")
+            
+            with day_cols[i]:
+                # Day Header
+                is_today = (curr_date == today)
+                bg_color = "#111A2B" if is_today else "#FFFFFF"
+                text_color = "#FFFFFF" if is_today else "#1A2B4C"
+                border = "none" if is_today else "1px solid rgba(0,0,0,0.08)"
+                
+                st.markdown(f"""
+                <div style='text-align:center; padding: 0.6rem 0; margin-bottom: 0.8rem; border-radius: 8px; background: {bg_color}; color: {text_color}; border: {border}; box-shadow: 0 1px 2px rgba(0,0,0,0.02);'>
+                    <div style='font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.9;'>{day_name}</div>
+                    <div style='font-size:1.3rem; font-family:"Playfair Display", serif; font-weight:600;'>{day_num}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Events Render
+                events = calendar_events_by_date.get(curr_date_str, [])
+                if events:
+                    for evt in events:
+                        st.markdown(f"""
+                        <div style='background: #FFFFFF; border: 1px solid rgba(0,0,0,0.06); border-left: 3px solid {evt["hex_color"]}; border-radius: 6px; padding: 0.6rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.1s;'>
+                            <div style='font-size: 0.65rem; color: {evt["hex_color"]}; font-weight: 700; margin-bottom: 0.2rem;'>{evt["time"]}</div>
+                            <div style='font-size: 0.75rem; color: #1A2B4C; font-weight: 600; line-height: 1.3; margin-bottom: 0.4rem;'>{evt["title"]}</div>
+                            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                                <span style='font-size: 0.6rem; color: #6C727A; background:#F3F4F6; padding:0.1rem 0.4rem; border-radius:12px;'>Assigned</span>
+                                <span style='font-size: 0.65rem; color: #1A2B4C; font-weight:500;'>{evt["owner"][:10]}</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style='text-align:center; color:#9CA3AF; font-size:0.75rem; margin-top: 1.5rem; font-style:italic;'>
+                        No tasks
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+        st.markdown('</div>', unsafe_allow_html=True)
