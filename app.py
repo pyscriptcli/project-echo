@@ -2,6 +2,7 @@ import sys
 import os
 import calendar
 import datetime
+import textwrap
 import streamlit as st
 
 # Add root directory to sys.path
@@ -373,7 +374,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch Data & Extract Calendar Action Items
+# 7. Fetch Data & Extract Calendar Action Items based on Delivery/Due Dates
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -382,7 +383,6 @@ total_internal_meetings = 0
 total_external_meetings = 0
 filtered_records = []
 
-# To populate the native calendar, we extract action items mapped to their delivery dates.
 calendar_events_by_date = {}
 theme_colors = ["bg-orange", "bg-blue", "bg-green", "bg-red"]
 c_idx = 0
@@ -390,7 +390,7 @@ c_idx = 0
 for m in supabase_records:
     m_date_raw = str(m.get("meeting_date", ""))
     
-    # Extract metrics for Left Panel
+    # Left panel filters
     try:
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d").date()
         if st.session_state["start_date"] <= parsed_d <= st.session_state["end_date"]:
@@ -408,17 +408,16 @@ for m in supabase_records:
     except Exception:
         pass
         
-    # Extract Action Items for Right Panel Calendar mapping
+    # Extract Action Items & Discussion Points mapped to Calendar
     raw = m.get("raw_payload", {}) or {}
     details = raw.get("meeting_details", {}) if isinstance(raw, dict) else {}
     items = details.get("action_items", [])
     if not items:
-        # Fallback to discussion points if no strict action items
         items = details.get("discussion_points", [])
         
     for item in items:
-        # Attempt to find a date tied to the action point
-        date_val = item.get("due_date") or item.get("delivery_date") or m_date_raw[:10]
+        # Prioritize delivery_date or due_date 
+        date_val = item.get("delivery_date") or item.get("due_date") or m_date_raw[:10]
         if not date_val: continue
         
         try:
@@ -432,7 +431,7 @@ for m in supabase_records:
         if d_str not in calendar_events_by_date:
             calendar_events_by_date[d_str] = []
             
-        # Simulate staggered visual times for aesthetic native UI placement (8AM to 4PM)
+        # Simulate visual UI staggered times (8AM to 4PM limits)
         hour = 8 + (len(calendar_events_by_date[d_str]) * 2) % 8
         am_pm = "AM" if hour < 12 else "PM"
         disp_hour = hour if hour <= 12 else hour - 12
@@ -550,7 +549,6 @@ for i in range(7):
     curr_date_str = curr_date.strftime("%Y-%m-%d")
     day_name = curr_date.strftime("%b %-d")
     
-    # Construct Events in this column
     events_html = ""
     for evt in calendar_events_by_date.get(curr_date_str, []):
         owner_initial = evt['owner'][0].upper() if evt['owner'] else "T"
@@ -580,83 +578,81 @@ with col_right:
     with st.container(border=False):
         st.markdown('<div class="custom-calendar-scope"></div>', unsafe_allow_html=True)
         
-        calendar_html = f"""
-        <div class="cal-header-bar">
-            <h1 class="cal-title">Calendar</h1>
-            <button class="btn-add-schedule">+ Add New Schedule</button>
+        # Remove indentation on this block so Streamlit doesn't render it as a Markdown Code Block
+        calendar_html = textwrap.dedent(f"""
+<div class="cal-header-bar">
+    <h1 class="cal-title">Calendar</h1>
+    <button class="btn-add-schedule">+ Add New Schedule</button>
+</div>
+
+<div class="cal-app-container">
+    <!-- Sidebar Navigation -->
+    <div class="cal-sidebar">
+        <div class="cal-dropdown">
+            <span>📅 All Calendar</span>
+            <span style="color:#9CA3AF; font-size:0.7rem;">▼</span>
         </div>
         
-        <div class="cal-app-container">
-            <!-- Sidebar Navigation -->
-            <div class="cal-sidebar">
-                <div class="cal-dropdown">
-                    <span>📅 All Calendar</span>
-                    <span style="color:#9CA3AF; font-size:0.7rem;">▼</span>
-                </div>
-                
-                <div class="mini-cal-header">
-                    <span>{today.strftime('%B %Y')}</span>
-                    <div>
-                        <span style="color:#9CA3AF; cursor:pointer; margin-right:8px;">&lt;</span>
-                        <span style="color:#9CA3AF; cursor:pointer;">&gt;</span>
-                    </div>
-                </div>
-                
-                <div class="mini-cal-grid">
-                    <div class="mini-cal-day">Sun</div><div class="mini-cal-day">Mon</div><div class="mini-cal-day">Tue</div><div class="mini-cal-day">Wed</div><div class="mini-cal-day">Thu</div><div class="mini-cal-day">Fri</div><div class="mini-cal-day">Sat</div>
-                    
-                    <div class="mini-cal-date dim">26</div><div class="mini-cal-date dim">27</div><div class="mini-cal-date dim">28</div><div class="mini-cal-date dim">29</div><div class="mini-cal-date dim">30</div><div class="mini-cal-date dim">31</div><div class="mini-cal-date">1</div>
-                    <div class="mini-cal-date">2</div><div class="mini-cal-date">3</div><div class="mini-cal-date">4</div><div class="mini-cal-date">5</div><div class="mini-cal-date">6</div><div class="mini-cal-date">7</div><div class="mini-cal-date">8</div>
-                    <div class="mini-cal-date">9</div><div class="mini-cal-date">10</div><div class="mini-cal-date">11</div><div class="mini-cal-date">12</div><div class="mini-cal-date">13</div><div class="mini-cal-date">14</div><div class="mini-cal-date">15</div>
-                    <div class="mini-cal-date">16</div><div class="mini-cal-date">17</div><div class="mini-cal-date">18</div><div class="mini-cal-date">19</div><div class="mini-cal-date">20</div><div class="mini-cal-date">21</div><div class="mini-cal-date">22</div>
-                    <div class="mini-cal-date active">23</div><div class="mini-cal-date">24</div><div class="mini-cal-date">25</div><div class="mini-cal-date">26</div><div class="mini-cal-date">27</div><div class="mini-cal-date">28</div><div class="mini-cal-date">29</div>
-                </div>
-                
-                <hr style="border:0; border-top:1px solid #E5E7EB; margin-bottom:1.5rem;">
-                
-                <div class="my-schedule-title">My Schedule <span style="color:#9CA3AF; transform: rotate(180deg); display:inline-block; font-size:0.7rem;">▼</span></div>
-                <ul class="schedule-list">
-                    <li class="schedule-item"><input type="checkbox" checked> Schedule Meeting</li>
-                    <li class="schedule-item"><input type="checkbox" checked> Project Review</li>
-                    <li class="schedule-item"><input type="checkbox" checked> Online Meeting</li>
-                    <li class="schedule-item"><input type="checkbox"> Recess Break</li>
-                    <li class="schedule-item"><input type="checkbox"> Coffee Date</li>
-                    <li class="schedule-item"><input type="checkbox"> Other</li>
-                </ul>
-            </div>
-            
-            <!-- Main Calendar Timetable -->
-            <div class="cal-main">
-                <div class="cal-main-header">
-                    <div class="cal-nav">&lt; {today.strftime('%B')} &gt;</div>
-                    <div class="cal-view-toggles">
-                        <button>Day</button>
-                        <button class="active">Week</button>
-                        <button>Month</button>
-                    </div>
-                </div>
-                
-                <div class="cal-timetable">
-                    <!-- Vertical Time Axis (60px segments mapped to the grid) -->
-                    <div class="cal-time-axis">
-                        <div class="cal-time-slot" style="height:60px;"></div> <!-- 8AM Alignment Padding -->
-                        <div class="cal-time-slot"><span class="cal-time-label">9AM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">10AM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">11AM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">12PM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">1PM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">2PM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">3PM</span></div>
-                        <div class="cal-time-slot"><span class="cal-time-label">4PM</span></div>
-                    </div>
-                    
-                    <!-- Dynamically Generated Week Columns -->
-                    <div class="cal-days-grid">
-                        {day_columns_html}
-                    </div>
-                </div>
+        <div class="mini-cal-header">
+            <span>{today.strftime('%B %Y')}</span>
+            <div>
+                <span style="color:#9CA3AF; cursor:pointer; margin-right:8px;">&lt;</span>
+                <span style="color:#9CA3AF; cursor:pointer;">&gt;</span>
             </div>
         </div>
-        """
+        
+        <div class="mini-cal-grid">
+            <div class="mini-cal-day">Sun</div><div class="mini-cal-day">Mon</div><div class="mini-cal-day">Tue</div><div class="mini-cal-day">Wed</div><div class="mini-cal-day">Thu</div><div class="mini-cal-day">Fri</div><div class="mini-cal-day">Sat</div>
+            
+            <div class="mini-cal-date dim">26</div><div class="mini-cal-date dim">27</div><div class="mini-cal-date dim">28</div><div class="mini-cal-date dim">29</div><div class="mini-cal-date dim">30</div><div class="mini-cal-date dim">31</div><div class="mini-cal-date">1</div>
+            <div class="mini-cal-date">2</div><div class="mini-cal-date">3</div><div class="mini-cal-date">4</div><div class="mini-cal-date">5</div><div class="mini-cal-date">6</div><div class="mini-cal-date">7</div><div class="mini-cal-date">8</div>
+            <div class="mini-cal-date">9</div><div class="mini-cal-date">10</div><div class="mini-cal-date">11</div><div class="mini-cal-date">12</div><div class="mini-cal-date">13</div><div class="mini-cal-date">14</div><div class="mini-cal-date">15</div>
+            <div class="mini-cal-date">16</div><div class="mini-cal-date">17</div><div class="mini-cal-date">18</div><div class="mini-cal-date">19</div><div class="mini-cal-date">20</div><div class="mini-cal-date">21</div><div class="mini-cal-date">22</div>
+            <div class="mini-cal-date active">23</div><div class="mini-cal-date">24</div><div class="mini-cal-date">25</div><div class="mini-cal-date">26</div><div class="mini-cal-date">27</div><div class="mini-cal-date">28</div><div class="mini-cal-date">29</div>
+        </div>
+        
+        <hr style="border:0; border-top:1px solid #E5E7EB; margin-bottom:1.5rem;">
+        
+        <div class="my-schedule-title">My Schedule <span style="color:#9CA3AF; transform: rotate(180deg); display:inline-block; font-size:0.7rem;">▼</span></div>
+        <ul class="schedule-list">
+            <li class="schedule-item"><input type="checkbox" checked> Schedule Meeting</li>
+            <li class="schedule-item"><input type="checkbox" checked> Project Review</li>
+            <li class="schedule-item"><input type="checkbox" checked> Online Meeting</li>
+            <li class="schedule-item"><input type="checkbox"> Recess Break</li>
+            <li class="schedule-item"><input type="checkbox"> Coffee Date</li>
+            <li class="schedule-item"><input type="checkbox"> Other</li>
+        </ul>
+    </div>
+    
+    <!-- Main Calendar Timetable -->
+    <div class="cal-main">
+        <div class="cal-main-header">
+            <div class="cal-nav">&lt; {today.strftime('%B')} &gt;</div>
+            <div class="cal-view-toggles">
+                <button>Day</button>
+                <button class="active">Week</button>
+                <button>Month</button>
+            </div>
+        </div>
+        
+        <div class="cal-timetable">
+            <div class="cal-time-axis">
+                <div class="cal-time-slot" style="height:60px;"></div>
+                <div class="cal-time-slot"><span class="cal-time-label">9AM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">10AM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">11AM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">12PM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">1PM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">2PM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">3PM</span></div>
+                <div class="cal-time-slot"><span class="cal-time-label">4PM</span></div>
+            </div>
+            <div class="cal-days-grid">
+                {day_columns_html}
+            </div>
+        </div>
+    </div>
+</div>
+        """)
         
         st.markdown(calendar_html, unsafe_allow_html=True)
