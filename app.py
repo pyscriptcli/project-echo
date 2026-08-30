@@ -22,7 +22,7 @@ st.set_page_config(
 # 2. Initialize Supabase client (cached)
 supabase = init_supabase()
 
-# 3. Custom CSS (updated to hide header, toolbar, and sidebar completely)
+# 3. Custom CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -35,10 +35,10 @@ st.markdown("""
 [data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
-/* Full-width main content */
+/* Full-width main content with compact padding */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 0.8rem !important;
+    padding-top: 1rem !important; /* Reduced top padding for compactness */
     padding-bottom: 0.5rem !important;
     padding-right: 1.5rem !important;
     padding-left: 1.5rem !important;
@@ -204,57 +204,49 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
 }
 
-/* Charcoal Black & Gold Accent Pill Buttons */
+/* Charcoal Black & Gold Accent Pill Buttons (Deep charcoal with gold accent) */
 .stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    font-size: 0.72rem !important;
-    padding: 0.2rem 0.75rem !important;
-    min-height: 26px !important;
-    height: 26px !important;
+    font-size: 0.8rem !important;
+    padding: 0.5rem 1rem !important;
+    min-height: 45px !important;
+    height: 45px !important;
     transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .stButton > button:hover {
     border-color: #F1C40F !important;
     background-color: #1A263D !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
-/* Authentication Login Card */
-.login-card {
-    background: #FFFFFF;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    padding: 2.5rem 2rem;
-    max-width: 380px;
-    margin: 0 auto;
-    border: 1px solid rgba(0,0,0,0.06);
-    text-align: center;
-}
+/* Authentication - No login card box, compact layout */
 .login-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 2rem;
+    font-size: 3rem; /* Bigger title */
     font-weight: 600;
     color: #1A2B4C;
     margin-bottom: 0.5rem;
+    line-height: 1.1;
 }
 .login-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #6C727A;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    font-style: italic; /* Italic subtitle */
 }
 </style>
 """, unsafe_allow_html=True)
 
 # 4. Authentication Check
 if not is_authenticated():
-    # Render login form (centered)
+    # Render login form (centered, no div card)
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown('<p class="login-title">Project Echo</p>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle">Sign in to access your dashboard</p>', unsafe_allow_html=True)
         email = st.text_input("Email", placeholder="your@email.com")
@@ -269,7 +261,6 @@ if not is_authenticated():
                     st.error("Invalid credentials. Please try again.")
         with col_btn2:
             st.markdown("")  # placeholder for potential "Forgot password" later
-        st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 # 5. If authenticated, proceed with original layout
