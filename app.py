@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 from utils.db import fetch_meeting_archives
 from utils.echo_ai import render_echo_chat
 from components.sidebar import setup_page_layout
+from utils.auth import init_supabase, login, logout, is_authenticated  # new import
 
 # 1. Page Configuration
 st.set_page_config(
@@ -17,22 +18,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-setup_page_layout()
 
-# 2. Session State Initialization
-if "global_chat_history" not in st.session_state:
-    st.session_state["global_chat_history"] = []
-if "selected_meeting_id" not in st.session_state:
-    st.session_state["selected_meeting_id"] = None
+# 2. Initialize Supabase client (cached)
+supabase = init_supabase()
 
-today = datetime.datetime.now().date()
-if "start_date" not in st.session_state:
-    st.session_state["start_date"] = today.replace(day=1)
-if "end_date" not in st.session_state:
-    _, last_day = calendar.monthrange(today.year, today.month)
-    st.session_state["end_date"] = today.replace(day=last_day)
-
-# 3. Global & Dashboard CSS (80px Large Grid, Pill Buttons, Synchronized Height)
+# 3. Custom CSS (same as before, plus a few additions for login)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -226,10 +216,81 @@ div[data-testid="stPopover"] > button:hover {
     background-color: #1A263D !important;
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
+
+/* Authentication Login Card */
+.login-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 2.5rem 2rem;
+    max-width: 380px;
+    margin: 0 auto;
+    border: 1px solid rgba(0,0,0,0.06);
+    text-align: center;
+}
+.login-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1A2B4C;
+    margin-bottom: 0.5rem;
+}
+.login-subtitle {
+    font-size: 0.85rem;
+    color: #6C727A;
+    margin-bottom: 2rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Fetch and Filter Data
+# 4. Authentication Check
+if not is_authenticated():
+    # Render login form (centered)
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown('<p class="login-title">Project Echo</p>', unsafe_allow_html=True)
+        st.markdown('<p class="login-subtitle">Sign in to access your dashboard</p>', unsafe_allow_html=True)
+        email = st.text_input("Email", placeholder="your@email.com")
+        password = st.text_input("Password", type="password", placeholder="••••••••")
+        col_btn1, col_btn2 = st.columns([1, 1])
+        with col_btn1:
+            if st.button("Sign In", use_container_width=True):
+                if login(email, password):
+                    st.success("Logged in successfully!")
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials. Please try again.")
+        with col_btn2:
+            st.markdown("")  # placeholder for potential "Forgot password" later
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+# 5. If authenticated, proceed with original layout
+setup_page_layout()
+
+# Add logout button in sidebar (after navigation)
+with st.sidebar:
+    st.markdown("---")
+    if st.button("Logout", key="logout_btn"):
+        logout()
+        st.rerun()
+
+# 6. Session State Initialization (same as before)
+if "global_chat_history" not in st.session_state:
+    st.session_state["global_chat_history"] = []
+if "selected_meeting_id" not in st.session_state:
+    st.session_state["selected_meeting_id"] = None
+
+today = datetime.datetime.now().date()
+if "start_date" not in st.session_state:
+    st.session_state["start_date"] = today.replace(day=1)
+if "end_date" not in st.session_state:
+    _, last_day = calendar.monthrange(today.year, today.month)
+    st.session_state["end_date"] = today.replace(day=last_day)
+
+# 7. Fetch and Filter Data (same as before)
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -258,7 +319,7 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 5. Dashboard Grid Composition
+# 8. Dashboard Grid Composition (same as before)
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
 # Left Column (Overview, Date Filter, Feed)
