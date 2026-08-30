@@ -35,7 +35,7 @@ st.markdown("""
 [data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
-/* Full-width main content with compact padding */
+/* Full-width main content */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
     padding-top: 1rem !important;
@@ -223,38 +223,54 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
-/* Authentication - No login card box, compact layout, centered text */
+/* Authentication - Left Aligned, Bigger Title */
 .login-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 3rem;
+    font-size: 4rem; /* Larger */
     font-weight: 600;
     color: #1A2B4C;
     margin-bottom: 0.5rem;
     line-height: 1.1;
-    text-align: center; /* Centered */
+    text-align: left; /* Left aligned */
 }
 .login-subtitle {
     font-size: 0.9rem;
     color: #6C727A;
     margin-bottom: 1.5rem;
     font-style: italic;
-    text-align: center; /* Centered */
+    text-align: left; /* Left aligned */
 }
 </style>
 """, unsafe_allow_html=True)
 
 # 4. Authentication Check
 if not is_authenticated():
-    # Render login form in a perfect 3x3 layout (content in the center 1/3)
-    col1, col2, col3 = st.columns(3) 
+    # Add CSS to vertically and horizontally center the login form
+    st.markdown("""
+    <style>
+    [data-testid="stMainBlockContainer"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Force full viewport height */
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Use a 3-column layout where the middle column holds the form
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         st.markdown('<p class="login-title">Project Echo</p>', unsafe_allow_html=True)
         st.markdown('<p class="login-subtitle">Sign in to access your dashboard</p>', unsafe_allow_html=True)
-        email = st.text_input("Email", placeholder="your@email.com")
-        password = st.text_input("Password", type="password", placeholder="••••••••")
         
-        # Single button to fill the width of the middle column
+        # Blank text fields by default (value="")
+        email = st.text_input("Email", value="")
+        password = st.text_input("Password", type="password", value="")
+        
+        st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
+        
         if st.button("Sign In", use_container_width=True):
             if login(email, password):
                 st.success("Logged in successfully!")
