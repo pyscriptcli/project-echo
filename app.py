@@ -53,7 +53,7 @@ header[data-testid="stHeader"],
 
 [data-testid="stHorizontalBlock"] {
     align-items: flex-start !important; 
-    gap: 1.5rem !important;
+    gap: 1rem !important;
 }
 
 /* Synchronize Outer Containers */
@@ -195,43 +195,156 @@ div[data-testid="stPopover"] > button {
     height: 28px !important;
 }
 
-/* Calendar navigation controls */
-.cal-nav-btn {
-    background: transparent !important;
+/* ===== CALENDAR SPECIFIC ===== */
+/* Segmented control */
+.segmented-control {
+    display: flex;
+    background: rgba(0,0,0,0.05);
+    border-radius: 20px;
+    padding: 3px;
+    gap: 2px;
+    width: max-content;
+}
+.segmented-btn {
+    background: transparent;
+    border: none;
+    border-radius: 17px;
+    padding: 6px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6C727A;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+.segmented-btn.active {
+    background: #FFFFFF;
+    color: #1A2B4C;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* Navigation buttons */
+.nav-btn {
+    background: rgba(255,255,255,0.7) !important;
     border: 1px solid rgba(0,0,0,0.1) !important;
     color: #1A2B4C !important;
     border-radius: 50% !important;
     width: 36px !important;
     height: 36px !important;
     padding: 0 !important;
-    font-size: 1rem !important;
+    font-size: 0.8rem !important;
     line-height: 1 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+    transition: all 0.2s !important;
 }
-.cal-nav-btn:hover {
-    background: rgba(0,0,0,0.05) !important;
+.nav-btn:hover {
+    background: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
 }
-.cal-today-btn {
+.today-btn {
     background: #111A2B !important;
     color: #fff !important;
-    border: 1px solid #D4AF37 !important;
+    border: 1px solid #111A2B !important;
     border-radius: 20px !important;
     font-size: 0.72rem !important;
-    padding: 0.2rem 0.75rem !important;
-    min-height: 28px !important;
-    height: 28px !important;
+    padding: 0.2rem 0.8rem !important;
+    height: 32px !important;
 }
-.cal-search {
-    margin-bottom: 0.5rem;
+
+/* Search input */
+.search-wrapper {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 20px;
+    padding: 0.3rem 0.8rem;
+    display: flex;
+    align-items: center;
 }
-.cal-search input {
-    background: #fff !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
-    border-radius: 20px !important;
-    font-size: 0.75rem !important;
-    color: #1A2B4C !important;
+.search-wrapper input {
+    border: none;
+    background: transparent;
+    font-size: 0.75rem;
+    color: #1A2B4C;
+    outline: none;
+    width: 100%;
+}
+.search-wrapper input::placeholder {
+    color: #9CA3AF;
+}
+
+/* Calendar Month Grid */
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 10px;
+}
+.month-day-header {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6C727A;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.month-cell {
+    background: #FFFFFF;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+    min-height: 100px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: box-shadow 0.2s;
+}
+.month-cell:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.month-cell.today {
+    border-color: #111A2B;
+    border-width: 2px;
+}
+.month-cell.dim {
+    background: rgba(0,0,0,0.02);
+    border: none;
+    pointer-events: none;
+}
+.month-day-num {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1A2B4C;
+    margin-bottom: 4px;
+}
+.month-event {
+    background: #F8F7F4;
+    border-radius: 4px;
+    padding: 3px 5px;
+    font-size: 0.6rem;
+    color: #2D2D2D;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.month-event-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.month-more {
+    font-size: 0.6rem;
+    color: #6C727A;
+    padding-left: 5px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -274,7 +387,7 @@ if "end_date" not in st.session_state:
 
 # Calendar session state
 if "cal_view" not in st.session_state:
-    st.session_state["cal_view"] = "Week"  # Day, Week, Month
+    st.session_state["cal_view"] = "Month"
 if "cal_focus_date" not in st.session_state:
     st.session_state["cal_focus_date"] = today
 if "cal_search" not in st.session_state:
@@ -434,25 +547,75 @@ with col_right:
     with st.container(border=False):
         st.markdown('<div class="sync-height-scope"></div>', unsafe_allow_html=True)
         
-        # Calendar Header with View Selector
-        header_row = st.columns([1, 1.2, 1, 2])
+        # 1. Calendar Header Controls
+        header_row = st.columns([1, 1, 1, 2])
+        
+        # Title
         with header_row[0]:
-            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Action Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.6rem;">Action Calendar</h2>', unsafe_allow_html=True)
+        
+        # Segmented control (Day/Week/Month)
         with header_row[1]:
-            # View Selector
-            view_options = ["Day", "Week", "Month"]
-            st.radio("View", view_options, key="cal_view", horizontal=True, label_visibility="collapsed")
+            # We'll use a custom HTML segmented control with buttons
+            cal_view = st.session_state["cal_view"]
+            seg_html = """
+            <div class="segmented-control">
+            """
+            for opt in ["Day", "Week", "Month"]:
+                active = "active" if cal_view == opt else ""
+                seg_html += f'<button class="segmented-btn {active}" onclick="window.location.href=?view={opt}">{opt}</button>'
+            seg_html += "</div>"
+            # Since onclick won't work in Streamlit, we'll use actual buttons in a row
+            # We'll use a different approach: three buttons with CSS
+            btn_cols = st.columns(3, gap="small")
+            with btn_cols[0]:
+                if st.button("Day", key="view_day", help="Day view"):
+                    st.session_state["cal_view"] = "Day"
+                    st.rerun()
+            with btn_cols[1]:
+                if st.button("Week", key="view_week", help="Week view"):
+                    st.session_state["cal_view"] = "Week"
+                    st.rerun()
+            with btn_cols[2]:
+                if st.button("Month", key="view_month", help="Month view"):
+                    st.session_state["cal_view"] = "Month"
+                    st.rerun()
+            # Style the buttons as segmented control via CSS
+            st.markdown("""
+            <style>
+            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) {
+                background: rgba(0,0,0,0.05);
+                border-radius: 20px;
+                padding: 3px;
+                width: max-content;
+            }
+            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button {
+                background: transparent !important;
+                border: none !important;
+                color: #6C727A !important;
+                font-size: 0.75rem !important;
+                font-weight: 600 !important;
+                padding: 6px 16px !important;
+                border-radius: 17px !important;
+            }
+            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]:hover) button {
+                background: #FFFFFF !important;
+                color: #1A2B4C !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+        
+        # Navigation buttons
         with header_row[2]:
-            # Navigation buttons
-            nav_cols = st.columns(3)
+            nav_cols = st.columns(3, gap="small")
             with nav_cols[0]:
                 if st.button("◀", key="cal_prev", help="Previous"):
+                    # navigation logic
                     if st.session_state["cal_view"] == "Day":
                         st.session_state["cal_focus_date"] -= datetime.timedelta(days=1)
                     elif st.session_state["cal_view"] == "Week":
                         st.session_state["cal_focus_date"] -= datetime.timedelta(days=7)
                     else:  # Month
-                        # go to previous month
                         if st.session_state["cal_focus_date"].month == 1:
                             st.session_state["cal_focus_date"] = st.session_state["cal_focus_date"].replace(year=st.session_state["cal_focus_date"].year-1, month=12)
                         else:
@@ -469,17 +632,19 @@ with col_right:
                     elif st.session_state["cal_view"] == "Week":
                         st.session_state["cal_focus_date"] += datetime.timedelta(days=7)
                     else:  # Month
-                        # go to next month
                         if st.session_state["cal_focus_date"].month == 12:
                             st.session_state["cal_focus_date"] = st.session_state["cal_focus_date"].replace(year=st.session_state["cal_focus_date"].year+1, month=1)
                         else:
                             st.session_state["cal_focus_date"] = st.session_state["cal_focus_date"].replace(month=st.session_state["cal_focus_date"].month+1)
                     st.rerun()
+        
+        # Search box
         with header_row[3]:
-            # Search box
-            st.text_input("Search tasks", key="cal_search", placeholder="Search by title or owner...", label_visibility="collapsed")
-
-        # Display current focus period label
+            st.markdown('<div class="search-wrapper">', unsafe_allow_html=True)
+            st.text_input("Search", key="cal_search", placeholder="Search tasks...", label_visibility="collapsed")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # 2. Period label
         if st.session_state["cal_view"] == "Day":
             period_label = st.session_state["cal_focus_date"].strftime("%A, %B %d, %Y")
         elif st.session_state["cal_view"] == "Week":
@@ -489,24 +654,7 @@ with col_right:
         else:
             period_label = st.session_state["cal_focus_date"].strftime("%B %Y")
         
-        st.markdown(f"""
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding: 0 0.5rem;">
-            <div>
-                <p style="color:#6C727A; font-size:0.8rem; margin:0;">Currently showing</p>
-                <p style="font-weight:600; color:#1A2B4C; font-size:1.1rem; margin:0;">{period_label}</p>
-            </div>
-            <div style="font-size:0.75rem; color:#6C727A;">
-                <span style="background:#fff; padding:0.2rem 0.6rem; border-radius:12px; border:1px solid rgba(0,0,0,0.05);">
-                    {len([k for k in calendar_events_by_date if k])} events total
-                </span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Scrollable calendar area
-        st.markdown('<div class="cal-scroll-area">', unsafe_allow_html=True)
-        
-        # Filter events by search term (if any)
+        # Count events in current period (after search filter)
         search_term = st.session_state["cal_search"].strip().lower()
         filtered_events_by_date = {}
         if search_term:
@@ -519,10 +667,41 @@ with col_right:
                     filtered_events_by_date[date_str] = filtered
         else:
             filtered_events_by_date = calendar_events_by_date
-
-        # Render based on view
+        
+        total_events = 0
         if st.session_state["cal_view"] == "Day":
-            # Day view: list all events for the focus date
+            total_events = len(filtered_events_by_date.get(st.session_state["cal_focus_date"].strftime("%Y-%m-%d"), []))
+        elif st.session_state["cal_view"] == "Week":
+            week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday())
+            for i in range(7):
+                d_str = (week_start + datetime.timedelta(days=i)).strftime("%Y-%m-%d")
+                total_events += len(filtered_events_by_date.get(d_str, []))
+        else:
+            focus = st.session_state["cal_focus_date"]
+            for d_str, events in filtered_events_by_date.items():
+                d = datetime.datetime.strptime(d_str, "%Y-%m-%d").date()
+                if d.year == focus.year and d.month == focus.month:
+                    total_events += len(events)
+        
+        st.markdown(f"""
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding: 0 0.5rem;">
+            <div>
+                <p style="color:#6C727A; font-size:0.8rem; margin:0;">Currently showing</p>
+                <p style="font-weight:600; color:#1A2B4C; font-size:1.1rem; margin:0;">{period_label}</p>
+            </div>
+            <div style="font-size:0.75rem; color:#6C727A;">
+                <span style="background:#fff; padding:0.2rem 0.6rem; border-radius:12px; border:1px solid rgba(0,0,0,0.05);">
+                    {total_events} events total
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # 3. Scrollable calendar area
+        st.markdown('<div class="cal-scroll-area">', unsafe_allow_html=True)
+        
+        if st.session_state["cal_view"] == "Day":
+            # ----- DAY VIEW -----
             day_str = st.session_state["cal_focus_date"].strftime("%Y-%m-%d")
             events = filtered_events_by_date.get(day_str, [])
             if events:
@@ -545,9 +724,9 @@ with col_right:
                     No tasks scheduled for this day.
                 </div>
                 """, unsafe_allow_html=True)
-
+        
         elif st.session_state["cal_view"] == "Week":
-            # Week view: 7 columns (existing style)
+            # ----- WEEK VIEW -----
             week_start = st.session_state["cal_focus_date"] - datetime.timedelta(days=st.session_state["cal_focus_date"].weekday())
             day_cols = st.columns(7, gap="small")
             for i in range(7):
@@ -590,64 +769,50 @@ with col_right:
                             No tasks
                         </div>
                         """, unsafe_allow_html=True)
-
+        
         elif st.session_state["cal_view"] == "Month":
-            # Month view: grid layout
+            # ----- MONTH VIEW (CSS Grid) -----
             focus = st.session_state["cal_focus_date"]
             cal = calendar.Calendar(firstweekday=0)  # Monday start
             month_days = cal.monthdatescalendar(focus.year, focus.month)
             
-            # Create 7 columns for days of week
-            day_cols = st.columns(7, gap="small")
-            # Day names header
+            # Build HTML grid
+            month_html = '<div class="month-grid">'
+            # Day headers
             day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            for i, name in enumerate(day_names):
-                with day_cols[i]:
-                    st.markdown(f"<div style='text-align:center; font-size:0.7rem; font-weight:700; color:#6C727A; text-transform:uppercase; padding:0.4rem 0;'>{name}</div>", unsafe_allow_html=True)
+            for name in day_names:
+                month_html += f'<div class="month-day-header">{name}</div>'
             
-            # Now rows of weeks
+            # Weeks
             for week in month_days:
-                row_cols = st.columns(7, gap="small")
-                for i, date_val in enumerate(week):
-                    with row_cols[i]:
-                        # If date_val is outside month, show blank
-                        if date_val.month != focus.month:
-                            st.markdown("<div style='height: 80px; background: rgba(0,0,0,0.02); border-radius: 6px;'></div>", unsafe_allow_html=True)
-                            continue
-                        date_str = date_val.strftime("%Y-%m-%d")
-                        events = filtered_events_by_date.get(date_str, [])
-                        is_today = (date_val == today)
-                        bg = "#111A2B" if is_today else "#FFFFFF"
-                        text_color = "#FFFFFF" if is_today else "#1A2B4C"
-                        
-                        # Day number badge
-                        st.markdown(f"""
-                        <div style="background: {bg}; color: {text_color}; border-radius: 6px 6px 0 0; padding: 0.3rem; text-align: center; font-weight: 700; font-size: 0.75rem;">
-                            {date_val.day}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Event indicators
-                        if events:
-                            # Show up to 2 events with color dots and truncated titles
-                            display_events = events[:2]
-                            more_count = len(events) - 2
-                            for evt in display_events:
-                                title_short = evt["title"][:20] + "..." if len(evt["title"]) > 20 else evt["title"]
-                                st.markdown(f"""
-                                <div style="display: flex; align-items: center; font-size: 0.65rem; padding: 0.2rem 0; color: #1A2B4C;">
-                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: {evt['hex_color']}; margin-right: 0.3rem; flex-shrink: 0;"></span>
-                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{title_short}</span>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            if more_count > 0:
-                                st.markdown(f"<div style='font-size:0.65rem; color:#6C727A; margin-left: 0.5rem;'>+{more_count} more</div>", unsafe_allow_html=True)
-                        else:
-                            st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
-                        
-                        st.markdown("<div style='border-bottom: 1px solid rgba(0,0,0,0.05); margin: 0.2rem 0;'></div>", unsafe_allow_html=True)
+                for date_val in week:
+                    if date_val.month != focus.month:
+                        month_html += '<div class="month-cell dim"></div>'
+                        continue
+                    
+                    date_str = date_val.strftime("%Y-%m-%d")
+                    events = filtered_events_by_date.get(date_str, [])
+                    is_today = (date_val == today)
+                    cell_class = "month-cell"
+                    if is_today:
+                        cell_class += " today"
+                    
+                    month_html += f'<div class="{cell_class}">'
+                    month_html += f'<div class="month-day-num">{date_val.day}</div>'
+                    
+                    # Show up to 2 events
+                    display_events = events[:2]
+                    for evt in display_events:
+                        title_short = evt["title"][:18] + "..." if len(evt["title"]) > 18 else evt["title"]
+                        month_html += f'<div class="month-event"><span class="month-event-dot" style="background:{evt["hex_color"]}"></span>{title_short}</div>'
+                    
+                    if len(events) > 2:
+                        month_html += f'<div class="month-more">+{len(events)-2} more</div>'
+                    
+                    month_html += '</div>'
             
-            # Add some spacing
-            st.markdown("<br>", unsafe_allow_html=True)
-
+            month_html += '</div>'
+            
+            st.markdown(month_html, unsafe_allow_html=True)
+        
         st.markdown('</div>', unsafe_allow_html=True)  # end cal-scroll-area
