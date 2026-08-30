@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS
+# 4. Custom CSS (Smaller Buttons for Compact Row)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -79,7 +79,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 8px !important;
 }
 
-/* Buttons */
+/* Smaller Buttons */
 .stButton > button {
     background-color: #161616 !important; 
     color: #FFFFFF !important; 
@@ -87,10 +87,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 50px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important; 
-    font-size: 0.75rem !important; 
-    height: 30px !important; 
-    padding: 0 0.75rem !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important; 
+    font-size: 0.65rem !important; /* Small font */
+    height: 24px !important;       /* Small height */
+    padding: 0 0.5rem !important;  /* Tight padding */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
@@ -98,7 +98,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #D4AF37 !important; 
     color: #161616 !important; 
     transform: translateY(-1px) !important;
-    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -156,19 +156,19 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# ---------------------------------------------------------
-# 6.5 THE MODAL (st.dialog) - Native Popup
-# ---------------------------------------------------------
+# 6.5 The Modal Functions (st.dialog)
+
+# View Dialog
 @st.dialog("Task Details", width="large")
 def open_task_details():
     task = st.session_state.get('selected_task')
     if not task:
         st.warning("No task selected.")
         if st.button("Close", use_container_width=True):
+            st.session_state.pop('selected_task', None)
             st.rerun()
         return
 
-    # Find meeting details for the origin tab
     meeting_id = task.get('meeting_id')
     meeting_details = next((m for m in meetings if m.get('meeting_id') == meeting_id), None)
 
@@ -178,7 +178,6 @@ def open_task_details():
         st.markdown(f"### {task['title']}")
         st.caption(f"**Task ID:** {task['id']}")
         st.markdown("---")
-        st.markdown(f"**Status:** `{task['status']}`")
         st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
         st.markdown(f"**Due Date:** {task.get('due_date', 'No date set')}")
         st.markdown(f"**Full Description:**")
@@ -199,6 +198,39 @@ def open_task_details():
         st.session_state.pop('selected_task', None)
         st.rerun()
 
+# Update Dialog
+@st.dialog("Update Task Status", width="small")
+def open_update_dialog():
+    task = st.session_state.get('update_task')
+    if not task:
+        st.warning("No task selected.")
+        if st.button("Close", use_container_width=True):
+            st.session_state.pop('update_task', None)
+            st.rerun()
+        return
+
+    status_map = {"todo": "📝 To Do", "in_progress": "⏳ In Progress", "done": "✅ Done"}
+    status_options = list(status_map.keys())
+
+    current_status = task.get('status', 'todo')
+    current_index = status_options.index(current_status) if current_status in status_options else 0
+
+    st.markdown(f"### {task['title']}")
+    st.caption(f"Current Status: {status_map[current_status]}")
+    st.markdown("---")
+
+    new_status = st.selectbox("Select New Status", status_options, index=current_index, format_func=lambda x: status_map[x])
+
+    if st.button("Save Changes", use_container_width=True):
+        update_task_status(task['id'], new_status)
+        st.session_state.pop('update_task', None)
+        st.success("Status updated successfully!")
+        st.rerun()
+        
+    if st.button("Cancel", use_container_width=True):
+        st.session_state.pop('update_task', None)
+        st.rerun()
+
 # 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
@@ -211,13 +243,16 @@ with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
     else:
+        status_map = {"todo": "📝 To Do", "in_progress": "⏳ In Progress", "done": "✅ Done"}
+        status_options = list(status_map.keys())
+
         # Loop through tasks and render a single-row card for each
         for task in tasks:
             task_id = task['id']
             
             with st.container(border=True):
-                # Split row into 5 columns: Title, Assignee, Due, Status, Actions (View/Update/Delete)
-                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 1.8, 3.5])
+                # Split row into 5 columns: Title, Assignee, Due, Status, Actions
+                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 3])
                 
                 with c1:
                     st.markdown(f"**{task['title']}**")
@@ -233,39 +268,40 @@ with tab_board:
                     st.caption(task['due_date'] or "N/A")
                 
                 with c4:
-                    # Selectbox with hidden label
-                    status_options = ["todo", "in_progress", "done"]
                     current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    new_status = st.selectbox(
+                    st.selectbox(
                         "Status", 
                         status_options, 
                         index=current_index, 
                         key=f"status_{task_id}",
-                        label_visibility="collapsed"
+                        label_visibility="collapsed",
+                        format_func=lambda x: status_map[x]
                     )
                 
                 with c5:
-                    # Three tiny columns for View, Update, and Delete
+                    # Three tiny columns for View, Update, and Delete (Smaller buttons)
                     b1, b2, b3 = st.columns(3)
                     
                     with b1:
-                        if st.button("View", key=f"view_{task_id}", use_container_width=True):
+                        if st.button("👁 View", key=f"view_{task_id}", use_container_width=True):
                             st.session_state['selected_task'] = task
                             st.rerun()
                     
                     with b2:
-                        if st.button("Update", key=f"upd_{task_id}", use_container_width=True):
-                            update_task_status(task_id, new_status)
+                        if st.button("✏️ Update", key=f"upd_{task_id}", use_container_width=True):
+                            st.session_state['update_task'] = task
                             st.rerun()
                             
                     with b3:
-                        if st.button("Del", key=f"del_{task_id}", use_container_width=True):
+                        if st.button("🗑 Del", key=f"del_{task_id}", use_container_width=True):
                             delete_task(task_id)
                             st.rerun()
 
-# Trigger the modal if the session state is set
+# Trigger Modals if session state is set
 if 'selected_task' in st.session_state:
     open_task_details()
+elif 'update_task' in st.session_state:
+    open_update_dialog()
 
 # ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
