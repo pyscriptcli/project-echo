@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS (Native UI, Compact, Monochrome - Stacked Cards)
+# 4. Custom CSS (Ultra-Compact, Native, Monochrome)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -50,7 +50,7 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     color: #2D2D2D;
 }
 
-.block-container { padding-top: 1.5rem !important; padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
+.block-container { padding-top: 1rem !important; padding-right: 1.5rem !important; padding-left: 1.5rem !important; }
 
 h3 {
     font-family: 'Playfair Display', serif !important; 
@@ -59,56 +59,63 @@ h3 {
     color: #1A2B4C !important; 
     letter-spacing: 0.02em; 
     margin-bottom: 0.25rem; 
-    font-size: 1.35rem !important;
+    font-size: 1.2rem !important;
 }
 
-/* Board Column Container */
-[data-testid="stVerticalBlockBorderWrapper"] {
+/* ------------------------- ULTRA-COMPACT CARD CSS ------------------------- */
+div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
-    border-radius: 8px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
-    border-left: 5px solid #E67E22 !important; /* Default Orange */
-    padding: 0.25rem 0.5rem !important; 
-    margin-bottom: 0.25rem !important; /* Pile up stacked */
+    border-left: 4px solid #E67E22 !important; 
+    padding: 0.2rem 0.4rem !important; 
+    margin-bottom: 0.2rem !important; /* Tightly stacked */
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+    gap: 0.1rem !important;
+}
+
+/* Compact Text */
+div[data-testid="stVerticalBlockBorderWrapper"] p {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.1rem !important;
+    line-height: 1.2 !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stCaptionContainer"] {
+    font-size: 0.65rem !important;
+    line-height: 1.1 !important;
+}
+
+/* Compact Dropdown */
+div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stSelectbox"] {
+    margin-bottom: 0 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stSelectbox"] > div > div {
+    min-height: 24px !important;
+    font-size: 0.65rem !important;
+}
+
+/* Compact Buttons */
+div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > button {
+    height: 24px !important;
+    font-size: 0.6rem !important;
+    padding: 0 0.25rem !important;
+    border: none !important;
+    width: 100% !important;
 }
 
 /* Status specific border colors */
-.task-todo { border-left: 5px solid #E67E22 !important; }
-.task-in_progress { border-left: 5px solid #2980B9 !important; }
-.task-done { border-left: 5px solid #27AE60 !important; }
+.task-todo { border-left: 4px solid #E67E22 !important; }
+.task-in_progress { border-left: 4px solid #2980B9 !important; }
+.task-done { border-left: 4px solid #27AE60 !important; }
 
 /* Overdue text color */
 .overdue { color: #E74C3C !important; font-weight: 600 !important; }
 
-/* Form inputs */
-.stTextInput input, .stTextArea textarea, .stDateInput input, .stSelectbox div[data-baseweb="select"] > div {
-    background-color: #FAFAFA !important; 
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    border-radius: 8px !important;
-}
-
-/* Compact Monochrome Buttons */
-.stButton > button {
-    background-color: transparent !important; 
-    color: #161616 !important; 
-    border: 1px solid transparent !important; 
-    border-radius: 8px !important; 
-    font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important; 
-    font-size: 0.65rem !important; 
-    height: 28px !important; 
-    padding: 0 0.4rem !important;
-    transition: all 0.2s ease !important; 
-    width: 100% !important;
-}
-.stButton > button:hover { 
-    background-color: rgba(0, 0, 0, 0.05) !important; 
-    color: #111A2B !important; 
-    border: 1px solid #D4AF37 !important; 
-}
-
-/* Minimal, Native Modal Styling */
+/* Native Modal Styling */
 [data-testid="stDialog"] div[data-testid="stVerticalBlock"] {
     gap: 0.25rem !important;
     padding: 0.5rem !important;
@@ -203,7 +210,7 @@ def get_assignee_ui_state(assignee_str):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The View & Edit Modal
+# 6.5 The View & Edit Modal (Unchanged)
 @st.dialog("Task Details", width="medium")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -306,7 +313,7 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs
 tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
-# ---------------- Board Tab (KANBAN 3-COLUMN) ----------------
+# ---------------- Board Tab (ULTRA-COMPACT KANBAN) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -314,7 +321,7 @@ with tab_board:
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
 
-        # Sort tasks by created_at descending (newest to oldest)
+        # Sort tasks newest to oldest
         def sort_by_newest(task_list):
             return sorted(task_list, key=lambda x: x.get('created_at', ''), reverse=True)
 
@@ -324,7 +331,7 @@ with tab_board:
 
         col_todo, col_progress, col_done = st.columns(3)
 
-        # Helper function to render a stacked task card
+        # Helper function to render an ultra-compact stacked task card
         def render_card(task):
             task_id = task['id']
             card_class = f"task-{task.get('status', 'todo')}"
@@ -332,48 +339,51 @@ with tab_board:
             with st.container(border=True):
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Title & Description
+                # Title & Description (Tightly spaced)
                 st.markdown(f"**{task['title']}**")
                 desc = task['description'] or ""
-                st.caption(desc[:80] + "..." if len(desc) > 80 else desc)
+                st.caption(desc[:65] + "..." if len(desc) > 65 else desc)
 
-                # Assignee
-                st.caption(f"Assigned: {task['assignee'] or 'N/A'}")
-
-                # Due Date (Overdue Logic)
-                due_date_str = task.get('due_date', None)
-                if due_date_str:
+                # Assignee & Due Date (Combined into a single line for compactness)
+                assignee = task['assignee'] or "N/A"
+                due_date_str = task.get('due_date', "N/A")
+                
+                # Overdue logic
+                if due_date_str != "N/A":
                     try:
                         due_date_obj = datetime.strptime(due_date_str[:10], "%Y-%m-%d").date()
                         if due_date_obj < date.today() and task.get('status') != 'done':
-                            st.markdown(f'<span class="overdue">Due: {due_date_str[:10]}</span>', unsafe_allow_html=True)
+                            st.markdown(
+                                f"<span style='font-size:0.65rem;'>Assigned: {assignee} | Due: <span class='overdue'>{due_date_str[:10]}</span></span>", 
+                                unsafe_allow_html=True
+                            )
                         else:
-                            st.caption(f"Due: {due_date_str[:10]}")
+                            st.caption(f"Assigned: {assignee} | Due: {due_date_str[:10]}")
                     except:
-                        st.caption(f"Due: {due_date_str[:10]}")
+                        st.caption(f"Assigned: {assignee} | Due: {due_date_str[:10]}")
                 else:
-                    st.caption("Due: N/A")
+                    st.caption(f"Assigned: {assignee} | Due: N/A")
 
-                # Status Dropdown (Instant Update)
-                current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                st.selectbox(
-                    "Status", 
-                    status_options, 
-                    index=current_index, 
-                    key=f"status_{task_id}",
-                    label_visibility="collapsed",
-                    format_func=lambda x: status_map[x],
-                    on_change=handle_status_change,
-                    args=(task_id,)
-                )
-
-                # Action Buttons
-                b1, b2 = st.columns(2)
-                with b1:
+                # Compact Row: Status, View, Delete
+                c_status, c_view, c_del = st.columns([2.5, 1, 1])
+                
+                with c_status:
+                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
+                    st.selectbox(
+                        "Status", 
+                        status_options, 
+                        index=current_index, 
+                        key=f"status_{task_id}",
+                        label_visibility="collapsed",
+                        format_func=lambda x: status_map[x],
+                        on_change=handle_status_change,
+                        args=(task_id,)
+                    )
+                with c_view:
                     if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
                         st.session_state['selected_task'] = task
                         st.rerun()
-                with b2:
+                with c_del:
                     if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
                         delete_task(task_id)
                         st.rerun()
@@ -409,7 +419,7 @@ with tab_board:
 if 'selected_task' in st.session_state:
     open_task_details()
 
-# ---------------- Import from Meeting Tab ---------------- (Unchanged)
+# ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -455,7 +465,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ---------------- (Unchanged)
+# ---------------- New Task Tab (Unchanged) ----------------
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
