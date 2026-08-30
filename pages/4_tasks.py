@@ -153,26 +153,32 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         st.error(f"Failed to add task: {e}")
         return False
 
-# Update function to track WHO and WHEN
-def update_task_status(task_id, new_status, username):
+# Updated function to track Status, Assignee, and Due Date
+def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
     if not supabase:
         return
     try:
-        supabase.table("tasks").update({
+        update_payload = {
             "status": new_status,
-            "status_updated_by": username,
+            "status_updated_by": st.session_state.get("user", {}).get("username", "System"),
             "status_updated_at": "now()",
             "updated_at": "now()"
-        }).eq("id", task_id).execute()
+        }
+        
+        # Only update if new values are provided
+        if new_assignee is not None:
+            update_payload["assignee"] = new_assignee
+        if new_due_date is not None:
+            update_payload["due_date"] = new_due_date.isoformat()
+            
+        supabase.table("tasks").update(update_payload).eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to update status: {e}")
+        st.error(f"Failed to update task: {e}")
 
-# Callback for immediate status change
+# Callback for immediate status change on the card
 def handle_status_change(task_id):
     new_status = st.session_state.get(f"status_{task_id}")
-    # Get current logged-in username from session state
-    username = st.session_state.get("user", {}).get("username", "System")
-    update_task_status(task_id, new_status, username)
+    update_task(task_id, new_status)
 
 def delete_task(task_id):
     if not supabase:
@@ -186,7 +192,11 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The View Modal (Now includes Who and When)
+# Gather all unique assignees for the dropdown
+all_assignees = list(set([t['assignee'] for t in tasks if t.get('assignee')]))
+all_assignees.sort()
+
+# 6.5 The View & Edit Modal
 @st.dialog("Task Details", width="medium")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -207,9 +217,45 @@ def open_task_details():
         st.caption(f"ID: {task['id']}")
         st.markdown("---")
         
-        # Who and When
-        st.markdown(f"**Assignee:** {task.get('assignee', 'Unassigned')}")
-        st.markdown(f"**Due Date:** {task.get('due_date', 'No date set')}")
+        # Editable Fields: Status, Assigned To, Due Date
+        status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
+        status_options = list(status_map.keys())
+        current_status = task.get('status', 'todo')
+        current_index = status_options.index(current_status) if current_status in status_options else 0
+        
+        # Parse existing due date
+        existing_due_date = task.get('due_date')
+        if existing_due_date:
+            try:
+                existing_due_date = datetime.strptime(existing_due_date[:10], "%Y-%m-%d").date()
+            except:
+                existing_due_date = None
+
+        # Dropdowns and Pickers
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**Status**")
+            new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x], label_visibility="collapsed")
+        
+        with c2:
+            st.markdown("**Assigned To**")
+            # Allow selection from existing assignees or type a new one
+            assignee_index = all_assignees.index(task['assignee']) if task.get('assignee') in all_assignees else 0
+            new_assignee = st.selectbox("Assigned To", all_assignees, index=assignee_index, placeholder="Select or type name...", label_visibility="collapsed")
+        
+        c3, c4 = st.columns(2)
+        with c3:
+            st.markdown("**Due Date**")
+            new_due_date = st.date_input("Due Date", value=existing_due_date, label_visibility="collapsed")
+
+        # Save Button for Modal Changes
+        if st.button("Save Changes", use_container_width=True):
+            update_task(task['id'], new_status, new_assignee, new_due_date)
+            st.session_state.pop('selected_task', None)
+            st.success("Task updated successfully!")
+            st.rerun()
+
+        st.markdown("---")
         st.markdown(f"**Status Updated By:** {task.get('status_updated_by', 'N/A')}")
         st.markdown(f"**Status Updated At:** {task.get('status_updated_at', 'Never')}")
         
@@ -238,7 +284,7 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs
 tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
-# ---------------- Board Tab (Instant Status Change) ----------------
+# ---------------- Board Tab (Instant Status Change & Clear Assignee Display) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -254,8 +300,8 @@ with tab_board:
             with st.container(border=True):
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Columns: Title, Assignee, Due, Status (Instant), Actions
-                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2.5, 2])
+                # Columns: Title, Assigned To, Due, Status (Instant), Actions
+                c1, c2, c3, c4, c5 = st.columns([3, 1.8, 1.5, 2.5, 2])
                 
                 with c1:
                     st.markdown(f"**{task['title']}**")
@@ -263,7 +309,7 @@ with tab_board:
                     st.caption(desc[:50] + "..." if len(desc) > 50 else desc)
                 
                 with c2:
-                    st.markdown("**Assignee**")
+                    st.markdown("**Assigned To**")
                     st.caption(task['assignee'] or "N/A")
                 
                 with c3:
@@ -283,7 +329,7 @@ with tab_board:
                 
                 with c4:
                     current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    # Dropdown with on_change for immediate update (No Update button)
+                    # Dropdown with on_change for immediate update
                     st.selectbox(
                         "Status", 
                         status_options, 
@@ -310,7 +356,7 @@ with tab_board:
 if 'selected_task' in st.session_state:
     open_task_details()
 
-# ---------------- Import from Meeting Tab ----------------
+# ---------------- Import from Meeting Tab ---------------- (Unchanged)
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -356,7 +402,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ----------------
+# ---------------- New Task Tab ---------------- (Unchanged)
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
