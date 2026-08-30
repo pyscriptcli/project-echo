@@ -1,7 +1,7 @@
 # pages/4_tasks.py (or pages/tasks.py)
 import sys
 import os
-import hashlib
+import hashlib  # Imported for fallback ID generation
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
@@ -71,7 +71,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
     border-left: 4px solid #E67E22 !important; 
     padding: 0.2rem 0.4rem !important; 
-    margin-bottom: 0.2rem !important;
+    margin-bottom: 0.2rem !important; /* Tightly stacked */
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
@@ -148,10 +148,12 @@ def fetch_tasks():
         st.error(f"Failed to fetch tasks: {e}")
         return []
 
+# Function to generate a stable hash if no ID is provided in the archive
 def generate_stable_id(meeting_id, discussion_text, action_text):
     source = f"{meeting_id}-{discussion_text}-{action_text}"
     return hashlib.md5(source.encode()).hexdigest()
 
+# Add Discussion Point ID to add_task
 def add_task(title, description, assignee, due_date, meeting_id=None, discussion_point_id=None):
     if not supabase:
         st.error("Supabase client not initialized.")
@@ -163,7 +165,7 @@ def add_task(title, description, assignee, due_date, meeting_id=None, discussion
         "due_date": due_date.isoformat() if due_date else None,
         "meeting_id": meeting_id,
         "status": "todo",
-        "discussion_point_id": discussion_point_id
+        "discussion_point_id": discussion_point_id  # Added here
     }
     try:
         supabase.table("tasks").insert(payload).execute()
@@ -226,6 +228,7 @@ def open_task_details():
     if not task:
         st.warning("No task selected.")
         if st.button("Close", use_container_width=True):
+            st.session_state.pop('selected_task', None)
             st.rerun()
         return
 
@@ -321,38 +324,10 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs
 tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
-# ---------------- Board Tab (WITH FILTERS & FIXED MODAL) ----------------
+# ---------------- Board Tab (ULTRA-COMPACT KANBAN) ----------------
 with tab_board:
-    # Filters Section
-    st.markdown("#### Filters")
-    f1, f2 = st.columns([2, 2])
-    with f1:
-        filter_assignees = st.multiselect("Filter by Assignee", SPECIFIC_PEOPLE + GROUP_OPTIONS, key="board_filter_assignees")
-    with f2:
-        filter_dates = st.date_input("Filter by Due Date Range", value=(None, None), key="board_filter_dates")
-
-    # Apply Filters
-    filtered_tasks = tasks
-    if filter_assignees:
-        filtered_tasks = [t for t in filtered_tasks if t.get('assignee') in filter_assignees]
-    
-    if filter_dates and len(filter_dates) == 2 and filter_dates[0] and filter_dates[1]:
-        start_date = filter_dates[0]
-        end_date = filter_dates[1]
-        date_filtered = []
-        for t in filtered_tasks:
-            due = t.get('due_date')
-            if due:
-                try:
-                    due_dt = datetime.strptime(due[:10], "%Y-%m-%d").date()
-                    if start_date <= due_dt <= end_date:
-                        date_filtered.append(t)
-                except:
-                    pass
-        filtered_tasks = date_filtered
-
-    if not filtered_tasks:
-        st.info("No tasks match the current filters.")
+    if not tasks:
+        st.info("No tasks yet. Create one or import from meetings.")
     else:
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
@@ -361,9 +336,9 @@ with tab_board:
         def sort_by_newest(task_list):
             return sorted(task_list, key=lambda x: x.get('created_at', ''), reverse=True)
 
-        todo_tasks = sort_by_newest([t for t in filtered_tasks if t.get('status') == 'todo'])
-        in_progress_tasks = sort_by_newest([t for t in filtered_tasks if t.get('status') == 'in_progress'])
-        done_tasks = sort_by_newest([t for t in filtered_tasks if t.get('status') == 'done'])
+        todo_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'todo'])
+        in_progress_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'in_progress'])
+        done_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'done'])
 
         col_todo, col_progress, col_done = st.columns(3)
 
@@ -375,11 +350,14 @@ with tab_board:
             with st.container(border=True):
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
+                # Title & Description (Tightly spaced)
                 st.markdown(f"**{task['title']}**")
                 desc = task['description'] or ""
                 st.caption(desc[:65] + "..." if len(desc) > 65 else desc)
 
+                # Assignee & Due Date (Combined into a single line for compactness)
                 assignee = task['assignee'] or "N/A"
+                
                 due_date_raw = task.get('due_date')
                 due_date_str = due_date_raw if isinstance(due_date_raw, str) and due_date_raw else "N/A"
                 
@@ -398,6 +376,7 @@ with tab_board:
                 else:
                     st.caption(f"Assigned: {assignee} | Due: N/A")
 
+                # Compact Row: Status, View, Delete
                 c_status, c_view, c_del = st.columns([2.5, 1, 1])
                 
                 with c_status:
@@ -448,12 +427,11 @@ with tab_board:
                 for task in done_tasks:
                     render_card(task)
 
-# Trigger Modal (FIXED: Clears state immediately so it doesn't re-open on reruns)
+# Trigger Modal if session state is set
 if 'selected_task' in st.session_state:
     open_task_details()
-    st.session_state.pop('selected_task', None)
 
-# ---------------- Import from Meeting Tab (Direct Button, No Checkbox) ----------------
+# ---------------- Import from Meeting Tab (Anti-Duplicate Logic) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -469,7 +447,7 @@ with tab_import:
                 st.caption(f"Found {len(table_items)} action item(s). Select which to import as tasks.")
                 for idx, item in enumerate(table_items):
                     with st.container(border=True):
-                        c1, c2, c3, c4, c5 = st.columns([3, 3, 1.5, 1.5, 1.5])
+                        c1, c2, c3, c4, c5 = st.columns([3, 3, 1.5, 1.5, 1])
                         with c1:
                             st.write(f"**Discussion:** {item.get('Discussion Points', '')[:100]}")
                         with c2:
@@ -480,6 +458,7 @@ with tab_import:
                             st.write(f"**PIC:** {item.get('Person-in-charge', '')}")
                         
                         # Extract or Generate Discussion Point ID
+                        # Assumes your table_items has an 'id' field. If not, it falls back to a Hash.
                         dp_id = item.get('discussion_point_id') or item.get('id') or None
                         if not dp_id:
                             dp_id = generate_stable_id(
@@ -490,12 +469,14 @@ with tab_import:
 
                         # Check for duplicates
                         if dp_id in existing_discussion_ids:
+                            # If already imported, show a success badge and don't show buttons
                             with c5:
                                 st.success("✓ Already Imported")
                         else:
                             with c5:
-                                # Direct Add to Task button (No checkbox)
-                                if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}", use_container_width=True):
+                                import_this = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}")
+                            if import_this:
+                                if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}"):
                                     title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
                                     description = item.get("Discussion Points", "")
                                     assignee = item.get("Person-in-charge", "")
