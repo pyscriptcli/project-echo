@@ -210,7 +210,7 @@ def get_assignee_ui_state(assignee_str):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The View & Edit Modal (Unchanged)
+# 6.5 The View & Edit Modal
 @st.dialog("Task Details", width="medium")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -346,9 +346,11 @@ with tab_board:
 
                 # Assignee & Due Date (Combined into a single line for compactness)
                 assignee = task['assignee'] or "N/A"
-                due_date_str = task.get('due_date', "N/A")
                 
-                # Overdue logic
+                # SAFE HANDLING OF None / EMPTY due_date
+                due_date_raw = task.get('due_date')
+                due_date_str = due_date_raw if isinstance(due_date_raw, str) and due_date_raw else "N/A"
+                
                 if due_date_str != "N/A":
                     try:
                         due_date_obj = datetime.strptime(due_date_str[:10], "%Y-%m-%d").date()
