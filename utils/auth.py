@@ -1,12 +1,74 @@
-# utils/auth.py (additions)
-
+# utils/auth.py
+import streamlit as st
 import bcrypt
 from supabase import create_client, Client
-import streamlit as st
 from typing import List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 
-# ... existing init_supabase, get_supabase, login, logout, is_authenticated, get_current_user ...
+# -------------------------------------------------------------------
+# Supabase client initialization (cached)
+# -------------------------------------------------------------------
+@st.cache_resource
+def init_supabase() -> Client:
+    """Return a cached Supabase client using credentials from secrets."""
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
+    return create_client(url, key)
+
+def get_supabase() -> Client:
+    """Return the cached Supabase client."""
+    return init_supabase()
+
+# -------------------------------------------------------------------
+# Authentication functions
+# -------------------------------------------------------------------
+def login(username: str, password: str) -> bool:
+    """
+    Check username and password against the admin_users table.
+    If successful, store user info in session state and return True.
+    """
+    supabase = get_supabase()
+    try:
+        # Query the admin_users table for the given username
+        response = supabase.table("admin_users") \
+                           .select("*") \
+                           .eq("username", username) \
+                           .limit(1) \
+                           .execute()
+
+        if not response.data:
+            return False  # username not found
+
+        user_record = response.data[0]
+        stored_hash = user_record["password_hash"]
+
+        # Verify password using bcrypt
+        if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+            # Store user info in session state (excluding password hash)
+            st.session_state.user = {
+                "id": user_record["id"],
+                "username": user_record["username"]
+            }
+            return True
+        else:
+            return False  # wrong password
+
+    except Exception as e:
+        st.error(f"Login error: {e}")
+        return False
+
+def logout():
+    """Clear the current user from session state."""
+    if "user" in st.session_state:
+        del st.session_state.user
+
+def is_authenticated() -> bool:
+    """Return True if a user is logged in."""
+    return "user" in st.session_state and st.session_state.user is not None
+
+def get_current_user():
+    """Return the current user dict or None."""
+    return st.session_state.get("user", None)
 
 def require_auth():
     """If not authenticated, stop execution with a message."""
@@ -14,6 +76,9 @@ def require_auth():
         st.error("Please log in to access this page.")
         st.stop()
 
+# -------------------------------------------------------------------
+# Admin management functions
+# -------------------------------------------------------------------
 def add_admin_user(username: str, password: str) -> bool:
     """
     Create a new admin user with hashed password.
@@ -51,16 +116,14 @@ def get_user_usage() -> List[Dict[str, Any]]:
     - user_id, username, total_tokens, total_events, last_active
     """
     supabase = get_supabase()
-    # Join user_usage with admin_users and aggregate
-    # We'll use a raw SQL query via supabase.rpc or just fetch and aggregate in Python
-    # For simplicity, fetch all usage rows and aggregate in Python.
+    # Fetch all usage rows
     usage_response = supabase.table("user_usage").select("*").execute()
     usage_data = usage_response.data if usage_response.data else []
 
     users = get_all_users()
     user_dict = {u["id"]: u for u in users}
 
-    # Aggregate
+    # Aggregate in Python
     agg = {}
     for row in usage_data:
         uid = row["user_id"]
