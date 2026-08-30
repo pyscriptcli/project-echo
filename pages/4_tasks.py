@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS (Native UI, Compact, Monochrome)
+# 4. Custom CSS (Native UI, Compact, Monochrome - Stacked Cards)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -62,15 +62,15 @@ h3 {
     font-size: 1.35rem !important;
 }
 
-/* Best Practice: Colored left borders based on status */
-div[data-testid="stVerticalBlockBorderWrapper"] {
+/* Board Column Container */
+[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 8px !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
     border-left: 5px solid #E67E22 !important; /* Default Orange */
     padding: 0.25rem 0.5rem !important; 
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.25rem !important; /* Pile up stacked */
 }
 
 /* Status specific border colors */
@@ -121,7 +121,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 """, unsafe_allow_html=True)
 
 # 5. Helper functions & Constants
-# Define the specific individuals and groups
 SPECIFIC_PEOPLE = [
     "Sondi Tuazon", "Meliza Zapata", "Dykstra Pineda", "Kristina Balajadia", 
     "Carlo Medina", "Cedtrix Rena", "Dave Policarpio", "Irish Rima"
@@ -148,7 +147,7 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
     payload = {
         "title": title.strip(),
         "description": description.strip(),
-        "assignee": assignee if assignee else None,  # Now just a string
+        "assignee": assignee if assignee else None,
         "due_date": due_date.isoformat() if due_date else None,
         "meeting_id": meeting_id,
         "status": "todo"
@@ -160,7 +159,6 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         st.error(f"Failed to add task: {e}")
         return False
 
-# Updated function to track Status, Assignee, and Due Date
 def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
     if not supabase:
         return
@@ -171,8 +169,6 @@ def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
             "status_updated_at": "now()",
             "updated_at": "now()"
         }
-        
-        # Only update if new values are provided
         if new_assignee is not None:
             update_payload["assignee"] = new_assignee
         if new_due_date is not None:
@@ -182,7 +178,6 @@ def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
     except Exception as e:
         st.error(f"Failed to update task: {e}")
 
-# Callback for immediate status change on the card
 def handle_status_change(task_id):
     new_status = st.session_state.get(f"status_{task_id}")
     update_task(task_id, new_status)
@@ -195,12 +190,10 @@ def delete_task(task_id):
     except Exception as e:
         st.error(f"Failed to delete task: {e}")
 
-# Helper to parse current assignee string into the UI state
 def get_assignee_ui_state(assignee_str):
     if assignee_str in GROUP_OPTIONS:
         return "Group", assignee_str, []
     elif assignee_str:
-        # Assume it's a comma-separated list of individuals
         selected_ind = [name.strip() for name in assignee_str.split(",") if name.strip() in SPECIFIC_PEOPLE]
         if selected_ind:
             return "Specific Individuals", "", selected_ind
@@ -231,13 +224,11 @@ def open_task_details():
         st.caption(f"ID: {task['id']}")
         st.markdown("---")
         
-        # Editable Fields: Status, Assigned To, Due Date
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
         current_status = task.get('status', 'todo')
         current_index = status_options.index(current_status) if current_status in status_options else 0
         
-        # Parse existing due date
         existing_due_date = task.get('due_date')
         if existing_due_date:
             try:
@@ -245,17 +236,13 @@ def open_task_details():
             except:
                 existing_due_date = None
 
-        # Status Dropdown
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Status**")
             new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x], label_visibility="collapsed")
         
-        # Assigned To - Radio + Conditional Dropdown/Multiselect
         with c2:
             st.markdown("**Assigned To**")
-            
-            # Parse current state
             assignee_type, group_val, individuals = get_assignee_ui_state(task.get('assignee', ""))
             
             assign_type = st.radio(
@@ -271,7 +258,6 @@ def open_task_details():
                 group_idx = GROUP_OPTIONS.index(group_val) if group_val in GROUP_OPTIONS else 0
                 new_assignee = st.selectbox("Select Group", GROUP_OPTIONS, index=group_idx, key="group_select_modal")
             else:
-                # Multiselect for specific individuals
                 new_assignee_list = st.multiselect(
                     "Select Individuals", 
                     SPECIFIC_PEOPLE, 
@@ -280,13 +266,11 @@ def open_task_details():
                 )
                 new_assignee = ", ".join(new_assignee_list)
         
-        # Due Date Picker
         c3, c4 = st.columns(2)
         with c3:
             st.markdown("**Due Date**")
             new_due_date = st.date_input("Due Date", value=existing_due_date, label_visibility="collapsed")
 
-        # Save Button for Modal Changes
         if st.button("Save Changes", use_container_width=True):
             update_task(task['id'], new_status, new_assignee, new_due_date)
             st.session_state.pop('selected_task', None)
@@ -322,7 +306,7 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs
 tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
 
-# ---------------- Board Tab (Instant Status Change & Clear Assignee Display) ----------------
+# ---------------- Board Tab (KANBAN 3-COLUMN) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -330,65 +314,96 @@ with tab_board:
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
 
-        for task in tasks:
+        # Sort tasks by created_at descending (newest to oldest)
+        def sort_by_newest(task_list):
+            return sorted(task_list, key=lambda x: x.get('created_at', ''), reverse=True)
+
+        todo_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'todo'])
+        in_progress_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'in_progress'])
+        done_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'done'])
+
+        col_todo, col_progress, col_done = st.columns(3)
+
+        # Helper function to render a stacked task card
+        def render_card(task):
             task_id = task['id']
-            
             card_class = f"task-{task.get('status', 'todo')}"
-            
+
             with st.container(border=True):
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Columns: Title, Assigned To, Due, Status (Instant), Actions
-                c1, c2, c3, c4, c5 = st.columns([3, 1.8, 1.5, 2.5, 2])
-                
-                with c1:
-                    st.markdown(f"**{task['title']}**")
-                    desc = task['description'] or ""
-                    st.caption(desc[:50] + "..." if len(desc) > 50 else desc)
-                
-                with c2:
-                    st.markdown("**Assigned To**")
-                    st.caption(task['assignee'] or "N/A")
-                
-                with c3:
-                    st.markdown("**Due Date**")
-                    due_date_str = task.get('due_date', None)
-                    if due_date_str:
-                        try:
-                            due_date_obj = datetime.strptime(due_date_str[:10], "%Y-%m-%d").date()
-                            if due_date_obj < date.today() and task.get('status') != 'done':
-                                st.markdown(f'<span class="overdue">{due_date_str[:10]}</span>', unsafe_allow_html=True)
-                            else:
-                                st.caption(due_date_str[:10])
-                        except:
-                            st.caption(due_date_str[:10])
-                    else:
-                        st.caption("N/A")
-                
-                with c4:
-                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
-                    # Dropdown with on_change for immediate update
-                    st.selectbox(
-                        "Status", 
-                        status_options, 
-                        index=current_index, 
-                        key=f"status_{task_id}",
-                        label_visibility="collapsed",
-                        format_func=lambda x: status_map[x],
-                        on_change=handle_status_change,
-                        args=(task_id,)
-                    )
-                
-                with c5:
-                    b1, b2 = st.columns(2)
-                    with b1:
-                        if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
-                            st.session_state['selected_task'] = task
-                            st.rerun()
-                    with b2:
-                        if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
-                            delete_task(task_id)
-                            st.rerun()
+                # Title & Description
+                st.markdown(f"**{task['title']}**")
+                desc = task['description'] or ""
+                st.caption(desc[:80] + "..." if len(desc) > 80 else desc)
+
+                # Assignee
+                st.caption(f"Assigned: {task['assignee'] or 'N/A'}")
+
+                # Due Date (Overdue Logic)
+                due_date_str = task.get('due_date', None)
+                if due_date_str:
+                    try:
+                        due_date_obj = datetime.strptime(due_date_str[:10], "%Y-%m-%d").date()
+                        if due_date_obj < date.today() and task.get('status') != 'done':
+                            st.markdown(f'<span class="overdue">Due: {due_date_str[:10]}</span>', unsafe_allow_html=True)
+                        else:
+                            st.caption(f"Due: {due_date_str[:10]}")
+                    except:
+                        st.caption(f"Due: {due_date_str[:10]}")
+                else:
+                    st.caption("Due: N/A")
+
+                # Status Dropdown (Instant Update)
+                current_index = status_options.index(task['status']) if task['status'] in status_options else 0
+                st.selectbox(
+                    "Status", 
+                    status_options, 
+                    index=current_index, 
+                    key=f"status_{task_id}",
+                    label_visibility="collapsed",
+                    format_func=lambda x: status_map[x],
+                    on_change=handle_status_change,
+                    args=(task_id,)
+                )
+
+                # Action Buttons
+                b1, b2 = st.columns(2)
+                with b1:
+                    if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
+                        st.session_state['selected_task'] = task
+                        st.rerun()
+                with b2:
+                    if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
+                        delete_task(task_id)
+                        st.rerun()
+
+        # Column 1: To Do
+        with col_todo:
+            with st.container(border=True):
+                st.markdown(f"#### To Do ({len(todo_tasks)})")
+                if not todo_tasks:
+                    st.caption("No tasks pending.")
+                for task in todo_tasks:
+                    render_card(task)
+
+        # Column 2: In Progress
+        with col_progress:
+            with st.container(border=True):
+                st.markdown(f"#### In Progress ({len(in_progress_tasks)})")
+                if not in_progress_tasks:
+                    st.caption("No tasks in progress.")
+                for task in in_progress_tasks:
+                    render_card(task)
+
+        # Column 3: Done
+        with col_done:
+            with st.container(border=True):
+                st.markdown(f"#### Done ({len(done_tasks)})")
+                if not done_tasks:
+                    st.caption("No completed tasks.")
+                for task in done_tasks:
+                    render_card(task)
 
 # Trigger Modal if session state is set
 if 'selected_task' in st.session_state:
@@ -440,14 +455,13 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ---------------- (Updated Assigned To Logic)
+# ---------------- New Task Tab ---------------- (Unchanged)
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
         title = st.text_input("Task Title *")
         description = st.text_area("Description")
         
-        # New Assigned To Logic
         assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="assign_type_new")
         
         if assign_type_new == "Group":
