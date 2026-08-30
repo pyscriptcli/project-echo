@@ -14,7 +14,7 @@ from utils.auth import init_supabase, login, logout, is_authenticated
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Project Echo - Dashboard",
+    page_title="Project Echo - Calendar",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -33,15 +33,14 @@ st.markdown("""
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
-[data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
     padding-top: 0.8rem !important;
     padding-bottom: 0.5rem !important;
-    padding-right: 1.5rem !important;
-    padding-left: 1.5rem !important;
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
     max-width: 100% !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
@@ -57,40 +56,32 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-[data-testid="stHorizontalBlock"] {
-    align-items: flex-start !important; 
+/* Left Column Container */
+.left-panel-wrapper {
+    height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-/* Synchronize Outer Containers */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) {
-    background-color: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin-top: 0 !important;
+.left-section {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    padding: 0.5rem 0.85rem !important;
-    gap: 0 !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
+.left-section-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
-/* Make Right Column Borderless for Custom Native UI */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    height: calc(100vh - 110px) !important;
-    padding: 0 !important;
+/* Right Column - Full Calendar */
+.calendar-wrapper {
+    height: calc(100vh - 100px);
+    background: transparent;
 }
 
 /* ---------------- CUSTOM NATIVE CALENDAR UI ---------------- */
@@ -101,7 +92,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     margin-bottom: 0.8rem;
 }
 .cal-title {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: #1B1B1B;
     margin: 0;
@@ -125,19 +116,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     background: #FFFFFF;
     border: 1px solid #E5E7EB;
     border-radius: 12px;
-    height: calc(100vh - 150px);
+    height: calc(100vh - 160px);
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 /* Sidebar */
 .cal-sidebar {
-    width: 250px;
+    width: 260px;
     border-right: 1px solid #E5E7EB;
     padding: 1.2rem;
     display: flex;
     flex-direction: column;
     background: #FAFAFA;
+    overflow-y: auto;
 }
 .cal-dropdown {
     display: flex;
@@ -151,6 +143,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     font-size: 0.85rem;
     font-weight: 500;
     box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    cursor: pointer;
 }
 .mini-cal-header {
     display: flex;
@@ -181,6 +174,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     color: #1B1B1B;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 .schedule-list { list-style: none; padding: 0; margin: 0; }
 .schedule-item {
@@ -198,6 +192,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
+    overflow: hidden;
 }
 .cal-main-header {
     display: flex;
@@ -205,6 +200,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     align-items: center;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #E5E7EB;
+    flex-shrink: 0;
 }
 .cal-nav { font-size: 1.25rem; font-weight: 600; color: #111827; }
 .cal-view-toggles {
@@ -226,22 +222,45 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
 .cal-view-toggles button.active { background: #1F2937; color: white; }
 
 /* Timetable */
-.cal-timetable { flex: 1; display: flex; overflow-y: auto; overflow-x: hidden; position: relative; }
+.cal-timetable { 
+    flex: 1; 
+    display: flex; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    position: relative;
+}
 .cal-time-axis {
     width: 60px;
     border-right: 1px solid #E5E7EB;
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
+    flex-shrink: 0;
 }
-.cal-time-slot { height: 60px; border-bottom: 1px solid #F3F4F6; position: relative; }
-.cal-time-label { position: absolute; top: -8px; right: 8px; font-size: 0.7rem; color: #9CA3AF; font-weight: 500; }
-.cal-days-grid { flex: 1; display: flex; }
+.cal-time-slot { 
+    height: 60px; 
+    border-bottom: 1px solid #F3F4F6; 
+    position: relative; 
+}
+.cal-time-label { 
+    position: absolute; 
+    top: -8px; 
+    right: 8px; 
+    font-size: 0.7rem; 
+    color: #9CA3AF; 
+    font-weight: 500; 
+}
+.cal-days-grid { 
+    flex: 1; 
+    display: flex; 
+    min-width: 0;
+}
 .cal-day-col {
     flex: 1;
     border-right: 1px solid #E5E7EB;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 .cal-day-header {
     text-align: center;
@@ -252,6 +271,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     flex-direction: column;
     justify-content: center;
     background: #FFFFFF;
+    flex-shrink: 0;
 }
 .cal-day-name { font-size: 0.85rem; font-weight: 600; color: #111827; }
 .cal-day-sub { font-size: 0.65rem; color: #9CA3AF; margin-top: 0.1rem; }
@@ -260,8 +280,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     flex: 1;
     position: relative;
     background-image: linear-gradient(to bottom, #F9FAFB 1px, transparent 1px);
-    background-size: 100% 60px; /* Maps to 1 hour slots */
-    min-height: 540px; /* 9 hours * 60px */
+    background-size: 100% 60px;
+    min-height: 540px;
 }
 
 /* Event Cards */
@@ -320,9 +340,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
 .kpi-mini-card { background: rgba(255, 255, 255, 0.9); border-radius: 4px; padding: 0.4rem 0.55rem; border: 1px solid rgba(0, 0, 0, 0.07); border-left: 3.5px solid #111A2B; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; justify-content: center; }
 .kpi-mini-title { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6C727A; margin-bottom: 0.05rem; }
 .kpi-mini-value { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.15rem; font-weight: 600; color: #1A2B4C; margin: 0; line-height: 1; }
-.left-feed-container { flex: 1 1 auto !important; min-height: 0 !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; }
-.left-feed-container > div[data-testid="stVerticalBlockBorderWrapper"] { background: rgba(255, 255, 255, 0.8) !important; border: 1px solid rgba(0, 0, 0, 0.06) !important; border-radius: 6px !important; overflow-y: auto !important; padding: 0.5rem 0.75rem !important; height: 100% !important; }
-.gallery-card { background-color: #FFFFFF; border: 1px solid rgba(0, 0, 0, 0.06); border-radius: 4px; padding: 0.5rem 0.65rem; margin-bottom: 0.25rem; }
+.gallery-card { background-color: #FFFFFF; border: 1px solid rgba(0, 0, 0, 0.06); border-radius: 4px; padding: 0.5rem 0.65rem; margin-bottom: 0.5rem; }
 .gallery-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.88rem; font-weight: 600; color: #1A2B4C; margin: 0 0 0.1rem 0; }
 .gallery-sub { font-size: 0.65rem; color: #6C727A; margin-bottom: 0.2rem; font-weight: 500; }
 .gallery-desc { font-size: 0.72rem; color: #2D2D2D; line-height: 1.35; margin: 0; }
@@ -346,7 +364,7 @@ if not is_authenticated():
         email = st.text_input("Email", value="")
         password = st.text_input("Password", type="password", value="")
         st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
-        if st.button("Sign In", use_container_width=True):
+        if st.button("Sign In", key="login_btn", use_container_width=True):
             if login(email, password):
                 st.success("Logged in successfully!")
                 st.rerun()
@@ -447,97 +465,102 @@ for m in supabase_records:
         c_idx += 1
 
 # 8. Dashboard Grid Composition
-col_left, col_right = st.columns([1, 2.3], gap="small")
+col_left, col_right = st.columns([0.85, 1.85], gap="small")
 
 # Left Column (Overview, Date Filter, Feed)
 with col_left:
-    with st.container(border=True):
-        st.markdown('<div class="dashboard-left-card-scope"></div>', unsafe_allow_html=True)
-        
-        st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
-        
-        # 2x2 Mini KPI Grid
-        st.markdown(f"""
-        <div class="kpi-grid-2x2">
-            <div class="kpi-mini-card">
-                <span class="kpi-mini-title">Selected</span>
-                <span class="kpi-mini-value">{total_range_meetings}</span>
-            </div>
-            <div class="kpi-mini-card">
-                <span class="kpi-mini-title">Team Archive</span>
-                <span class="kpi-mini-value">{total_team_meetings}</span>
-            </div>
-            <div class="kpi-mini-card">
-                <span class="kpi-mini-title">Internal</span>
-                <span class="kpi-mini-value">{total_internal_meetings}</span>
-            </div>
-            <div class="kpi-mini-card">
-                <span class="kpi-mini-title">External</span>
-                <span class="kpi-mini-value">{total_external_meetings}</span>
-            </div>
+    st.markdown('<div class="left-panel-wrapper">', unsafe_allow_html=True)
+    
+    # Overview Section
+    st.markdown('<div class="left-section">', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
+    
+    # 2x2 Mini KPI Grid
+    st.markdown(f"""
+    <div class="kpi-grid-2x2">
+        <div class="kpi-mini-card">
+            <span class="kpi-mini-title">Selected</span>
+            <span class="kpi-mini-value">{total_range_meetings}</span>
         </div>
-        """, unsafe_allow_html=True)
+        <div class="kpi-mini-card">
+            <span class="kpi-mini-title">Team Archive</span>
+            <span class="kpi-mini-value">{total_team_meetings}</span>
+        </div>
+        <div class="kpi-mini-card">
+            <span class="kpi-mini-title">Internal</span>
+            <span class="kpi-mini-value">{total_internal_meetings}</span>
+        </div>
+        <div class="kpi-mini-card">
+            <span class="kpi-mini-title">External</span>
+            <span class="kpi-mini-value">{total_external_meetings}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Date Picker Section
+    st.markdown('<div class="left-section" style="margin-top: 0.5rem;">', unsafe_allow_html=True)
+    date_label = f"{st.session_state['start_date'].strftime('%b %d')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
+    with st.popover(date_label, use_container_width=True):
+        p_col1, p_col2 = st.columns([1.1, 1.9])
+        with p_col1:
+            st.caption("PRESETS")
+            if st.button("This Week", key="btn_tw", use_container_width=True):
+                st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
+                st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+                st.rerun()
+            if st.button("Last Month", key="btn_lm", use_container_width=True):
+                first_this = today.replace(day=1)
+                last_prev = first_this - datetime.timedelta(days=1)
+                st.session_state["start_date"] = last_prev.replace(day=1)
+                st.session_state["end_date"] = last_prev
+                st.rerun()
+            st.markdown("<div style='margin-top: 0.3rem;'></div>", unsafe_allow_html=True)
+            if st.button("Reset", key="btn_reset_inside", use_container_width=True):
+                st.session_state["start_date"] = today.replace(day=1)
+                _, last = calendar.monthrange(today.year, today.month)
+                st.session_state["end_date"] = today.replace(day=last)
+                st.rerun()
 
-        # Date Picker Popover Pill
-        date_label = f"{st.session_state['start_date'].strftime('%b %d')} — {st.session_state['end_date'].strftime('%b %d, %Y')}"
-        with st.popover(date_label, use_container_width=True):
-            p_col1, p_col2 = st.columns([1.1, 1.9])
-            with p_col1:
-                st.caption("PRESETS")
-                if st.button("This Week", key="btn_tw", use_container_width=True):
-                    st.session_state["start_date"] = today - datetime.timedelta(days=today.weekday())
-                    st.session_state["end_date"] = st.session_state["start_date"] + datetime.timedelta(days=6)
+        with p_col2:
+            st.caption("CUSTOM RANGE")
+            selected_dates = st.date_input("Date Range", value=(st.session_state["start_date"], st.session_state["end_date"]), label_visibility="collapsed")
+            if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+                if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
+                    st.session_state["start_date"] = selected_dates[0]
+                    st.session_state["end_date"] = selected_dates[1]
                     st.rerun()
-                if st.button("Last Month", key="btn_lm", use_container_width=True):
-                    first_this = today.replace(day=1)
-                    last_prev = first_this - datetime.timedelta(days=1)
-                    st.session_state["start_date"] = last_prev.replace(day=1)
-                    st.session_state["end_date"] = last_prev
-                    st.rerun()
-                st.markdown("<div style='margin-top: 0.3rem;'></div>", unsafe_allow_html=True)
-                if st.button("Reset", key="btn_reset_inside", use_container_width=True):
-                    st.session_state["start_date"] = today.replace(day=1)
-                    _, last = calendar.monthrange(today.year, today.month)
-                    st.session_state["end_date"] = today.replace(day=last)
-                    st.rerun()
-
-            with p_col2:
-                st.caption("CUSTOM RANGE")
-                selected_dates = st.date_input("Date Range", value=(st.session_state["start_date"], st.session_state["end_date"]), label_visibility="collapsed")
-                if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-                    if st.session_state["start_date"] != selected_dates[0] or st.session_state["end_date"] != selected_dates[1]:
-                        st.session_state["start_date"] = selected_dates[0]
-                        st.session_state["end_date"] = selected_dates[1]
-                        st.rerun()
-
-        st.markdown('<p class="section-title">Recent Meetings</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Filtered meeting archives.</p>', unsafe_allow_html=True)
-        
-        st.markdown('<div class="left-feed-container">', unsafe_allow_html=True)
-        with st.container():
-            if filtered_records:
-                for idx, m in enumerate(filtered_records):
-                    m_id = m.get("meeting_id") or f"MOM-{idx}"
-                    client = m.get("client_name") or "Meeting Record"
-                    m_date = str(m.get("meeting_date", "N/A"))[:10]
-                    prep = m.get("prepared_by") or "CRD Team"
-                    summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-                    
-                    st.markdown(f"""
-                    <div class="gallery-card">
-                        <p class="gallery-title">{client}</p>
-                        <p class="gallery-sub">{m_date} &bull; {prep}</p>
-                        <p class="gallery-desc">{summary[:85]}...</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
-                        st.session_state["selected_meeting_id"] = m_id
-                        st.switch_page("pages/2_meeting_details.py")
-            else:
-                st.info("No records found.")
-        st.markdown('</div>', unsafe_allow_html=True)
-
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Recent Meetings Section
+    st.markdown('<div class="left-section left-section-scrollable">', unsafe_allow_html=True)
+    st.markdown('<p class="section-title">Recent Meetings</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-caption">Filtered meeting archives.</p>', unsafe_allow_html=True)
+    
+    if filtered_records:
+        for idx, m in enumerate(filtered_records):
+            m_id = m.get("meeting_id") or f"MOM-{idx}"
+            client = m.get("client_name") or "Meeting Record"
+            m_date = str(m.get("meeting_date", "N/A"))[:10]
+            prep = m.get("prepared_by") or "CRD Team"
+            summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+            
+            st.markdown(f"""
+            <div class="gallery-card">
+                <p class="gallery-title">{client}</p>
+                <p class="gallery-sub">{m_date} • {prep}</p>
+                <p class="gallery-desc">{summary[:85]}...</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
+                st.session_state["selected_meeting_id"] = m_id
+                st.switch_page("pages/2_meeting_details.py")
+    else:
+        st.info("No records found.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Generate the Dynamic Native Calendar Layout for Right Column
 week_start = today - datetime.timedelta(days=today.weekday() + 1) # Sunday Start
@@ -575,16 +598,18 @@ for i in range(7):
 
 # Right Column (Full Custom Native Calendar UI)
 with col_right:
-    with st.container(border=False):
-        st.markdown('<div class="custom-calendar-scope"></div>', unsafe_allow_html=True)
-        
-        # Remove indentation on this block so Streamlit doesn't render it as a Markdown Code Block
-        calendar_html = textwrap.dedent(f"""
-<div class="cal-header-bar">
-    <h1 class="cal-title">Calendar</h1>
-    <button class="btn-add-schedule">+ Add New Schedule</button>
-</div>
-
+    st.markdown('<div class="calendar-wrapper">', unsafe_allow_html=True)
+    
+    # Header
+    st.markdown(f"""
+    <div class="cal-header-bar">
+        <h1 class="cal-title">Calendar</h1>
+        <button class="btn-add-schedule">+ Add New Schedule</button>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Calendar Container
+    calendar_html = f"""
 <div class="cal-app-container">
     <!-- Sidebar Navigation -->
     <div class="cal-sidebar">
@@ -653,6 +678,7 @@ with col_right:
         </div>
     </div>
 </div>
-        """)
-        
-        st.markdown(calendar_html, unsafe_allow_html=True)
+    """
+    
+    st.markdown(calendar_html, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
