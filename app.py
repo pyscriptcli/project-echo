@@ -22,12 +22,13 @@ st.set_page_config(
 # 2. Initialize Supabase client (cached)
 supabase = init_supabase()
 
-# 3. Custom CSS
+# 3. Custom CSS (Merged layout from old version with new app styles)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Hide Streamlit chrome */
+/* Canvas & Margins */
+.stApp > header { display: none !important; visibility: hidden !important; }
 [data-testid="stHeader"] { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
@@ -35,17 +36,17 @@ st.markdown("""
 [data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
-/* Full-width main viewport & clean grid background */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
-    padding-top: 0.85rem !important;
+    padding-top: 0.8rem !important;
     padding-bottom: 0.5rem !important;
-    padding-right: 1.25rem !important;
-    padding-left: 1.25rem !important;
+    padding-right: 1.5rem !important;
+    padding-left: 1.5rem !important;
     max-width: 100% !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
+/* Warm Cream Architectural Large 80px Grid Background */
 [data-testid="stAppViewContainer"], .stApp {
     background-color: #F5F1E8 !important;
     background-image: 
@@ -56,49 +57,27 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-/* --------------- COLUMN & CONTAINER ALIGNMENT --------------- */
-
-/* Equalize column flex height */
-[data-testid="stHorizontalBlock"] {
-    align-items: stretch !important;
-    gap: 1.25rem !important;
-}
-
-[data-testid="stColumn"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: calc(100vh - 85px) !important;
-}
-
-/* Standardize bordered containers in both columns */
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
-    height: 100% !important;
-    max-height: 100% !important;
-    background-color: rgba(255, 255, 255, 0.45) !important;
+/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
+.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
+    background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    padding: 0.75rem 0.9rem !important;
-    display: flex !important;
-    flex-direction: column !important;
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
+    overflow: hidden !important;
+    padding: 0 !important;
 }
 
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+.dashboard-left-card > div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
+    padding: 0.5rem 0.85rem !important;
+    gap: 0 !important;
+    box-sizing: border-box !important;
     overflow: hidden !important;
-}
-
-/* Scrollable feed inside the left container */
-.left-feed-scroll {
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    margin-top: 0.5rem;
-    padding-top: 0.6rem;
-    padding-right: 0.25rem;
 }
 
 /* Section Headings */
@@ -107,28 +86,28 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     font-style: italic !important;
     font-weight: 600 !important;
     color: #1A2B4C !important;
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
     margin: 0 !important;
     line-height: 1.2 !important;
 }
 .section-caption {
     font-size: 0.72rem;
     color: #6C727A;
-    margin: 0 0 0.4rem 0 !important;
+    margin: 0 0 0.35rem 0 !important;
 }
 
 /* 2x2 Mini KPI Grid */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.4rem;
-    margin-bottom: 0.4rem;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
     flex-shrink: 0;
 }
 .kpi-mini-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 4px;
-    padding: 0.45rem 0.6rem;
+    padding: 0.4rem 0.55rem;
     border: 1px solid rgba(0, 0, 0, 0.07);
     border-left: 3.5px solid #111A2B;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -159,7 +138,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 
 /* Date Picker Popover Pill */
 div[data-testid="stPopover"] {
-    margin-bottom: 0.35rem !important;
+    margin-bottom: 0.4rem !important;
     flex-shrink: 0 !important;
 }
 div[data-testid="stPopover"] > button {
@@ -178,18 +157,36 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
+/* Left Column Inner Feed Auto-Scroll */
+.left-feed-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.left-feed-container > div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 6px !important;
+    overflow-y: auto !important;
+    padding: 0.5rem 0.75rem !important;
+    height: 100% !important;
+}
+
 /* Meeting Cards */
 .gallery-card {
     background-color: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 4px;
-    padding: 0.55rem 0.7rem;
-    margin-bottom: 0.35rem;
+    padding: 0.5rem 0.65rem;
+    margin-bottom: 0.25rem;
 }
 .gallery-title { 
     font-family: 'Playfair Display', serif; 
     font-style: italic; 
-    font-size: 0.9rem; 
+    font-size: 0.88rem; 
     font-weight: 600; 
     color: #1A2B4C; 
     margin: 0 0 0.1rem 0; 
@@ -197,7 +194,7 @@ div[data-testid="stPopover"] > button:hover {
 .gallery-sub { 
     font-size: 0.65rem; 
     color: #6C727A; 
-    margin-bottom: 0.25rem; 
+    margin-bottom: 0.2rem; 
     font-weight: 500;
 }
 .gallery-desc { 
@@ -288,7 +285,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# 6. Session State Initialization
+# 6. Session State Initialization[cite: 1]
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
@@ -301,7 +298,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data
+# 7. Fetch and Filter Data[cite: 1]
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -330,11 +327,12 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Dashboard Grid Composition
+# 8. Dashboard Grid Composition[cite: 1]
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
-# Left Column (Overview, Date Filter, Feed)
+# Left Column (Overview, Date Filter, Feed)[cite: 1]
 with col_left:
+    st.markdown('<div class="dashboard-left-card">', unsafe_allow_html=True)
     with st.container(border=True):
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
@@ -406,34 +404,35 @@ with col_left:
                         st.session_state["end_date"] = selected_dates[1]
                         st.rerun()
 
-        # Recent Meetings Scrollable Feed
-        st.markdown('<div class="left-feed-scroll">', unsafe_allow_html=True)
         st.markdown('<p class="section-title">Recent Meetings</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Filtered meeting archives.</p>', unsafe_allow_html=True)
         
-        if filtered_records:
-            for idx, m in enumerate(filtered_records):
-                m_id = m.get("meeting_id") or f"MOM-{idx}"
-                client = m.get("client_name") or "Meeting Record"
-                m_date = str(m.get("meeting_date", "N/A"))[:10]
-                prep = m.get("prepared_by") or "CRD Team"
-                summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-                
-                st.markdown(f"""
-                <div class="gallery-card">
-                    <p class="gallery-title">{client}</p>
-                    <p class="gallery-sub">{m_date} &bull; {prep}</p>
-                    <p class="gallery-desc">{summary[:85]}...</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
-                    st.session_state["selected_meeting_id"] = m_id
-                    st.switch_page("pages/2_meeting_details.py")
-        else:
-            st.info("No records found.")
+        st.markdown('<div class="left-feed-container">', unsafe_allow_html=True)
+        with st.container():
+            if filtered_records:
+                for idx, m in enumerate(filtered_records):
+                    m_id = m.get("meeting_id") or f"MOM-{idx}"
+                    client = m.get("client_name") or "Meeting Record"
+                    m_date = str(m.get("meeting_date", "N/A"))[:10]
+                    prep = m.get("prepared_by") or "CRD Team"
+                    summary = str(m.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+                    
+                    st.markdown(f"""
+                    <div class="gallery-card">
+                        <p class="gallery-title">{client}</p>
+                        <p class="gallery-sub">{m_date} &bull; {prep}</p>
+                        <p class="gallery-desc">{summary[:85]}...</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button("View Details", key=f"btn_view_{m_id}_{idx}", use_container_width=True):
+                        st.session_state["selected_meeting_id"] = m_id
+                        st.switch_page("pages/2_meeting_details.py")
+            else:
+                st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Ask Echo AI Plugin)
+# Right Column (Ask Echo AI Plugin)[cite: 1]
 with col_right:
     render_echo_chat(title="Ask Echo")
