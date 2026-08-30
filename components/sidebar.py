@@ -24,7 +24,7 @@ def setup_page_layout():
     """, unsafe_allow_html=True)
 
     # Render your custom horizontal navbar with EQUAL width columns
-    # Updated to 5 columns to include the new Tasks page
+    # NOTE: 0_admin.py is intentionally excluded as per your request to access it only via URL
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
     
     with col1:
@@ -36,5 +36,5 @@ def setup_page_layout():
     with col4:
         st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
     with col5:
-        # Make sure to create this file in your 'pages' folder: pages/tasks.py (or pages/4_tasks.py)
-        st.page_link("pages/tasks.py", label="Tasks", icon=":material/checklist:", use_container_width=True)
+        # Updated to point to your actual file: 4_tasks.py
+        st.page_link("pages/4_tasks.py", label="Tasks", icon=":material/checklist:", use_container_width=True)
