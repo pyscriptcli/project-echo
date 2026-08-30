@@ -8,19 +8,20 @@ import streamlit as st
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 from utils.db import fetch_meeting_archives
+from components.sidebar import setup_page_layout
 from utils.auth import init_supabase, login, logout, is_authenticated
 
 # 1. Page Configuration
 st.set_page_config(
     page_title="Project Echo - Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # 2. Initialize Supabase client
 supabase = init_supabase()
 
-# 3. Global & Dashboard CSS (Fixed for Perfect Alignment)
+# 3. Global & Dashboard CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -55,16 +56,34 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-/* Force left and right columns to have identical heights */
-[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
-    overflow: hidden !important;
+/* Force horizontal block columns to align to top without extra margins */
+[data-testid="stHorizontalBlock"] {
+    align-items: flex-start !important; 
+}
+
+/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin-top: 0 !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) > div[data-testid="stVerticalBlock"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
     padding: 0.5rem 0.85rem !important;
+    gap: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
 }
 
 /* Section Headings */
@@ -144,7 +163,7 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
-/* Left Column Inner Feed Auto-Scroll */
+/* Inner Feed Auto-Scroll */
 .left-feed-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -191,7 +210,7 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
 }
 
-/* Charcoal Black & Gold Accent Pill Buttons */
+/* Action Buttons */
 .stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
@@ -263,9 +282,7 @@ if not is_authenticated():
     st.stop()
 
 # 5. Page Layout Setup
-# (Assuming setup_page_layout is called elsewhere or you can call it here if needed)
-# from components.sidebar import setup_page_layout
-# setup_page_layout()
+setup_page_layout()
 
 with st.sidebar:
     st.markdown("---")
@@ -274,8 +291,6 @@ with st.sidebar:
         st.rerun()
 
 # 6. Session State Initialization
-if "global_chat_history" not in st.session_state:
-    st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
@@ -321,6 +336,8 @@ col_left, col_right = st.columns([1, 2.3], gap="small")
 # Left Column (Overview, Date Filter, Feed)
 with col_left:
     with st.container(border=True):
+        st.markdown('<div class="dashboard-left-card-scope"></div>', unsafe_allow_html=True)
+        
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
         
@@ -419,27 +436,52 @@ with col_left:
                 st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Native Calendar & Action Items)
+# Right Column (Action Items Calendar)
 with col_right:
     with st.container(border=True):
+        st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
+        
         st.markdown('<p class="section-title">Action Items Calendar</p>', unsafe_allow_html=True)
-        st.markdown('<p class="section-caption">Select a date to add or review action items.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-caption">Schedule and track tasks synced from meeting minutes.</p>', unsafe_allow_html=True)
         
-        # Native Streamlit Date Picker
-        selected_date = st.date_input("Select Date", value=today)
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         
-        st.markdown("---")
-        
-        # Action Item Input
-        st.markdown("#### Add New Action Item")
-        action_item = st.text_area("Action Item", placeholder="e.g., Follow up with Dave on Salesforce leads")
-        if st.button("Add Action Item", key="add_action_item"):
-            if action_item:
-                st.success(f"Action item added for {selected_date.strftime('%B %d, %Y')}!")
-                # TODO: Save to database here in the future
+        cal_col1, cal_col2 = st.columns([1, 2.5], gap="medium")
+        with cal_col1:
+            selected_cal_date = st.date_input("Select Date", value=today, label_visibility="collapsed")
+            st.button("➕ Add Manual Task", use_container_width=True)
+            
+        with cal_col2:
+            st.markdown(f"<span style='font-weight: 600; color: #1A2B4C;'>Tasks for {selected_cal_date.strftime('%B %d, %Y')}</span>", unsafe_allow_html=True)
+            if selected_cal_date == today:
+                st.info("No tasks scheduled for today. Ready for new action items.")
             else:
-                st.warning("Please enter an action item.")
-
-        # Display existing items (Placeholder for future)
-        st.markdown("#### Scheduled Action Items")
-        st.info("No action items scheduled for this date yet.") # This will be replaced with database data later
+                st.info(f"No action items scheduled for {selected_cal_date.strftime('%b %d')}.")
+                
+        # Scrollable area for upcoming broad tasks
+        st.markdown('<div class="left-feed-container" style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 0.8rem; margin-top: 1rem;">', unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<span style='font-weight: 600; color: #1A2B4C; font-size: 0.9rem;'>Upcoming Sync Feed</span>", unsafe_allow_html=True)
+            st.caption("Action items waiting to be scheduled from recent meetings.")
+            
+            st.markdown("""
+            <div class="gallery-card" style="border-left: 4px solid #D4AF37;">
+                <p class="gallery-title">Send Revised Proposal to Client X</p>
+                <p class="gallery-sub">Source: CRD Team Meeting &bull; Assigned to: Dave Policarpio</p>
+                <p class="gallery-desc">Ensure peripheral topics discussed are included in the final draft.</p>
+            </div>
+            
+            <div class="gallery-card" style="border-left: 4px solid #111A2B;">
+                <p class="gallery-title">Schedule Follow-up Lead Response Call</p>
+                <p class="gallery-sub">Source: Meeting Record &bull; Assigned to: CRD Team</p>
+                <p class="gallery-desc">Review lead response metrics before the next weekly sync.</p>
+            </div>
+            
+            <div class="gallery-card" style="border-left: 4px solid #6C727A;">
+                <p class="gallery-title">Finalize Marketing Attendance Roster</p>
+                <p class="gallery-sub">Source: Marketing Department &bull; Assigned to: Carlo</p>
+                <p class="gallery-desc">Verify Q3 attendance updates for the regional team.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
