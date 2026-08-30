@@ -16,24 +16,19 @@ from utils.auth import init_supabase, login, logout, is_authenticated
 st.set_page_config(
     page_title="Project Echo - Dashboard",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# 2. Initialize Supabase client (cached)
+# 2. Initialize Supabase client
 supabase = init_supabase()
 
-# 3. Custom CSS (Merged layout from old version with new app styles)
+# 3. Global & Dashboard CSS (Includes Login Styles & Original Sync Layout)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Canvas & Margins */
 .stApp > header { display: none !important; visibility: hidden !important; }
-[data-testid="stHeader"] { display: none !important; }
-[data-testid="stToolbar"] { display: none !important; }
-[data-testid="stDecoration"] { display: none !important; }
-[data-testid="stStatusWidget"] { display: none !important; }
-[data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
@@ -210,17 +205,16 @@ div[data-testid="stPopover"] > button:hover {
     color: #FFFFFF !important;
     border: 1px solid #D4AF37 !important;
     border-radius: 20px !important;
-    font-size: 0.75rem !important;
-    padding: 0.3rem 0.8rem !important;
-    min-height: 34px !important;
-    height: 34px !important;
+    font-size: 0.72rem !important;
+    padding: 0.2rem 0.75rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
     transition: all 0.2s ease !important;
-    margin-top: 0.2rem;
 }
 .stButton > button:hover {
     border-color: #F1C40F !important;
     background-color: #1A263D !important;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
 }
 
 /* Login Page Styling */
@@ -285,7 +279,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# 6. Session State Initialization[cite: 1]
+# 6. Session State Initialization
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
@@ -298,7 +292,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data[cite: 1]
+# 7. Fetch and Filter Data
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -327,10 +321,10 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Dashboard Grid Composition[cite: 1]
+# 8. Dashboard Grid Composition
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
-# Left Column (Overview, Date Filter, Feed)[cite: 1]
+# Left Column (Overview, Date Filter, Feed)
 with col_left:
     st.markdown('<div class="dashboard-left-card">', unsafe_allow_html=True)
     with st.container(border=True):
@@ -433,6 +427,6 @@ with col_left:
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Ask Echo AI Plugin)[cite: 1]
+# Right Column (Ask Echo AI Plugin)
 with col_right:
     render_echo_chat(title="Ask Echo")
