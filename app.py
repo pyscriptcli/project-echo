@@ -8,21 +8,19 @@ import streamlit as st
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 from utils.db import fetch_meeting_archives
-from utils.echo_ai import render_echo_chat
-from components.sidebar import setup_page_layout
 from utils.auth import init_supabase, login, logout, is_authenticated
 
 # 1. Page Configuration
 st.set_page_config(
     page_title="Project Echo - Dashboard",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # 2. Initialize Supabase client
 supabase = init_supabase()
 
-# 3. Global & Dashboard CSS
+# 3. Global & Dashboard CSS (Fixed for Perfect Alignment)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -57,33 +55,16 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     color: #1A1A1A;
 }
 
-/* Force horizontal block columns to align to top without extra margins */
-[data-testid="stHorizontalBlock"] {
-    align-items: flex-start !important; 
-}
-
-/* Synchronize Both Left and Right Outer Containers to Identical Viewport Heights */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope),
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
+/* Force left and right columns to have identical heights */
+[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+    height: calc(100vh - 130px) !important;
+    max-height: calc(100vh - 130px) !important;
+    overflow: hidden !important;
     background-color: transparent !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 8px !important;
     box-shadow: none !important;
-    height: calc(100vh - 130px) !important;
-    max-height: calc(100vh - 130px) !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin-top: 0 !important;
-}
-
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
     padding: 0.5rem 0.85rem !important;
-    gap: 0 !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
 }
 
 /* Section Headings */
@@ -210,7 +191,7 @@ div[data-testid="stPopover"] > button:hover {
     margin: 0;
 }
 
-/* Action Buttons */
+/* Charcoal Black & Gold Accent Pill Buttons */
 .stButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
@@ -282,7 +263,9 @@ if not is_authenticated():
     st.stop()
 
 # 5. Page Layout Setup
-setup_page_layout()
+# (Assuming setup_page_layout is called elsewhere or you can call it here if needed)
+# from components.sidebar import setup_page_layout
+# setup_page_layout()
 
 with st.sidebar:
     st.markdown("---")
@@ -290,7 +273,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
-# 6. Session State Initialization[cite: 1]
+# 6. Session State Initialization
 if "global_chat_history" not in st.session_state:
     st.session_state["global_chat_history"] = []
 if "selected_meeting_id" not in st.session_state:
@@ -303,7 +286,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data[cite: 1]
+# 7. Fetch and Filter Data
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -332,15 +315,12 @@ for m in supabase_records:
     except Exception:
         pass
 
-# 8. Dashboard Grid Composition[cite: 1]
+# 8. Dashboard Grid Composition
 col_left, col_right = st.columns([1, 2.3], gap="small")
 
-# Left Column (Overview, Date Filter, Feed)[cite: 1]
+# Left Column (Overview, Date Filter, Feed)
 with col_left:
     with st.container(border=True):
-        # Adding the scoping element inside the container to trigger perfect synchronization
-        st.markdown('<div class="dashboard-left-card-scope"></div>', unsafe_allow_html=True)
-        
         st.markdown('<p class="section-title">Overview & Metrics</p>', unsafe_allow_html=True)
         st.markdown('<p class="section-caption">Summary of records in selected scope.</p>', unsafe_allow_html=True)
         
@@ -439,6 +419,27 @@ with col_left:
                 st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Ask Echo AI Plugin)[cite: 1]
+# Right Column (Native Calendar & Action Items)
 with col_right:
-    render_echo_chat(title="Ask Echo")
+    with st.container(border=True):
+        st.markdown('<p class="section-title">Action Items Calendar</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-caption">Select a date to add or review action items.</p>', unsafe_allow_html=True)
+        
+        # Native Streamlit Date Picker
+        selected_date = st.date_input("Select Date", value=today)
+        
+        st.markdown("---")
+        
+        # Action Item Input
+        st.markdown("#### Add New Action Item")
+        action_item = st.text_area("Action Item", placeholder="e.g., Follow up with Dave on Salesforce leads")
+        if st.button("Add Action Item", key="add_action_item"):
+            if action_item:
+                st.success(f"Action item added for {selected_date.strftime('%B %d, %Y')}!")
+                # TODO: Save to database here in the future
+            else:
+                st.warning("Please enter an action item.")
+
+        # Display existing items (Placeholder for future)
+        st.markdown("#### Scheduled Action Items")
+        st.info("No action items scheduled for this date yet.") # This will be replaced with database data later
