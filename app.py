@@ -196,41 +196,43 @@ div[data-testid="stPopover"] > button {
 }
 
 /* ===== CALENDAR SPECIFIC ===== */
-/* Segmented control (monochrome) */
-.segmented-control-container {
+/* Monochrome Segmented control */
+.mono-segmented {
     display: flex;
     align-items: center;
-    gap: 2px;
-    background: rgba(0,0,0,0.05);
+    gap: 0;
+    background: #FFFFFF;
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 24px;
-    padding: 4px;
+    padding: 3px;
     width: max-content;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.segmented-btn {
+.mono-seg-btn {
     background: transparent;
     border: none;
     border-radius: 20px;
-    padding: 6px 14px;
+    padding: 6px 16px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #1A2B4C; /* monochrome dark */
+    color: #1A2B4C;
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Inter', sans-serif;
 }
-.segmented-btn:hover {
-    background: rgba(0,0,0,0.08);
+.mono-seg-btn:hover {
+    background: #F0EEE6;
 }
-.segmented-btn.active {
-    background: #FFFFFF;
-    color: #1A2B4C;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.mono-seg-btn.active {
+    background: #111A2B;
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
 }
 
 /* Navigation buttons (monochrome) */
-.nav-btn {
+.mono-nav-btn {
     background: #FFFFFF !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(0,0,0,0.15) !important;
     color: #1A2B4C !important;
     border-radius: 50% !important;
     width: 36px !important;
@@ -244,36 +246,40 @@ div[data-testid="stPopover"] > button {
     box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     transition: all 0.2s !important;
 }
-.nav-btn:hover {
+.mono-nav-btn:hover {
     background: #F0EEE6 !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
 }
-.today-btn {
+
+/* Today button (monochrome) */
+.mono-today-btn {
     background: #FFFFFF !important;
     color: #1A2B4C !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(0,0,0,0.15) !important;
     border-radius: 20px !important;
     font-size: 0.72rem !important;
-    padding: 0.25rem 0.9rem !important;
+    font-weight: 600 !important;
+    padding: 0.25rem 1rem !important;
     height: 32px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
-.today-btn:hover {
+.mono-today-btn:hover {
     background: #F0EEE6 !important;
 }
 
-/* Month picker button */
-.month-btn {
+/* Month picker button (monochrome) */
+.mono-month-btn {
     background: #FFFFFF !important;
     color: #1A2B4C !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(0,0,0,0.15) !important;
     border-radius: 20px !important;
     font-size: 0.75rem !important;
-    padding: 0.25rem 0.9rem !important;
+    font-weight: 600 !important;
+    padding: 0.25rem 1rem !important;
     height: 32px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
-.month-btn:hover {
+.mono-month-btn:hover {
     background: #F0EEE6 !important;
 }
 
@@ -435,7 +441,6 @@ if "cal_view" not in st.session_state:
     st.session_state["cal_view"] = "Month"
 if "cal_focus_date" not in st.session_state:
     st.session_state["cal_focus_date"] = today
-# No search state anymore
 
 # 7. Fetch Data & Extract Actions
 supabase_records = fetch_meeting_archives(limit=100)
@@ -592,54 +597,67 @@ with col_right:
     with st.container(border=False):
         st.markdown('<div class="sync-height-scope"></div>', unsafe_allow_html=True)
         
-        # 1. Calendar Header Controls
-        header_row = st.columns([1.5, 1, 1, 1])
+        # 1. Calendar Header Controls - Aligned and Well-Spaced
+        header_row = st.columns([1.5, 1.2, 1.5, 1.5])
         
         # Title
         with header_row[0]:
             st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         
-        # Segmented control (Day/Week/Month) - monochrome
+        # Segmented control (Day/Week/Month) - fully monochrome
         with header_row[1]:
-            # Use three buttons styled as segmented control via CSS
+            # Using actual buttons with custom CSS for monochrome segmented control
             seg_cols = st.columns(3, gap="small")
             view_labels = ["Day", "Week", "Month"]
             for idx, opt in enumerate(view_labels):
                 with seg_cols[idx]:
                     is_active = (st.session_state["cal_view"] == opt)
-                    # Add active class via CSS selector by key
-                    if st.button(opt, key=f"view_{opt.lower()}"):
+                    # Use HTML button style via markdown? No, we'll use st.button and CSS
+                    if st.button(opt, key=f"seg_{opt.lower()}", help=f"{opt} view"):
                         st.session_state["cal_view"] = opt
                         st.rerun()
-            # Apply segmented control styling to the buttons' container
+            
+            # CSS to make the column container look like segmented control
             st.markdown("""
             <style>
-            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) {
-                background: rgba(0,0,0,0.05);
+            /* Style the segmented control container */
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_day"]),
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_week"]),
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_month"]) {
+                background: #FFFFFF;
+                border: 1px solid rgba(0,0,0,0.1);
                 border-radius: 24px;
-                padding: 4px;
+                padding: 3px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                display: flex;
+                gap: 0;
                 width: max-content;
             }
-            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button {
+            /* Style individual buttons */
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_day"]) button,
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_week"]) button,
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_month"]) button {
                 background: transparent !important;
                 border: none !important;
                 color: #1A2B4C !important;
                 font-size: 0.75rem !important;
                 font-weight: 600 !important;
-                padding: 6px 14px !important;
+                padding: 6px 16px !important;
                 border-radius: 20px !important;
                 box-shadow: none !important;
             }
-            /* Active state: add subtle background */
-            div[data-testid="stHorizontalBlock"]:has(button[data-testid="stButton"]) button:hover {
-                background: rgba(0,0,0,0.08) !important;
+            /* Active state (dark background, white text) */
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_day"]) button:hover,
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_week"]) button:hover,
+            div[data-testid="stHorizontalBlock"]:has(button[key="seg_month"]) button:hover {
+                background: rgba(0,0,0,0.05) !important;
             }
             </style>
             """, unsafe_allow_html=True)
         
-        # Navigation buttons (prev, today, next) + month picker
+        # Navigation buttons (prev, today, next) - monochrome
         with header_row[2]:
-            nav_cols = st.columns(3, gap="small")
+            nav_cols = st.columns([1, 1.2, 1], gap="small")
             with nav_cols[0]:
                 if st.button("◀", key="cal_prev", help="Previous"):
                     if st.session_state["cal_view"] == "Day":
@@ -669,15 +687,13 @@ with col_right:
                             st.session_state["cal_focus_date"] = st.session_state["cal_focus_date"].replace(month=st.session_state["cal_focus_date"].month+1)
                     st.rerun()
         
-        # Month picker
+        # Month picker - monochrome
         with header_row[3]:
             month_label = st.session_state["cal_focus_date"].strftime("%B %Y")
             with st.popover(month_label, use_container_width=False):
-                # Inside popover, a date input to select any date in the month
                 selected_date = st.date_input("Pick a date", value=st.session_state["cal_focus_date"].replace(day=1), 
                                              min_value=datetime.date(2000,1,1), max_value=datetime.date(2100,12,31))
                 if selected_date != st.session_state["cal_focus_date"].replace(day=1):
-                    # Set focus date to the first of the selected month
                     st.session_state["cal_focus_date"] = selected_date.replace(day=1)
                     st.rerun()
         
@@ -767,7 +783,6 @@ with col_right:
                 is_today = (curr_date == today)
                 
                 with day_cols[i]:
-                    # Day Header
                     if is_today:
                         bg_color = "#D4AF37"
                         text_color = "#111A2B"
@@ -786,7 +801,6 @@ with col_right:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Events
                     events = calendar_events_by_date.get(curr_date_str, [])
                     if events:
                         for evt in events:
