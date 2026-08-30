@@ -120,7 +120,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 </style>
 """, unsafe_allow_html=True)
 
-# 5. Helper functions for Supabase tasks
+# 5. Helper functions & Constants
+# Define the specific individuals and groups
+SPECIFIC_PEOPLE = [
+    "Sondi Tuazon", "Meliza Zapata", "Dykstra Pineda", "Kristina Balajadia", 
+    "Carlo Medina", "Cedtrix Rena", "Dave Policarpio", "Irish Rima"
+]
+GROUP_OPTIONS = ["All Team Members", "All Advisors"]
+
 supabase = get_supabase_client()
 
 def fetch_tasks():
@@ -141,7 +148,7 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
     payload = {
         "title": title.strip(),
         "description": description.strip(),
-        "assignee": assignee.strip() if assignee else None,
+        "assignee": assignee if assignee else None,  # Now just a string
         "due_date": due_date.isoformat() if due_date else None,
         "meeting_id": meeting_id,
         "status": "todo"
@@ -188,13 +195,20 @@ def delete_task(task_id):
     except Exception as e:
         st.error(f"Failed to delete task: {e}")
 
+# Helper to parse current assignee string into the UI state
+def get_assignee_ui_state(assignee_str):
+    if assignee_str in GROUP_OPTIONS:
+        return "Group", assignee_str, []
+    elif assignee_str:
+        # Assume it's a comma-separated list of individuals
+        selected_ind = [name.strip() for name in assignee_str.split(",") if name.strip() in SPECIFIC_PEOPLE]
+        if selected_ind:
+            return "Specific Individuals", "", selected_ind
+    return "Group", GROUP_OPTIONS[0], []
+
 # 6. Fetch data
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
-
-# Gather all unique assignees for the dropdown
-all_assignees = list(set([t['assignee'] for t in tasks if t.get('assignee')]))
-all_assignees.sort()
 
 # 6.5 The View & Edit Modal
 @st.dialog("Task Details", width="medium")
@@ -231,18 +245,42 @@ def open_task_details():
             except:
                 existing_due_date = None
 
-        # Dropdowns and Pickers
+        # Status Dropdown
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Status**")
             new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x], label_visibility="collapsed")
         
+        # Assigned To - Radio + Conditional Dropdown/Multiselect
         with c2:
             st.markdown("**Assigned To**")
-            # Allow selection from existing assignees or type a new one
-            assignee_index = all_assignees.index(task['assignee']) if task.get('assignee') in all_assignees else 0
-            new_assignee = st.selectbox("Assigned To", all_assignees, index=assignee_index, placeholder="Select or type name...", label_visibility="collapsed")
+            
+            # Parse current state
+            assignee_type, group_val, individuals = get_assignee_ui_state(task.get('assignee', ""))
+            
+            assign_type = st.radio(
+                "Assignment Type", 
+                ["Group", "Specific Individuals"], 
+                index=0 if assignee_type == "Group" else 1, 
+                horizontal=True, 
+                label_visibility="collapsed",
+                key="assign_type_modal"
+            )
+            
+            if assign_type == "Group":
+                group_idx = GROUP_OPTIONS.index(group_val) if group_val in GROUP_OPTIONS else 0
+                new_assignee = st.selectbox("Select Group", GROUP_OPTIONS, index=group_idx, key="group_select_modal")
+            else:
+                # Multiselect for specific individuals
+                new_assignee_list = st.multiselect(
+                    "Select Individuals", 
+                    SPECIFIC_PEOPLE, 
+                    default=individuals, 
+                    key="individual_modal"
+                )
+                new_assignee = ", ".join(new_assignee_list)
         
+        # Due Date Picker
         c3, c4 = st.columns(2)
         with c3:
             st.markdown("**Due Date**")
@@ -402,15 +440,25 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ---------------- (Unchanged)
+# ---------------- New Task Tab ---------------- (Updated Assigned To Logic)
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
         title = st.text_input("Task Title *")
         description = st.text_area("Description")
-        assignee = st.text_input("Assignee")
+        
+        # New Assigned To Logic
+        assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="assign_type_new")
+        
+        if assign_type_new == "Group":
+            assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="group_select_new")
+        else:
+            assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="individual_new")
+            assignee = ", ".join(assignee_list)
+            
         due_date = st.date_input("Due Date", value=None)
         meeting_id = st.text_input("Linked Meeting ID (optional)", help="Paste a meeting ID to link this task.")
+        
         submitted = st.form_submit_button("Create Task")
         if submitted:
             if not title.strip():
