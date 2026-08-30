@@ -24,7 +24,7 @@ setup_page_layout()
 # 3. Authentication check
 require_auth()
 
-# 4. Custom CSS (Smaller Buttons for Compact Row)
+# 4. Custom CSS (Native UI, Monochrome Icons, Best Practices)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
@@ -62,15 +62,24 @@ h3 {
     font-size: 1.35rem !important;
 }
 
-/* Compact Container/Task Cards */
+/* Best Practice: Colored left borders based on status */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 8px !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
+    border-left: 5px solid #E67E22 !important; /* Default Orange */
     padding: 0.25rem 0.5rem !important; 
     margin-bottom: 0.5rem !important;
 }
+
+/* Status specific border colors */
+.task-todo { border-left: 5px solid #E67E22 !important; }
+.task-in_progress { border-left: 5px solid #2980B9 !important; }
+.task-done { border-left: 5px solid #27AE60 !important; }
+
+/* Overdue text color */
+.overdue { color: #E74C3C !important; font-weight: 600 !important; }
 
 /* Form inputs */
 .stTextInput input, .stTextArea textarea, .stDateInput input, .stSelectbox div[data-baseweb="select"] > div {
@@ -79,26 +88,26 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 8px !important;
 }
 
-/* Smaller Buttons */
+/* Monochrome Buttons - extremely compact */
 .stButton > button {
-    background-color: #161616 !important; 
-    color: #FFFFFF !important; 
-    border: none !important; 
-    border-radius: 50px !important; 
+    background-color: transparent !important; 
+    color: #161616 !important; 
+    border: 1px solid transparent !important; 
+    border-radius: 8px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 500 !important; 
-    font-size: 0.65rem !important; /* Small font */
-    height: 24px !important;       /* Small height */
-    padding: 0 0.5rem !important;  /* Tight padding */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; 
+    font-size: 0.65rem !important; 
+    height: 28px !important; 
+    padding: 0 0.4rem !important;
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
+
+/* Hover effect: darker background */
 .stButton > button:hover { 
-    background-color: #D4AF37 !important; 
-    color: #161616 !important; 
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.05) !important; 
+    color: #111A2B !important; 
+    border: 1px solid #D4AF37 !important; 
 }
 </style>
 """, unsafe_allow_html=True)
@@ -136,13 +145,18 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         st.error(f"Failed to add task: {e}")
         return False
 
-def update_task_status(task_id, new_status):
+# Updated function to handle both status and due date updates
+def update_task_status(task_id, new_status, new_due_date=None):
     if not supabase:
         return
     try:
-        supabase.table("tasks").update({"status": new_status, "updated_at": "now()"}).eq("id", task_id).execute()
+        update_payload = {"status": new_status, "updated_at": "now()"}
+        if new_due_date:
+            update_payload["due_date"] = new_due_date.isoformat()
+        
+        supabase.table("tasks").update(update_payload).eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to update status: {e}")
+        st.error(f"Failed to update task: {e}")
 
 def delete_task(task_id):
     if not supabase:
@@ -156,7 +170,7 @@ def delete_task(task_id):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# 6.5 The Modal Functions (st.dialog)
+# 6.5 The Modal Functions (st.dialog) - Native Streamlit Modals
 
 # View Dialog
 @st.dialog("Task Details", width="large")
@@ -198,8 +212,8 @@ def open_task_details():
         st.session_state.pop('selected_task', None)
         st.rerun()
 
-# Update Dialog
-@st.dialog("Update Task Status", width="small")
+# Update Dialog (Now includes Due Date Picker)
+@st.dialog("Update Task", width="small")
 def open_update_dialog():
     task = st.session_state.get('update_task')
     if not task:
@@ -209,22 +223,33 @@ def open_update_dialog():
             st.rerun()
         return
 
-    status_map = {"todo": "📝 To Do", "in_progress": "⏳ In Progress", "done": "✅ Done"}
+    status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
     status_options = list(status_map.keys())
 
     current_status = task.get('status', 'todo')
     current_index = status_options.index(current_status) if current_status in status_options else 0
 
+    # Parse existing due date
+    existing_due_date = task.get('due_date')
+    if existing_due_date:
+        try:
+            existing_due_date = datetime.strptime(existing_due_date[:10], "%Y-%m-%d").date()
+        except:
+            existing_due_date = None
+
     st.markdown(f"### {task['title']}")
-    st.caption(f"Current Status: {status_map[current_status]}")
     st.markdown("---")
 
-    new_status = st.selectbox("Select New Status", status_options, index=current_index, format_func=lambda x: status_map[x])
+    # Native Status Dropdown (No colors, clean text)
+    new_status = st.selectbox("Status", status_options, index=current_index, format_func=lambda x: status_map[x])
+    
+    # Native Date Picker
+    new_due_date = st.date_input("Due Date", value=existing_due_date)
 
     if st.button("Save Changes", use_container_width=True):
-        update_task_status(task['id'], new_status)
+        update_task_status(task['id'], new_status, new_due_date)
         st.session_state.pop('update_task', None)
-        st.success("Status updated successfully!")
+        st.success("Task updated successfully!")
         st.rerun()
         
     if st.button("Cancel", use_container_width=True):
@@ -238,21 +263,27 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
-# ---------------- Board Tab (SINGLE ROW COMPACT CARDS) ----------------
+# ---------------- Board Tab (Best Practices: Single Row, Compact, Native) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
     else:
-        status_map = {"todo": "📝 To Do", "in_progress": "⏳ In Progress", "done": "✅ Done"}
+        status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
 
         # Loop through tasks and render a single-row card for each
         for task in tasks:
             task_id = task['id']
             
+            # Best Practice: Add class based on status for colored left border
+            card_class = f"task-{task.get('status', 'todo')}"
+            
             with st.container(border=True):
-                # Split row into 5 columns: Title, Assignee, Due, Status, Actions
-                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 3])
+                # Injecting class for the colored border
+                st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
+
+                # Split row into 5 columns: Title, Assignee, Due, Status, Actions (Monochrome Icons)
+                c1, c2, c3, c4, c5 = st.columns([3, 1.5, 1.5, 2, 2.5])
                 
                 with c1:
                     st.markdown(f"**{task['title']}**")
@@ -265,7 +296,19 @@ with tab_board:
                 
                 with c3:
                     st.markdown("**Due Date**")
-                    st.caption(task['due_date'] or "N/A")
+                    # Best Practice: Red text if overdue
+                    due_date_str = task.get('due_date', None)
+                    if due_date_str:
+                        try:
+                            due_date_obj = datetime.strptime(due_date_str[:10], "%Y-%m-%d").date()
+                            if due_date_obj < date.today() and task.get('status') != 'done':
+                                st.markdown(f'<span class="overdue">{due_date_str[:10]}</span>', unsafe_allow_html=True)
+                            else:
+                                st.caption(due_date_str[:10])
+                        except:
+                            st.caption(due_date_str[:10])
+                    else:
+                        st.caption("N/A")
                 
                 with c4:
                     current_index = status_options.index(task['status']) if task['status'] in status_options else 0
@@ -279,21 +322,21 @@ with tab_board:
                     )
                 
                 with c5:
-                    # Three tiny columns for View, Update, and Delete (Smaller buttons)
+                    # Monochrome Material Icon Buttons (No colors)
                     b1, b2, b3 = st.columns(3)
                     
                     with b1:
-                        if st.button("👁 View", key=f"view_{task_id}", use_container_width=True):
+                        if st.button("View", icon=":material/visibility:", key=f"view_{task_id}", use_container_width=True):
                             st.session_state['selected_task'] = task
                             st.rerun()
                     
                     with b2:
-                        if st.button("✏️ Update", key=f"upd_{task_id}", use_container_width=True):
+                        if st.button("Update", icon=":material/edit:", key=f"upd_{task_id}", use_container_width=True):
                             st.session_state['update_task'] = task
                             st.rerun()
                             
                     with b3:
-                        if st.button("🗑 Del", key=f"del_{task_id}", use_container_width=True):
+                        if st.button("Delete", icon=":material/delete:", key=f"del_{task_id}", use_container_width=True):
                             delete_task(task_id)
                             st.rerun()
 
