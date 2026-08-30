@@ -16,21 +16,26 @@ from utils.auth import init_supabase, login, logout, is_authenticated  # new imp
 st.set_page_config(
     page_title="Project Echo - Dashboard",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # <-- changed to collapsed
 )
 
 # 2. Initialize Supabase client (cached)
 supabase = init_supabase()
 
-# 3. Custom CSS (same as before, plus a few additions for login)
+# 3. Custom CSS (updated to hide header, toolbar, and sidebar completely)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Canvas & Margins */
-.stApp > header { display: none !important; visibility: hidden !important; }
+/* Hide Streamlit chrome (header, toolbar, sidebar, status) */
+[data-testid="stHeader"] { display: none !important; }
+[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stStatusWidget"] { display: none !important; }
+[data-testid="stSidebar"] { display: none !important; }
 #MainMenu { visibility: hidden !important; }
 
+/* Full-width main content */
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow: hidden !important;
     padding-top: 0.8rem !important;
