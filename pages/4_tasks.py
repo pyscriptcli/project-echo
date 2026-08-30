@@ -1,6 +1,7 @@
 # pages/4_tasks.py (or pages/tasks.py)
 import sys
 import os
+import hashlib  # Imported for fallback ID generation
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
@@ -147,7 +148,13 @@ def fetch_tasks():
         st.error(f"Failed to fetch tasks: {e}")
         return []
 
-def add_task(title, description, assignee, due_date, meeting_id=None):
+# Function to generate a stable hash if no ID is provided in the archive
+def generate_stable_id(meeting_id, discussion_text, action_text):
+    source = f"{meeting_id}-{discussion_text}-{action_text}"
+    return hashlib.md5(source.encode()).hexdigest()
+
+# Add Discussion Point ID to add_task
+def add_task(title, description, assignee, due_date, meeting_id=None, discussion_point_id=None):
     if not supabase:
         st.error("Supabase client not initialized.")
         return False
@@ -157,7 +164,8 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         "assignee": assignee if assignee else None,
         "due_date": due_date.isoformat() if due_date else None,
         "meeting_id": meeting_id,
-        "status": "todo"
+        "status": "todo",
+        "discussion_point_id": discussion_point_id  # Added here
     }
     try:
         supabase.table("tasks").insert(payload).execute()
@@ -209,6 +217,9 @@ def get_assignee_ui_state(assignee_str):
 # 6. Fetch data
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
+
+# Build a set of existing discussion point IDs to check for duplicates
+existing_discussion_ids = {t.get('discussion_point_id') for t in tasks if t.get('discussion_point_id')}
 
 # 6.5 The View & Edit Modal
 @st.dialog("Task Details", width="medium")
@@ -347,7 +358,6 @@ with tab_board:
                 # Assignee & Due Date (Combined into a single line for compactness)
                 assignee = task['assignee'] or "N/A"
                 
-                # SAFE HANDLING OF None / EMPTY due_date
                 due_date_raw = task.get('due_date')
                 due_date_str = due_date_raw if isinstance(due_date_raw, str) and due_date_raw else "N/A"
                 
@@ -421,7 +431,7 @@ with tab_board:
 if 'selected_task' in st.session_state:
     open_task_details()
 
-# ---------------- Import from Meeting Tab (Unchanged) ----------------
+# ---------------- Import from Meeting Tab (Anti-Duplicate Logic) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -446,24 +456,41 @@ with tab_import:
                             st.write(f"**Due:** {item.get('Indicative Delivery Date', '')}")
                         with c4:
                             st.write(f"**PIC:** {item.get('Person-in-charge', '')}")
-                        with c5:
-                            import_this = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}")
-                        if import_this:
-                            if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}"):
-                                title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
-                                description = item.get("Discussion Points", "")
-                                assignee = item.get("Person-in-charge", "")
-                                due_date_str = item.get("Indicative Delivery Date", "")
-                                due_date = None
-                                if due_date_str:
-                                    try:
-                                        due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
-                                    except:
-                                        pass
-                                success = add_task(title, description, assignee, due_date, meeting_id=selected_meeting_id)
-                                if success:
-                                    st.success("Task added!")
-                                    st.rerun()
+                        
+                        # Extract or Generate Discussion Point ID
+                        # Assumes your table_items has an 'id' field. If not, it falls back to a Hash.
+                        dp_id = item.get('discussion_point_id') or item.get('id') or None
+                        if not dp_id:
+                            dp_id = generate_stable_id(
+                                selected_meeting_id, 
+                                item.get('Discussion Points', ''), 
+                                item.get('Action Plan', '')
+                            )
+
+                        # Check for duplicates
+                        if dp_id in existing_discussion_ids:
+                            # If already imported, show a success badge and don't show buttons
+                            with c5:
+                                st.success("✓ Already Imported")
+                        else:
+                            with c5:
+                                import_this = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}")
+                            if import_this:
+                                if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}"):
+                                    title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
+                                    description = item.get("Discussion Points", "")
+                                    assignee = item.get("Person-in-charge", "")
+                                    due_date_str = item.get("Indicative Delivery Date", "")
+                                    due_date = None
+                                    if due_date_str:
+                                        try:
+                                            due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
+                                        except:
+                                            pass
+                                    success = add_task(title, description, assignee, due_date, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
+                                    if success:
+                                        st.success("Task added!")
+                                        st.rerun()
             else:
                 st.info("This meeting has no action items.")
 
