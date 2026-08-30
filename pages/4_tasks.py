@@ -4,12 +4,12 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
-from datetime import date, timedelta, datetime  # Fixed missing import
+from datetime import date, timedelta, datetime
 import pandas as pd
 
 from utils.auth import require_auth
 from utils.db import get_supabase_client, fetch_meeting_archives
-from components.sidebar import setup_page_layout  # Added custom nav bar import
+from components.sidebar import setup_page_layout
 
 # 1. Page config (must be first)
 st.set_page_config(
@@ -62,23 +62,14 @@ h3 {
     font-size: 1.35rem !important;
 }
 
-.playfair-label {
-    font-family: 'Playfair Display', serif !important; 
-    font-style: italic !important;
-    color: #1A2B4C !important; 
-    font-size: 1.05rem !important; 
-    margin-bottom: 0.25rem !important; 
-    display: block;
-}
-
-/* Cards */
+/* Task Cards - Force background and shadow */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #FFFFFF !important; 
     border-radius: 12px !important;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
-    padding: 1.5rem !important; 
-    margin-bottom: 1.25rem !important;
+    padding: 1rem 1.5rem !important; 
+    margin-bottom: 1rem !important;
 }
 
 /* Form inputs */
@@ -121,7 +112,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 supabase = get_supabase_client()
 
 def fetch_tasks():
-    """Fetch all tasks from Supabase, ordered by due date."""
     if not supabase:
         st.error("Supabase client not initialized.")
         return []
@@ -133,7 +123,6 @@ def fetch_tasks():
         return []
 
 def add_task(title, description, assignee, due_date, meeting_id=None):
-    """Insert a new task."""
     if not supabase:
         st.error("Supabase client not initialized.")
         return False
@@ -153,7 +142,6 @@ def add_task(title, description, assignee, due_date, meeting_id=None):
         return False
 
 def update_task_status(task_id, new_status):
-    """Update task status."""
     if not supabase:
         return
     try:
@@ -162,7 +150,6 @@ def update_task_status(task_id, new_status):
         st.error(f"Failed to update status: {e}")
 
 def delete_task(task_id):
-    """Delete a task."""
     if not supabase:
         return
     try:
@@ -172,7 +159,7 @@ def delete_task(task_id):
 
 # 6. Fetch data
 tasks = fetch_tasks()
-meetings = fetch_meeting_archives(limit=100)  # for import
+meetings = fetch_meeting_archives(limit=100)
 
 # 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
@@ -181,50 +168,57 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs: Board View | Import from Meeting | New Task
 tab_board, tab_import, tab_new = st.tabs(["📋 Board", "📥 Import from Meeting", "➕ New Task"])
 
-# ---------------- Board Tab ----------------
+# ---------------- Board Tab (CARDS VIEW) ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
     else:
-        # Convert to DataFrame for easy display
-        df = pd.DataFrame(tasks)
-        # Map status to friendly names
-        status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
-        df["Status"] = df["status"].map(status_map).fillna(df["status"])
-        df["Due Date"] = pd.to_datetime(df["due_date"]).dt.strftime("%Y-%m-%d")
-        # Keep only relevant columns
-        display_cols = ["title", "description", "assignee", "Due Date", "Status", "meeting_id"]
-        df_display = df[display_cols].rename(columns={
-            "title": "Task",
-            "description": "Description",
-            "assignee": "Assignee",
-            "meeting_id": "Source Meeting"
-        })
+        # Loop through tasks and render a card for each
+        for task in tasks:
+            # Unique keys to prevent Streamlit widget ID collisions
+            task_id = task['id']
+            
+            with st.container(border=True):
+                # Title & Status
+                st.markdown(f"#### {task['title']}")
+                
+                # Colored Status Badge
+                status_color = {"todo": "orange", "in_progress": "blue", "done": "green"}
+                color = status_color.get(task['status'], "gray")
+                st.markdown(
+                    f"<span style='color:{color}; font-weight: 700; text-transform: uppercase;'>{task['status'].replace('_', ' ')}</span>", 
+                    unsafe_allow_html=True
+                )
 
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
+                # Details
+                st.caption(f"Assignee: {task['assignee']} | Due: {task['due_date']} | Source: {task['meeting_id']}")
+                st.write(task['description'])
 
-        st.markdown("---")
-        st.markdown("#### Update Status")
-        col1, col2, col3 = st.columns([3, 2, 2])
-        with col1:
-            task_options = {t["id"]: t["title"] for t in tasks}
-            selected_task_id = st.selectbox("Select Task", options=list(task_options.keys()), format_func=lambda x: task_options[x])
-        with col2:
-            new_status = st.selectbox("New Status", ["todo", "in_progress", "done"], format_func=lambda x: status_map[x])
-        with col3:
-            if st.button("Update Status", key="btn_update_status"):
-                update_task_status(selected_task_id, new_status)
-                st.success("Status updated!")
-                st.rerun()
+                st.markdown("---")
+                
+                # Update and Delete Buttons side-by-side inside the card
+                c1, c2 = st.columns([2, 1])
+                with c1:
+                    status_options = ["todo", "in_progress", "done"]
+                    # Get the current index, or default to 0 if not found
+                    current_index = status_options.index(task['status']) if task['status'] in status_options else 0
+                    
+                    new_status = st.selectbox(
+                        "Update Status", 
+                        status_options, 
+                        index=current_index, 
+                        key=f"status_{task_id}"
+                    )
+                    if st.button("Apply Update", key=f"update_{task_id}"):
+                        update_task_status(task_id, new_status)
+                        st.rerun()
+                
+                with c2:
+                    if st.button("Delete Task", key=f"delete_{task_id}"):
+                        delete_task(task_id)
+                        st.rerun()
 
-        st.markdown("---")
-        st.markdown("#### Delete Task")
-        if st.button("Delete Selected Task", key="btn_delete_task"):
-            delete_task(selected_task_id)
-            st.success("Task deleted.")
-            st.rerun()
-
-# ---------------- Import from Meeting Tab ----------------
+# ---------------- Import from Meeting Tab (Unchanged) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -252,7 +246,6 @@ with tab_import:
                         with c5:
                             import_this = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}")
                         if import_this:
-                            # When import button is clicked, add task
                             if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}"):
                                 title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
                                 description = item.get("Discussion Points", "")
@@ -271,7 +264,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab ----------------
+# ---------------- New Task Tab (Unchanged) ----------------
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
