@@ -21,7 +21,7 @@ st.set_page_config(
 # 2. Initialize Supabase client
 supabase = init_supabase()
 
-# 3. Global & Dashboard CSS (Includes New Calendar UI Styles)
+# 3. Global & Dashboard CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -83,7 +83,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.dashboard-left-card-scope) 
     overflow: hidden !important;
 }
 
-/* Make Right Column Borderless for Custom UI */
+/* Make Right Column Borderless for Custom Native UI */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     background: transparent !important;
     border: none !important;
@@ -92,87 +92,94 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     padding: 0 !important;
 }
 
-/* ---------------- CUSTOM CALENDAR UI ---------------- */
+/* ---------------- CUSTOM NATIVE CALENDAR UI ---------------- */
 .cal-header-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
 }
 .cal-title {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-weight: 700;
     color: #1B1B1B;
     margin: 0;
 }
 .btn-add-schedule {
-    background-color: #F86E45;
+    background-color: #FF6B4A;
     color: #FFFFFF;
     border: none;
     border-radius: 8px;
-    padding: 0.6rem 1.2rem;
+    padding: 0.6rem 1.4rem;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(248, 110, 69, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
     transition: background-color 0.2s;
 }
-.btn-add-schedule:hover {
-    background-color: #E05A32;
-}
+.btn-add-schedule:hover { background-color: #E85A3A; }
 
 .cal-app-container {
     display: flex;
     background: #FFFFFF;
     border: 1px solid #E5E7EB;
     border-radius: 12px;
-    height: calc(100vh - 165px);
+    height: calc(100vh - 150px);
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 /* Sidebar */
 .cal-sidebar {
-    width: 260px;
+    width: 250px;
     border-right: 1px solid #E5E7EB;
-    padding: 1.5rem;
+    padding: 1.2rem;
     display: flex;
     flex-direction: column;
+    background: #FAFAFA;
 }
 .cal-dropdown {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    background: #FFFFFF;
     border: 1px solid #E5E7EB;
     border-radius: 8px;
     margin-bottom: 1.5rem;
     font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 .mini-cal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.9rem;
 }
 .mini-cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.25rem;
+    gap: 0.2rem;
     text-align: center;
     font-size: 0.75rem;
     color: #6B7280;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
-.mini-cal-day { padding: 0.25rem; }
-.mini-cal-date { padding: 0.3rem 0; cursor: pointer; border-radius: 50%; }
-.mini-cal-date.active { background-color: #F86E45; color: white; font-weight: 600; }
+.mini-cal-day { font-weight: 600; padding: 0.2rem; color: #374151; }
+.mini-cal-date { padding: 0.3rem 0; cursor: pointer; border-radius: 50%; color: #4B5563; }
+.mini-cal-date.active { background-color: #FF6B4A; color: white; font-weight: 600; }
+.mini-cal-date.dim { color: #D1D5DB; }
+
 .my-schedule-title {
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 1rem;
     color: #1B1B1B;
+    display: flex;
+    justify-content: space-between;
 }
 .schedule-list { list-style: none; padding: 0; margin: 0; }
 .schedule-item {
@@ -182,7 +189,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     color: #4B5563;
     margin-bottom: 0.8rem;
 }
-.schedule-item input { margin-right: 0.5rem; accent-color: #F86E45; }
+.schedule-item input { margin-right: 0.6rem; accent-color: #FF6B4A; transform: scale(1.1); }
 
 /* Main Grid */
 .cal-main {
@@ -198,7 +205,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #E5E7EB;
 }
-.cal-nav { font-size: 1.25rem; font-weight: 600; }
+.cal-nav { font-size: 1.25rem; font-weight: 600; color: #111827; }
 .cal-view-toggles {
     display: flex;
     background: #F3F4F6;
@@ -211,111 +218,98 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.custom-calendar-scope) {
     padding: 0.4rem 1rem;
     border-radius: 6px;
     font-size: 0.8rem;
+    font-weight: 500;
     color: #4B5563;
+    cursor: pointer;
 }
-.cal-view-toggles button.active {
-    background: #1F2937;
-    color: white;
-}
+.cal-view-toggles button.active { background: #1F2937; color: white; }
 
 /* Timetable */
-.cal-timetable {
-    flex: 1;
-    display: flex;
-    overflow-y: auto;
-}
+.cal-timetable { flex: 1; display: flex; overflow-y: auto; overflow-x: hidden; position: relative; }
 .cal-time-axis {
     width: 60px;
     border-right: 1px solid #E5E7EB;
     display: flex;
     flex-direction: column;
+    background: #FFFFFF;
 }
-.cal-time-slot {
-    height: 120px; /* 1 hour blocks */
-    border-bottom: 1px solid #F3F4F6;
-    position: relative;
-}
-.cal-time-label {
-    position: absolute;
-    top: -10px;
-    right: 10px;
-    font-size: 0.75rem;
-    color: #9CA3AF;
-}
-.cal-days-grid {
-    flex: 1;
-    display: flex;
-}
+.cal-time-slot { height: 60px; border-bottom: 1px solid #F3F4F6; position: relative; }
+.cal-time-label { position: absolute; top: -8px; right: 8px; font-size: 0.7rem; color: #9CA3AF; font-weight: 500; }
+.cal-days-grid { flex: 1; display: flex; }
 .cal-day-col {
     flex: 1;
     border-right: 1px solid #E5E7EB;
     display: flex;
     flex-direction: column;
-    position: relative;
 }
 .cal-day-header {
     text-align: center;
-    padding: 0.75rem 0;
+    padding: 0.8rem 0;
     border-bottom: 1px solid #E5E7EB;
-    height: 50px;
+    height: 60px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    background: #FFFFFF;
 }
-.cal-day-name { font-size: 0.85rem; font-weight: 600; color: #1B1B1B; }
-.cal-day-sub { font-size: 0.7rem; color: #9CA3AF; }
+.cal-day-name { font-size: 0.85rem; font-weight: 600; color: #111827; }
+.cal-day-sub { font-size: 0.65rem; color: #9CA3AF; margin-top: 0.1rem; }
 
 .cal-day-body {
     flex: 1;
     position: relative;
-    background-image: linear-gradient(to bottom, #F3F4F6 1px, transparent 1px);
-    background-size: 100% 120px; /* Match hour block height */
+    background-image: linear-gradient(to bottom, #F9FAFB 1px, transparent 1px);
+    background-size: 100% 60px; /* Maps to 1 hour slots */
+    min-height: 540px; /* 9 hours * 60px */
 }
 
 /* Event Cards */
 .cal-event {
     position: absolute;
-    left: 8px;
-    right: 8px;
-    border-radius: 8px;
-    padding: 0.6rem;
-    font-size: 0.8rem;
+    left: 4px;
+    right: 4px;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
     display: flex;
     flex-direction: column;
     border-left: 3px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    overflow: hidden;
+    z-index: 10;
 }
-.evt-time { font-weight: 600; margin-bottom: 0.2rem; font-size: 0.75rem; }
-.evt-title { color: #1F2937; line-height: 1.2; }
+.evt-time { font-weight: 600; margin-bottom: 0.15rem; font-size: 0.7rem; }
+.evt-title { color: #1F2937; line-height: 1.2; font-weight: 500; }
 .evt-avatars {
     margin-top: auto;
     display: flex;
     justify-content: flex-end;
 }
 .avatar {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 2px solid white;
     margin-left: -6px;
-    background: #D1D5DB;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.55rem;
+    font-size: 0.5rem;
+    font-weight: 600;
     color: white;
 }
 
-/* Event Colors */
-.bg-orange { background-color: #FEF0E7; border-left-color: #F86E45; }
-.bg-orange .evt-time { color: #F86E45; }
+/* Specific Event Themes */
+.bg-orange { background-color: #FEF2EB; border-left-color: #FF6B4A; }
+.bg-orange .evt-time { color: #FF6B4A; }
 
-.bg-blue { background-color: #EAEFFB; border-left-color: #4B6BFB; }
-.bg-blue .evt-time { color: #4B6BFB; }
+.bg-blue { background-color: #EEF2FF; border-left-color: #6366F1; }
+.bg-blue .evt-time { color: #6366F1; }
 
-.bg-red { background-color: #FBEBEB; border-left-color: #EF4444; }
+.bg-red { background-color: #FEF2F2; border-left-color: #EF4444; }
 .bg-red .evt-time { color: #EF4444; }
 
-.bg-green { background-color: #E8F6ED; border-left-color: #10B981; }
+.bg-green { background-color: #ECFDF5; border-left-color: #10B981; }
 .bg-green .evt-time { color: #10B981; }
 
 /* Left Column Overrides */
@@ -379,7 +373,7 @@ if "end_date" not in st.session_state:
     _, last_day = calendar.monthrange(today.year, today.month)
     st.session_state["end_date"] = today.replace(day=last_day)
 
-# 7. Fetch and Filter Data
+# 7. Fetch Data & Extract Calendar Action Items
 supabase_records = fetch_meeting_archives(limit=100)
 
 total_team_meetings = len(supabase_records)
@@ -388,14 +382,20 @@ total_internal_meetings = 0
 total_external_meetings = 0
 filtered_records = []
 
+# To populate the native calendar, we extract action items mapped to their delivery dates.
+calendar_events_by_date = {}
+theme_colors = ["bg-orange", "bg-blue", "bg-green", "bg-red"]
+c_idx = 0
+
 for m in supabase_records:
     m_date_raw = str(m.get("meeting_date", ""))
+    
+    # Extract metrics for Left Panel
     try:
         parsed_d = datetime.datetime.strptime(m_date_raw[:10], "%Y-%m-%d").date()
         if st.session_state["start_date"] <= parsed_d <= st.session_state["end_date"]:
             filtered_records.append(m)
             total_range_meetings += 1
-            
             client_name_str = str(m.get("client_name", "")).strip().lower()
             raw_payload = m.get("raw_payload", {}) or {}
             meeting_details_dict = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
@@ -407,6 +407,45 @@ for m in supabase_records:
                 total_external_meetings += 1
     except Exception:
         pass
+        
+    # Extract Action Items for Right Panel Calendar mapping
+    raw = m.get("raw_payload", {}) or {}
+    details = raw.get("meeting_details", {}) if isinstance(raw, dict) else {}
+    items = details.get("action_items", [])
+    if not items:
+        # Fallback to discussion points if no strict action items
+        items = details.get("discussion_points", [])
+        
+    for item in items:
+        # Attempt to find a date tied to the action point
+        date_val = item.get("due_date") or item.get("delivery_date") or m_date_raw[:10]
+        if not date_val: continue
+        
+        try:
+            d_str = datetime.datetime.strptime(date_val[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
+        except:
+            d_str = m_date_raw[:10]
+            
+        title = item.get("task") or item.get("topic") or item.get("action") or "Action Required"
+        owner = item.get("owner") or item.get("assigned_to") or "Team"
+        
+        if d_str not in calendar_events_by_date:
+            calendar_events_by_date[d_str] = []
+            
+        # Simulate staggered visual times for aesthetic native UI placement (8AM to 4PM)
+        hour = 8 + (len(calendar_events_by_date[d_str]) * 2) % 8
+        am_pm = "AM" if hour < 12 else "PM"
+        disp_hour = hour if hour <= 12 else hour - 12
+        
+        calendar_events_by_date[d_str].append({
+            "title": title,
+            "owner": owner,
+            "color": theme_colors[c_idx % len(theme_colors)],
+            "time": f"{disp_hour}:00{am_pm}",
+            "top_px": (hour - 8) * 60, # 60px slot per hour starting from 8AM
+            "height_px": 80 if len(title) > 20 else 60
+        })
+        c_idx += 1
 
 # 8. Dashboard Grid Composition
 col_left, col_right = st.columns([1, 2.3], gap="small")
@@ -500,27 +539,63 @@ with col_left:
                 st.info("No records found.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Right Column (Full Custom Calendar UI)
+
+# Generate the Dynamic Native Calendar Layout for Right Column
+week_start = today - datetime.timedelta(days=today.weekday() + 1) # Sunday Start
+if today.weekday() == 6: week_start = today
+
+day_columns_html = ""
+for i in range(7):
+    curr_date = week_start + datetime.timedelta(days=i)
+    curr_date_str = curr_date.strftime("%Y-%m-%d")
+    day_name = curr_date.strftime("%b %-d")
+    
+    # Construct Events in this column
+    events_html = ""
+    for evt in calendar_events_by_date.get(curr_date_str, []):
+        owner_initial = evt['owner'][0].upper() if evt['owner'] else "T"
+        events_html += f"""
+        <div class="cal-event {evt['color']}" style="top: {evt['top_px']}px; height: {evt['height_px']}px;">
+            <div class="evt-time">{evt['time']}</div>
+            <div class="evt-title">{evt['title'][:45]}{"..." if len(evt['title']) > 45 else ""}</div>
+            <div class="evt-avatars">
+                <div class="avatar" style="background:#4B5563;">{owner_initial}</div>
+            </div>
+        </div>
+        """
+        
+    day_columns_html += f"""
+    <div class="cal-day-col">
+        <div class="cal-day-header">
+            <div class="cal-day-name">{day_name}</div>
+        </div>
+        <div class="cal-day-body">
+            {events_html}
+        </div>
+    </div>
+    """
+
+# Right Column (Full Custom Native Calendar UI)
 with col_right:
     with st.container(border=False):
         st.markdown('<div class="custom-calendar-scope"></div>', unsafe_allow_html=True)
         
-        calendar_html = """
+        calendar_html = f"""
         <div class="cal-header-bar">
             <h1 class="cal-title">Calendar</h1>
             <button class="btn-add-schedule">+ Add New Schedule</button>
         </div>
         
         <div class="cal-app-container">
-            <!-- Sidebar -->
+            <!-- Sidebar Navigation -->
             <div class="cal-sidebar">
                 <div class="cal-dropdown">
                     <span>📅 All Calendar</span>
-                    <span style="color:#9CA3AF;">▼</span>
+                    <span style="color:#9CA3AF; font-size:0.7rem;">▼</span>
                 </div>
                 
                 <div class="mini-cal-header">
-                    <span>March 2025</span>
+                    <span>{today.strftime('%B %Y')}</span>
                     <div>
                         <span style="color:#9CA3AF; cursor:pointer; margin-right:8px;">&lt;</span>
                         <span style="color:#9CA3AF; cursor:pointer;">&gt;</span>
@@ -530,34 +605,30 @@ with col_right:
                 <div class="mini-cal-grid">
                     <div class="mini-cal-day">Sun</div><div class="mini-cal-day">Mon</div><div class="mini-cal-day">Tue</div><div class="mini-cal-day">Wed</div><div class="mini-cal-day">Thu</div><div class="mini-cal-day">Fri</div><div class="mini-cal-day">Sat</div>
                     
-                    <div class="mini-cal-date" style="color:#D1D5DB;">23</div><div class="mini-cal-date" style="color:#D1D5DB;">24</div><div class="mini-cal-date" style="color:#D1D5DB;">25</div><div class="mini-cal-date" style="color:#D1D5DB;">26</div><div class="mini-cal-date" style="color:#D1D5DB;">27</div><div class="mini-cal-date" style="color:#D1D5DB;">28</div><div class="mini-cal-date" style="color:#D1D5DB;">1</div>
-                    
-                    <div class="mini-cal-date">2</div><div class="mini-cal-date">3</div><div class="mini-cal-date">4</div><div class="mini-cal-date">5</div><div class="mini-cal-date">6</div><div class="mini-cal-date">7</div><div class="mini-cal-date active">8</div>
-                    
+                    <div class="mini-cal-date dim">26</div><div class="mini-cal-date dim">27</div><div class="mini-cal-date dim">28</div><div class="mini-cal-date dim">29</div><div class="mini-cal-date dim">30</div><div class="mini-cal-date dim">31</div><div class="mini-cal-date">1</div>
+                    <div class="mini-cal-date">2</div><div class="mini-cal-date">3</div><div class="mini-cal-date">4</div><div class="mini-cal-date">5</div><div class="mini-cal-date">6</div><div class="mini-cal-date">7</div><div class="mini-cal-date">8</div>
                     <div class="mini-cal-date">9</div><div class="mini-cal-date">10</div><div class="mini-cal-date">11</div><div class="mini-cal-date">12</div><div class="mini-cal-date">13</div><div class="mini-cal-date">14</div><div class="mini-cal-date">15</div>
-                    
                     <div class="mini-cal-date">16</div><div class="mini-cal-date">17</div><div class="mini-cal-date">18</div><div class="mini-cal-date">19</div><div class="mini-cal-date">20</div><div class="mini-cal-date">21</div><div class="mini-cal-date">22</div>
-                    
-                    <div class="mini-cal-date">23</div><div class="mini-cal-date">24</div><div class="mini-cal-date">25</div><div class="mini-cal-date">26</div><div class="mini-cal-date">27</div><div class="mini-cal-date">28</div><div class="mini-cal-date">29</div>
+                    <div class="mini-cal-date active">23</div><div class="mini-cal-date">24</div><div class="mini-cal-date">25</div><div class="mini-cal-date">26</div><div class="mini-cal-date">27</div><div class="mini-cal-date">28</div><div class="mini-cal-date">29</div>
                 </div>
                 
                 <hr style="border:0; border-top:1px solid #E5E7EB; margin-bottom:1.5rem;">
                 
-                <div class="my-schedule-title">My Schedule <span style="float:right; color:#9CA3AF;">^</span></div>
+                <div class="my-schedule-title">My Schedule <span style="color:#9CA3AF; transform: rotate(180deg); display:inline-block; font-size:0.7rem;">▼</span></div>
                 <ul class="schedule-list">
-                    <li class="schedule-item"><input type="checkbox"> Schedule Meeting</li>
-                    <li class="schedule-item"><input type="checkbox"> Project Review</li>
-                    <li class="schedule-item"><input type="checkbox"> Online Meeting</li>
+                    <li class="schedule-item"><input type="checkbox" checked> Schedule Meeting</li>
+                    <li class="schedule-item"><input type="checkbox" checked> Project Review</li>
+                    <li class="schedule-item"><input type="checkbox" checked> Online Meeting</li>
                     <li class="schedule-item"><input type="checkbox"> Recess Break</li>
                     <li class="schedule-item"><input type="checkbox"> Coffee Date</li>
                     <li class="schedule-item"><input type="checkbox"> Other</li>
                 </ul>
             </div>
             
-            <!-- Main Calendar Area -->
+            <!-- Main Calendar Timetable -->
             <div class="cal-main">
                 <div class="cal-main-header">
-                    <div class="cal-nav">&lt; March &gt;</div>
+                    <div class="cal-nav">&lt; {today.strftime('%B')} &gt;</div>
                     <div class="cal-view-toggles">
                         <button>Day</button>
                         <button class="active">Week</button>
@@ -566,115 +637,22 @@ with col_right:
                 </div>
                 
                 <div class="cal-timetable">
-                    <!-- Time Axis -->
+                    <!-- Vertical Time Axis (60px segments mapped to the grid) -->
                     <div class="cal-time-axis">
-                        <div style="height: 50px; border-bottom: 1px solid #E5E7EB;"></div>
+                        <div class="cal-time-slot" style="height:60px;"></div> <!-- 8AM Alignment Padding -->
+                        <div class="cal-time-slot"><span class="cal-time-label">9AM</span></div>
+                        <div class="cal-time-slot"><span class="cal-time-label">10AM</span></div>
+                        <div class="cal-time-slot"><span class="cal-time-label">11AM</span></div>
+                        <div class="cal-time-slot"><span class="cal-time-label">12PM</span></div>
                         <div class="cal-time-slot"><span class="cal-time-label">1PM</span></div>
                         <div class="cal-time-slot"><span class="cal-time-label">2PM</span></div>
                         <div class="cal-time-slot"><span class="cal-time-label">3PM</span></div>
                         <div class="cal-time-slot"><span class="cal-time-label">4PM</span></div>
                     </div>
                     
-                    <!-- Days Grid -->
+                    <!-- Dynamically Generated Week Columns -->
                     <div class="cal-days-grid">
-                        <!-- Mar 2 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 2</div>
-                                <div class="cal-day-sub">05:00:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-orange" style="top: 40px; height: 180px;">
-                                    <div class="evt-time">11:30AM</div>
-                                    <div class="evt-title">Web Update</div>
-                                    <div class="evt-avatars">
-                                        <div class="avatar" style="background:#4B5563;">JM</div>
-                                        <div class="avatar" style="background:#F86E45;">+2</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mar 3 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 3</div>
-                                <div class="cal-day-sub">06:00:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-blue" style="top: 260px; height: 160px;">
-                                    <div class="evt-time">1:12PM</div>
-                                    <div class="evt-title">Meeting with<br>Angel Siphron</div>
-                                    <div class="evt-avatars">
-                                        <div class="avatar" style="background:#4B6BFB;">+3</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mar 4 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 4</div>
-                                <div class="cal-day-sub">06:00:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-blue" style="top: 10px; height: 150px;">
-                                    <div class="evt-time">3:30PM</div>
-                                    <div class="evt-title">Pick my child<br>from school</div>
-                                    <div class="evt-avatars">
-                                        <div class="avatar" style="background:#4B5563;">D</div>
-                                        <div class="avatar" style="background:#4B6BFB;">+2</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mar 5 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 5</div>
-                                <div class="cal-day-sub">07:00:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-green" style="top: 320px; height: 140px;">
-                                    <div class="evt-time">8:00PM</div>
-                                    <div class="evt-title">Meeting with<br>Allen</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mar 6 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 6</div>
-                                <div class="cal-day-sub">07:30:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-red" style="top: 130px; height: 150px;">
-                                    <div class="evt-time">1:30PM</div>
-                                    <div class="evt-title">Lunch with<br>Angelina</div>
-                                    <div class="evt-avatars">
-                                        <div class="avatar" style="background:#4B5563;">A</div>
-                                        <div class="avatar" style="background:#EF4444;">+2</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Mar 7 -->
-                        <div class="cal-day-col">
-                            <div class="cal-day-header">
-                                <div class="cal-day-name">Mar 7</div>
-                                <div class="cal-day-sub">08:00:19</div>
-                            </div>
-                            <div class="cal-day-body">
-                                <div class="cal-event bg-orange" style="top: 400px; height: 80px;">
-                                    <div class="evt-time">10:40AM</div>
-                                    <div class="evt-title">Feedback<br>Collection</div>
-                                </div>
-                            </div>
-                        </div>
+                        {day_columns_html}
                     </div>
                 </div>
             </div>
