@@ -22,8 +22,16 @@ def get_supabase() -> Client:
 # -------------------------------------------------------------------
 # Authentication functions
 # -------------------------------------------------------------------
-def login(username: str, password: str) -> bool:
-    """Check username and password against the admin_users table."""
+def login(username: str, password: str):
+    """
+    Authenticate a user against the admin_users table.
+
+    Returns:
+        tuple (bool, str, dict | None)
+        - success flag
+        - error message (empty string on success)
+        - user dict (None on failure)
+    """
     supabase = get_supabase()
     try:
         response = supabase.table("admin_users") \
@@ -33,23 +41,24 @@ def login(username: str, password: str) -> bool:
                            .execute()
 
         if not response.data:
-            return False
+            return False, "Invalid username or password.", None
 
         user_record = response.data[0]
         stored_hash = user_record["password_hash"]
 
         if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
-            st.session_state.user = {
+            user = {
                 "id": user_record["id"],
                 "username": user_record["username"]
             }
-            return True
+            st.session_state.user = user
+            return True, "", user
         else:
-            return False
+            return False, "Invalid username or password.", None
 
     except Exception as e:
-        st.error(f"Login error: {e}")
-        return False
+        # Generic error for security — don't leak internals to the login UI
+        return False, "Authentication error. Please try again.", None
 
 def logout():
     """Clear the current user from session state."""
