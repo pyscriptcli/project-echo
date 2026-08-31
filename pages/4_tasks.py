@@ -7,7 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import streamlit as st
 from datetime import date, timedelta, datetime
 import calendar
-import pandas as pd
 
 from utils.auth import require_auth
 from utils.db import get_supabase_client, fetch_meeting_archives
@@ -31,7 +30,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
 
-/* Hide Streamlit chrome */
+/* ---------- Hide Streamlit chrome ---------- */
 header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
 [data-testid="stStatusWidget"], #MainMenu, footer,
 section[data-testid="stSidebar"], [data-testid="collapsedControl"],
@@ -49,8 +48,8 @@ html, body, [class*="css"] {
 
 .stApp {
     background-color: #F3EFE6 !important;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
     background-size: 80px 80px;
     color: #2D2D2D;
 }
@@ -70,10 +69,6 @@ html, body, [class*="css"] {
     --danger: #E74C3C;
     --radius: 6px;
     --control-height: 28px;
-    --space-xs: 2px;
-    --space-sm: 4px;
-    --space-md: 8px;
-    --space-lg: 16px;
 }
 
 h3 {
@@ -85,9 +80,8 @@ h3 {
     margin-bottom: 0.2rem !important;
 }
 
-/* ===================== GLOBAL CONTROLS ===================== */
-.stButton > button,
-[data-testid="stBaseButton-secondary"] {
+/* ---------- Global controls ---------- */
+.stButton > button {
     height: var(--control-height) !important;
     min-height: var(--control-height) !important;
     border-radius: var(--radius) !important;
@@ -99,10 +93,8 @@ h3 {
     box-shadow: none !important;
     transition: all 0.15s ease !important;
 }
-.stButton > button:hover,
-[data-testid="stBaseButton-secondary"]:hover {
+.stButton > button:hover {
     border-color: var(--gold) !important;
-    color: var(--ink) !important;
     background: #FFFDF6 !important;
     box-shadow: 0 1px 3px rgba(212, 175, 55, 0.2) !important;
 }
@@ -117,24 +109,33 @@ h3 {
     border-color: rgba(26, 43, 76, 0.15) !important;
 }
 
-/* Modal */
+/* Popover trigger (filter icon button) */
+div[data-testid="stPopover"] > button {
+    height: var(--control-height) !important;
+    min-height: var(--control-height) !important;
+    min-width: 32px !important;
+    border-radius: var(--radius) !important;
+    border: 1px solid rgba(26, 43, 76, 0.15) !important;
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    padding: 0 8px !important;
+    box-shadow: none !important;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: var(--gold) !important;
+    background: #FFFDF6 !important;
+}
+
+/* ---------- Modal ---------- */
 [data-testid="stDialog"] {
     background: var(--surface) !important;
     border-radius: 10px !important;
-    padding: 0.4rem 0.4rem 0 0.4rem !important;
 }
 [data-testid="stDialog"] div[data-testid="stVerticalBlock"] {
     gap: 0.4rem !important;
 }
 
-/* ===================== BOARD VIEW ===================== */
-.board-column {
-    background: rgba(255, 255, 255, 0.25) !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
-    border-radius: 8px !important;
-    padding: 0.5rem !important;
-}
-
+/* ---------- Board ---------- */
 .board-column-header {
     display: flex;
     align-items: center;
@@ -143,7 +144,6 @@ h3 {
     margin-bottom: 0.4rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
-
 .board-col-title {
     font-size: 0.72rem;
     font-weight: 700;
@@ -179,7 +179,6 @@ h3 {
     border-color: rgba(212, 175, 55, 0.5);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
-
 .task-card-header {
     display: flex;
     align-items: center;
@@ -206,7 +205,6 @@ h3 {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
 .task-card-desc {
     font-size: 0.7rem;
     color: #666;
@@ -216,7 +214,6 @@ h3 {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
 .task-card-footer {
     display: flex;
     align-items: center;
@@ -250,6 +247,7 @@ h3 {
     background: #F5F4F0;
     color: var(--muted);
     border: 1px solid rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
 }
 .due-chip.overdue {
     background: #FDF0EF;
@@ -262,69 +260,85 @@ h3 {
     border-color: rgba(212, 175, 55, 0.25);
 }
 
-.card-actions {
-    margin-top: 0.25rem;
+.import-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #03543F;
+    background: #DEF7EC;
+    border: 1px solid rgba(39, 174, 96, 0.25);
+    border-radius: 10px;
+    padding: 2px 8px;
+    white-space: nowrap;
 }
 
-/* ===================== CALENDAR VIEW ===================== */
-.cal-scope [data-testid="stHorizontalBlock"] {
-    align-items: stretch !important;
+/* ---------- Calendar cells (real containers, styled via :has markers) ---------- */
+.cell-marker { display: none !important; }
+
+/* Base cell */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: var(--radius) !important;
+    padding: 5px 6px !important;
+    min-height: 84px;
+    box-shadow: none !important;
 }
-.cal-scope div[data-testid="stHorizontalBlock"] > div {
+
+/* Dim (other-month) cell */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-dim) {
+    background: rgba(0, 0, 0, 0.025) !important;
+    border: 1px dashed rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Weekend cell */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) {
+    background: #111A2B !important;
+    border-color: #111A2B !important;
+}
+
+/* Today cell: subtle gold border */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-today) {
+    border: 1px solid rgba(212, 175, 55, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Equal-height rows: stretch columns & cells */
+div[data-testid="stColumn"]:has(.cell-marker) {
     display: flex !important;
     flex-direction: column !important;
 }
+div[data-testid="stColumn"]:has(.cell-marker) > div {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBorderWrapper"] {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
+    flex: 1 1 auto !important;
+    gap: 3px !important;
+}
 
-.cal-filter-row {
+/* Day number + today dot */
+.cal-day-num {
     display: flex;
     align-items: center;
-    gap: 6px;
-}
-.cal-filter-row .stSelectbox,
-.cal-filter-row .stDateInput,
-.cal-filter-row .stMultiselect {
-    flex-shrink: 1;
-}
-.cal-filter-row [data-testid="stBaseButton-secondary"] {
-    width: 28px !important;
-    padding: 0 !important;
-}
-
-/* Calendar month cell container */
-.cal-month-cell {
-    background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: var(--radius);
-    padding: 4px;
-    min-height: 78px;
-    height: auto !important;
-    box-sizing: border-box;
-    transition: border-color 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-.cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
-.cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
-.cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
-
-/* Subtle today border + gold dot */
-.cal-month-cell.today {
-    border: 1px solid rgba(212, 175, 55, 0.65);
-}
-.cal-month-day-num {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
     gap: 4px;
     font-family: 'Playfair Display', serif;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--ink);
-    padding: 1px 2px 3px 2px;
+    line-height: 1;
+    margin-bottom: 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #fff; }
-
+.cal-day-num.dim { color: rgba(0, 0, 0, 0.3); }
 .today-dot {
     width: 6px;
     height: 6px;
@@ -332,55 +346,92 @@ h3 {
     background: var(--gold);
     display: inline-block;
     flex-shrink: 0;
-    margin-left: auto; /* push dot to right */
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) .cal-day-num { color: #FFFFFF; }
+
+/* Event / add buttons inside cells: compact left-aligned tags */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) button {
+    background: #F6F5F2 !important;
+    color: #2D2D2D !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    font-size: 0.64rem !important;
+    font-weight: 500 !important;
+    padding: 3px 6px !important;
+    min-height: 20px !important;
+    height: auto !important;
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    box-shadow: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    transition: background 0.15s ease !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) button:hover {
+    background: #ECEAE4 !important;
+    border-color: rgba(212, 175, 55, 0.45) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) button {
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: #FFFFFF !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) button:hover {
+    background: rgba(255, 255, 255, 0.20) !important;
 }
 
-/* Event buttons inside month cells — minimal tag style */
-.cal-month-cell button {
-    background: #F6F5F2;
-    border-radius: 3px;
-    font-size: 0.62rem;
-    padding: 1px 3px;
-    margin: 0 0 2px 0;
+.cal-more {
+    font-size: 0.6rem;
+    color: var(--muted);
+    padding-left: 2px;
+    line-height: 1.2;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) .cal-more {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Unscheduled rows (inside filter popover) */
+.unsched-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+.unsched-row:last-child { border-bottom: none; }
+.unsched-row .assignee-avatar { width: 18px; height: 18px; font-size: 0.46rem; }
+.unsched-title {
+    flex: 1;
+    font-size: 0.72rem;
+    color: #2D2D2D;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    display: block;
-    width: 100%;
-    height: auto !important;
-    min-height: 18px !important;
-    border: 1px solid transparent !important;
-    text-align: left !important;
-}
-.cal-month-cell button:hover {
-    background: #EAE9E4 !important;
-    border-color: rgba(212, 175, 55, 0.3) !important;
-}
-.cal-month-cell button.overdue { border-left: 2px solid var(--danger) !important; }
-.cal-month-cell button.meeting-action { background: rgba(99, 102, 241, 0.1); }
-.cal-month-cell.weekend button { background: rgba(255, 255, 255, 0.1); color: #fff; }
-.cal-month-cell.weekend button .initials { color: var(--gold); }
-
-.cal-more {
-    font-size: 0.58rem;
-    color: var(--muted);
-    padding-left: 2px;
-    margin-top: 1px;
 }
 
-.cal-unscheduled {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: var(--radius);
-    padding: 0.35rem 0.5rem;
-    margin-top: 0.3rem;
+/* Week view day header */
+.week-day-header {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.35rem;
+    color: var(--ink);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.week-day-header.today {
+    color: #8C6D23;
+    border-bottom: 2px solid var(--gold);
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 5. Helper functions & Constants
+# 5. Constants & helpers
 SPECIFIC_PEOPLE = [
     "Sondi Tuazon", "Meliza Zapata", "Dykstra Pineda", "Kristina Balajadia",
     "Carlo Medina", "Cedtrix Rena", "Dave Policarpio", "Irish Rima"
@@ -511,6 +562,13 @@ def get_assignee_ui_state(assignee_str):
     return "Group", GROUP_OPTIONS[0], []
 
 
+# Select All handler (callback runs before rerun, so row checkboxes pick up state)
+def handle_select_all_change(meeting_id, importable_indices):
+    select_val = st.session_state.get(f"select_all_{meeting_id}", False)
+    for idx in importable_indices:
+        st.session_state[f"import_{meeting_id}_{idx}"] = select_val
+
+
 # 6. Fetch data
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
@@ -536,7 +594,6 @@ def build_calendar_events():
             "assignee": t.get("assignee") or "",
             "meeting_id": t.get("meeting_id"),
             "meeting_label": "",
-            "description": t.get("description", ""),
             "overdue": due_date < today and status != "done",
         })
 
@@ -560,7 +617,6 @@ def build_calendar_events():
                 "assignee": item.get("Person-in-charge", ""),
                 "meeting_id": m_id,
                 "meeting_label": client_name,
-                "description": item.get("Discussion Points", ""),
                 "overdue": due_date < today,
             })
 
@@ -573,26 +629,23 @@ def apply_calendar_filters(events, assignee_filters, status_filters, meeting_fil
         if not (start_date <= e["date"] <= end_date):
             continue
 
-        # Assignee filter (multiselect)
+        # Assignee filter (multiselect, OR-based)
         if assignee_filters and "All Assignees" not in assignee_filters:
-            if "Unassigned" in assignee_filters:
-                if e.get("assignee"):
-                    continue
-            else:
-                match = False
+            matched = False
+            if "Unassigned" in assignee_filters and not e.get("assignee"):
+                matched = True
+            if not matched:
                 for f in assignee_filters:
-                    if f in GROUP_OPTIONS:
-                        if e.get("assignee") == f:
-                            match = True
-                            break
-                    elif f in SPECIFIC_PEOPLE:
-                        if f in (e.get("assignee") or ""):
-                            match = True
-                            break
-                if not match:
-                    continue
+                    if f in GROUP_OPTIONS and e.get("assignee") == f:
+                        matched = True
+                        break
+                    if f in SPECIFIC_PEOPLE and f in (e.get("assignee") or ""):
+                        matched = True
+                        break
+            if not matched:
+                continue
 
-        # Status filter (only applies to tasks)
+        # Status filter (tasks only)
         if e["source"] == "task" and status_filters and e["status"] not in status_filters:
             continue
 
@@ -625,11 +678,14 @@ def get_event_label(evt):
 
 
 def get_event_tooltip(evt):
-    line2 = evt.get("meeting_label") or ("Meeting: " + (evt.get("meeting_id") or "—")) if evt["source"] == "meeting_action" else "Task"
+    if evt["source"] == "meeting_action":
+        line2 = evt.get("meeting_label") or f"Meeting: {evt.get('meeting_id') or '—'}"
+    else:
+        line2 = "Task"
     return f"{evt['title']}\n{line2}\nDue: {format_mm_dd_yyyy(evt['date'])}"
 
 
-# 6.5 Modals
+# ===================== MODALS =====================
 @st.dialog("Task Details", width="large")
 def open_task_details():
     task = st.session_state.get('selected_task')
@@ -702,24 +758,24 @@ def open_task_details():
             key=f"modal_due_{task['id']}"
         )
 
-        if st.button("Save Changes", use_container_width=True):
+        if st.button("Save Changes", use_container_width=True, type="primary"):
             update_task(task['id'], new_status, new_assignee, new_due_date)
             st.session_state.pop('selected_task', None)
-            st.success("Task updated successfully!")
+            st.session_state["task_flash"] = "Task updated successfully."
             st.rerun()
 
         st.markdown("---")
-        st.markdown(f"**Status Updated By:** {task.get('status_updated_by', 'N/A')}")
-        st.markdown(f"**Status Updated At:** {task.get('status_updated_at', 'Never')}")
+        st.caption(f"Status Updated By: {task.get('status_updated_by') or '—'}")
+        st.caption(f"Status Updated At: {task.get('status_updated_at') or '—'}")
 
     with right_col:
         st.markdown("### Meeting Origin")
         if meeting_details:
             st.markdown(f"**{meeting_details.get('client_name', 'Meeting Record')}**")
             st.caption(f"Date: {format_mm_dd_yyyy(parse_calendar_date(meeting_details.get('meeting_date')))}")
-            st.caption(f"Prepared By: {meeting_details.get('prepared_by')}")
+            st.caption(f"Prepared By: {meeting_details.get('prepared_by') or '—'}")
             st.markdown("---")
-            st.markdown("**Summary:**")
+            st.markdown("**Summary**")
             st.write(meeting_details.get('summary_md', 'No summary available.'))
         else:
             st.info("This task is not linked to a specific meeting.")
@@ -745,7 +801,12 @@ def new_task_dialog():
             st.caption("Optional. One or two lines are plenty.")
 
         with right:
-            assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="cal_dlg_assign_type")
+            assign_type_new = st.radio(
+                "Assignment Type",
+                ["Group", "Specific Individuals"],
+                horizontal=True,
+                key="cal_dlg_assign_type"
+            )
 
             if assign_type_new == "Group":
                 assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="cal_dlg_group")
@@ -756,9 +817,13 @@ def new_task_dialog():
                 st.caption("Select one or more specific people.")
 
             due_date = st.date_input("Due Date", value=prefill_date or date.today(), key="cal_dlg_due_date")
-            st.caption(f"Date format: MM-DD-YYYY · Current: {format_mm_dd_yyyy(due_date)}")
+            st.caption(f"Format: MM-DD-YYYY · {format_mm_dd_yyyy(due_date)}")
 
-            meeting_id = st.text_input("Linked Meeting ID (optional)", key="cal_dlg_meeting", placeholder="e.g., MOM-20260831-1230")
+            meeting_id = st.text_input(
+                "Linked Meeting ID (optional)",
+                key="cal_dlg_meeting",
+                placeholder="e.g., MOM-20260831-1230"
+            )
             st.caption("Paste a meeting ID to trace the origin.")
 
         submitted = st.form_submit_button("Create Task", type="primary", use_container_width=True)
@@ -769,7 +834,7 @@ def new_task_dialog():
                 success = add_task(title, description, assignee, due_date, meeting_id if meeting_id else None)
                 if success:
                     st.session_state.pop("cal_new_task_date", None)
-                    st.success("Task created!")
+                    st.session_state["task_flash"] = "Task created successfully."
                     st.rerun()
 
 
@@ -783,6 +848,9 @@ tab_board, tab_import, tab_new, tab_calendar = st.tabs(["Board", "Import from Me
 
 # ---------------- BOARD TAB ----------------
 with tab_board:
+    if "task_flash" in st.session_state:
+        st.success(st.session_state.pop("task_flash"))
+
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
     else:
@@ -797,7 +865,12 @@ with tab_board:
         done_tasks = sort_by_newest([t for t in tasks if t.get('status') == 'done'])
 
         def count_overdue(task_list):
-            return sum(1 for t in task_list if parse_calendar_date(t.get('due_date')) and parse_calendar_date(t.get('due_date')) < date.today() and t.get('status') != 'done')
+            return sum(
+                1 for t in task_list
+                if parse_calendar_date(t.get('due_date'))
+                and parse_calendar_date(t.get('due_date')) < date.today()
+                and t.get('status') != 'done'
+            )
 
         col_todo, col_progress, col_done = st.columns(3)
 
@@ -806,7 +879,6 @@ with tab_board:
             status_class = task.get('status', 'todo')
             due_dt = parse_calendar_date(task.get('due_date'))
             due_display, due_class = get_due_chip_info(due_dt, status_class)
-
             assignee_initials = get_initials(task.get('assignee', '')) if task.get('assignee') else "—"
 
             st.markdown(f"""
@@ -823,7 +895,7 @@ with tab_board:
                 </div>
             """, unsafe_allow_html=True)
 
-            c_status, c_actions = st.columns([1.7, 1])
+            c_status, c_view, c_del = st.columns([2, 0.6, 0.6], gap="small")
             with c_status:
                 current_index = status_options.index(task['status']) if task['status'] in status_options else 0
                 st.selectbox(
@@ -836,16 +908,16 @@ with tab_board:
                     on_change=handle_status_change,
                     args=(task_id,)
                 )
-            with c_actions:
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.button("", icon=":material/visibility:", key=f"view_{task_id}", help="View details"):
-                        st.session_state['selected_task'] = task
-                        st.rerun()
-                with c2:
-                    if st.button("", icon=":material/delete:", key=f"del_{task_id}", help="Delete task"):
-                        delete_task(task_id)
-                        st.rerun()
+            with c_view:
+                if st.button("", icon=":material/visibility:", key=f"view_{task_id}",
+                             help="View details", use_container_width=True):
+                    st.session_state['selected_task'] = task
+                    st.rerun()
+            with c_del:
+                if st.button("", icon=":material/delete:", key=f"del_{task_id}",
+                             help="Delete task", use_container_width=True):
+                    delete_task(task_id)
+                    st.rerun()
 
         with col_todo:
             todo_overdue = count_overdue(todo_tasks)
@@ -890,6 +962,11 @@ with tab_board:
 # ---------------- IMPORT TAB ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
+
+    # Flash message (survives rerun)
+    if "import_flash" in st.session_state:
+        st.success(st.session_state.pop("import_flash"))
+
     if not meetings:
         st.info("No meetings found to import from.")
     else:
@@ -904,92 +981,92 @@ with tab_import:
         if selected_meeting:
             table_items = selected_meeting.get("table_items", [])
             if isinstance(table_items, list) and len(table_items) > 0:
-                # "Select All" checkbox at top
-                all_selected = st.checkbox("Select All", key=f"import_select_all_{selected_meeting_id}")
 
-                # Build a list of rows with selection state
-                rows_to_import = []
-                if all_selected:
-                    rows_to_import = [i for i in range(len(table_items))]
-                else:
-                    for idx, item in enumerate(table_items):
-                        dp_id = item.get('discussion_point_id') or item.get('id') or None
-                        if not dp_id:
-                            dp_id = generate_stable_id(
-                                selected_meeting_id,
-                                item.get('Discussion Points', ''),
-                                item.get('Action Plan', '')
-                            )
-                        if dp_id not in existing_discussion_ids:
-                            rows_to_import.append(idx)
-
-                # If select all, all rows that aren't already imported are selected
-                # We'll display each row with its own checkbox anyway (for granularity)
-                # But if all_selected is True, we can set all checkboxes to True by default; 
-                # To keep simple, we'll use individual checkboxes and a bulk button.
-
-                st.caption(f"Found {len(table_items)} action item(s). Select which to import as tasks.")
-
-                selected_rows = []
+                # Pre-compute which rows are importable (not already imported)
+                importable_indices = []
                 for idx, item in enumerate(table_items):
-                    dp_id = item.get('discussion_point_id') or item.get('id') or None
-                    if not dp_id:
-                        dp_id = generate_stable_id(
-                            selected_meeting_id,
-                            item.get('Discussion Points', ''),
-                            item.get('Action Plan', '')
-                        )
+                    dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
+                        selected_meeting_id,
+                        item.get('Discussion Points', ''),
+                        item.get('Action Plan', '')
+                    )
+                    if dp_id not in existing_discussion_ids:
+                        importable_indices.append(idx)
 
+                # Header row: count + Select All
+                hdr_c1, hdr_c2 = st.columns([3, 1], gap="small")
+                with hdr_c1:
+                    st.caption(f"Found **{len(table_items)}** action item(s) · **{len(importable_indices)}** available to import")
+                with hdr_c2:
+                    st.checkbox(
+                        "Select All",
+                        key=f"select_all_{selected_meeting_id}",
+                        on_change=handle_select_all_change,
+                        args=(selected_meeting_id, importable_indices)
+                    )
+
+                st.markdown("<hr style='margin:0.3rem 0 0.6rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+
+                # Render rows
+                for idx, item in enumerate(table_items):
+                    dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
+                        selected_meeting_id,
+                        item.get('Discussion Points', ''),
+                        item.get('Action Plan', '')
+                    )
                     already_imported = dp_id in existing_discussion_ids
 
-                    # Card style preview
                     action_title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
                     discussion_desc = item.get("Discussion Points", "")
-                    due_date = parse_calendar_date(item.get("Indicative Delivery Date", ""))
-                    due_display = format_mm_dd_yyyy(due_date) if due_date else "No date"
+                    due_dt = parse_calendar_date(item.get("Indicative Delivery Date", ""))
+                    due_display = format_mm_dd_yyyy(due_dt) if due_dt else "No date"
                     pic = item.get("Person-in-charge", "")
                     initials = get_initials(pic)
 
-                    with st.container(border=False):
-                        st.markdown(
-                            f"""
-                            <div class="task-card">
-                                <div class="task-card-header">
-                                    <span class="task-status-dot dot-meeting"></span>
-                                    <span class="task-card-title">{action_title[:80]}</span>
-                                </div>
-                                <div class="task-card-desc">{(discussion_desc or '')[:100]}</div>
-                                <div class="task-card-footer">
-                                    <span class="assignee-avatar">{initials}</span>
-                                    <span class="due-chip">{due_display}</span>
-                                </div>
+                    st.markdown(f"""
+                        <div class="task-card">
+                            <div class="task-card-header">
+                                <span class="task-status-dot dot-meeting"></span>
+                                <span class="task-card-title">{str(action_title)[:90]}</span>
                             </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-                        c1, c2 = st.columns([0.7, 0.3])
-                        with c1:
-                            if not already_imported:
-                                row_selected = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}", value=all_selected)
-                                if row_selected:
-                                    selected_rows.append(idx)
-                            else:
-                                st.success("✓ Already Imported")
-                        with c2:
-                            if not already_imported:
-                                if st.button("Add Task", key=f"add_{selected_meeting_id}_{idx}"):
-                                    title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
-                                    description = item.get("Discussion Points", "")
-                                    assignee = item.get("Person-in-charge", "")
-                                    due_dt = parse_calendar_date(item.get("Indicative Delivery Date", ""))
-                                    success = add_task(title, description, assignee, due_dt, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
-                                    if success:
-                                        st.success("Task added!")
-                                        st.rerun()
+                            <div class="task-card-desc">{(discussion_desc or '')[:100]}</div>
+                            <div class="task-card-footer">
+                                <span class="assignee-avatar">{initials}</span>
+                                <span class="due-chip">{due_display}</span>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                # Bulk import button (only if any selected)
+                    a1, a2 = st.columns([3, 1.2], gap="small")
+                    with a1:
+                        if not already_imported:
+                            st.checkbox("Select for import", key=f"import_{selected_meeting_id}_{idx}")
+                        else:
+                            st.markdown('<span class="import-badge">✓ Already Imported</span>', unsafe_allow_html=True)
+                    with a2:
+                        if not already_imported:
+                            if st.button("Add Task", key=f"add_{selected_meeting_id}_{idx}", use_container_width=True):
+                                ok = add_task(
+                                    item.get("Action Plan") or item.get("Discussion Points", "Untitled Task"),
+                                    item.get("Discussion Points", ""),
+                                    item.get("Person-in-charge", ""),
+                                    parse_calendar_date(item.get("Indicative Delivery Date", "")),
+                                    meeting_id=selected_meeting_id,
+                                    discussion_point_id=dp_id
+                                )
+                                if ok:
+                                    st.session_state["import_flash"] = "Task added to board."
+                                    st.rerun()
+
+                # Bulk import
+                selected_rows = [
+                    idx for idx in importable_indices
+                    if st.session_state.get(f"import_{selected_meeting_id}_{idx}", False)
+                ]
                 if selected_rows:
-                    if st.button(f"Import Selected ({len(selected_rows)})", use_container_width=True):
+                    st.write("")
+                    if st.button(f"Import Selected ({len(selected_rows)})", type="primary", use_container_width=True):
+                        imported_count = 0
                         for idx in selected_rows:
                             item = table_items[idx]
                             dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
@@ -997,12 +1074,17 @@ with tab_import:
                                 item.get('Discussion Points', ''),
                                 item.get('Action Plan', '')
                             )
-                            title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
-                            description = item.get("Discussion Points", "")
-                            assignee = item.get("Person-in-charge", "")
-                            due_dt = parse_calendar_date(item.get("Indicative Delivery Date", ""))
-                            add_task(title, description, assignee, due_dt, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
-                        st.success(f"Imported {len(selected_rows)} tasks!")
+                            ok = add_task(
+                                item.get("Action Plan") or item.get("Discussion Points", "Untitled Task"),
+                                item.get("Discussion Points", ""),
+                                item.get("Person-in-charge", ""),
+                                parse_calendar_date(item.get("Indicative Delivery Date", "")),
+                                meeting_id=selected_meeting_id,
+                                discussion_point_id=dp_id
+                            )
+                            if ok:
+                                imported_count += 1
+                        st.session_state["import_flash"] = f"Imported {imported_count} task(s) from meeting."
                         st.rerun()
             else:
                 st.info("This meeting has no action items.")
@@ -1010,51 +1092,65 @@ with tab_import:
 
 # ---------------- NEW TASK TAB ----------------
 with tab_new:
+    if "task_flash" in st.session_state:
+        st.success(st.session_state.pop("task_flash"))
+
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
-        title = st.text_input("Task Title *", placeholder="e.g., Prepare Q3 report")
-        st.caption("Required. Brief, actionable summary of the task.")
+        left, right = st.columns(2)
 
-        description = st.text_area("Description", placeholder="Add context, links, or dependencies...")
-        st.caption("Optional. One or two lines are plenty.")
+        with left:
+            title = st.text_input("Task Title *", placeholder="e.g., Prepare Q3 report")
+            st.caption("Required. Brief, actionable summary of the task.")
 
-        assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="assign_type_new")
+            description = st.text_area("Description", placeholder="Add context, links, or dependencies...")
+            st.caption("Optional. One or two lines are plenty.")
 
-        if assign_type_new == "Group":
-            assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="group_select_new")
-            st.caption("Assign to a whole team or group.")
-        else:
-            assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="individual_new")
-            assignee = ", ".join(assignee_list)
-            st.caption("Select one or more specific people.")
+        with right:
+            assign_type_new = st.radio(
+                "Assignment Type",
+                ["Group", "Specific Individuals"],
+                horizontal=True,
+                key="assign_type_new"
+            )
 
-        due_date = st.date_input("Due Date", value=None)
-        st.caption(f"Date format: MM-DD-YYYY · Selected: {format_mm_dd_yyyy(due_date) if due_date else 'No date selected'}")
+            if assign_type_new == "Group":
+                assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="group_select_new")
+                st.caption("Assign to a whole team or group.")
+            else:
+                assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="individual_new")
+                assignee = ", ".join(assignee_list)
+                st.caption("Select one or more specific people.")
 
-        meeting_id = st.text_input("Linked Meeting ID (optional)", placeholder="e.g., MOM-20260831-1230", help="Paste a meeting ID to link this task.")
+            due_date = st.date_input("Due Date", value=None)
+            st.caption(f"Format: MM-DD-YYYY · {format_mm_dd_yyyy(due_date) if due_date else 'No date selected'}")
 
-        submitted = st.form_submit_button("Create Task", type="primary")
+            meeting_id = st.text_input(
+                "Linked Meeting ID (optional)",
+                placeholder="e.g., MOM-20260831-1230",
+                help="Paste a meeting ID to link this task."
+            )
+
+        submitted = st.form_submit_button("Create Task", type="primary", use_container_width=True)
         if submitted:
             if not title.strip():
                 st.error("Title is required.")
             else:
                 success = add_task(title, description, assignee, due_date, meeting_id if meeting_id else None)
                 if success:
-                    st.success("Task created!")
+                    st.session_state["task_flash"] = "Task created successfully."
                     st.rerun()
 
 
 # ---------------- CALENDAR TAB ----------------
 with tab_calendar:
-    st.markdown('<div class="cal-scope">', unsafe_allow_html=True)
-
     if "tasks_cal_focus_date" not in st.session_state:
         st.session_state["tasks_cal_focus_date"] = date.today()
 
     # ===== COMPACT FILTER ROW =====
-    filter_cols = st.columns([3.0, 1.6, 0.7, 1.8], gap="small")
+    filter_cols = st.columns([2.6, 1.4, 0.55, 1.6], gap="small")
 
-    # Assignee: multiselect (visible text)
+    # Assignee: multiselect
     with filter_cols[0]:
         assignee_options = ["All Assignees", "Unassigned"] + GROUP_OPTIONS + SPECIFIC_PEOPLE
         cal_assignee = st.multiselect(
@@ -1064,8 +1160,10 @@ with tab_calendar:
             key="cal_assignee_filter",
             label_visibility="collapsed"
         )
+    if not cal_assignee:
+        cal_assignee = ["All Assignees"]
 
-    # Date picker (visible text)
+    # Date picker
     with filter_cols[1]:
         picked_date = st.date_input(
             "Date",
@@ -1078,7 +1176,7 @@ with tab_calendar:
 
     focus = st.session_state["tasks_cal_focus_date"]
 
-    # Filter icon: status + meeting + unscheduled
+    # Filter popover: status + meeting + unscheduled panel
     with filter_cols[2]:
         with st.popover("", icon=":material/filter_list:", help="Filters"):
             st.markdown("**Status**")
@@ -1100,22 +1198,29 @@ with tab_calendar:
                 label_visibility="collapsed"
             )
 
-            # Unscheduled panel inside filter popover
+            st.markdown("---")
+
+            # Unscheduled panel (inside the filter button)
             unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
             show_unscheduled = st.toggle(
-                f"Show unscheduled ({len(unscheduled_tasks)})",
+                f"Unscheduled ({len(unscheduled_tasks)})",
                 value=False,
                 key="cal_show_unscheduled"
             )
             if show_unscheduled:
-                st.markdown("**Unscheduled Tasks**")
                 if not unscheduled_tasks:
                     st.caption("No unscheduled tasks.")
                 else:
                     for ut in unscheduled_tasks:
-                        initials = get_initials(ut.get('assignee', ''))
+                        u_initials = get_initials(ut.get('assignee', ''))
                         st.markdown(
-                            f"{initials} — {ut.get('title')} — *{ut.get('assignee') or 'Unassigned'}*"
+                            f"""
+                            <div class="unsched-row">
+                                <span class="assignee-avatar">{u_initials}</span>
+                                <span class="unsched-title">{ut.get('title')}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
                         )
 
     # View toggle
@@ -1127,6 +1232,7 @@ with tab_calendar:
             key="tasks_cal_view",
             label_visibility="collapsed"
         )
+    cal_view = cal_view or "Month"
 
     # ===== DATE RANGE =====
     if cal_view == "Day":
@@ -1144,7 +1250,7 @@ with tab_calendar:
         _, last_day = calendar.monthrange(focus.year, focus.month)
         end_date = focus.replace(day=last_day)
 
-    # ===== BUILD EVENTS =====
+    # ===== BUILD & FILTER EVENTS =====
     all_events = build_calendar_events()
 
     if "cal_status_filter" not in st.session_state:
@@ -1156,7 +1262,7 @@ with tab_calendar:
         all_events,
         assignee_filters=cal_assignee,
         status_filters=st.session_state["cal_status_filter"],
-        meeting_filter=st.session_state["cal_meeting_filter"].strip(),
+        meeting_filter=(st.session_state["cal_meeting_filter"] or "").strip(),
         start_date=start_date,
         end_date=end_date
     )
@@ -1166,8 +1272,7 @@ with tab_calendar:
         d_str = evt["date"].strftime("%Y-%m-%d")
         events_by_date.setdefault(d_str, []).append(evt)
 
-    # ===== RENDER =====
-    # Day view (agenda style)
+    # ===== RENDER: DAY VIEW =====
     if cal_view == "Day":
         day_str = focus.strftime("%Y-%m-%d")
         day_events = events_by_date.get(day_str, [])
@@ -1176,10 +1281,13 @@ with tab_calendar:
 
         if day_events:
             for evt in day_events:
-                icon = get_event_icon(evt)
-                label = get_event_label(evt)
-                tooltip = get_event_tooltip(evt)
-                if st.button(label, key=f"cal_d_{evt['id']}_{day_str}", icon=icon, help=tooltip, use_container_width=True):
+                if st.button(
+                    get_event_label(evt),
+                    key=f"cal_d_{evt['id']}_{day_str}",
+                    icon=get_event_icon(evt),
+                    help=get_event_tooltip(evt),
+                    use_container_width=True
+                ):
                     st.session_state["cal_clicked_event"] = evt
                     st.session_state["cal_open_event"] = True
         else:
@@ -1189,7 +1297,7 @@ with tab_calendar:
             st.session_state["cal_new_task_date"] = focus
             st.session_state["cal_open_new_dialog"] = True
 
-    # Week view (agenda per day)
+    # ===== RENDER: WEEK VIEW =====
     elif cal_view == "Week":
         if focus.weekday() == 6:
             week_start = focus
@@ -1202,36 +1310,39 @@ with tab_calendar:
             day = week_start + timedelta(days=i)
             day_str = day.strftime("%Y-%m-%d")
             day_events = events_by_date.get(day_str, [])
-
             is_today = (day == date.today())
-            title_style = "color:#8C6D23; border-bottom:2px solid var(--gold);" if is_today else "color:var(--ink); border-bottom:1px solid rgba(0,0,0,0.06);"
 
+            header_class = "week-day-header today" if is_today else "week-day-header"
             st.markdown(
-                f"<h4 style='font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.02em; "
-                f"padding-bottom:0.25rem; margin-bottom:0.35rem; {title_style}'>{day_names[i]} · {format_mm_dd_yyyy(day)}</h4>",
+                f"<div class='{header_class}'>{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                 unsafe_allow_html=True
             )
 
             if day_events:
                 for evt in day_events:
-                    icon = get_event_icon(evt)
-                    label = get_event_label(evt)
-                    tooltip = get_event_tooltip(evt)
-                    if st.button(label, key=f"cal_w_{day_str}_{evt['id']}", icon=icon, help=tooltip, use_container_width=True):
+                    if st.button(
+                        get_event_label(evt),
+                        key=f"cal_w_{day_str}_{evt['id']}",
+                        icon=get_event_icon(evt),
+                        help=get_event_tooltip(evt),
+                        use_container_width=True
+                    ):
                         st.session_state["cal_clicked_event"] = evt
                         st.session_state["cal_open_event"] = True
             else:
                 st.caption("No events")
-                if st.button("+", key=f"cal_add_{day_str}", icon=":material/add:", use_container_width=True, help="Add task"):
+                if st.button("", key=f"cal_add_{day_str}", icon=":material/add:",
+                             help="Add task", use_container_width=True):
                     st.session_state["cal_new_task_date"] = day
                     st.session_state["cal_open_new_dialog"] = True
 
-    # Month view (grid)
+    # ===== RENDER: MONTH VIEW =====
     else:
         cal = calendar.Calendar(firstweekday=6)
         month_days = cal.monthdatescalendar(focus.year, focus.month)
         day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
+        # Header row
         header_cols = st.columns(7, gap="small")
         for i, name in enumerate(day_names):
             with header_cols[i]:
@@ -1239,7 +1350,7 @@ with tab_calendar:
                 header_style = (
                     "background:#111A2B; color:#FFFFFF; border-radius:6px 6px 0 0;"
                     if is_weekend
-                    else "background:#FFFFFF; color:var(--ink);"
+                    else "background:#FFFFFF; color:#1A2B4C; border:1px solid rgba(0,0,0,0.06); border-bottom:none;"
                 )
                 st.markdown(
                     f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1247,57 +1358,69 @@ with tab_calendar:
                     unsafe_allow_html=True
                 )
 
+        # Week rows — each cell is a REAL container (tasks live INSIDE the box)
         for week in month_days:
             week_cols = st.columns(7, gap="small")
             for i, day_val in enumerate(week):
                 with week_cols[i]:
+                    in_month = (day_val.month == focus.month)
                     is_weekend = (i == 0 or i == 6)
-
-                    if day_val.month != focus.month:
-                        st.markdown(
-                            "<div style='min-height:78px; background:rgba(0,0,0,0.02); border-radius:6px;'></div>",
-                            unsafe_allow_html=True
-                        )
-                        continue
-
-                    day_str = day_val.strftime("%Y-%m-%d")
-                    day_events = events_by_date.get(day_str, [])
                     is_today = (day_val == date.today())
 
-                    cell_class = "cal-month-cell"
-                    if is_today: cell_class += " today"
-                    if is_weekend: cell_class += " weekend"
+                    # Build marker classes for CSS :has() targeting
+                    marker_classes = "cell-marker"
+                    if in_month and is_weekend:
+                        marker_classes += " cell-weekend"
+                    if is_today and in_month:
+                        marker_classes += " cell-today"
+                    if not in_month:
+                        marker_classes += " cell-dim"
 
-                    st.markdown(f'<div class="{cell_class}">', unsafe_allow_html=True)
+                    with st.container(border=True):
+                        st.markdown(f'<span class="{marker_classes}"></span>', unsafe_allow_html=True)
 
-                    # Day number row with today dot
-                    day_num_html = f"{day_val.day}"
-                    if is_today:
-                        day_num_html += '<span class="today-dot"></span>'
-                    st.markdown(
-                        f"<div class='cal-month-day-num'>{day_num_html}</div>",
-                        unsafe_allow_html=True
-                    )
+                        # Day number (+ tiny gold dot for today)
+                        if in_month:
+                            dot = '<span class="today-dot"></span>' if is_today else ''
+                            st.markdown(
+                                f"<div class='cal-day-num'>{day_val.day}{dot}</div>",
+                                unsafe_allow_html=True
+                            )
 
-                    for evt in day_events[:3]:
-                        icon = get_event_icon(evt)
-                        label = get_event_label(evt)
-                        tooltip = get_event_tooltip(evt)
-                        if st.button(label, key=f"cal_m_{day_str}_{evt['id']}", icon=icon, help=tooltip, use_container_width=True):
-                            st.session_state["cal_clicked_event"] = evt
-                            st.session_state["cal_open_event"] = True
+                            day_str = day_val.strftime("%Y-%m-%d")
+                            day_events = events_by_date.get(day_str, [])
 
-                    if len(day_events) > 3:
-                        st.markdown(f"<div class='cal-more'>+{len(day_events) - 3} more</div>", unsafe_allow_html=True)
+                            # Event tags — INSIDE the cell container
+                            for evt in day_events[:3]:
+                                if st.button(
+                                    get_event_label(evt),
+                                    key=f"cal_m_{day_str}_{evt['id']}",
+                                    icon=get_event_icon(evt),
+                                    help=get_event_tooltip(evt),
+                                    use_container_width=True
+                                ):
+                                    st.session_state["cal_clicked_event"] = evt
+                                    st.session_state["cal_open_event"] = True
 
-                    if not day_events:
-                        if st.button("", key=f"cal_add_{day_str}", icon=":material/add:", use_container_width=True, help="Add task"):
-                            st.session_state["cal_new_task_date"] = day_val
-                            st.session_state["cal_open_new_dialog"] = True
+                            if len(day_events) > 3:
+                                st.markdown(
+                                    f"<div class='cal-more'>+{len(day_events) - 3} more</div>",
+                                    unsafe_allow_html=True
+                                )
 
-                    st.markdown('</div>', unsafe_allow_html=True)
+                            # Add affordance on empty days
+                            if not day_events:
+                                if st.button("", key=f"cal_add_{day_str}", icon=":material/add:",
+                                             help="Add task", use_container_width=True):
+                                    st.session_state["cal_new_task_date"] = day_val
+                                    st.session_state["cal_open_new_dialog"] = True
+                        else:
+                            st.markdown(
+                                f"<div class='cal-day-num dim'>{day_val.day}</div>",
+                                unsafe_allow_html=True
+                            )
 
-    # ===== HANDLE CLICKS =====
+    # ===== HANDLE CALENDAR CLICKS =====
     if st.session_state.pop("cal_open_event", False):
         evt = st.session_state.pop("cal_clicked_event", None)
         if evt:
@@ -1313,9 +1436,7 @@ with tab_calendar:
     if st.session_state.pop("cal_open_new_dialog", False):
         new_task_dialog()
 
-    st.markdown('</div>', unsafe_allow_html=True)
 
-
-# Trigger modal if session state is set
+# Trigger Task Details modal if session state is set
 if 'selected_task' in st.session_state:
     open_task_details()
