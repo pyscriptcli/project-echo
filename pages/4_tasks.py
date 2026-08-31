@@ -1,7 +1,7 @@
 # pages/4_tasks.py (or pages/tasks.py)
 import sys
 import os
-import hashlib  # Imported for fallback ID generation
+import hashlib
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
@@ -72,14 +72,13 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid rgba(0, 0, 0, 0.06) !important; 
     border-left: 4px solid #E67E22 !important; 
     padding: 0.2rem 0.4rem !important; 
-    margin-bottom: 0.2rem !important; /* Tightly stacked */
+    margin-bottom: 0.2rem !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
     gap: 0.1rem !important;
 }
 
-/* Compact Text */
 div[data-testid="stVerticalBlockBorderWrapper"] p {
     font-size: 0.75rem !important;
     margin-bottom: 0.1rem !important;
@@ -91,7 +90,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stCaptionContai
     line-height: 1.1 !important;
 }
 
-/* Compact Dropdown */
 div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stSelectbox"] {
     margin-bottom: 0 !important;
 }
@@ -100,7 +98,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stSelectbox"] >
     font-size: 0.65rem !important;
 }
 
-/* Compact Buttons */
 div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > button {
     height: 24px !important;
     font-size: 0.6rem !important;
@@ -109,15 +106,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > bu
     width: 100% !important;
 }
 
-/* Status specific border colors */
 .task-todo { border-left: 4px solid #E67E22 !important; }
 .task-in_progress { border-left: 4px solid #2980B9 !important; }
 .task-done { border-left: 4px solid #27AE60 !important; }
 
-/* Overdue text color */
 .overdue { color: #E74C3C !important; font-weight: 600 !important; }
 
-/* Native Modal Styling */
 [data-testid="stDialog"] div[data-testid="stVerticalBlock"] {
     gap: 0.25rem !important;
     padding: 0.5rem !important;
@@ -128,46 +122,67 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > bu
 }
 
 /* ===================== CALENDAR VIEW ===================== */
-/* Compact filter + nav controls */
-.cal-filter-row {
-    margin-bottom: 0.35rem !important;
-}
-.cal-filter-row [data-testid="stSelectbox"] > div,
-.cal-filter-row [data-testid="stMultiselect"] > div,
-.cal-filter-row [data-testid="stTextInput"] > div {
-    margin-bottom: 0 !important;
-}
-.cal-filter-row [data-testid="stBaseButton-secondary"] {
-    height: 28px !important;
-    min-height: 28px !important;
-    font-size: 0.72rem !important;
-    padding: 0 0.5rem !important;
-    border-radius: 6px !important;
-}
-.cal-filter-row [data-testid="stSegmentedControl"] button {
-    height: 28px !important;
-    min-height: 28px !important;
-    font-size: 0.72rem !important;
-    padding: 0 0.6rem !important;
-}
-.cal-filter-row [data-testid="stCheckbox"] label,
-.cal-filter-row [data-testid="stToggle"] label {
-    font-size: 0.72rem !important;
-    min-height: 24px !important;
+/* Scope wrapper for calendar controls */
+.cal-scope {
+    margin-top: 0.25rem;
 }
 
-/* Calendar grid */
-.cal-month-grid {
-    margin-top: 0.5rem;
+/* Compact filter row: single line, zero extra padding */
+.cal-scope .stSelectbox > div,
+.cal-scope .stMultiselect > div,
+.cal-scope .stTextInput > div,
+.cal-scope .stDateInput > div {
+    margin-bottom: 0 !important;
 }
+.cal-scope .stSelectbox, 
+.cal-scope .stMultiselect, 
+.cal-scope .stTextInput,
+.cal-scope .stDateInput {
+    padding-bottom: 0 !important;
+}
+
+/* Ultra small widgets inside calendar */
+.cal-scope [data-testid="stBaseButton-secondary"],
+.cal-scope [data-testid="stDateInput"] input {
+    height: 26px !important;
+    min-height: 26px !important;
+    font-size: 0.72rem !important;
+    border-radius: 5px !important;
+    padding: 0 0.35rem !important;
+}
+.cal-scope [data-testid="stSegmentedControl"] button {
+    height: 26px !important;
+    min-height: 26px !important;
+    font-size: 0.72rem !important;
+    padding: 0 0.5rem !important;
+}
+.cal-scope [data-testid="stToggle"] label,
+.cal-scope [data-testid="stCheckbox"] label {
+    font-size: 0.72rem !important;
+    min-height: 24px !important;
+    padding-left: 0.3rem !important;
+}
+
+/* Force calendar columns to stretch so rows match tallest cell */
+.cal-scope div[data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+}
+.cal-scope div[data-testid="stHorizontalBlock"] > div {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Calendar month cells */
 .cal-month-cell {
     background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 6px;
     padding: 4px;
     min-height: 82px;
+    height: 100% !important;
     margin-bottom: 4px;
     transition: box-shadow 0.2s;
+    box-sizing: border-box;
 }
 .cal-month-cell:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); }
 .cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
@@ -186,51 +201,38 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > bu
 }
 .cal-month-cell.weekend .cal-month-day-num { color: #FFFFFF; }
 
-.cal-month-add-btn {
-    background: transparent;
-    border: 1px dashed rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    font-size: 0.65rem;
-    color: #6C727A;
-    padding: 1px 4px;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.2s;
+/* Event buttons inside calendar cells — minimal & integrated */
+.cal-scope button {
+    background: #F8F7F4 !important;
+    border: none !important;
+    border-radius: 3px !important;
+    font-size: 0.62rem !important;
+    padding: 1px 4px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    color: #2D2D2D !important;
+    margin-bottom: 2px !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    line-height: 1 !important;
 }
-.cal-month-add-btn:hover { border-color: #D4AF37; color: #1A2B4C; }
-
-.cal-month-task {
-    background: #F8F7F4;
-    border-radius: 3px;
-    padding: 2px 4px;
-    font-size: 0.65rem;
-    color: #2D2D2D;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    width: 100%;
-    text-align: left;
-    border: none;
-    cursor: pointer;
+.cal-scope button:hover {
+    background: #E8E6E0 !important;
+    color: #1A2B4C !important;
 }
-.cal-month-task:hover { background: #E8E6E0; }
-.cal-month-task.meeting-action { background: rgba(99, 102, 241, 0.08); }
-.cal-month-cell.weekend .cal-month-task { background: rgba(255, 255, 255, 0.12); color: #FFF; }
+.cal-scope button svg {
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0;
+}
 
 .cal-more { font-size: 0.6rem; color: #6C727A; padding-left: 2px; }
 
-/* Compact day/week header */
-.cal-slot-header {
-    text-align: center;
-    padding: 0.5rem 0;
-    margin-bottom: 0.6rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-/* Unscheduled task list */
 .cal-unscheduled {
     margin-top: 0.4rem;
     padding: 0.5rem;
@@ -261,12 +263,10 @@ def fetch_tasks():
         st.error(f"Failed to fetch tasks: {e}")
         return []
 
-# Function to generate a stable hash if no ID is provided in the archive
 def generate_stable_id(meeting_id, discussion_text, action_text):
     source = f"{meeting_id}-{discussion_text}-{action_text}"
     return hashlib.md5(source.encode()).hexdigest()
 
-# Add Discussion Point ID to add_task
 def add_task(title, description, assignee, due_date, meeting_id=None, discussion_point_id=None):
     if not supabase:
         st.error("Supabase client not initialized.")
@@ -278,7 +278,7 @@ def add_task(title, description, assignee, due_date, meeting_id=None, discussion
         "due_date": due_date.isoformat() if due_date else None,
         "meeting_id": meeting_id,
         "status": "todo",
-        "discussion_point_id": discussion_point_id  # Added here
+        "discussion_point_id": discussion_point_id
     }
     try:
         supabase.table("tasks").insert(payload).execute()
@@ -331,12 +331,10 @@ def get_assignee_ui_state(assignee_str):
 tasks = fetch_tasks()
 meetings = fetch_meeting_archives(limit=100)
 
-# Build a set of existing discussion point IDs to check for duplicates
 existing_discussion_ids = {t.get('discussion_point_id') for t in tasks if t.get('discussion_point_id')}
 
 # ===================== CALENDAR DATA HELPERS =====================
 def parse_calendar_date(raw_val):
-    """Parse a date string from either a task or meeting action item."""
     if not raw_val:
         return None
     raw_s = str(raw_val).strip()[:10]
@@ -348,11 +346,9 @@ def parse_calendar_date(raw_val):
     return None
 
 def build_calendar_events():
-    """Merge tasks + meeting action items into a unified event list."""
     events = []
     today = date.today()
 
-    # Tasks from `tasks` table
     for t in tasks:
         due_date = parse_calendar_date(t.get("due_date"))
         if not due_date:
@@ -378,7 +374,6 @@ def build_calendar_events():
             "overdue": due_date < today and status != "done",
         })
 
-    # Meeting action items from meeting_archives -> table_items
     for m in meetings:
         m_id = m.get("meeting_id")
         client_name = m.get("client_name", "Meeting")
@@ -408,13 +403,11 @@ def build_calendar_events():
     return events
 
 def apply_calendar_filters(events, assignee_filter, status_filters, meeting_filter, start_date, end_date):
-    """Filter events by assignee, status, meeting search, and a date range."""
     result = []
     for e in events:
         if not (start_date <= e["date"] <= end_date):
             continue
 
-        # Assignee filter
         if assignee_filter and assignee_filter != "All Assignees":
             if assignee_filter == "Unassigned":
                 if e.get("assignee"):
@@ -426,11 +419,9 @@ def apply_calendar_filters(events, assignee_filter, status_filters, meeting_filt
                 if assignee_filter not in (e.get("assignee") or ""):
                     continue
 
-        # Status filter (only applies to tasks)
         if e["source"] == "task" and status_filters and e["status"] not in status_filters:
             continue
 
-        # Meeting search filter
         if meeting_filter:
             search_text = f"{e.get('meeting_id', '')} {e.get('meeting_label', '')}".lower()
             if meeting_filter.lower() not in search_text:
@@ -440,7 +431,6 @@ def apply_calendar_filters(events, assignee_filter, status_filters, meeting_filt
     return result
 
 def get_event_icon(evt):
-    """Return a native monochrome material icon for the event type."""
     if evt["overdue"]:
         return ":material/error:"
     if evt["source"] == "meeting_action":
@@ -548,7 +538,6 @@ def open_task_details():
         st.session_state.pop('selected_task', None)
         st.rerun()
 
-# Create Task Dialog (used from Calendar empty-day clicks)
 @st.dialog("Create Task", width="medium")
 def new_task_dialog():
     prefill_date = st.session_state.get("cal_new_task_date")
@@ -586,7 +575,7 @@ st.caption("Manage tasks derived from meeting action items or create new ones.")
 # 8. Tabs
 tab_board, tab_import, tab_new, tab_calendar = st.tabs(["Board", "Import from Meeting", "New Task", "Calendar"])
 
-# ---------------- Board Tab (ULTRA-COMPACT KANBAN) ----------------
+# ---------------- Board Tab ----------------
 with tab_board:
     if not tasks:
         st.info("No tasks yet. Create one or import from meetings.")
@@ -594,7 +583,6 @@ with tab_board:
         status_map = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
         status_options = list(status_map.keys())
 
-        # Sort tasks newest to oldest
         def sort_by_newest(task_list):
             return sorted(task_list, key=lambda x: x.get('created_at', ''), reverse=True)
 
@@ -604,7 +592,6 @@ with tab_board:
 
         col_todo, col_progress, col_done = st.columns(3)
 
-        # Helper function to render an ultra-compact stacked task card
         def render_card(task):
             task_id = task['id']
             card_class = f"task-{task.get('status', 'todo')}"
@@ -612,12 +599,10 @@ with tab_board:
             with st.container(border=True):
                 st.markdown(f'<div class="{card_class}" style="display:none"></div>', unsafe_allow_html=True)
 
-                # Title & Description (Tightly spaced)
                 st.markdown(f"**{task['title']}**")
                 desc = task['description'] or ""
                 st.caption(desc[:65] + "..." if len(desc) > 65 else desc)
 
-                # Assignee & Due Date (Combined into a single line for compactness)
                 assignee = task['assignee'] or "N/A"
                 
                 due_date_raw = task.get('due_date')
@@ -638,7 +623,6 @@ with tab_board:
                 else:
                     st.caption(f"Assigned: {assignee} | Due: N/A")
 
-                # Compact Row: Status, View, Delete
                 c_status, c_view, c_del = st.columns([2.5, 1, 1])
                 
                 with c_status:
@@ -662,7 +646,6 @@ with tab_board:
                         delete_task(task_id)
                         st.rerun()
 
-        # Column 1: To Do
         with col_todo:
             with st.container(border=True):
                 st.markdown(f"#### To Do ({len(todo_tasks)})")
@@ -671,7 +654,6 @@ with tab_board:
                 for task in todo_tasks:
                     render_card(task)
 
-        # Column 2: In Progress
         with col_progress:
             with st.container(border=True):
                 st.markdown(f"#### In Progress ({len(in_progress_tasks)})")
@@ -680,7 +662,6 @@ with tab_board:
                 for task in in_progress_tasks:
                     render_card(task)
 
-        # Column 3: Done
         with col_done:
             with st.container(border=True):
                 st.markdown(f"#### Done ({len(done_tasks)})")
@@ -689,7 +670,7 @@ with tab_board:
                 for task in done_tasks:
                     render_card(task)
 
-# ---------------- Import from Meeting Tab (Anti-Duplicate Logic) ----------------
+# ---------------- Import from Meeting Tab ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
     if not meetings:
@@ -715,7 +696,6 @@ with tab_import:
                         with c4:
                             st.write(f"**PIC:** {item.get('Person-in-charge', '')}")
                         
-                        # Extract or Generate Discussion Point ID
                         dp_id = item.get('discussion_point_id') or item.get('id') or None
                         if not dp_id:
                             dp_id = generate_stable_id(
@@ -724,7 +704,6 @@ with tab_import:
                                 item.get('Action Plan', '')
                             )
 
-                        # Check for duplicates
                         if dp_id in existing_discussion_ids:
                             with c5:
                                 st.success("✓ Already Imported")
@@ -777,16 +756,15 @@ with tab_new:
 
 # ---------------- Calendar Tab ----------------
 with tab_calendar:
-    # Initialize calendar session state
+    st.markdown('<div class="cal-scope">', unsafe_allow_html=True)
+
+    # Initialize calendar focus state
     if "tasks_cal_focus_date" not in st.session_state:
         st.session_state["tasks_cal_focus_date"] = date.today()
-    if "tasks_cal_view" not in st.session_state:
-        st.session_state["tasks_cal_view"] = "Month"
 
-    focus = st.session_state["tasks_cal_focus_date"]
-
-    # ========== COMPACT FILTER ROW ==========
-    filter_cols = st.columns([2.3, 2.7, 2.5, 1.7, 2.0], gap="small")
+    # ========== SINGLE COMPACT FILTER ROW ==========
+    # Assignee | Status | Meeting | Unscheduled | View | Date Picker
+    filter_cols = st.columns([1.8, 2.2, 2.0, 1.4, 1.6, 1.8], gap="small")
 
     with filter_cols[0]:
         assignee_options = ["All Assignees", "Unassigned"] + GROUP_OPTIONS + SPECIFIC_PEOPLE
@@ -821,7 +799,8 @@ with tab_calendar:
         show_unscheduled = st.toggle(
             f"Unscheduled ({len(unscheduled_tasks)})",
             value=False,
-            key="cal_show_unscheduled"
+            key="cal_show_unscheduled",
+            label_visibility="collapsed"
         )
 
     with filter_cols[4]:
@@ -833,7 +812,20 @@ with tab_calendar:
             label_visibility="collapsed"
         )
 
-    # Unscheduled task list (toggled)
+    with filter_cols[5]:
+        picked_date = st.date_input(
+            "Date",
+            value=st.session_state["tasks_cal_focus_date"],
+            key="cal_jump_date",
+            label_visibility="collapsed"
+        )
+        if picked_date != st.session_state["tasks_cal_focus_date"]:
+            st.session_state["tasks_cal_focus_date"] = picked_date
+
+    # Focus date now follows the date picker
+    focus = st.session_state["tasks_cal_focus_date"]
+
+    # Show unscheduled list when toggled
     if show_unscheduled:
         with st.container(border=False):
             st.markdown('<div class="cal-unscheduled">', unsafe_allow_html=True)
@@ -847,58 +839,6 @@ with tab_calendar:
                         f"`{ut.get('due_date') or 'No due date'}`"
                     )
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # ========== DATE NAVIGATION ==========
-    nav_cols = st.columns([1, 1, 1.6, 1, 4.5], gap="small")
-
-    with nav_cols[0]:
-        if st.button("◀", key="cal_prev", help="Previous", use_container_width=True):
-            if cal_view == "Day":
-                st.session_state["tasks_cal_focus_date"] = focus - timedelta(days=1)
-            elif cal_view == "Week":
-                st.session_state["tasks_cal_focus_date"] = focus - timedelta(days=7)
-            else:
-                if focus.month == 1:
-                    st.session_state["tasks_cal_focus_date"] = focus.replace(year=focus.year - 1, month=12)
-                else:
-                    st.session_state["tasks_cal_focus_date"] = focus.replace(month=focus.month - 1)
-            st.rerun()
-
-    with nav_cols[1]:
-        if st.button("Today", key="cal_today", help="Today", use_container_width=True):
-            st.session_state["tasks_cal_focus_date"] = date.today()
-            st.rerun()
-
-    with nav_cols[2]:
-        if st.button("▶", key="cal_next", help="Next", use_container_width=True):
-            if cal_view == "Day":
-                st.session_state["tasks_cal_focus_date"] = focus + timedelta(days=1)
-            elif cal_view == "Week":
-                st.session_state["tasks_cal_focus_date"] = focus + timedelta(days=7)
-            else:
-                if focus.month == 12:
-                    st.session_state["tasks_cal_focus_date"] = focus.replace(year=focus.year + 1, month=1)
-                else:
-                    st.session_state["tasks_cal_focus_date"] = focus.replace(month=focus.month + 1)
-            st.rerun()
-
-    with nav_cols[3]:
-        # Period label
-        if cal_view == "Day":
-            period_label = focus.strftime("%A, %B %d, %Y")
-        elif cal_view == "Week":
-            if focus.weekday() == 6:
-                week_start = focus
-            else:
-                week_start = focus - timedelta(days=focus.weekday() + 1)
-            week_end = week_start + timedelta(days=6)
-            period_label = f"{week_start.strftime('%b %d')} – {week_end.strftime('%b %d, %Y')}"
-        else:
-            period_label = focus.strftime("%B %Y")
-        st.markdown(
-            f"<p style='font-size:0.8rem; color:#1A2B4C; font-weight:600; margin:0; padding-top:0.3rem;'>{period_label}</p>",
-            unsafe_allow_html=True
-        )
 
     # ========== COMPUTE DATE RANGE ==========
     if cal_view == "Day":
@@ -927,7 +867,6 @@ with tab_calendar:
         end_date=end_date
     )
 
-    # Group by date string
     events_by_date = {}
     for evt in filtered_events:
         d_str = evt["date"].strftime("%Y-%m-%d")
@@ -986,7 +925,7 @@ with tab_calendar:
                 border = "none" if is_today else "1px solid rgba(0,0,0,0.08)"
 
                 st.markdown(
-                    f"<div class='cal-slot-header' style='background:{bg_color}; color:{text_color}; border:{border};'>"
+                    f"<div style='text-align:center; padding:0.5rem 0; margin-bottom:0.6rem; border-radius:8px; background:{bg_color}; color:{text_color}; border:{border};'>"
                     f"<div style='font-size:0.65rem; font-weight:700; text-transform:uppercase; opacity:0.9;'>{day_names[i]}</div>"
                     f"<div style='font-size:1.1rem; font-family:Playfair Display, serif; font-weight:600;'>{day.day}</div>"
                     f"</div>",
@@ -1060,7 +999,7 @@ with tab_calendar:
                     if is_weekend:
                         cell_class += " weekend"
 
-                    st.markdown(f'<div class="{cell_class}" style="min-height:82px;">', unsafe_allow_html=True)
+                    st.markdown(f'<div class="{cell_class}">', unsafe_allow_html=True)
                     st.markdown(f"<div class='cal-month-day-num'>{day_val.day}</div>", unsafe_allow_html=True)
 
                     for evt in day_events[:3]:
@@ -1091,7 +1030,6 @@ with tab_calendar:
                     st.markdown('</div>', unsafe_allow_html=True)
 
     # ========== HANDLE CALENDAR CLICKS ==========
-    # Open Event (Task detail or Meeting detail)
     if st.session_state.pop("cal_open_event", False):
         evt = st.session_state.pop("cal_clicked_event", None)
         if evt:
@@ -1104,9 +1042,10 @@ with tab_calendar:
                 st.session_state["selected_meeting_id"] = evt["meeting_id"]
                 st.switch_page("pages/2_meeting_details.py")
 
-    # Open New Task dialog
     if st.session_state.pop("cal_open_new_dialog", False):
         new_task_dialog()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Trigger Modal if session state is set
 if 'selected_task' in st.session_state:
