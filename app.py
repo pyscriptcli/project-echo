@@ -351,12 +351,6 @@ if not is_authenticated():
 
 setup_page_layout()
 
-with st.sidebar:
-    st.markdown("---")
-    if st.button("Logout", key="logout_btn"):
-        logout()
-        st.rerun()
-
 if "selected_meeting_id" not in st.session_state:
     st.session_state["selected_meeting_id"] = None
 
