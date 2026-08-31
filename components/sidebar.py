@@ -9,6 +9,7 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
 - Non-collapsible: native collapse/expand chevrons are hidden,
   the sidebar remains open at all times.
+- Drop shadow on the entire sidebar for clear separation from main content.
 
 Design rules followed to avoid breaking Streamlit internals:
 - No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
@@ -86,7 +87,8 @@ button[data-testid="stSidebarCollapsedControl"] {
 section[data-testid="stSidebar"] {
     background: #F5F1E8 !important;
     border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: none !important;
+    /* Noticeable drop shadow for separation */
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -161,6 +163,7 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page
 /* ---------------- Footer (pinned to bottom) ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
     margin-top: auto !important;
+    flex-shrink: 0 !important;  /* Prevent the footer from shrinking */
 }
 .sb-footer-scope { display: none !important; }
 .sb-user-wrap {
@@ -251,7 +254,9 @@ def setup_page_layout():
 
         # ----- Footer: user chip + sign out (pinned to the bottom) -----
         user = get_current_user()
+        # Use a container to group footer elements and mark it for CSS targeting
         with st.container():
+            # Marker span for CSS :has() selector
             st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
 
             if user:
