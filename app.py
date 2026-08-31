@@ -22,11 +22,27 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
-header[data-testid="stHeader"], 
+/* ---- Header: hide content, NOT the element (sidebar expand button lives there) ---- */
+header[data-testid="stHeader"],
+.stApp > header {
+    background: transparent !important;
+    height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;   /* critical: keeps expand button visible */
+}
+
 [data-testid="stToolbar"],
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
-#MainMenu { display: none !important; }
+[data-testid="stMainMenu"],
+#MainMenu,
+footer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+}
 
 .stApp {
     background-color: #F5F1E8 !important;
