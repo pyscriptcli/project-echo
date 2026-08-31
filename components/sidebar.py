@@ -1,20 +1,14 @@
 # components/sidebar.py
 """
-Project Echo — Global Sidebar Navigation
+Project Echo — Global Sidebar Navigation (Streamlit 1.62 compatible)
 
 Native Streamlit sidebar + custom branding & compact navigation.
 - Brand block: "Echo" in Cormorant Garamond italic
 - Compact nav via st.page_link with material icons
 - Active page: gold left border + tinted background (via aria-current)
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
-- Non-collapsible: native collapse/expand chevrons are hidden,
-  the sidebar remains open at all times.
-- Noticeable drop shadow on the entire sidebar for clear separation.
-
-Design rules followed to avoid breaking Streamlit internals:
-- No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
-- The auto-generated multipage nav ([data-testid="stSidebarNav"]) is hidden
-  so our custom links are the single source of navigation
+- Non-collapsible: collapse/expand controls are hidden AND the sidebar
+  is force-locked open via CSS, making collapse visually impossible.
 """
 
 import re
@@ -24,7 +18,7 @@ from utils.auth import get_current_user, logout
 
 
 # ---------------------------------------------------------------------------
-# Navigation model — flat, compact list (Dashboard -> Ask Echo -> rest)
+# Navigation model
 # ---------------------------------------------------------------------------
 NAV_ITEMS = [
     ("app.py", "Dashboard", ":material/dashboard:"),
@@ -39,7 +33,7 @@ SIDEBAR_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
-/* ---------------- Hide app chrome but KEEP the header element ---------------- */
+/* ---------------- Hide app chrome (header kept alive, zero-height) ---------------- */
 header[data-testid="stHeader"],
 .stApp > header {
     background: transparent !important;
@@ -49,7 +43,6 @@ header[data-testid="stHeader"],
     box-shadow: none !important;
     overflow: visible !important;
 }
-
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 [data-testid="stMainMenu"],
@@ -61,22 +54,20 @@ footer {
     height: 0 !important;
 }
 
-/* Hide Streamlit's auto-generated page list — we render our own nav */
+/* Hide Streamlit's auto-generated page list */
 [data-testid="stSidebarNav"] { display: none !important; }
 
-/* ---------------- Non‑collapsible sidebar ---------------- */
-/* Hide the entire sidebar header (contains collapse button) */
-div[data-testid="stSidebarHeader"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;  /* ensure no click target */
-}
-
-/* Hide the native collapse/expand buttons (fallback) */
-button[data-testid="stSidebarCollapseButton"],
-button[data-testid="stSidebarCollapsedControl"] {
+/* ---------------- Collapse prevention: hide ALL collapse/expand controls ---------------- */
+/* Catch the collapse button in any version — it's a <button> wrapping a material icon */
+section[data-testid="stSidebar"] button:has(span[data-testid="stIconMaterial"]),
+/* Also hide the sidebar header's buttons (1.62 places the control there) */
+[data-testid="stSidebarHeader"] button,
+/* Hide the collapsed-state expand control (any version) */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+/* Kill the resize drag-handle entirely (1.62+) */
+[data-testid="stSidebarResizeHandle"],
+[data-testid="stSidebarResizeControl"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -86,12 +77,19 @@ button[data-testid="stSidebarCollapsedControl"] {
     pointer-events: none !important;
 }
 
-/* Prevent any residual collapse icon from being clickable */
-section[data-testid="stSidebar"] [data-testid="stIconMaterial"] {
-    pointer-events: none !important;
-}
-section[data-testid="stSidebar"] button:has([data-testid="stIconMaterial"]) {
-    pointer-events: none !important;
+/* ---------------- Force-open lock: sidebar cannot visually collapse ---------------- */
+/* Even if Streamlit's JS sets the collapsed state, these !important rules
+   override both emotion classes and inline styles. */
+section[data-testid="stSidebar"] {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    min-width: 250px !important;
+    width: 250px !important;
+    max-width: 250px !important;
+    pointer-events: auto !important;
 }
 
 /* ---------------- Main content breathing room ---------------- */
@@ -106,8 +104,7 @@ section[data-testid="stSidebar"] button:has([data-testid="stIconMaterial"]) {
 section[data-testid="stSidebar"] {
     background: #F5F1E8 !important;
     border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-    /* Noticeable drop shadow for separation */
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: none !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -182,7 +179,6 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page
 /* ---------------- Footer (pinned to bottom) ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
     margin-top: auto !important;
-    flex-shrink: 0 !important;  /* Prevent the footer from shrinking */
 }
 .sb-footer-scope { display: none !important; }
 .sb-user-wrap {
@@ -247,7 +243,6 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 
 
 def _initials(name: str) -> str:
-    """Derive a 2-letter monogram from a username."""
     parts = [p for p in re.split(r"[\s._\-]+", (name or "").strip()) if p]
     if len(parts) >= 2:
         return (parts[0][0] + parts[1][0]).upper()
@@ -255,11 +250,9 @@ def _initials(name: str) -> str:
 
 
 def setup_page_layout():
-    """Injects global chrome styling and renders the branded sidebar navigation."""
     st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
     with st.sidebar:
-        # ----- Brand -----
         st.markdown(
             '<div class="sb-brand">Echo</div>'
             '<div class="sb-brand-sub">AI Assistant</div>'
@@ -267,15 +260,11 @@ def setup_page_layout():
             unsafe_allow_html=True,
         )
 
-        # ----- Flat, compact navigation -----
         for path, label, icon in NAV_ITEMS:
             st.page_link(path, label=label, icon=icon, use_container_width=True)
 
-        # ----- Footer: user chip + sign out (pinned to the bottom) -----
         user = get_current_user()
-        # Use a container to group footer elements and mark it for CSS targeting
         with st.container():
-            # Marker span for CSS :has() selector
             st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
 
             if user:
