@@ -20,14 +20,6 @@ supabase = init_supabase()
 
 st.markdown("""
 <style>
-/* LOCK SIDEBAR OPEN */
-[data-testid="stSidebarCollapsedControl"] {
-    display: none !important;
-}
-[data-testid="stSidebar"] {
-    display: block !important;
-}
-
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ---- Header: hide content, NOT the element (sidebar expand button lives there) ---- */
@@ -38,7 +30,7 @@ header[data-testid="stHeader"],
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
-    overflow: visible !important;   /* critical: keeps expand button visible */
+    overflow: visible !important;
 }
 
 [data-testid="stToolbar"],
@@ -358,21 +350,178 @@ div[data-testid="stPopover"] > button {
 </style>
 """, unsafe_allow_html=True)
 
+# ------------------------------------------------------------
+# LOGIN SCREEN — Enhanced Experience (A2 + B1-B6 + C1-C4, D1, D4)
+# ------------------------------------------------------------
 if not is_authenticated():
+    # Login-only CSS (scoped to the login card when rendered)
+    st.markdown("""
+    <style>
+    /* Card styling for the login container */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: #FFFFFF !important;
+        border: 1px solid rgba(0,0,0,0.06) !important;
+        border-radius: 12px !important;
+        border-top: 3px solid #D4AF37 !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+        padding: 2rem !important;
+        margin: 2rem auto !important;
+        max-width: 450px !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .login-brand {
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1A2B4C;
+        text-align: center;
+    }
+    .login-tagline {
+        font-size: 0.9rem;
+        color: #6C727A;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Inputs */
+    .stTextInput input {
+        background-color: #FAFAFA !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        border-radius: 6px !important;
+        font-size: 0.85rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+    .stTextInput input:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 2px rgba(212,175,55,0.15) !important;
+        background: #FFFFFF !important;
+    }
+
+    /* Button */
+    .stFormSubmitButton > button {
+        background-color: #111A2B !important;
+        color: #FFFFFF !important;
+        border: 1px solid #D4AF37 !important;
+        border-radius: 50px !important;
+        font-weight: 600 !important;
+        min-height: 36px !important;
+        width: 100% !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stFormSubmitButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+    /* Error / warning states */
+    .login-error {
+        background: #FDF0EF;
+        border-left: 3px solid #E74C3C;
+        color: #9B1C1C;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-top: 0.75rem;
+    }
+    .login-warning {
+        background: #FFFBEB;
+        border-left: 3px solid #F59E0B;
+        color: #92400E;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Checkboxes & links */
+    .login-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Read the show_password state BEFORE rendering the password input
+    show_pw = st.session_state.get("show_password", False)
+
+    # Center the card
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown('<p style="font-family:\'Playfair Display\',serif;font-style:italic;font-size:3rem;font-weight:600;color:#1A2B4C;text-align:center;">Project Echo</p>', unsafe_allow_html=True)
-        st.markdown('<p style="font-size:0.9rem;color:#6C727A;text-align:center;font-style:italic;">Sign in to access your dashboard</p>', unsafe_allow_html=True)
-        email = st.text_input("Email", value="")
-        password = st.text_input("Password", type="password", value="")
-        if st.button("Sign In", key="login_btn", use_container_width=True):
-            if login(email, password):
-                st.success("Logged in successfully!")
-                st.rerun()
-            else:
-                st.error("Invalid credentials.")
+        with st.container(border=True):
+            st.markdown('<div class="login-brand">Project Echo</div>', unsafe_allow_html=True)
+            st.markdown('<div class="login-tagline">Sign in to your AI assistant dashboard</div>', unsafe_allow_html=True)
+
+            with st.form("login_form", clear_on_submit=False):
+                username = st.text_input(
+                    "Username",
+                    key="login_username",
+                    placeholder="Enter your username",
+                    autocomplete="username"
+                )
+                password = st.text_input(
+                    "Password",
+                    type="text" if show_pw else "password",
+                    key="login_password",
+                    placeholder="Enter your password",
+                    autocomplete="current-password"
+                )
+                submitted = st.form_submit_button(
+                    "Sign In",
+                    use_container_width=True,
+                    type="primary"
+                )
+
+            # Options row (outside form to allow live password reveal)
+            opt_col1, opt_col2 = st.columns(2)
+            with opt_col1:
+                st.checkbox("Show password", key="show_password")
+            with opt_col2:
+                st.checkbox("Remember me", key="remember_me")
+
+            st.markdown(
+                '<div style="text-align:center; margin-top:0.75rem;">'
+                '<a href="#" style="color:#1A2B4C; text-decoration:underline; font-size:0.8rem;">Forgot password?</a>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+            # Handle form submission
+            if submitted:
+                errors = []
+                if not username.strip():
+                    errors.append("Username is required.")
+                if not password.strip():
+                    errors.append("Password is required.")
+                if errors:
+                    for e in errors:
+                        st.markdown(f'<div class="login-error">{e}</div>', unsafe_allow_html=True)
+                else:
+                    with st.spinner("Signing in..."):
+                        success, error_msg, user = login(username, password)
+                    if success:
+                        st.toast("Logged in successfully!", icon="✅")
+                        st.session_state["user"] = user
+                        st.rerun()
+                    else:
+                        st.markdown(f'<div class="login-error">{error_msg}</div>', unsafe_allow_html=True)
+
+            # Caps Lock warning (heuristic — see note below)
+            if password and password.isalpha() and password.isupper():
+                st.markdown(
+                    '<div class="login-warning">Caps Lock is on.</div>',
+                    unsafe_allow_html=True
+                )
+
     st.stop()
 
+# ------------------------------------------------------------
+# EXISTING DASHBOARD CODE — NO CHANGES AFTER THIS LINE
+# ------------------------------------------------------------
 setup_page_layout()
 
 if "selected_meeting_id" not in st.session_state:
