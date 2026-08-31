@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
 from datetime import date, timedelta, datetime
+import calendar
 import pandas as pd
 
 from utils.auth import require_auth
@@ -125,6 +126,118 @@ div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stButton"] > bu
     margin-bottom: 0.2rem !important;
     font-size: 1.1rem !important;
 }
+
+/* ===================== CALENDAR VIEW ===================== */
+/* Compact filter + nav controls */
+.cal-filter-row {
+    margin-bottom: 0.35rem !important;
+}
+.cal-filter-row [data-testid="stSelectbox"] > div,
+.cal-filter-row [data-testid="stMultiselect"] > div,
+.cal-filter-row [data-testid="stTextInput"] > div {
+    margin-bottom: 0 !important;
+}
+.cal-filter-row [data-testid="stBaseButton-secondary"] {
+    height: 28px !important;
+    min-height: 28px !important;
+    font-size: 0.72rem !important;
+    padding: 0 0.5rem !important;
+    border-radius: 6px !important;
+}
+.cal-filter-row [data-testid="stSegmentedControl"] button {
+    height: 28px !important;
+    min-height: 28px !important;
+    font-size: 0.72rem !important;
+    padding: 0 0.6rem !important;
+}
+.cal-filter-row [data-testid="stCheckbox"] label,
+.cal-filter-row [data-testid="stToggle"] label {
+    font-size: 0.72rem !important;
+    min-height: 24px !important;
+}
+
+/* Calendar grid */
+.cal-month-grid {
+    margin-top: 0.5rem;
+}
+.cal-month-cell {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    padding: 4px;
+    min-height: 82px;
+    margin-bottom: 4px;
+    transition: box-shadow 0.2s;
+}
+.cal-month-cell:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); }
+.cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
+.cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
+.cal-month-cell.today { border: 2px solid #D4AF37; }
+
+.cal-month-day-num {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1A2B4C;
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.cal-month-cell.weekend .cal-month-day-num { color: #FFFFFF; }
+
+.cal-month-add-btn {
+    background: transparent;
+    border: 1px dashed rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    font-size: 0.65rem;
+    color: #6C727A;
+    padding: 1px 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+}
+.cal-month-add-btn:hover { border-color: #D4AF37; color: #1A2B4C; }
+
+.cal-month-task {
+    background: #F8F7F4;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 0.65rem;
+    color: #2D2D2D;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+}
+.cal-month-task:hover { background: #E8E6E0; }
+.cal-month-task.meeting-action { background: rgba(99, 102, 241, 0.08); }
+.cal-month-cell.weekend .cal-month-task { background: rgba(255, 255, 255, 0.12); color: #FFF; }
+
+.cal-more { font-size: 0.6rem; color: #6C727A; padding-left: 2px; }
+
+/* Compact day/week header */
+.cal-slot-header {
+    text-align: center;
+    padding: 0.5rem 0;
+    margin-bottom: 0.6rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Unscheduled task list */
+.cal-unscheduled {
+    margin-top: 0.4rem;
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.5);
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -220,6 +333,124 @@ meetings = fetch_meeting_archives(limit=100)
 
 # Build a set of existing discussion point IDs to check for duplicates
 existing_discussion_ids = {t.get('discussion_point_id') for t in tasks if t.get('discussion_point_id')}
+
+# ===================== CALENDAR DATA HELPERS =====================
+def parse_calendar_date(raw_val):
+    """Parse a date string from either a task or meeting action item."""
+    if not raw_val:
+        return None
+    raw_s = str(raw_val).strip()[:10]
+    for fmt in ("%Y-%m-%d", "%B %d, %Y", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(raw_s, fmt).date()
+        except ValueError:
+            pass
+    return None
+
+def build_calendar_events():
+    """Merge tasks + meeting action items into a unified event list."""
+    events = []
+    today = date.today()
+
+    # Tasks from `tasks` table
+    for t in tasks:
+        due_date = parse_calendar_date(t.get("due_date"))
+        if not due_date:
+            continue
+        status = t.get("status", "todo")
+        if status == "done":
+            color = "#27AE60"
+        elif status == "in_progress":
+            color = "#2980B9"
+        else:
+            color = "#E67E22"
+        events.append({
+            "id": t.get("id"),
+            "title": t.get("title", "Untitled Task"),
+            "date": due_date,
+            "source": "task",
+            "status": status,
+            "assignee": t.get("assignee") or "",
+            "meeting_id": t.get("meeting_id"),
+            "meeting_label": "",
+            "description": t.get("description", ""),
+            "color": color,
+            "overdue": due_date < today and status != "done",
+        })
+
+    # Meeting action items from meeting_archives -> table_items
+    for m in meetings:
+        m_id = m.get("meeting_id")
+        client_name = m.get("client_name", "Meeting")
+        table_items = m.get("table_items") or []
+        for idx, item in enumerate(table_items):
+            action = item.get("Action Plan") or item.get("Discussion Points", "")
+            if not action:
+                continue
+            delivery_raw = item.get("Indicative Delivery Date", "")
+            due_date = parse_calendar_date(delivery_raw)
+            if not due_date:
+                continue
+            events.append({
+                "id": f"meeting_{m_id}_{idx}",
+                "title": f"[Action] {str(action)[:60]}",
+                "date": due_date,
+                "source": "meeting_action",
+                "status": "n/a",
+                "assignee": item.get("Person-in-charge", ""),
+                "meeting_id": m_id,
+                "meeting_label": client_name,
+                "description": item.get("Discussion Points", ""),
+                "color": "#6366F1",
+                "overdue": due_date < today,
+            })
+
+    return events
+
+def apply_calendar_filters(events, assignee_filter, status_filters, meeting_filter, start_date, end_date):
+    """Filter events by assignee, status, meeting search, and a date range."""
+    result = []
+    for e in events:
+        if not (start_date <= e["date"] <= end_date):
+            continue
+
+        # Assignee filter
+        if assignee_filter and assignee_filter != "All Assignees":
+            if assignee_filter == "Unassigned":
+                if e.get("assignee"):
+                    continue
+            elif assignee_filter in GROUP_OPTIONS:
+                if e.get("assignee") != assignee_filter:
+                    continue
+            elif assignee_filter in SPECIFIC_PEOPLE:
+                if assignee_filter not in (e.get("assignee") or ""):
+                    continue
+
+        # Status filter (only applies to tasks)
+        if e["source"] == "task" and status_filters and e["status"] not in status_filters:
+            continue
+
+        # Meeting search filter
+        if meeting_filter:
+            search_text = f"{e.get('meeting_id', '')} {e.get('meeting_label', '')}".lower()
+            if meeting_filter.lower() not in search_text:
+                continue
+
+        result.append(e)
+    return result
+
+def get_event_icon(evt):
+    """Return a native monochrome material icon for the event type."""
+    if evt["overdue"]:
+        return ":material/error:"
+    if evt["source"] == "meeting_action":
+        return ":material/event:"
+    status = evt.get("status", "todo")
+    if status == "done":
+        return ":material/check_circle:"
+    if status == "in_progress":
+        return ":material/play_circle:"
+    return ":material/radio_button_unchecked:"
 
 # 6.5 The View & Edit Modal
 @st.dialog("Task Details", width="medium")
@@ -317,12 +548,43 @@ def open_task_details():
         st.session_state.pop('selected_task', None)
         st.rerun()
 
+# Create Task Dialog (used from Calendar empty-day clicks)
+@st.dialog("Create Task", width="medium")
+def new_task_dialog():
+    prefill_date = st.session_state.get("cal_new_task_date")
+    
+    with st.form("cal_new_task_form", clear_on_submit=True):
+        title = st.text_input("Task Title *")
+        description = st.text_area("Description")
+        
+        assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="cal_dlg_assign_type")
+        
+        if assign_type_new == "Group":
+            assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="cal_dlg_group")
+        else:
+            assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="cal_dlg_individuals")
+            assignee = ", ".join(assignee_list)
+            
+        due_date = st.date_input("Due Date", value=prefill_date or date.today(), key="cal_dlg_due_date")
+        meeting_id = st.text_input("Linked Meeting ID (optional)", key="cal_dlg_meeting", help="Paste a meeting ID to link this task.")
+        
+        submitted = st.form_submit_button("Create Task")
+        if submitted:
+            if not title.strip():
+                st.error("Title is required.")
+            else:
+                success = add_task(title, description, assignee, due_date, meeting_id if meeting_id else None)
+                if success:
+                    st.session_state.pop("cal_new_task_date", None)
+                    st.success("Task created!")
+                    st.rerun()
+
 # 7. Page layout
 st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
 st.caption("Manage tasks derived from meeting action items or create new ones.")
 
 # 8. Tabs
-tab_board, tab_import, tab_new = st.tabs(["Board", "Import from Meeting", "New Task"])
+tab_board, tab_import, tab_new, tab_calendar = st.tabs(["Board", "Import from Meeting", "New Task", "Calendar"])
 
 # ---------------- Board Tab (ULTRA-COMPACT KANBAN) ----------------
 with tab_board:
@@ -427,10 +689,6 @@ with tab_board:
                 for task in done_tasks:
                     render_card(task)
 
-# Trigger Modal if session state is set
-if 'selected_task' in st.session_state:
-    open_task_details()
-
 # ---------------- Import from Meeting Tab (Anti-Duplicate Logic) ----------------
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
@@ -458,7 +716,6 @@ with tab_import:
                             st.write(f"**PIC:** {item.get('Person-in-charge', '')}")
                         
                         # Extract or Generate Discussion Point ID
-                        # Assumes your table_items has an 'id' field. If not, it falls back to a Hash.
                         dp_id = item.get('discussion_point_id') or item.get('id') or None
                         if not dp_id:
                             dp_id = generate_stable_id(
@@ -469,7 +726,6 @@ with tab_import:
 
                         # Check for duplicates
                         if dp_id in existing_discussion_ids:
-                            # If already imported, show a success badge and don't show buttons
                             with c5:
                                 st.success("✓ Already Imported")
                         else:
@@ -483,10 +739,7 @@ with tab_import:
                                     due_date_str = item.get("Indicative Delivery Date", "")
                                     due_date = None
                                     if due_date_str:
-                                        try:
-                                            due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
-                                        except:
-                                            pass
+                                        due_date = parse_calendar_date(due_date_str)
                                     success = add_task(title, description, assignee, due_date, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
                                     if success:
                                         st.success("Task added!")
@@ -494,7 +747,7 @@ with tab_import:
             else:
                 st.info("This meeting has no action items.")
 
-# ---------------- New Task Tab (Unchanged) ----------------
+# ---------------- New Task Tab ----------------
 with tab_new:
     st.markdown("#### Create New Task")
     with st.form("new_task_form", clear_on_submit=True):
@@ -521,3 +774,340 @@ with tab_new:
                 if success:
                     st.success("Task created!")
                     st.rerun()
+
+# ---------------- Calendar Tab ----------------
+with tab_calendar:
+    # Initialize calendar session state
+    if "tasks_cal_focus_date" not in st.session_state:
+        st.session_state["tasks_cal_focus_date"] = date.today()
+    if "tasks_cal_view" not in st.session_state:
+        st.session_state["tasks_cal_view"] = "Month"
+
+    focus = st.session_state["tasks_cal_focus_date"]
+
+    # ========== COMPACT FILTER ROW ==========
+    filter_cols = st.columns([2.3, 2.7, 2.5, 1.7, 2.0], gap="small")
+
+    with filter_cols[0]:
+        assignee_options = ["All Assignees", "Unassigned"] + GROUP_OPTIONS + SPECIFIC_PEOPLE
+        cal_assignee = st.selectbox(
+            "Assignee",
+            assignee_options,
+            key="cal_assignee_filter",
+            label_visibility="collapsed"
+        )
+
+    with filter_cols[1]:
+        status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
+        cal_status = st.multiselect(
+            "Status",
+            options=["todo", "in_progress", "done"],
+            default=["todo", "in_progress", "done"],
+            format_func=lambda x: status_labels[x],
+            key="cal_status_filter",
+            label_visibility="collapsed"
+        )
+
+    with filter_cols[2]:
+        cal_meeting = st.text_input(
+            "Meeting",
+            placeholder="Linked meeting...",
+            key="cal_meeting_filter",
+            label_visibility="collapsed"
+        )
+
+    with filter_cols[3]:
+        unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
+        show_unscheduled = st.toggle(
+            f"Unscheduled ({len(unscheduled_tasks)})",
+            value=False,
+            key="cal_show_unscheduled"
+        )
+
+    with filter_cols[4]:
+        cal_view = st.segmented_control(
+            "View",
+            options=["Day", "Week", "Month"],
+            default="Month",
+            key="tasks_cal_view",
+            label_visibility="collapsed"
+        )
+
+    # Unscheduled task list (toggled)
+    if show_unscheduled:
+        with st.container(border=False):
+            st.markdown('<div class="cal-unscheduled">', unsafe_allow_html=True)
+            st.markdown("**Unscheduled Tasks**")
+            if not unscheduled_tasks:
+                st.caption("No unscheduled tasks.")
+            else:
+                for ut in unscheduled_tasks:
+                    st.markdown(
+                        f"- {ut.get('title')} — *{ut.get('assignee') or 'Unassigned'}* "
+                        f"`{ut.get('due_date') or 'No due date'}`"
+                    )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # ========== DATE NAVIGATION ==========
+    nav_cols = st.columns([1, 1, 1.6, 1, 4.5], gap="small")
+
+    with nav_cols[0]:
+        if st.button("◀", key="cal_prev", help="Previous", use_container_width=True):
+            if cal_view == "Day":
+                st.session_state["tasks_cal_focus_date"] = focus - timedelta(days=1)
+            elif cal_view == "Week":
+                st.session_state["tasks_cal_focus_date"] = focus - timedelta(days=7)
+            else:
+                if focus.month == 1:
+                    st.session_state["tasks_cal_focus_date"] = focus.replace(year=focus.year - 1, month=12)
+                else:
+                    st.session_state["tasks_cal_focus_date"] = focus.replace(month=focus.month - 1)
+            st.rerun()
+
+    with nav_cols[1]:
+        if st.button("Today", key="cal_today", help="Today", use_container_width=True):
+            st.session_state["tasks_cal_focus_date"] = date.today()
+            st.rerun()
+
+    with nav_cols[2]:
+        if st.button("▶", key="cal_next", help="Next", use_container_width=True):
+            if cal_view == "Day":
+                st.session_state["tasks_cal_focus_date"] = focus + timedelta(days=1)
+            elif cal_view == "Week":
+                st.session_state["tasks_cal_focus_date"] = focus + timedelta(days=7)
+            else:
+                if focus.month == 12:
+                    st.session_state["tasks_cal_focus_date"] = focus.replace(year=focus.year + 1, month=1)
+                else:
+                    st.session_state["tasks_cal_focus_date"] = focus.replace(month=focus.month + 1)
+            st.rerun()
+
+    with nav_cols[3]:
+        # Period label
+        if cal_view == "Day":
+            period_label = focus.strftime("%A, %B %d, %Y")
+        elif cal_view == "Week":
+            if focus.weekday() == 6:
+                week_start = focus
+            else:
+                week_start = focus - timedelta(days=focus.weekday() + 1)
+            week_end = week_start + timedelta(days=6)
+            period_label = f"{week_start.strftime('%b %d')} – {week_end.strftime('%b %d, %Y')}"
+        else:
+            period_label = focus.strftime("%B %Y")
+        st.markdown(
+            f"<p style='font-size:0.8rem; color:#1A2B4C; font-weight:600; margin:0; padding-top:0.3rem;'>{period_label}</p>",
+            unsafe_allow_html=True
+        )
+
+    # ========== COMPUTE DATE RANGE ==========
+    if cal_view == "Day":
+        start_date = focus
+        end_date = focus
+    elif cal_view == "Week":
+        if focus.weekday() == 6:
+            week_start = focus
+        else:
+            week_start = focus - timedelta(days=focus.weekday() + 1)
+        start_date = week_start
+        end_date = week_start + timedelta(days=6)
+    else:
+        start_date = focus.replace(day=1)
+        _, last_day = calendar.monthrange(focus.year, focus.month)
+        end_date = focus.replace(day=last_day)
+
+    # ========== BUILD & FILTER EVENTS ==========
+    all_calendar_events = build_calendar_events()
+    filtered_events = apply_calendar_filters(
+        all_calendar_events,
+        assignee_filter=cal_assignee,
+        status_filters=cal_status,
+        meeting_filter=cal_meeting.strip(),
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    # Group by date string
+    events_by_date = {}
+    for evt in filtered_events:
+        d_str = evt["date"].strftime("%Y-%m-%d")
+        events_by_date.setdefault(d_str, []).append(evt)
+
+    # ========== RENDER CALENDAR ==========
+    # ----- DAY VIEW -----
+    if cal_view == "Day":
+        day_str = focus.strftime("%Y-%m-%d")
+        day_events = events_by_date.get(day_str, [])
+
+        if day_events:
+            for evt in day_events:
+                icon = get_event_icon(evt)
+                if st.button(
+                    evt["title"],
+                    key=f"cal_d_{evt['id']}_{day_str}",
+                    icon=icon,
+                    use_container_width=True
+                ):
+                    st.session_state["cal_clicked_event"] = evt
+                    st.session_state["cal_open_event"] = True
+        else:
+            st.caption("No events scheduled on this day.")
+
+        if st.button("+ Add Task", key=f"cal_add_day_{day_str}", use_container_width=True):
+            st.session_state["cal_new_task_date"] = focus
+            st.session_state["cal_open_new_dialog"] = True
+
+    # ----- WEEK VIEW -----
+    elif cal_view == "Week":
+        if focus.weekday() == 6:
+            week_start = focus
+        else:
+            week_start = focus - timedelta(days=focus.weekday() + 1)
+
+        day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        week_cols = st.columns(7, gap="small")
+
+        for i in range(7):
+            day = week_start + timedelta(days=i)
+            day_str = day.strftime("%Y-%m-%d")
+            is_weekend = (i == 0 or i == 6)
+            is_today = (day == date.today())
+
+            with week_cols[i]:
+                if is_today:
+                    bg_color = "#D4AF37"
+                    text_color = "#111A2B"
+                elif is_weekend:
+                    bg_color = "#111A2B"
+                    text_color = "#FFFFFF"
+                else:
+                    bg_color = "#FFFFFF"
+                    text_color = "#1A2B4C"
+                border = "none" if is_today else "1px solid rgba(0,0,0,0.08)"
+
+                st.markdown(
+                    f"<div class='cal-slot-header' style='background:{bg_color}; color:{text_color}; border:{border};'>"
+                    f"<div style='font-size:0.65rem; font-weight:700; text-transform:uppercase; opacity:0.9;'>{day_names[i]}</div>"
+                    f"<div style='font-size:1.1rem; font-family:Playfair Display, serif; font-weight:600;'>{day.day}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+
+                day_events = events_by_date.get(day_str, [])
+                if day_events:
+                    for evt in day_events:
+                        icon = get_event_icon(evt)
+                        if st.button(
+                            evt["title"],
+                            key=f"cal_w_{day_str}_{evt['id']}",
+                            icon=icon,
+                            use_container_width=True
+                        ):
+                            st.session_state["cal_clicked_event"] = evt
+                            st.session_state["cal_open_event"] = True
+                else:
+                    if st.button(
+                        "",
+                        key=f"cal_add_{day_str}",
+                        icon=":material/add:",
+                        use_container_width=True,
+                        help="Add task for this day"
+                    ):
+                        st.session_state["cal_new_task_date"] = day
+                        st.session_state["cal_open_new_dialog"] = True
+
+    # ----- MONTH VIEW -----
+    else:
+        cal = calendar.Calendar(firstweekday=6)
+        month_days = cal.monthdatescalendar(focus.year, focus.month)
+        day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+        header_cols = st.columns(7, gap="small")
+        for i, name in enumerate(day_names):
+            with header_cols[i]:
+                is_weekend = (i == 0 or i == 6)
+                header_style = (
+                    "background:#111A2B; color:#FFFFFF; border-radius:6px 6px 0 0;"
+                    if is_weekend
+                    else "background:#FFFFFF; color:#1A2B4C;"
+                )
+                st.markdown(
+                    f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
+                    f"text-transform:uppercase; {header_style}'>{name}</div>",
+                    unsafe_allow_html=True
+                )
+
+        for week in month_days:
+            week_cols = st.columns(7, gap="small")
+            for i, day_val in enumerate(week):
+                with week_cols[i]:
+                    is_weekend = (i == 0 or i == 6)
+
+                    if day_val.month != focus.month:
+                        st.markdown(
+                            "<div style='height:82px; background:rgba(0,0,0,0.02); border-radius:6px;'></div>",
+                            unsafe_allow_html=True
+                        )
+                        continue
+
+                    day_str = day_val.strftime("%Y-%m-%d")
+                    day_events = events_by_date.get(day_str, [])
+                    is_today = (day_val == date.today())
+
+                    cell_class = "cal-month-cell"
+                    if is_today:
+                        cell_class += " today"
+                    if is_weekend:
+                        cell_class += " weekend"
+
+                    st.markdown(f'<div class="{cell_class}" style="min-height:82px;">', unsafe_allow_html=True)
+                    st.markdown(f"<div class='cal-month-day-num'>{day_val.day}</div>", unsafe_allow_html=True)
+
+                    for evt in day_events[:3]:
+                        icon = get_event_icon(evt)
+                        if st.button(
+                            evt["title"],
+                            key=f"cal_m_{day_str}_{evt['id']}",
+                            icon=icon,
+                            use_container_width=True
+                        ):
+                            st.session_state["cal_clicked_event"] = evt
+                            st.session_state["cal_open_event"] = True
+
+                    if len(day_events) > 3:
+                        st.markdown(f"<div class='cal-more'>+{len(day_events) - 3} more</div>", unsafe_allow_html=True)
+
+                    if not day_events:
+                        if st.button(
+                            "",
+                            key=f"cal_add_{day_str}",
+                            icon=":material/add:",
+                            use_container_width=True,
+                            help="Add task for this day"
+                        ):
+                            st.session_state["cal_new_task_date"] = day_val
+                            st.session_state["cal_open_new_dialog"] = True
+
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ========== HANDLE CALENDAR CLICKS ==========
+    # Open Event (Task detail or Meeting detail)
+    if st.session_state.pop("cal_open_event", False):
+        evt = st.session_state.pop("cal_clicked_event", None)
+        if evt:
+            if evt["source"] == "task":
+                task = next((t for t in tasks if str(t.get("id")) == str(evt["id"])), None)
+                if task:
+                    st.session_state["selected_task"] = task
+                    st.rerun()
+            else:
+                st.session_state["selected_meeting_id"] = evt["meeting_id"]
+                st.switch_page("pages/2_meeting_details.py")
+
+    # Open New Task dialog
+    if st.session_state.pop("cal_open_new_dialog", False):
+        new_task_dialog()
+
+# Trigger Modal if session state is set
+if 'selected_task' in st.session_state:
+    open_task_details()
