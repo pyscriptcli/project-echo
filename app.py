@@ -351,10 +351,9 @@ div[data-testid="stPopover"] > button {
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# LOGIN SCREEN — Enhanced Experience (A2 + B1-B6 + C1-C4, D1, D4)
+# LOGIN SCREEN (A2 + B-series + C1 + D1)
 # ------------------------------------------------------------
 if not is_authenticated():
-    # Login-only CSS (scoped to the login card when rendered)
     st.markdown("""
     <style>
     /* Card styling for the login container */
@@ -368,6 +367,21 @@ if not is_authenticated():
         margin: 2rem auto !important;
         max-width: 450px !important;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .login-icon {
+        text-align: center;
+        margin-bottom: 0.5rem;
+        color: #1A2B4C;
+    }
+    .login-icon svg {
+        width: 56px;
+        height: 56px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 
     .login-brand {
@@ -434,27 +448,25 @@ if not is_authenticated():
         font-size: 0.8rem;
         margin-top: 0.5rem;
     }
-
-    /* Checkboxes & links */
-    .login-options {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1rem;
-        font-size: 0.8rem;
-    }
     </style>
     """, unsafe_allow_html=True)
 
-    # Read the show_password state BEFORE rendering the password input
-    show_pw = st.session_state.get("show_password", False)
-
-    # Center the card
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         with st.container(border=True):
-            st.markdown('<div class="login-brand">Project Echo</div>', unsafe_allow_html=True)
-            st.markdown('<div class="login-tagline">Sign in to your AI assistant dashboard</div>', unsafe_allow_html=True)
+            # Monochrome SVG icon
+            st.markdown(
+                '<div class="login-icon">'
+                '<svg viewBox="0 0 24 24" aria-hidden="true">'
+                '<path d="M12 3a9 9 0 0 0 0 18" />'
+                '<path d="M12 7a5 5 0 0 0 0 10" />'
+                '<path d="M12 11a1 1 0 0 0 0 2" />'
+                '</svg>'
+                '</div>'
+                '<div class="login-brand">Project Echo</div>'
+                '<div class="login-tagline">Sign in to your AI Assistant</div>',
+                unsafe_allow_html=True
+            )
 
             with st.form("login_form", clear_on_submit=False):
                 username = st.text_input(
@@ -465,7 +477,7 @@ if not is_authenticated():
                 )
                 password = st.text_input(
                     "Password",
-                    type="text" if show_pw else "password",
+                    type="password",
                     key="login_password",
                     placeholder="Enter your password",
                     autocomplete="current-password"
@@ -476,21 +488,6 @@ if not is_authenticated():
                     type="primary"
                 )
 
-            # Options row (outside form to allow live password reveal)
-            opt_col1, opt_col2 = st.columns(2)
-            with opt_col1:
-                st.checkbox("Show password", key="show_password")
-            with opt_col2:
-                st.checkbox("Remember me", key="remember_me")
-
-            st.markdown(
-                '<div style="text-align:center; margin-top:0.75rem;">'
-                '<a href="#" style="color:#1A2B4C; text-decoration:underline; font-size:0.8rem;">Forgot password?</a>'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            # Handle form submission
             if submitted:
                 errors = []
                 if not username.strip():
@@ -510,7 +507,7 @@ if not is_authenticated():
                     else:
                         st.markdown(f'<div class="login-error">{error_msg}</div>', unsafe_allow_html=True)
 
-            # Caps Lock warning (heuristic — see note below)
+            # Caps Lock heuristic warning (optional; purely cosmetic)
             if password and password.isalpha() and password.isupper():
                 st.markdown(
                     '<div class="login-warning">Caps Lock is on.</div>',
@@ -520,7 +517,7 @@ if not is_authenticated():
     st.stop()
 
 # ------------------------------------------------------------
-# EXISTING DASHBOARD CODE — NO CHANGES AFTER THIS LINE
+# EXISTING DASHBOARD CODE — UNCHANGED
 # ------------------------------------------------------------
 setup_page_layout()
 
