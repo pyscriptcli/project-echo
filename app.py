@@ -454,20 +454,7 @@ if not is_authenticated():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         with st.container(border=True):
-            # Monochrome SVG icon
-            st.markdown(
-                '<div class="login-icon">'
-                '<svg viewBox="0 0 24 24" aria-hidden="true">'
-                '<path d="M12 3a9 9 0 0 0 0 18" />'
-                '<path d="M12 7a5 5 0 0 0 0 10" />'
-                '<path d="M12 11a1 1 0 0 0 0 2" />'
-                '</svg>'
-                '</div>'
-                '<div class="login-brand">Project Echo</div>'
-                '<div class="login-tagline">Sign in to your AI Assistant</div>',
-                unsafe_allow_html=True
-            )
-
+            # Removed Project Echo logo and branding
             with st.form("login_form", clear_on_submit=False):
                 username = st.text_input(
                     "Username",
@@ -501,7 +488,7 @@ if not is_authenticated():
                     with st.spinner("Signing in..."):
                         success, error_msg, user = login(username, password)
                     if success:
-                        st.toast("Logged in successfully!", icon="✅")
+                        # Removed login success toast
                         st.session_state["user"] = user
                         st.rerun()
                     else:
