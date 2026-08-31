@@ -454,7 +454,13 @@ if not is_authenticated():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         with st.container(border=True):
-            # Removed Project Echo logo and branding
+            # Display Project Echo text and tagline (logo removed)
+            st.markdown(
+                '<div class="login-brand">Project Echo</div>'
+                '<div class="login-tagline">Sign in to your AI Assistant</div>',
+                unsafe_allow_html=True
+            )
+
             with st.form("login_form", clear_on_submit=False):
                 username = st.text_input(
                     "Username",
@@ -488,7 +494,6 @@ if not is_authenticated():
                     with st.spinner("Signing in..."):
                         success, error_msg, user = login(username, password)
                     if success:
-                        # Removed login success toast
                         st.session_state["user"] = user
                         st.rerun()
                     else:
