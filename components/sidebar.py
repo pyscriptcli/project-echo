@@ -6,9 +6,8 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Brand block: "Echo" in Cormorant Garamond italic
 - Compact nav via st.page_link with material icons
 - Active page: gold left border + tinted background (via aria-current)
-- Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
-- Non-collapsible: collapse/expand controls are hidden AND the sidebar
-  is force-locked open via CSS, making collapse visually impossible.
+- Footer pinned to bottom: user chip (initials + username) + small deep charcoal Sign Out with gold accent
+- Non-collapsible: collapse/expand controls are hidden AND the sidebar is force-locked open
 - Noticeable drop shadow for separation from main content
 - Subtle deep charcoal & gold gradient overlay (opacity 5%)
 """
@@ -17,7 +16,6 @@ import re
 import streamlit as st
 
 from utils.auth import get_current_user, logout
-
 
 # ---------------------------------------------------------------------------
 # Navigation model
@@ -29,7 +27,6 @@ NAV_ITEMS = [
     ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
     ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
 ]
-
 
 SIDEBAR_CSS = """
 <style>
@@ -60,14 +57,10 @@ footer {
 [data-testid="stSidebarNav"] { display: none !important; }
 
 /* ---------------- Collapse prevention: hide ALL collapse/expand controls ---------------- */
-/* Catch the collapse button in any version — it's a <button> wrapping a material icon */
 section[data-testid="stSidebar"] button:has(span[data-testid="stIconMaterial"]),
-/* Also hide the sidebar header's buttons (1.62 places the control there) */
 [data-testid="stSidebarHeader"] button,
-/* Hide the collapsed-state expand control (any version) */
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="collapsedControl"],
-/* Kill the resize drag-handle entirely (1.62+) */
 [data-testid="stSidebarResizeHandle"],
 [data-testid="stSidebarResizeControl"] {
     display: none !important;
@@ -80,8 +73,6 @@ section[data-testid="stSidebar"] button:has(span[data-testid="stIconMaterial"]),
 }
 
 /* ---------------- Force-open lock: sidebar cannot visually collapse ---------------- */
-/* Even if Streamlit's JS sets the collapsed state, these !important rules
-   override both emotion classes and inline styles. */
 section[data-testid="stSidebar"] {
     display: flex !important;
     flex-direction: column !important;
@@ -185,11 +176,9 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page
 }
 
 /* ---------------- Footer (pinned to bottom, separate container) ---------------- */
-/* The footer container is marked with .sb-footer-scope and is placed in its own
-   st.container() to ensure it sits at the bottom of the flex column. */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
     margin-top: auto !important;
-    flex-shrink: 0 !important;  /* Prevent shrinking */
+    flex-shrink: 0 !important;
 }
 .sb-footer-scope { display: none !important; }
 
@@ -232,23 +221,25 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     text-overflow: ellipsis;
 }
 
-/* Sign Out — gold-bordered pill, full width */
+/* ---------------- Sign Out — small deep charcoal with gold accent ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: transparent !important;
-    color: #8C6D23 !important;
-    border: 1px solid #D4AF37 !important;
+    background: #111A2B !important;               /* deep charcoal background */
+    color: #D4AF37 !important;                    /* gold text */
+    border: 1px solid #D4AF37 !important;         /* gold border */
     border-radius: 999px !important;
-    height: 32px !important;
-    min-height: 32px !important;
+    height: 28px !important;                      /* reduced height for “small” */
+    min-height: 28px !important;
+    padding: 0 12px !important;                   /* compact padding */
     font-family: 'Inter', sans-serif !important;
-    font-size: 0.74rem !important;
+    font-size: 0.72rem !important;                /* slightly smaller text */
     font-weight: 600 !important;
     box-shadow: none !important;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: rgba(212, 175, 55, 0.14) !important;
-    color: #6B5313 !important;
+    background: #1A2B4C !important;               /* lighter charcoal on hover */
+    color: #E6C44D !important;                    /* brighter gold */
+    border-color: #E6C44D !important;
 }
 </style>
 """
