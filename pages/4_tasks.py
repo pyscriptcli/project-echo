@@ -61,7 +61,6 @@ html, body, [class*="css"] {
     padding-left: 1.5rem !important;
 }
 
-/* Design tokens */
 :root {
     --bg: #F3EFE6;
     --surface: #FFFFFF;
@@ -88,7 +87,6 @@ h3 {
 
 /* ===================== GLOBAL CONTROLS ===================== */
 .stButton > button,
-.stDownloadButton > button,
 [data-testid="stBaseButton-secondary"] {
     height: var(--control-height) !important;
     min-height: var(--control-height) !important;
@@ -263,7 +261,6 @@ h3 {
     border-color: rgba(212, 175, 55, 0.25);
 }
 
-/* Card actions */
 .card-actions {
     margin-top: 0.25rem;
 }
@@ -291,6 +288,7 @@ h3 {
     padding: 0 !important;
 }
 
+/* Calendar month cell container */
 .cal-month-cell {
     background: var(--surface);
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -318,7 +316,8 @@ h3 {
 }
 .cal-month-cell.weekend .cal-month-day-num { color: #fff; }
 
-.cal-event-tag {
+/* Event buttons inside month cells — minimal tag style */
+.cal-month-cell button {
     background: #F6F5F2;
     border-radius: 3px;
     font-size: 0.62rem;
@@ -331,15 +330,18 @@ h3 {
     transition: background 0.15s ease;
     display: block;
     width: 100%;
+    height: auto !important;
+    min-height: 18px !important;
+    border: 1px solid transparent !important;
 }
-.cal-event-tag.overdue { border-left: 2px solid var(--danger); }
-.cal-event-tag.meeting-action { background: rgba(99, 102, 241, 0.1); }
-.cal-event-tag .initials {
-    font-weight: 700;
-    margin-right: 2px;
+.cal-month-cell button:hover {
+    background: #EAE9E4 !important;
+    border-color: rgba(212, 175, 55, 0.3) !important;
 }
-.cal-month-cell.weekend .cal-event-tag { background: rgba(255,255,255,0.1); color: #fff; }
-.cal-month-cell.weekend .cal-event-tag .initials { color: var(--gold); }
+.cal-month-cell button.overdue { border-left: 2px solid var(--danger) !important; }
+.cal-month-cell button.meeting-action { background: rgba(99, 102, 241, 0.1); }
+.cal-month-cell.weekend button { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.cal-month-cell.weekend button .initials { color: var(--gold); }
 
 .cal-more {
     font-size: 0.58rem;
@@ -401,7 +403,6 @@ def format_mm_dd_yyyy(d):
 def get_initials(name_str):
     if not name_str:
         return "—"
-    # For group names, use first letters of each word
     parts = name_str.replace(",", " ").split()
     initials = "".join([p[0].upper() for p in parts if p][:2])
     return initials or "—"
@@ -546,26 +547,36 @@ def build_calendar_events():
     return events
 
 
-def apply_calendar_filters(events, assignee_filter, status_filters, meeting_filter, start_date, end_date):
+def apply_calendar_filters(events, assignee_filters, status_filters, meeting_filter, start_date, end_date):
     result = []
     for e in events:
         if not (start_date <= e["date"] <= end_date):
             continue
 
-        if assignee_filter and assignee_filter != "All Assignees":
-            if assignee_filter == "Unassigned":
+        # Assignee filter (multiselect)
+        if assignee_filters and "All Assignees" not in assignee_filters:
+            if "Unassigned" in assignee_filters:
                 if e.get("assignee"):
                     continue
-            elif assignee_filter in GROUP_OPTIONS:
-                if e.get("assignee") != assignee_filter:
-                    continue
-            elif assignee_filter in SPECIFIC_PEOPLE:
-                if assignee_filter not in (e.get("assignee") or ""):
+            else:
+                match = False
+                for f in assignee_filters:
+                    if f in GROUP_OPTIONS:
+                        if e.get("assignee") == f:
+                            match = True
+                            break
+                    elif f in SPECIFIC_PEOPLE:
+                        if f in (e.get("assignee") or ""):
+                            match = True
+                            break
+                if not match:
                     continue
 
+        # Status filter (only applies to tasks)
         if e["source"] == "task" and status_filters and e["status"] not in status_filters:
             continue
 
+        # Meeting search filter
         if meeting_filter:
             search_text = f"{e.get('meeting_id', '')} {e.get('meeting_label', '')}".lower()
             if meeting_filter.lower() not in search_text:
@@ -612,7 +623,6 @@ def open_task_details():
     meeting_id = task.get('meeting_id')
     meeting_details = next((m for m in meetings if m.get('meeting_id') == meeting_id), None)
 
-    # Two-column layout: left details, right origin
     left_col, right_col = st.columns([1.3, 1])
 
     with left_col:
@@ -773,7 +783,6 @@ with tab_board:
             due_dt = parse_calendar_date(task.get('due_date'))
             due_display, due_class = get_due_chip_info(due_dt, status_class)
 
-            # Build the HTML card (avatar + due chip)
             assignee_initials = get_initials(task.get('assignee', '')) if task.get('assignee') else "—"
 
             st.markdown(f"""
@@ -790,7 +799,6 @@ with tab_board:
                 </div>
             """, unsafe_allow_html=True)
 
-            # Card actions: status dropdown + view/delete (compact)
             c_status, c_actions = st.columns([1.7, 1])
             with c_status:
                 current_index = status_options.index(task['status']) if task['status'] in status_options else 0
@@ -957,18 +965,21 @@ with tab_calendar:
     if "tasks_cal_focus_date" not in st.session_state:
         st.session_state["tasks_cal_focus_date"] = date.today()
 
-    # ===== COMPACT FILTER ROW: Assignee visible | Date visible | Filter icon (status+meeting) | View toggle =====
-    filter_cols = st.columns([2.2, 1.6, 0.7, 1.8], gap="small")
+    # ===== COMPACT FILTER ROW =====
+    filter_cols = st.columns([3.0, 1.6, 0.7, 1.8], gap="small")
 
+    # Assignee: multiselect (visible text)
     with filter_cols[0]:
         assignee_options = ["All Assignees", "Unassigned"] + GROUP_OPTIONS + SPECIFIC_PEOPLE
-        cal_assignee = st.selectbox(
+        cal_assignee = st.multiselect(
             "Assignee",
-            assignee_options,
+            options=assignee_options,
+            default=["All Assignees"],
             key="cal_assignee_filter",
             label_visibility="collapsed"
         )
 
+    # Date picker (visible text)
     with filter_cols[1]:
         picked_date = st.date_input(
             "Date",
@@ -981,7 +992,7 @@ with tab_calendar:
 
     focus = st.session_state["tasks_cal_focus_date"]
 
-    # Filter icon: status + meeting + unscheduled in a popover
+    # Filter icon: status + meeting + unscheduled
     with filter_cols[2]:
         with st.popover("", icon=":material/filter_list:", help="Filters"):
             st.markdown("**Status**")
@@ -1010,6 +1021,7 @@ with tab_calendar:
                 key="cal_show_unscheduled"
             )
 
+    # View toggle
     with filter_cols[3]:
         cal_view = st.segmented_control(
             "View",
@@ -1019,8 +1031,8 @@ with tab_calendar:
             label_visibility="collapsed"
         )
 
-    # Unscheduled list (if toggled)
-    if 'show_unscheduled' in st.session_state and st.session_state["cal_show_unscheduled"]:
+    # Unscheduled list
+    if "cal_show_unscheduled" in st.session_state and st.session_state["cal_show_unscheduled"]:
         unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
         with st.container(border=False):
             st.markdown('<div class="cal-unscheduled">', unsafe_allow_html=True)
@@ -1054,7 +1066,6 @@ with tab_calendar:
     # ===== BUILD EVENTS =====
     all_events = build_calendar_events()
 
-    # Status/meeting filters are inside popover; default to all if not set
     if "cal_status_filter" not in st.session_state:
         st.session_state["cal_status_filter"] = ["todo", "in_progress", "done"]
     if "cal_meeting_filter" not in st.session_state:
@@ -1062,7 +1073,7 @@ with tab_calendar:
 
     filtered = apply_calendar_filters(
         all_events,
-        assignee_filter=cal_assignee,
+        assignee_filters=cal_assignee,
         status_filters=st.session_state["cal_status_filter"],
         meeting_filter=st.session_state["cal_meeting_filter"].strip(),
         start_date=start_date,
@@ -1097,7 +1108,7 @@ with tab_calendar:
             st.session_state["cal_new_task_date"] = focus
             st.session_state["cal_open_new_dialog"] = True
 
-    # Week view (agenda per day, time-friendly labels)
+    # Week view (agenda per day)
     elif cal_view == "Week":
         if focus.weekday() == 6:
             week_start = focus
@@ -1180,21 +1191,20 @@ with tab_calendar:
                     st.markdown(f"<div class='cal-month-day-num'>{day_val.day}</div>", unsafe_allow_html=True)
 
                     for evt in day_events[:3]:
-                        initials = get_initials(evt.get("assignee", ""))
-                        tag_class = "cal-event-tag"
-                        if evt["overdue"]: tag_class += " overdue"
-                        if evt["source"] == "meeting_action": tag_class += " meeting-action"
-
-                        # Tooltip via native title attribute
+                        icon = get_event_icon(evt)
+                        label = get_event_label(evt)
                         tooltip = get_event_tooltip(evt)
 
-                        st.markdown(
-                            f'<button class="{tag_class}" title="{tooltip}" '
-                            f'onclick="window.streamlit.setComponentValue(\'cal_click_{day_str}_{evt["id"]}\')">'
-                            f'<span class="initials">{initials}</span> {evt["title"]}'
-                            f'</button>',
-                            unsafe_allow_html=True
-                        )
+                        # Add CSS class if overdue / meeting action
+                        evt_class = ""
+                        if evt["overdue"]: evt_class = " overdue"
+                        if evt["source"] == "meeting_action": evt_class += " meeting-action"
+
+                        # We use st.button; wrap it so we can add a class via CSS? 
+                        # Instead we'll rely on the generic styling plus a key.
+                        if st.button(label, key=f"cal_m_{day_str}_{evt['id']}", icon=icon, help=tooltip, use_container_width=True):
+                            st.session_state["cal_clicked_event"] = evt
+                            st.session_state["cal_open_event"] = True
 
                     if len(day_events) > 3:
                         st.markdown(f"<div class='cal-more'>+{len(day_events) - 3} more</div>", unsafe_allow_html=True)
