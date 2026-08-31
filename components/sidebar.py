@@ -9,7 +9,7 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
 - Non-collapsible: native collapse/expand chevrons are hidden,
   the sidebar remains open at all times.
-- Drop shadow on the entire sidebar for clear separation from main content.
+- Noticeable drop shadow on the entire sidebar for clear separation.
 
 Design rules followed to avoid breaking Streamlit internals:
 - No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
@@ -64,7 +64,17 @@ footer {
 /* Hide Streamlit's auto-generated page list — we render our own nav */
 [data-testid="stSidebarNav"] { display: none !important; }
 
-/* Hide the native collapse/expand chevrons — sidebar stays open */
+/* ---------------- Non‑collapsible sidebar ---------------- */
+/* Hide the entire sidebar header (contains collapse button) */
+div[data-testid="stSidebarHeader"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;  /* ensure no click target */
+}
+
+/* Hide the native collapse/expand buttons (fallback) */
 button[data-testid="stSidebarCollapseButton"],
 button[data-testid="stSidebarCollapsedControl"] {
     display: none !important;
@@ -73,6 +83,15 @@ button[data-testid="stSidebarCollapsedControl"] {
     width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Prevent any residual collapse icon from being clickable */
+section[data-testid="stSidebar"] [data-testid="stIconMaterial"] {
+    pointer-events: none !important;
+}
+section[data-testid="stSidebar"] button:has([data-testid="stIconMaterial"]) {
+    pointer-events: none !important;
 }
 
 /* ---------------- Main content breathing room ---------------- */
