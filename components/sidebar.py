@@ -2,7 +2,8 @@
 """
 Project Echo — Global Sidebar Navigation (Streamlit 1.62 compatible)
 
-Native Streamlit sidebar + custom compact navigation.
+Native Streamlit sidebar + custom branding & compact navigation.
+- Brand block: "Echo" in Cormorant Garamond italic
 - Compact nav via st.page_link with material icons
 - Active page: gold left border + tinted background (via aria-current)
 - Footer pinned to bottom: user chip (initials + username) + small deep charcoal Sign Out with gold accent
@@ -118,6 +119,31 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     gap: 0.25rem !important;
 }
 
+/* ---------------- Brand block ---------------- */
+.sb-brand {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 2rem;
+    line-height: 1;
+    color: #1A2B4C;
+    letter-spacing: 0.01em;
+}
+.sb-brand-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #6C727A;
+    margin-top: 3px;
+}
+.sb-brand-rule {
+    height: 1px;
+    margin: 0.85rem 0 0.9rem 0;
+    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
+}
+
 /* ---------------- Nav links (st.page_link) ---------------- */
 section[data-testid="stSidebar"] [data-testid="stPageLink"] {
     margin: 0 !important;
@@ -231,7 +257,13 @@ def setup_page_layout():
     st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
     with st.sidebar:
-        # Navigation links (brand block removed)
+        st.markdown(
+            '<div class="sb-brand">Echo</div>'
+            '<div class="sb-brand-sub">AI Assistant</div>'
+            '<div class="sb-brand-rule"></div>',
+            unsafe_allow_html=True,
+        )
+
         for path, label, icon in NAV_ITEMS:
             st.page_link(path, label=label, icon=icon, use_container_width=True)
 
