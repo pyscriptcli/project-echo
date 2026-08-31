@@ -9,6 +9,8 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
 - Non-collapsible: collapse/expand controls are hidden AND the sidebar
   is force-locked open via CSS, making collapse visually impossible.
+- Noticeable drop shadow for separation from main content
+- Subtle deep charcoal & gold gradient overlay (opacity 5%)
 """
 
 import re
@@ -102,9 +104,15 @@ section[data-testid="stSidebar"] {
 
 /* ---------------- Sidebar shell ---------------- */
 section[data-testid="stSidebar"] {
-    background: #F5F1E8 !important;
+    /* Base background + subtle deep charcoal & gold gradient overlay */
+    background: linear-gradient(
+        180deg,
+        rgba(26, 43, 76, 0.05) 0%,
+        rgba(212, 175, 55, 0.05) 100%
+    ), #F5F1E8 !important;
     border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: none !important;
+    /* Noticeable drop shadow for separation */
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -176,11 +184,15 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page
     font-weight: 600 !important;
 }
 
-/* ---------------- Footer (pinned to bottom) ---------------- */
+/* ---------------- Footer (pinned to bottom, separate container) ---------------- */
+/* The footer container is marked with .sb-footer-scope and is placed in its own
+   st.container() to ensure it sits at the bottom of the flex column. */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
     margin-top: auto !important;
+    flex-shrink: 0 !important;  /* Prevent shrinking */
 }
 .sb-footer-scope { display: none !important; }
+
 .sb-user-wrap {
     border-top: 1px solid rgba(0, 0, 0, 0.07);
     padding-top: 0.8rem;
@@ -263,8 +275,10 @@ def setup_page_layout():
         for path, label, icon in NAV_ITEMS:
             st.page_link(path, label=label, icon=icon, use_container_width=True)
 
+        # Footer in its own container, pinned to bottom via CSS
         user = get_current_user()
         with st.container():
+            # Marker span for CSS :has() selector to target this container
             st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
 
             if user:
