@@ -20,6 +20,14 @@ supabase = init_supabase()
 
 st.markdown("""
 <style>
+/* LOCK SIDEBAR OPEN */
+[data-testid="stSidebarCollapsedControl"] {
+    display: none !important;
+}
+[data-testid="stSidebar"] {
+    display: block !important;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ---- Header: hide content, NOT the element (sidebar expand button lives there) ---- */
