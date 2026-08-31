@@ -7,13 +7,13 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Compact nav via st.page_link with material icons
 - Active page: gold left border + tinted background (via aria-current)
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
-- Collapse: native Streamlit control, restyled to match the theme
+- Non-collapsible: native collapse/expand chevrons are hidden,
+  the sidebar remains open at all times.
 
 Design rules followed to avoid breaking Streamlit internals:
 - No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
 - The auto-generated multipage nav ([data-testid="stSidebarNav"]) is hidden
   so our custom links are the single source of navigation
-- Sidebar collapse/expand controls are kept and themed, never removed
 """
 
 import re
@@ -23,14 +23,14 @@ from utils.auth import get_current_user, logout
 
 
 # ---------------------------------------------------------------------------
-# Navigation model — flat, compact list
+# Navigation model — flat, compact list (Dashboard -> Ask Echo -> rest)
 # ---------------------------------------------------------------------------
 NAV_ITEMS = [
     ("app.py", "Dashboard", ":material/dashboard:"),
+    ("pages/3_echo_ai.py", "Ask Echo.ai", ":material/smart_toy:"),
     ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
     ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
     ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
-    ("pages/3_echo_ai.py", "Ask Echo", ":material/smart_toy:"),
 ]
 
 
@@ -39,8 +39,6 @@ SIDEBAR_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ---------------- Hide app chrome but KEEP the header element ---------------- */
-/* The header element must stay visible because Streamlit places the collapsed
-   sidebar expand button inside it. */
 header[data-testid="stHeader"],
 .stApp > header {
     background: transparent !important;
@@ -48,7 +46,7 @@ header[data-testid="stHeader"],
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
-    overflow: visible !important;   /* critical: keeps expand button visible */
+    overflow: visible !important;
 }
 
 [data-testid="stDecoration"],
@@ -64,6 +62,17 @@ footer {
 
 /* Hide Streamlit's auto-generated page list — we render our own nav */
 [data-testid="stSidebarNav"] { display: none !important; }
+
+/* Hide the native collapse/expand chevrons — sidebar stays open */
+button[data-testid="stSidebarCollapseButton"],
+button[data-testid="stSidebarCollapsedControl"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
 
 /* ---------------- Main content breathing room ---------------- */
 .block-container {
@@ -210,25 +219,6 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
     background: rgba(212, 175, 55, 0.14) !important;
     color: #6B5313 !important;
-}
-
-/* ---------------- Native collapse controls, themed ---------------- */
-button[data-testid="stSidebarCollapseButton"] {
-    color: #6C727A !important;
-    background: transparent !important;
-}
-button[data-testid="stSidebarCollapsedControl"] {
-    background: #111A2B !important;
-    color: #D4AF37 !important;
-    border: 1px solid rgba(212, 175, 55, 0.7) !important;
-    border-radius: 50% !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18) !important;
-}
-button[data-testid="stSidebarCollapsedControl"]:hover {
-    background: #1A2B4C !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22) !important;
 }
 </style>
 """
