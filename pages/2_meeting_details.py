@@ -28,7 +28,7 @@ from components.sidebar import setup_page_layout
 st.set_page_config(
     page_title="Project Echo - Meetings Workspace",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 setup_page_layout()
 
@@ -1065,7 +1065,6 @@ elif st.session_state["view_mode"] == "details":
                     st.rerun()
 
         if not st.session_state["edit_meeting_details"]:
-            # Display Mode
             d_r1_c1, d_r1_c2 = st.columns(2)
             with d_r1_c1:
                 st.write(f"**Date:** {active_meeting.get('meeting_date', 'N/A')}")
@@ -1074,7 +1073,6 @@ elif st.session_state["view_mode"] == "details":
                 st.write(f"**Location:** {active_meeting.get('location', 'N/A')}")
                 st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
         else:
-            # Edit Mode
             e_r1_c1, e_r1_c2 = st.columns(2)
             with e_r1_c1:
                 edit_client = st.text_input("Client / Company", value=str(active_meeting.get("client_name", "")), key=f"e_client_{m_id}")
@@ -1102,7 +1100,6 @@ elif st.session_state["view_mode"] == "details":
                                     "confirmed_by": edit_conf.strip()
                                 }).eq("meeting_id", m_id).execute()
                                 
-                                # Update locally in memory
                                 active_meeting["client_name"] = edit_client.strip()
                                 active_meeting["meeting_date"] = edit_date.strip()
                                 active_meeting["location"] = edit_loc.strip()
@@ -1115,7 +1112,7 @@ elif st.session_state["view_mode"] == "details":
                             except Exception as e:
                                 st.error(f"Metadata update failed: {e}")
 
-    # Tabs (Matching Exact Image Styling)
+    # Tabs
     tab_editor, tab_transcript = st.tabs(["Minutes of Meeting Editor", "Full Transcript"])
 
     with tab_editor:
@@ -1189,7 +1186,6 @@ elif st.session_state["view_mode"] == "details":
                 key=f"summary_{m_id}"
             )
 
-            # Reconstruct details for exporting
             df_export = pd.DataFrame(rows_to_keep, columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
             raw_payload = active_meeting.get("raw_payload", {})
             md = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
@@ -1208,7 +1204,6 @@ elif st.session_state["view_mode"] == "details":
                 "conf_desig": md.get("conf_desig", "Client")
             }
 
-            # Export Options
             st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
             template_selection = st.selectbox(
                 "Select MoM Template Format",
