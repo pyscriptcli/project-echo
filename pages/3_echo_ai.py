@@ -12,7 +12,7 @@ from utils.echo_ai import render_echo_chat
 st.set_page_config(
     page_title="Ask Echo",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 setup_page_layout()
 
