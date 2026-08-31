@@ -195,6 +195,7 @@ h3 {
 .dot-todo { background: #E67E22; }
 .dot-in_progress { background: #2980B9; }
 .dot-done { background: #27AE60; }
+.dot-meeting { background: #6366F1; }
 
 .task-card-title {
     font-size: 0.78rem;
@@ -280,7 +281,8 @@ h3 {
     gap: 6px;
 }
 .cal-filter-row .stSelectbox,
-.cal-filter-row .stDateInput {
+.cal-filter-row .stDateInput,
+.cal-filter-row .stMultiselect {
     flex-shrink: 1;
 }
 .cal-filter-row [data-testid="stBaseButton-secondary"] {
@@ -295,19 +297,26 @@ h3 {
     border-radius: var(--radius);
     padding: 4px;
     min-height: 78px;
-    height: 100% !important;
+    height: auto !important;
     box-sizing: border-box;
     transition: border-color 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 .cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
 .cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
 .cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
-.cal-month-cell.today { border: 2px solid var(--gold); }
 
+/* Subtle today border + gold dot */
+.cal-month-cell.today {
+    border: 1px solid rgba(212, 175, 55, 0.65);
+}
 .cal-month-day-num {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
     font-family: 'Playfair Display', serif;
     font-size: 0.9rem;
     font-weight: 600;
@@ -316,13 +325,23 @@ h3 {
 }
 .cal-month-cell.weekend .cal-month-day-num { color: #fff; }
 
+.today-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: inline-block;
+    flex-shrink: 0;
+    margin-left: auto; /* push dot to right */
+}
+
 /* Event buttons inside month cells — minimal tag style */
 .cal-month-cell button {
     background: #F6F5F2;
     border-radius: 3px;
     font-size: 0.62rem;
     padding: 1px 3px;
-    margin-bottom: 2px;
+    margin: 0 0 2px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -333,6 +352,7 @@ h3 {
     height: auto !important;
     min-height: 18px !important;
     border: 1px solid transparent !important;
+    text-align: left !important;
 }
 .cal-month-cell button:hover {
     background: #EAE9E4 !important;
@@ -709,35 +729,39 @@ def open_task_details():
         st.rerun()
 
 
-@st.dialog("Create Task", width="medium")
+@st.dialog("Create Task", width="large")
 def new_task_dialog():
     prefill_date = st.session_state.get("cal_new_task_date")
 
     with st.form("cal_new_task_form", clear_on_submit=True):
         st.markdown("### New Task")
-        title = st.text_input("Task Title *", placeholder="e.g., Prepare Q3 report")
-        st.caption("Required. Brief, actionable summary of the task.")
+        left, right = st.columns(2)
 
-        description = st.text_area("Description", placeholder="Add context, links, or dependencies...")
-        st.caption("Optional. One or two lines are plenty.")
+        with left:
+            title = st.text_input("Task Title *", placeholder="e.g., Prepare Q3 report")
+            st.caption("Required. Brief, actionable summary of the task.")
 
-        assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="cal_dlg_assign_type")
+            description = st.text_area("Description", placeholder="Add context, links, or dependencies...")
+            st.caption("Optional. One or two lines are plenty.")
 
-        if assign_type_new == "Group":
-            assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="cal_dlg_group")
-            st.caption("Assign to a whole team or group.")
-        else:
-            assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="cal_dlg_individuals")
-            assignee = ", ".join(assignee_list)
-            st.caption("Select one or more specific people.")
+        with right:
+            assign_type_new = st.radio("Assignment Type", ["Group", "Specific Individuals"], horizontal=True, key="cal_dlg_assign_type")
 
-        due_date = st.date_input("Due Date", value=prefill_date or date.today(), key="cal_dlg_due_date")
-        st.caption(f"Date format: MM-DD-YYYY · Current: {format_mm_dd_yyyy(due_date)}")
+            if assign_type_new == "Group":
+                assignee = st.selectbox("Select Group", GROUP_OPTIONS, key="cal_dlg_group")
+                st.caption("Assign to a whole team or group.")
+            else:
+                assignee_list = st.multiselect("Select Individuals", SPECIFIC_PEOPLE, key="cal_dlg_individuals")
+                assignee = ", ".join(assignee_list)
+                st.caption("Select one or more specific people.")
 
-        meeting_id = st.text_input("Linked Meeting ID (optional)", key="cal_dlg_meeting", placeholder="e.g., MOM-20260831-1230")
-        st.caption("Paste a meeting ID to trace the origin.")
+            due_date = st.date_input("Due Date", value=prefill_date or date.today(), key="cal_dlg_due_date")
+            st.caption(f"Date format: MM-DD-YYYY · Current: {format_mm_dd_yyyy(due_date)}")
 
-        submitted = st.form_submit_button("Create Task", type="primary")
+            meeting_id = st.text_input("Linked Meeting ID (optional)", key="cal_dlg_meeting", placeholder="e.g., MOM-20260831-1230")
+            st.caption("Paste a meeting ID to trace the origin.")
+
+        submitted = st.form_submit_button("Create Task", type="primary", use_container_width=True)
         if submitted:
             if not title.strip():
                 st.error("Title is required.")
@@ -880,20 +904,15 @@ with tab_import:
         if selected_meeting:
             table_items = selected_meeting.get("table_items", [])
             if isinstance(table_items, list) and len(table_items) > 0:
-                st.caption(f"Found {len(table_items)} action item(s). Select which to import as tasks.")
-                for idx, item in enumerate(table_items):
-                    with st.container(border=True):
-                        c1, c2, c3, c4, c5 = st.columns([3, 3, 1.5, 1.5, 1])
-                        with c1:
-                            st.write(f"**Discussion:** {item.get('Discussion Points', '')[:100]}")
-                        with c2:
-                            st.write(f"**Action:** {item.get('Action Plan', '')[:100]}")
-                        with c3:
-                            due_d = parse_calendar_date(item.get('Indicative Delivery Date', ''))
-                            st.write(f"**Due:** {format_mm_dd_yyyy(due_d) if due_d else item.get('Indicative Delivery Date', '')}")
-                        with c4:
-                            st.write(f"**PIC:** {item.get('Person-in-charge', '')}")
+                # "Select All" checkbox at top
+                all_selected = st.checkbox("Select All", key=f"import_select_all_{selected_meeting_id}")
 
+                # Build a list of rows with selection state
+                rows_to_import = []
+                if all_selected:
+                    rows_to_import = [i for i in range(len(table_items))]
+                else:
+                    for idx, item in enumerate(table_items):
                         dp_id = item.get('discussion_point_id') or item.get('id') or None
                         if not dp_id:
                             dp_id = generate_stable_id(
@@ -901,23 +920,90 @@ with tab_import:
                                 item.get('Discussion Points', ''),
                                 item.get('Action Plan', '')
                             )
+                        if dp_id not in existing_discussion_ids:
+                            rows_to_import.append(idx)
 
-                        if dp_id in existing_discussion_ids:
-                            with c5:
-                                st.success("✓")
-                        else:
-                            with c5:
-                                import_this = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}")
-                            if import_this:
-                                if st.button("Add as Task", key=f"add_{selected_meeting_id}_{idx}"):
+                # If select all, all rows that aren't already imported are selected
+                # We'll display each row with its own checkbox anyway (for granularity)
+                # But if all_selected is True, we can set all checkboxes to True by default; 
+                # To keep simple, we'll use individual checkboxes and a bulk button.
+
+                st.caption(f"Found {len(table_items)} action item(s). Select which to import as tasks.")
+
+                selected_rows = []
+                for idx, item in enumerate(table_items):
+                    dp_id = item.get('discussion_point_id') or item.get('id') or None
+                    if not dp_id:
+                        dp_id = generate_stable_id(
+                            selected_meeting_id,
+                            item.get('Discussion Points', ''),
+                            item.get('Action Plan', '')
+                        )
+
+                    already_imported = dp_id in existing_discussion_ids
+
+                    # Card style preview
+                    action_title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
+                    discussion_desc = item.get("Discussion Points", "")
+                    due_date = parse_calendar_date(item.get("Indicative Delivery Date", ""))
+                    due_display = format_mm_dd_yyyy(due_date) if due_date else "No date"
+                    pic = item.get("Person-in-charge", "")
+                    initials = get_initials(pic)
+
+                    with st.container(border=False):
+                        st.markdown(
+                            f"""
+                            <div class="task-card">
+                                <div class="task-card-header">
+                                    <span class="task-status-dot dot-meeting"></span>
+                                    <span class="task-card-title">{action_title[:80]}</span>
+                                </div>
+                                <div class="task-card-desc">{(discussion_desc or '')[:100]}</div>
+                                <div class="task-card-footer">
+                                    <span class="assignee-avatar">{initials}</span>
+                                    <span class="due-chip">{due_display}</span>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        c1, c2 = st.columns([0.7, 0.3])
+                        with c1:
+                            if not already_imported:
+                                row_selected = st.checkbox("Import", key=f"import_{selected_meeting_id}_{idx}", value=all_selected)
+                                if row_selected:
+                                    selected_rows.append(idx)
+                            else:
+                                st.success("✓ Already Imported")
+                        with c2:
+                            if not already_imported:
+                                if st.button("Add Task", key=f"add_{selected_meeting_id}_{idx}"):
                                     title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
                                     description = item.get("Discussion Points", "")
                                     assignee = item.get("Person-in-charge", "")
-                                    due_date = parse_calendar_date(item.get("Indicative Delivery Date", ""))
-                                    success = add_task(title, description, assignee, due_date, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
+                                    due_dt = parse_calendar_date(item.get("Indicative Delivery Date", ""))
+                                    success = add_task(title, description, assignee, due_dt, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
                                     if success:
                                         st.success("Task added!")
                                         st.rerun()
+
+                # Bulk import button (only if any selected)
+                if selected_rows:
+                    if st.button(f"Import Selected ({len(selected_rows)})", use_container_width=True):
+                        for idx in selected_rows:
+                            item = table_items[idx]
+                            dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
+                                selected_meeting_id,
+                                item.get('Discussion Points', ''),
+                                item.get('Action Plan', '')
+                            )
+                            title = item.get("Action Plan") or item.get("Discussion Points", "Untitled Task")
+                            description = item.get("Discussion Points", "")
+                            assignee = item.get("Person-in-charge", "")
+                            due_dt = parse_calendar_date(item.get("Indicative Delivery Date", ""))
+                            add_task(title, description, assignee, due_dt, meeting_id=selected_meeting_id, discussion_point_id=dp_id)
+                        st.success(f"Imported {len(selected_rows)} tasks!")
+                        st.rerun()
             else:
                 st.info("This meeting has no action items.")
 
@@ -1014,12 +1100,23 @@ with tab_calendar:
                 label_visibility="collapsed"
             )
 
+            # Unscheduled panel inside filter popover
             unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
             show_unscheduled = st.toggle(
                 f"Show unscheduled ({len(unscheduled_tasks)})",
                 value=False,
                 key="cal_show_unscheduled"
             )
+            if show_unscheduled:
+                st.markdown("**Unscheduled Tasks**")
+                if not unscheduled_tasks:
+                    st.caption("No unscheduled tasks.")
+                else:
+                    for ut in unscheduled_tasks:
+                        initials = get_initials(ut.get('assignee', ''))
+                        st.markdown(
+                            f"{initials} — {ut.get('title')} — *{ut.get('assignee') or 'Unassigned'}*"
+                        )
 
     # View toggle
     with filter_cols[3]:
@@ -1030,22 +1127,6 @@ with tab_calendar:
             key="tasks_cal_view",
             label_visibility="collapsed"
         )
-
-    # Unscheduled list
-    if "cal_show_unscheduled" in st.session_state and st.session_state["cal_show_unscheduled"]:
-        unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
-        with st.container(border=False):
-            st.markdown('<div class="cal-unscheduled">', unsafe_allow_html=True)
-            st.markdown("**Unscheduled Tasks**")
-            if not unscheduled_tasks:
-                st.caption("No unscheduled tasks.")
-            else:
-                for ut in unscheduled_tasks:
-                    initials = get_initials(ut.get('assignee', ''))
-                    st.markdown(
-                        f"{initials} — {ut.get('title')} — *{ut.get('assignee') or 'Unassigned'}*"
-                    )
-            st.markdown('</div>', unsafe_allow_html=True)
 
     # ===== DATE RANGE =====
     if cal_view == "Day":
@@ -1188,20 +1269,20 @@ with tab_calendar:
                     if is_weekend: cell_class += " weekend"
 
                     st.markdown(f'<div class="{cell_class}">', unsafe_allow_html=True)
-                    st.markdown(f"<div class='cal-month-day-num'>{day_val.day}</div>", unsafe_allow_html=True)
+
+                    # Day number row with today dot
+                    day_num_html = f"{day_val.day}"
+                    if is_today:
+                        day_num_html += '<span class="today-dot"></span>'
+                    st.markdown(
+                        f"<div class='cal-month-day-num'>{day_num_html}</div>",
+                        unsafe_allow_html=True
+                    )
 
                     for evt in day_events[:3]:
                         icon = get_event_icon(evt)
                         label = get_event_label(evt)
                         tooltip = get_event_tooltip(evt)
-
-                        # Add CSS class if overdue / meeting action
-                        evt_class = ""
-                        if evt["overdue"]: evt_class = " overdue"
-                        if evt["source"] == "meeting_action": evt_class += " meeting-action"
-
-                        # We use st.button; wrap it so we can add a class via CSS? 
-                        # Instead we'll rely on the generic styling plus a key.
                         if st.button(label, key=f"cal_m_{day_str}_{evt['id']}", icon=icon, help=tooltip, use_container_width=True):
                             st.session_state["cal_clicked_event"] = evt
                             st.session_state["cal_open_event"] = True
