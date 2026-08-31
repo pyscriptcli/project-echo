@@ -16,7 +16,7 @@ from components.sidebar import setup_page_layout
 st.set_page_config(
     page_title="Project Echo - Task Board",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # 2. Render the custom navigation bar
@@ -30,12 +30,9 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
 
-/* ---------- Hide Streamlit chrome ---------- */
+/* Hide Streamlit chrome */
 header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
-[data-testid="stStatusWidget"], #MainMenu, footer,
-section[data-testid="stSidebar"], [data-testid="collapsedControl"],
-button[data-testid="stSidebarCollapseButton"], button[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarNav"] {
+[data-testid="stStatusWidget"], #MainMenu, footer {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -48,8 +45,8 @@ html, body, [class*="css"] {
 
 .stApp {
     background-color: #F3EFE6 !important;
-    background-image: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
     background-size: 80px 80px;
     color: #2D2D2D;
 }
@@ -80,7 +77,7 @@ h3 {
     margin-bottom: 0.2rem !important;
 }
 
-/* ---------- Global controls ---------- */
+/* ===================== GLOBAL CONTROLS ===================== */
 .stButton > button {
     height: var(--control-height) !important;
     min-height: var(--control-height) !important;
@@ -109,33 +106,7 @@ h3 {
     border-color: rgba(26, 43, 76, 0.15) !important;
 }
 
-/* Popover trigger (filter icon button) */
-div[data-testid="stPopover"] > button {
-    height: var(--control-height) !important;
-    min-height: var(--control-height) !important;
-    min-width: 32px !important;
-    border-radius: var(--radius) !important;
-    border: 1px solid rgba(26, 43, 76, 0.15) !important;
-    background: var(--surface) !important;
-    color: var(--ink) !important;
-    padding: 0 8px !important;
-    box-shadow: none !important;
-}
-div[data-testid="stPopover"] > button:hover {
-    border-color: var(--gold) !important;
-    background: #FFFDF6 !important;
-}
-
-/* ---------- Modal ---------- */
-[data-testid="stDialog"] {
-    background: var(--surface) !important;
-    border-radius: 10px !important;
-}
-[data-testid="stDialog"] div[data-testid="stVerticalBlock"] {
-    gap: 0.4rem !important;
-}
-
-/* ---------- Board ---------- */
+/* ===================== BOARD VIEW ===================== */
 .board-column-header {
     display: flex;
     align-items: center;
@@ -274,60 +245,57 @@ div[data-testid="stPopover"] > button:hover {
     white-space: nowrap;
 }
 
-/* ---------- Calendar cells (real containers, styled via :has markers) ---------- */
-.cell-marker { display: none !important; }
+/* ===================== CALENDAR VIEW ===================== */
+.cal-scope [data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+}
+.cal-scope div[data-testid="stHorizontalBlock"] > div {
+    display: flex !important;
+    flex-direction: column !important;
+}
 
-/* Base cell */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+.cal-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.cal-filter-row .stSelectbox,
+.cal-filter-row .stDateInput,
+.cal-filter-row .stMultiselect {
+    flex-shrink: 1;
+}
+.cal-filter-row [data-testid="stBaseButton-secondary"] {
+    width: 28px !important;
+    padding: 0 !important;
+}
+
+/* Popover (filter) */
+[data-testid="stSidebar"] [data-testid="stPopover"] > button {
+    height: var(--control-height) !important;
+    min-height: var(--control-height) !important;
+    min-width: 32px !important;
     border-radius: var(--radius) !important;
-    padding: 5px 6px !important;
-    min-height: 84px;
-    box-shadow: none !important;
+    border: 1px solid rgba(26, 43, 76, 0.15) !important;
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    padding: 0 8px !important;
 }
 
-/* Dim (other-month) cell */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-dim) {
-    background: rgba(0, 0, 0, 0.025) !important;
-    border: 1px dashed rgba(0, 0, 0, 0.06) !important;
+.cal-month-cell {
+    background: var(--surface);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius);
+    padding: 4px;
+    min-height: 78px;
+    height: auto !important;
+    box-sizing: border-box;
 }
+.cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
+.cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
+.cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
+.cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
 
-/* Weekend cell */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) {
-    background: #111A2B !important;
-    border-color: #111A2B !important;
-}
-
-/* Today cell: subtle gold border */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-today) {
-    border: 1px solid rgba(212, 175, 55, 0.75) !important;
-    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2) !important;
-}
-
-/* Equal-height rows: stretch columns & cells */
-div[data-testid="stColumn"]:has(.cell-marker) {
-    display: flex !important;
-    flex-direction: column !important;
-}
-div[data-testid="stColumn"]:has(.cell-marker) > div {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBorderWrapper"] {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"] {
-    flex: 1 1 auto !important;
-    gap: 3px !important;
-}
-
-/* Day number + today dot */
-.cal-day-num {
+.cal-month-day-num {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -335,10 +303,10 @@ div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBo
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--ink);
-    line-height: 1;
-    margin-bottom: 2px;
+    padding: 1px 2px 3px 2px;
 }
-.cal-day-num.dim { color: rgba(0, 0, 0, 0.3); }
+.cal-month-cell.weekend .cal-month-day-num { color: #fff; }
+
 .today-dot {
     width: 6px;
     height: 6px;
@@ -347,91 +315,25 @@ div[data-testid="stColumn"]:has(.cell-marker) div[data-testid="stVerticalBlockBo
     display: inline-block;
     flex-shrink: 0;
 }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) .cal-day-num { color: #FFFFFF; }
-
-/* Event / add buttons inside cells: compact left-aligned tags */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) button {
-    background: #F6F5F2 !important;
-    color: #2D2D2D !important;
-    border: 1px solid transparent !important;
-    border-radius: 4px !important;
-    font-size: 0.64rem !important;
-    font-weight: 500 !important;
-    padding: 3px 6px !important;
-    min-height: 20px !important;
-    height: auto !important;
-    width: 100% !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-    box-shadow: none !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    transition: background 0.15s ease !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-marker) button:hover {
-    background: #ECEAE4 !important;
-    border-color: rgba(212, 175, 55, 0.45) !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) button {
-    background: rgba(255, 255, 255, 0.10) !important;
-    color: #FFFFFF !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) button:hover {
-    background: rgba(255, 255, 255, 0.20) !important;
-}
 
 .cal-more {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     color: var(--muted);
     padding-left: 2px;
-    line-height: 1.2;
-}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.cell-weekend) .cal-more {
-    color: rgba(255, 255, 255, 0.7);
+    margin-top: 1px;
 }
 
-/* Unscheduled rows (inside filter popover) */
-.unsched-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-}
-.unsched-row:last-child { border-bottom: none; }
-.unsched-row .assignee-avatar { width: 18px; height: 18px; font-size: 0.46rem; }
-.unsched-title {
-    flex: 1;
-    font-size: 0.72rem;
-    color: #2D2D2D;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Week view day header */
-.week-day-header {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    padding-bottom: 0.25rem;
-    margin-bottom: 0.35rem;
-    color: var(--ink);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-.week-day-header.today {
-    color: #8C6D23;
-    border-bottom: 2px solid var(--gold);
+.cal-unscheduled {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius);
+    padding: 0.35rem 0.5rem;
+    margin-top: 0.3rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 5. Constants & helpers
+# 5. Helper functions & Constants
 SPECIFIC_PEOPLE = [
     "Sondi Tuazon", "Meliza Zapata", "Dykstra Pineda", "Kristina Balajadia",
     "Carlo Medina", "Cedtrix Rena", "Dave Policarpio", "Irish Rima"
@@ -963,7 +865,6 @@ with tab_board:
 with tab_import:
     st.markdown("#### Import Action Items from Meetings")
 
-    # Flash message (survives rerun)
     if "import_flash" in st.session_state:
         st.success(st.session_state.pop("import_flash"))
 
@@ -982,7 +883,6 @@ with tab_import:
             table_items = selected_meeting.get("table_items", [])
             if isinstance(table_items, list) and len(table_items) > 0:
 
-                # Pre-compute which rows are importable (not already imported)
                 importable_indices = []
                 for idx, item in enumerate(table_items):
                     dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
@@ -993,7 +893,6 @@ with tab_import:
                     if dp_id not in existing_discussion_ids:
                         importable_indices.append(idx)
 
-                # Header row: count + Select All
                 hdr_c1, hdr_c2 = st.columns([3, 1], gap="small")
                 with hdr_c1:
                     st.caption(f"Found **{len(table_items)}** action item(s) · **{len(importable_indices)}** available to import")
@@ -1007,7 +906,6 @@ with tab_import:
 
                 st.markdown("<hr style='margin:0.3rem 0 0.6rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
 
-                # Render rows
                 for idx, item in enumerate(table_items):
                     dp_id = item.get('discussion_point_id') or item.get('id') or generate_stable_id(
                         selected_meeting_id,
@@ -1058,7 +956,6 @@ with tab_import:
                                     st.session_state["import_flash"] = "Task added to board."
                                     st.rerun()
 
-                # Bulk import
                 selected_rows = [
                     idx for idx in importable_indices
                     if st.session_state.get(f"import_{selected_meeting_id}_{idx}", False)
@@ -1147,10 +1044,13 @@ with tab_calendar:
     if "tasks_cal_focus_date" not in st.session_state:
         st.session_state["tasks_cal_focus_date"] = date.today()
 
-    # ===== COMPACT FILTER ROW =====
+    cal_assignee = ["All Assignees"]
+    cal_status = ["todo", "in_progress", "done"]
+    cal_meeting = ""
+    show_unscheduled = False
+
     filter_cols = st.columns([2.6, 1.4, 0.55, 1.6], gap="small")
 
-    # Assignee: multiselect
     with filter_cols[0]:
         assignee_options = ["All Assignees", "Unassigned"] + GROUP_OPTIONS + SPECIFIC_PEOPLE
         cal_assignee = st.multiselect(
@@ -1163,7 +1063,6 @@ with tab_calendar:
     if not cal_assignee:
         cal_assignee = ["All Assignees"]
 
-    # Date picker
     with filter_cols[1]:
         picked_date = st.date_input(
             "Date",
@@ -1176,7 +1075,6 @@ with tab_calendar:
 
     focus = st.session_state["tasks_cal_focus_date"]
 
-    # Filter popover: status + meeting + unscheduled panel
     with filter_cols[2]:
         with st.popover("", icon=":material/filter_list:", help="Filters"):
             st.markdown("**Status**")
@@ -1200,7 +1098,6 @@ with tab_calendar:
 
             st.markdown("---")
 
-            # Unscheduled panel (inside the filter button)
             unscheduled_tasks = [t for t in tasks if not t.get("due_date")]
             show_unscheduled = st.toggle(
                 f"Unscheduled ({len(unscheduled_tasks)})",
@@ -1215,15 +1112,14 @@ with tab_calendar:
                         u_initials = get_initials(ut.get('assignee', ''))
                         st.markdown(
                             f"""
-                            <div class="unsched-row">
+                            <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04);">
                                 <span class="assignee-avatar">{u_initials}</span>
-                                <span class="unsched-title">{ut.get('title')}</span>
+                                <span style="flex:1;font-size:0.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{ut.get('title')}</span>
                             </div>
                             """,
                             unsafe_allow_html=True
                         )
 
-    # View toggle
     with filter_cols[3]:
         cal_view = st.segmented_control(
             "View",
@@ -1253,16 +1149,11 @@ with tab_calendar:
     # ===== BUILD & FILTER EVENTS =====
     all_events = build_calendar_events()
 
-    if "cal_status_filter" not in st.session_state:
-        st.session_state["cal_status_filter"] = ["todo", "in_progress", "done"]
-    if "cal_meeting_filter" not in st.session_state:
-        st.session_state["cal_meeting_filter"] = ""
-
     filtered = apply_calendar_filters(
         all_events,
         assignee_filters=cal_assignee,
-        status_filters=st.session_state["cal_status_filter"],
-        meeting_filter=(st.session_state["cal_meeting_filter"] or "").strip(),
+        status_filters=cal_status,
+        meeting_filter=(cal_meeting or "").strip(),
         start_date=start_date,
         end_date=end_date
     )
@@ -1314,7 +1205,9 @@ with tab_calendar:
 
             header_class = "week-day-header today" if is_today else "week-day-header"
             st.markdown(
-                f"<div class='{header_class}'>{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
+                f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
+                f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#8C6D23;border-bottom:2px solid var(--gold);' if is_today else 'color:var(--ink);border-bottom:1px solid rgba(0,0,0,0.06);')}'"
+                f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                 unsafe_allow_html=True
             )
 
@@ -1342,7 +1235,6 @@ with tab_calendar:
         month_days = cal.monthdatescalendar(focus.year, focus.month)
         day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-        # Header row
         header_cols = st.columns(7, gap="small")
         for i, name in enumerate(day_names):
             with header_cols[i]:
@@ -1358,7 +1250,6 @@ with tab_calendar:
                     unsafe_allow_html=True
                 )
 
-        # Week rows — each cell is a REAL container (tasks live INSIDE the box)
         for week in month_days:
             week_cols = st.columns(7, gap="small")
             for i, day_val in enumerate(week):
@@ -1367,7 +1258,6 @@ with tab_calendar:
                     is_weekend = (i == 0 or i == 6)
                     is_today = (day_val == date.today())
 
-                    # Build marker classes for CSS :has() targeting
                     marker_classes = "cell-marker"
                     if in_month and is_weekend:
                         marker_classes += " cell-weekend"
@@ -1377,20 +1267,19 @@ with tab_calendar:
                         marker_classes += " cell-dim"
 
                     with st.container(border=True):
-                        st.markdown(f'<span class="{marker_classes}"></span>', unsafe_allow_html=True)
+                        st.markdown(f'<span class="{marker_classes}" style="display:none;"></span>', unsafe_allow_html=True)
 
-                        # Day number (+ tiny gold dot for today)
                         if in_month:
                             dot = '<span class="today-dot"></span>' if is_today else ''
                             st.markdown(
-                                f"<div class='cal-day-num'>{day_val.day}{dot}</div>",
+                                f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
+                                f"font-size:0.9rem;font-weight:600;color:#1A2B4C;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                 unsafe_allow_html=True
                             )
 
                             day_str = day_val.strftime("%Y-%m-%d")
                             day_events = events_by_date.get(day_str, [])
 
-                            # Event tags — INSIDE the cell container
                             for evt in day_events[:3]:
                                 if st.button(
                                     get_event_label(evt),
@@ -1404,11 +1293,10 @@ with tab_calendar:
 
                             if len(day_events) > 3:
                                 st.markdown(
-                                    f"<div class='cal-more'>+{len(day_events) - 3} more</div>",
+                                    f"<div style='font-size:0.58rem;color:#6C727A;padding-left:2px;'>+{len(day_events) - 3} more</div>",
                                     unsafe_allow_html=True
                                 )
 
-                            # Add affordance on empty days
                             if not day_events:
                                 if st.button("", key=f"cal_add_{day_str}", icon=":material/add:",
                                              help="Add task", use_container_width=True):
@@ -1416,7 +1304,8 @@ with tab_calendar:
                                     st.session_state["cal_open_new_dialog"] = True
                         else:
                             st.markdown(
-                                f"<div class='cal-day-num dim'>{day_val.day}</div>",
+                                f"<div style='font-family:Playfair Display,serif;font-size:0.9rem;font-weight:600;"
+                                f"color:rgba(0,0,0,0.3);padding:1px 2px 3px 2px;'>{day_val.day}</div>",
                                 unsafe_allow_html=True
                             )
 
