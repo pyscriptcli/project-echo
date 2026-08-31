@@ -1,19 +1,19 @@
 # components/sidebar.py
 """
-Project Echo — Global Sidebar Navigation
+Project Echo — Global Sidebar Navigation (Non-collapsible)
 
-Native Streamlit sidebar + custom branding & compact navigation.
-- Brand block: "Echo" in Cormorant Garamond italic
-- Compact nav via st.page_link with material icons
+Native Streamlit sidebar + custom branding & grouped navigation.
+- Brand block: "Echo" in Cormorant Garamond italic (no logo image)
+- Nav: Dashboard first, then Ask Echo.ai
 - Active page: gold left border + tinted background (via aria-current)
 - Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
-- Non-collapsible: native collapse/expand chevrons are hidden,
-  the sidebar remains open at all times.
+- No collapse: all collapse controls are hidden and sidebar is fixed open.
 
-Design rules followed to avoid breaking Streamlit internals:
+Design rules:
 - No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
 - The auto-generated multipage nav ([data-testid="stSidebarNav"]) is hidden
-  so our custom links are the single source of navigation
+  so our custom links are the single source of navigation.
+- Sidebar cannot be collapsed; collapse/expand controls are hidden entirely.
 """
 
 import re
@@ -22,257 +22,151 @@ import streamlit as st
 from utils.auth import get_current_user, logout
 
 
-# ---------------------------------------------------------------------------
-# Navigation model — flat, compact list (Dashboard -> Ask Echo -> rest)
-# ---------------------------------------------------------------------------
-NAV_ITEMS = [
-    ("app.py", "Dashboard", ":material/dashboard:"),
-    ("pages/3_echo_ai.py", "Ask Echo.ai", ":material/smart_toy:"),
-    ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
-    ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
-    ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
-]
+def _get_initials(name: str) -> str:
+    """Return up to two initials from a full name."""
+    if not name:
+        return "??"
+    parts = [p for p in name.strip().split() if p]
+    if not parts:
+        return "??"
+    if len(parts) == 1:
+        return parts[0][0].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
 
 
-SIDEBAR_CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+def render_sidebar():
+    """Render the custom non-collapsible sidebar."""
+    user = get_current_user()
+    username = user.get("name") if isinstance(user, dict) else getattr(user, "name", None)
+    if not username:
+        username = "User"
+    initials = _get_initials(username)
 
-/* ---------------- Hide app chrome but KEEP the header element ---------------- */
-header[data-testid="stHeader"],
-.stApp > header {
-    background: transparent !important;
-    height: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    overflow: visible !important;
-}
+    st.markdown("""
+    <style>
+    /* Hide Streamlit auto-generated multipage nav and all collapse controls */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="collapsedControl"],
+    button[data-testid="stSidebarCollapseButton"],
+    button[data-testid="stSidebarCollapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
 
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-[data-testid="stMainMenu"],
-[data-testid="stToolbar"],
-#MainMenu,
-footer {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-}
+    /* Sidebar base */
+    section[data-testid="stSidebar"] {
+        background-color: #0d1117;
+        border-right: 1px solid #2b3138;
+        padding: 1.5rem 1rem;
+    }
 
-/* Hide Streamlit's auto-generated page list — we render our own nav */
-[data-testid="stSidebarNav"] { display: none !important; }
+    /* Brand */
+    .echo-brand {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: 2rem;
+        font-weight: 500;
+        color: #e6c200;
+        margin-bottom: 2rem;
+        padding-left: 0.25rem;
+        letter-spacing: 0.5px;
+    }
 
-/* Hide the native collapse/expand chevrons — sidebar stays open */
-button[data-testid="stSidebarCollapseButton"],
-button[data-testid="stSidebarCollapsedControl"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    width: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
+    /* Custom nav links (all sidebar page_link anchors) */
+    section[data-testid="stSidebar"] a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.625rem 0.875rem;
+        margin-bottom: 0.25rem;
+        color: #c9d1d9;
+        text-decoration: none;
+        border-radius: 8px;
+        border-left: 3px solid transparent;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    section[data-testid="stSidebar"] a:hover {
+        background-color: #161b22;
+        color: #f0f6fc;
+    }
+    section[data-testid="stSidebar"] a[aria-current="page"] {
+        background-color: rgba(230, 194, 0, 0.08);
+        border-left-color: #e6c200;
+        color: #f0e6c8;
+    }
 
-/* ---------------- Main content breathing room ---------------- */
-.block-container {
-    padding-top: 1.5rem !important;
-    padding-left: 2.2rem !important;
-    padding-right: 2.2rem !important;
-    max-width: 100% !important;
-}
-
-/* ---------------- Sidebar shell ---------------- */
-section[data-testid="stSidebar"] {
-    background: #F5F1E8 !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: none !important;
-}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 1.15rem 0.9rem 1rem 0.9rem !important;
-}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid="stVerticalBlock"] {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem !important;
-}
-
-/* ---------------- Brand block ---------------- */
-.sb-brand {
-    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
-    font-style: italic;
-    font-weight: 600;
-    font-size: 2rem;
-    line-height: 1;
-    color: #1A2B4C;
-    letter-spacing: 0.01em;
-}
-.sb-brand-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.62rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: #6C727A;
-    margin-top: 3px;
-}
-.sb-brand-rule {
-    height: 1px;
-    margin: 0.85rem 0 0.9rem 0;
-    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
-}
-
-/* ---------------- Nav links (st.page_link) ---------------- */
-section[data-testid="stSidebar"] [data-testid="stPageLink"] {
-    margin: 0 !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
-    border-radius: 6px !important;
-    padding: 6px 10px !important;
-    border-left: 3px solid transparent !important;
-    color: #24344F !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.83rem !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
-    margin: 0 !important;
-    font-size: 0.83rem !important;
-    color: inherit !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
-    background: rgba(0, 0, 0, 0.045) !important;
-    color: #111A2B !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-    background: rgba(212, 175, 55, 0.12) !important;
-    border-left-color: #D4AF37 !important;
-    color: #111A2B !important;
-    font-weight: 600 !important;
-}
-
-/* ---------------- Footer (pinned to bottom) ---------------- */
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
-    margin-top: auto !important;
-}
-.sb-footer-scope { display: none !important; }
-.sb-user-wrap {
-    border-top: 1px solid rgba(0, 0, 0, 0.07);
-    padding-top: 0.8rem;
-    margin-top: 0.9rem;
-    margin-bottom: 0.55rem;
-}
-.sb-user {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 0;
-    margin-bottom: 0.55rem;
-}
-.sb-user-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #111A2B;
-    color: #D4AF37;
-    border: 1px solid rgba(212, 175, 55, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
-}
-.sb-user-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #1A2B4C;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Sign Out — gold-bordered pill, full width */
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: transparent !important;
-    color: #8C6D23 !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 999px !important;
-    height: 32px !important;
-    min-height: 32px !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.74rem !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: rgba(212, 175, 55, 0.14) !important;
-    color: #6B5313 !important;
-}
-</style>
-"""
-
-
-def _initials(name: str) -> str:
-    """Derive a 2-letter monogram from a username."""
-    parts = [p for p in re.split(r"[\s._\-]+", (name or "").strip()) if p]
-    if len(parts) >= 2:
-        return (parts[0][0] + parts[1][0]).upper()
-    return (name or "—")[:2].upper()
-
-
-def setup_page_layout():
-    """Injects global chrome styling and renders the branded sidebar navigation."""
-    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
+    /* Footer pinned to bottom of sidebar */
+    .st-key-sidebar_footer {
+        position: sticky;
+        bottom: 0;
+        background-color: #0d1117;
+        padding: 1rem 0 0.5rem 0;
+        border-top: 1px solid #2b3138;
+        margin-top: 1rem;
+        z-index: 10;
+    }
+    .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin-bottom: 0.75rem;
+        color: #c9d1d9;
+    }
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #21262d;
+        border: 1px solid #30363d;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #e6c200;
+    }
+    .st-key-sidebar_footer .stButton > button {
+        width: 100%;
+        background-color: #e6c200;
+        color: #0d1117;
+        border: none;
+        border-radius: 999px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
+    .st-key-sidebar_footer .stButton > button:hover {
+        background-color: #d4b100;
+        color: #0d1117;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
     with st.sidebar:
-        # ----- Brand -----
-        st.markdown(
-            '<div class="sb-brand">Echo</div>'
-            '<div class="sb-brand-sub">AI Assistant</div>'
-            '<div class="sb-brand-rule"></div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div class="echo-brand">Echo</div>', unsafe_allow_html=True)
 
-        # ----- Flat, compact navigation -----
-        for path, label, icon in NAV_ITEMS:
-            st.page_link(path, label=label, icon=icon, use_container_width=True)
+        # Navigation order: Dashboard first, then Ask Echo.ai
+        st.page_link("app.py", label="Dashboard", icon=":material/dashboard:")
+        st.page_link("pages/Ask_Echo.py", label="Ask Echo.ai", icon=":material/chat:")
 
-        # ----- Footer: user chip + sign out (pinned to the bottom) -----
-        user = get_current_user()
-        with st.container():
-            st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
-
-            if user:
-                username = str(user.get("username", "user"))
-                st.markdown(
-                    f'<div class="sb-user-wrap">'
-                    f'<div class="sb-user">'
-                    f'<span class="sb-user-avatar">{_initials(username)}</span>'
-                    f'<span class="sb-user-name">{username}</span>'
-                    f'</div></div>',
-                    unsafe_allow_html=True,
-                )
-                if st.button("Sign Out", key="sb_logout", use_container_width=True):
-                    logout()
-                    st.rerun()
-            else:
-                st.markdown(
-                    '<div class="sb-user-wrap">'
-                    '<div class="sb-user">'
-                    '<span class="sb-user-avatar">—</span>'
-                    '<span class="sb-user-name">Guest</span>'
-                    '</div></div>',
-                    unsafe_allow_html=True,
-                )
+        # Footer pinned to bottom
+        with st.container(key="sidebar_footer"):
+            st.markdown(
+                f"""
+                <div class="user-chip">
+                    <span class="user-avatar">{initials}</span>
+                    <span>{username}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if st.button("Sign Out", key="sign_out", use_container_width=True):
+                logout()
