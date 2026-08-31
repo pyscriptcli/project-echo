@@ -1,40 +1,307 @@
+# components/sidebar.py
+"""
+Project Echo — Global Sidebar Navigation (Option B)
+
+Native Streamlit sidebar + custom branding & grouped navigation.
+- Brand block: "Echo" in Cormorant Garamond italic (no logo image)
+- Grouped nav via st.page_link with material icons
+- Active page: gold left border + tinted background (via aria-current)
+- Footer pinned to bottom: user chip (initials + username) + gold pill Sign Out
+- Collapse: native Streamlit control, restyled to match the theme
+
+Design rules followed to avoid breaking Streamlit internals:
+- No DOM restructuring, styling-only CSS (scoped to [data-testid="stSidebar"])
+- The auto-generated multipage nav ([data-testid="stSidebarNav"]) is hidden
+  so our custom links are the single source of navigation
+- Sidebar collapse/expand controls are kept and themed, never removed
+"""
+
+import re
 import streamlit as st
 
-def setup_page_layout():
-    """Hides default UI elements and renders the custom navigation bar."""
-    st.markdown("""
-    <style>
-    header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
-    [data-testid="stStatusWidget"], #MainMenu, footer,
-    section[data-testid="stSidebar"], [data-testid="collapsedControl"],
-    button[data-testid="stSidebarCollapseButton"], button[data-testid="stSidebarCollapsedControl"],
-    [data-testid="stSidebarNav"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-    }
-    .block-container {
-        padding-top: 1.5rem !important;
-        padding-left: 2.5rem !important;
-        padding-right: 2.5rem !important;
-        max-width: 100% !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+from utils.auth import get_current_user, logout
 
-    # Render your custom horizontal navbar with EQUAL width columns
-    # NOTE: 0_admin.py is intentionally excluded as per your request to access it only via URL
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
-    
-    with col1:
-        st.page_link("app.py", label="Dashboard", icon=":material/dashboard:", use_container_width=True)
-    with col2:
-        st.page_link("pages/2_meeting_details.py", label="Meetings", icon=":material/menu_book:", use_container_width=True)
-    with col3:
-        st.page_link("pages/1_minutes_of_the_meeting.py", label="Minutes of the Meeting", icon=":material/edit_note:", use_container_width=True)
-    with col4:
-        st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
-    with col5:
-        # Updated to point to your actual file: 4_tasks.py
-        st.page_link("pages/4_tasks.py", label="Tasks", icon=":material/checklist:", use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# Navigation model
+# (path, label, material icon). Admin is intentionally excluded (URL-only).
+# ---------------------------------------------------------------------------
+NAV_SECTIONS = [
+    (None, [
+        ("app.py", "Dashboard", ":material/dashboard:"),
+    ]),
+    ("Workspace", [
+        ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
+        ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
+    ]),
+    ("Workflows", [
+        ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
+    ]),
+    ("Intelligence", [
+        ("pages/3_echo_ai.py", "Ask Echo", ":material/smart_toy:"),
+    ]),
+]
+
+
+SIDEBAR_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ---------------- Hide app chrome (NOT the sidebar) ---------------- */
+header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
+[data-testid="stStatusWidget"], #MainMenu, footer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+}
+/* Hide Streamlit's auto-generated page list — we render our own nav */
+[data-testid="stSidebarNav"] { display: none !important; }
+
+/* ---------------- Sidebar shell ---------------- */
+section[data-testid="stSidebar"] {
+    background: #F5F1E8 !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: none !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1.15rem 0.9rem 1rem 0.9rem !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid="stVerticalBlock"] {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem !important;
+}
+
+/* ---------------- Brand block ---------------- */
+.sb-brand {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 2rem;
+    line-height: 1;
+    color: #1A2B4C;
+    letter-spacing: 0.01em;
+}
+.sb-brand-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #6C727A;
+    margin-top: 3px;
+}
+.sb-brand-rule {
+    height: 1px;
+    margin: 0.85rem 0 0.7rem 0;
+    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
+}
+
+/* ---------------- Section headers ---------------- */
+.sb-section {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: #8A8F98;
+    margin: 0.85rem 0 0.25rem 4px;
+}
+
+/* ---------------- Nav links (st.page_link) ---------------- */
+section[data-testid="stSidebar"] [data-testid="stPageLink"] {
+    margin: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    border-left: 3px solid transparent !important;
+    color: #24344F !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.83rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
+    margin: 0 !important;
+    font-size: 0.83rem !important;
+    color: inherit !important;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
+    background: rgba(0, 0, 0, 0.045) !important;
+    color: #111A2B !important;
+}
+/* Active page — gold left border + slightly darker background.
+   Both selector placements covered for version resilience. */
+section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
+    background: rgba(212, 175, 55, 0.12) !important;
+    border-left-color: #D4AF37 !important;
+    color: #111A2B !important;
+    font-weight: 600 !important;
+}
+
+/* ---------------- Footer (pinned to bottom) ---------------- */
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
+    margin-top: auto !important;
+}
+.sb-footer-scope { display: none !important; }
+.sb-user-wrap {
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    padding-top: 0.8rem;
+    margin-top: 0.9rem;
+    margin-bottom: 0.55rem;
+}
+.sb-user {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+.sb-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #111A2B;
+    color: #D4AF37;
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.sb-user-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+}
+.sb-user-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1A2B4C;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sb-user-role {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #6C727A;
+}
+
+/* Sign Out — gold-bordered pill, full width */
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
+    background: transparent !important;
+    color: #8C6D23 !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 999px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
+    background: rgba(212, 175, 55, 0.14) !important;
+    color: #6B5313 !important;
+}
+
+/* ---------------- Native collapse controls, themed ---------------- */
+button[data-testid="stSidebarCollapseButton"] {
+    color: #6C727A !important;
+    background: transparent !important;
+}
+button[data-testid="stSidebarCollapsedControl"] {
+    background: #111A2B !important;
+    color: #D4AF37 !important;
+    border: 1px solid rgba(212, 175, 55, 0.7) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* ---------------- Main content breathing room ---------------- */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-left: 2.2rem !important;
+    padding-right: 2.2rem !important;
+    max-width: 100% !important;
+}
+</style>
+"""
+
+
+def _initials(name: str) -> str:
+    """Derive a 2-letter monogram from a username (jdoe -> JD, john_doe -> JD)."""
+    parts = [p for p in re.split(r"[\s._\-]+", (name or "").strip()) if p]
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[1][0]).upper()
+    return (name or "—")[:2].upper()
+
+
+def setup_page_layout():
+    """Injects global chrome styling and renders the branded sidebar navigation."""
+    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
+
+    with st.sidebar:
+        # ----- Brand -----
+        st.markdown(
+            '<div class="sb-brand">Echo</div>'
+            '<div class="sb-brand-sub">Executive Assistant</div>'
+            '<div class="sb-brand-rule"></div>',
+            unsafe_allow_html=True,
+        )
+
+        # ----- Grouped navigation -----
+        for header, items in NAV_SECTIONS:
+            if header:
+                st.markdown(f'<div class="sb-section">{header}</div>', unsafe_allow_html=True)
+            for path, label, icon in items:
+                st.page_link(path, label=label, icon=icon, use_container_width=True)
+
+        # ----- Footer: user chip + sign out (pinned to bottom) -----
+        user = get_current_user()
+        with st.container():
+            st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
+
+            if user:
+                username = str(user.get("username", "user"))
+                st.markdown(
+                    f'<div class="sb-user-wrap">'
+                    f'<div class="sb-user">'
+                    f'<span class="sb-user-avatar">{_initials(username)}</span>'
+                    f'<span class="sb-user-meta">'
+                    f'<span class="sb-user-name">{username}</span>'
+                    f'<span class="sb-user-role">Signed in</span>'
+                    f'</span></div></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button("Sign Out", key="sb_logout", use_container_width=True):
+                    logout()
+                    st.rerun()
+            else:
+                st.markdown(
+                    '<div class="sb-user-wrap">'
+                    '<div class="sb-user">'
+                    '<span class="sb-user-avatar">—</span>'
+                    '<span class="sb-user-meta">'
+                    '<span class="sb-user-name">Guest</span>'
+                    '<span class="sb-user-role">Not signed in</span>'
+                    '</span></div></div>',
+                    unsafe_allow_html=True,
+                )
