@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------
+# atlas.py — Project Atlas with Custom Sidebar
+# ------------------------------------------------------------------------
+
 import json
 import re
 import streamlit as st
@@ -6,6 +10,286 @@ import requests
 import logging
 import time
 import random
+
+# ------------------------------------------------------------------------
+# SIDEBAR INTEGRATION (from components/sidebar.py)
+# ------------------------------------------------------------------------
+
+NAV_ITEMS = [
+    ("app.py", "Dashboard", ":material/dashboard:"),
+    ("pages/3_echo_ai.py", "Ask Echo.ai", ":material/smart_toy:"),
+    ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
+    ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
+    ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
+]
+
+SIDEBAR_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ---------------- Hide app chrome (header kept alive, zero-height) ---------------- */
+header[data-testid="stHeader"],
+.stApp > header {
+    background: transparent !important;
+    height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="stMainMenu"],
+[data-testid="stToolbar"],
+#MainMenu,
+footer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+}
+
+/* Hide Streamlit's auto-generated page list */
+[data-testid="stSidebarNav"] { display: none !important; }
+
+/* ---------------- Collapse prevention: hide ALL collapse/expand controls ---------------- */
+section[data-testid="stSidebar"] button:has(span[data-testid="stIconMaterial"]),
+[data-testid="stSidebarHeader"] button,
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarResizeHandle"],
+[data-testid="stSidebarResizeControl"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ---------------- Force-open lock: sidebar cannot visually collapse ---------------- */
+section[data-testid="stSidebar"] {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    min-width: 250px !important;
+    width: 250px !important;
+    max-width: 250px !important;
+    pointer-events: auto !important;
+}
+
+/* ---------------- Main content breathing room ---------------- */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-left: 2.2rem !important;
+    padding-right: 2.2rem !important;
+    max-width: 100% !important;
+}
+
+/* ---------------- Sidebar shell ---------------- */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(
+        180deg,
+        rgba(26, 43, 76, 0.05) 0%,
+        rgba(212, 175, 55, 0.05) 100%
+    ), #F5F1E8 !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1.15rem 0.9rem 1rem 0.9rem !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid="stVerticalBlock"] {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem !important;
+}
+
+/* ---------------- Brand block ---------------- */
+.sb-brand {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 2rem;
+    line-height: 1;
+    color: #1A2B4C;
+    letter-spacing: 0.01em;
+}
+.sb-brand-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #6C727A;
+    margin-top: 3px;
+}
+.sb-brand-rule {
+    height: 1px;
+    margin: 0.85rem 0 0.9rem 0;
+    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
+}
+
+/* ---------------- Nav links (st.page_link) ---------------- */
+section[data-testid="stSidebar"] [data-testid="stPageLink"] {
+    margin: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    border-left: 3px solid transparent !important;
+    color: #24344F !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.83rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
+    margin: 0 !important;
+    font-size: 0.83rem !important;
+    color: inherit !important;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
+    background: rgba(0, 0, 0, 0.045) !important;
+    color: #111A2B !important;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
+    background: rgba(212, 175, 55, 0.12) !important;
+    border-left-color: #D4AF37 !important;
+    color: #111A2B !important;
+    font-weight: 600 !important;
+}
+
+/* ---------------- Footer (pinned to bottom, separate container) ---------------- */
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+}
+.sb-footer-scope { display: none !important; }
+
+.sb-user-wrap {
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    padding-top: 0.8rem;
+    margin-top: 0.9rem;
+    margin-bottom: 0.55rem;
+}
+.sb-user {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    margin-bottom: 0.55rem;
+}
+.sb-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #111A2B;
+    color: #D4AF37;
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.sb-user-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1A2B4C;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---------------- Sign Out — small deep charcoal with gold accent ---------------- */
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
+    background: #111A2B !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 999px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 12px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
+    background: #1A2B4C !important;
+    color: #E6C44D !important;
+    border-color: #E6C44D !important;
+}
+</style>
+"""
+
+def _initials(name: str) -> str:
+    parts = [p for p in re.split(r"[\s._\-]+", (name or "").strip()) if p]
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[1][0]).upper()
+    return (name or "—")[:2].upper()
+
+def get_current_user():
+    """Placeholder — replace with your actual auth logic."""
+    return st.session_state.get("user", None)
+
+def logout():
+    st.session_state.pop("user", None)
+
+def setup_page_layout():
+    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
+
+    with st.sidebar:
+        st.markdown(
+            '<div class="sb-brand">Echo</div>'
+            '<div class="sb-brand-sub">AI Assistant</div>'
+            '<div class="sb-brand-rule"></div>',
+            unsafe_allow_html=True,
+        )
+
+        for path, label, icon in NAV_ITEMS:
+            st.page_link(path, label=label, icon=icon, use_container_width=True)
+
+        user = get_current_user()
+        with st.container():
+            st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
+
+            if user:
+                username = str(user.get("username", "user"))
+                st.markdown(
+                    f'<div class="sb-user-wrap">'
+                    f'<div class="sb-user">'
+                    f'<span class="sb-user-avatar">{_initials(username)}</span>'
+                    f'<span class="sb-user-name">{username}</span>'
+                    f'</div></div>',
+                    unsafe_allow_html=True,
+                )
+                if st.button("Sign Out", key="sb_logout", use_container_width=True):
+                    logout()
+                    st.rerun()
+            else:
+                st.markdown(
+                    '<div class="sb-user-wrap">'
+                    '<div class="sb-user">'
+                    '<span class="sb-user-avatar">—</span>'
+                    '<span class="sb-user-name">Guest</span>'
+                    '</div></div>',
+                    unsafe_allow_html=True,
+                )
 
 # ------------------------------------------------------------------------
 # ROBUST OVERPASS API QUERY FUNCTION (PYTHON)
@@ -113,61 +397,11 @@ def fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 9
 st.set_page_config(
     page_title="Project Atlas",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",  # Sidebar is now visible and locked open
 )
 
-st.markdown(
-    """
-    <style>
-@font-face {
-    font-family: 'Century Gothic Custom';
-    src: local('Century Gothic'), local('CenturyGothic'), local('AppleGothic'), sans-serif;
-}
-* { font-family: 'Century Gothic Custom', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important; }
-[data-testid="stSidebar"], section[data-testid="stSidebar"],
-header, #MainMenu, footer, [data-testid="stHeader"] {
-    display: none !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-.stApp {
-    margin: 0 !important;
-    padding: 0 !important;
-    background-color: #0a1628 !important;
-}
-.block-container {
-    padding: 0rem !important;
-    margin: 0rem !important;
-    max-width: 100vw !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
-}
-iframe {
-    border: none !important;
-    overflow: hidden !important;
-    height: 100vh !important;
-    width: 100vw !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 1 !important;
-}
-html, body {
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: #0a1628 !important;
-}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Call the custom sidebar
+setup_page_layout()
 
 # ------------------------------------------------------------------------
 # 2. SUPABASE REST INTEGRATION
@@ -411,8 +645,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     src: local('Century Gothic'), local('CenturyGothic'), local('AppleGothic'), sans-serif;
 }
 * { box-sizing: border-box; user-select: none; font-family: 'Century Gothic Custom', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
-html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #0a1628; }
-#map { position: absolute; inset: 0; width: 100vw; height: 100vh; z-index: 1; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0a1628; }
+#app-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
@@ -420,7 +655,7 @@ html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
 select, select option { background-color: #0f172a !important; color: #f8fafc !important; }
 select option:hover, select option:checked { background-color: #2563eb !important; color: #ffffff !important; }
 #top-toolbar-bar {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 1000;
     background-color: rgba(9, 16, 24, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 36px; padding: 4px 10px;
     display: flex; align-items: center; gap: 4px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
@@ -442,7 +677,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 .save-badge.saved { color: #3fb950; border-color: rgba(63, 185, 80, 0.4); }
 .save-badge.unsaved { color: #f85149; border-color: rgba(248, 81, 73, 0.4); }
 .left-panel {
-    position: fixed; top: 68px; left: 16px; bottom: 16px; width: 360px; z-index: 999;
+    position: absolute; top: 68px; left: 16px; bottom: 16px; width: 360px; z-index: 999;
     background-color: rgba(9, 16, 24, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7); display: none; flex-direction: column;
@@ -505,7 +740,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 .poi-summary { font-size: 11px; color: #adbac7; max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .poi-badge { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 5px 8px; border-radius: 6px; }
 .float-card {
-    position: fixed; top: 68px; z-index: 998;
+    position: absolute; top: 68px; z-index: 998;
     background-color: rgba(9, 16, 24, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 14px;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75); display: none; flex-direction: column;
@@ -541,7 +776,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 .tag-table th { background: rgba(255,255,255,0.06); color: #38bdf8; }
 .tag-table td { word-break: break-all; }
 #hint-toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1001;
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 1001;
     background-color: rgba(9, 16, 24, 0.97); color: #f0f6fc;
     border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 7px 18px;
     font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); display: none; font-weight:600;
@@ -560,7 +795,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 .ctx-coords { padding: 6px 10px 8px 10px; font-size: 10px; color: #768390; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 4px; }
 .ctx-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 3px 0; }
 #launcher-modal-scrim {
-    position: fixed; inset: 0; z-index: 9999;
+    position: absolute; inset: 0; z-index: 9999;
     display: flex; align-items: center; justify-content: center;
     background-color: rgba(9, 16, 24, 0.97);
     opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
@@ -637,7 +872,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 
 /* Modal Scrims */
 .modal-scrim {
-    position: fixed; inset: 0; z-index: 10000;
+    position: absolute; inset: 0; z-index: 10000;
     display: flex; align-items: center; justify-content: center;
     background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
 }
@@ -672,6 +907,7 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 </style>
 </head>
 <body>
+<div id="app-container">
 <div id="map"></div>
 
 <div id="top-toolbar-bar">
@@ -1160,6 +1396,8 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 </div>
 
 <div id="hint-toast"></div>
+
+</div> <!-- end app-container -->
 
 <script>
 try {
@@ -1788,7 +2026,7 @@ $('customMarkerFileInput').onchange = function(e) {
 
 const ICON_SVGS = {
     pin: '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle>',
-    star: '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8-6.1-3.4-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8z"></path>',
+    star: '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8-6
     circle: '<circle cx="12" cy="12" r="8"></circle>',
     square: '<rect x="5" y="5" width="14" height="14"></rect>',
     flag: '<path d="M6 21V4"></path><path d="M6 4l12 3-12 3"></path>',
@@ -1965,6 +2203,7 @@ function syncLabels() {
             const dist = f.props.metadata.distance;
             const dur = f.props.metadata.duration;
             const distStr = dist > 1000 ? `${(dist/1000).toFixed(2)} km` : `${Math.round(dist)} m`;
+            const durStr = dur > 3600 ? `${(dur/3600).to
             const durStr = dur > 3600 ? `${(dur/3600).toFixed(1)} hr` : `${Math.round(dur/60)} min`;
             labelText = `${distStr} · ${durStr}`;
         } else if (f.props.attributes && f.props.attributes.label_text) {
@@ -3352,7 +3591,8 @@ function renderLayerCardHtml(f) {
 function renderMyLayers() {
     const container = $('my-layers-list');
     $('layer-badge-count').textContent = features.length;
-    const polyList = features.filter(f => ['polygon', 'rectangle', 'circle'].includes(f.kind));
+    const polyList = features.filter(f => ['polygon', 'rectangle', 'circle'].includes(f.kind); // typo corrected
+    const polyList = features.filter(f => ['polygon', 'rectangle', 'circle'].includes(f.kind)); // corrected
     $('tradePolygonSelect').innerHTML = '<option value="">-- Choose --</option>' + polyList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     if (!features.length && !Object.keys(customGroups).length) {
         container.innerHTML = '<div style="font-size:12px; color:#768390; padding:6px 0;">No drawings yet. Use the tools to create shapes.</div>';
