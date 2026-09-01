@@ -178,7 +178,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
     border: 1px solid rgba(0,0,0,0.06) !important;
     border-radius: 12px !important;
-    border-top: 3px solid #D4AF37 !important;
+    border-top: 3px solid #C9B59C !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
     padding: 2rem !important;
     margin: 2rem auto !important;
@@ -191,12 +191,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     font-style: italic;
     font-size: 2rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #412D15;
     text-align: center;
 }
 .login-tagline {
     font-size: 0.9rem;
-    color: #6C727A;
+    color: #8A7A5F;
     text-align: center;
     margin-bottom: 1.5rem;
 }
@@ -204,21 +204,21 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .stTextInput input {
     background-color: #FAFAFA !important;
     border: 1px solid rgba(0,0,0,0.1) !important;
-    border-radius: 6px !important;
+    border-radius: 0 !important;
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
 }
 .stTextInput input:focus {
-    border-color: #D4AF37 !important;
+    border-color: #C9B59C !important;
     box-shadow: 0 0 0 2px rgba(212,175,55,0.15) !important;
     background: #FFFFFF !important;
 }
 
 .stFormSubmitButton > button {
-    background-color: #111A2B !important;
-    color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 50px !important;
+    background-color: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
+    border-radius: 0 !important;
     font-weight: 600 !important;
     min-height: 36px !important;
     width: 100% !important;

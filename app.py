@@ -106,7 +106,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     font-family: 'Playfair Display', serif;
     font-style: italic;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #412D15;
     font-size: 1.1rem;
     margin: 0 0 0.2rem 0;
 }
@@ -126,7 +126,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     border-radius: 4px;
     padding: 0.5rem 0.65rem;
     border: 1px solid rgba(0,0,0,0.07);
-    border-left: 3.5px solid #111A2B;
+    border-left: 3.5px solid #C9B59C;
 }
 .kpi-title {
     font-size: 0.6rem;
@@ -140,7 +140,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     font-style: italic;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #412D15;
 }
 
 .meeting-card {
@@ -155,7 +155,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     font-style: italic;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #412D15;
     margin: 0 0 0.1rem 0;
 }
 .meeting-sub {
@@ -302,7 +302,7 @@ h3 {
 }
 .cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
 .cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
-.cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
+.cal-month-cell.weekend { background: #C9B59C; border-color: #C9B59C; }
 .cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
 
 .cal-month-day-num {
@@ -1079,7 +1079,7 @@ with col_right:
         # Title + Add Task button
         title_col, add_col = st.columns([3, 1], gap="medium")
         with title_col:
-            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#1A2B4C; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#412D15; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         with add_col:
             if st.button("+ Add Task", key="cal_add_task_global", use_container_width=True):
                 st.session_state["cal_new_task_date"] = today
@@ -1297,7 +1297,7 @@ with col_right:
                                 dot = '<span class="today-dot"></span>' if is_today else ''
                                 st.markdown(
                                     f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
-                                    f"font-size:0.9rem;font-weight:600;color:#1A2B4C;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                    f"font-size:0.9rem;font-weight:600;color:#412D15;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                     unsafe_allow_html=True
                                 )
 

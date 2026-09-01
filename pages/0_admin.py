@@ -34,22 +34,22 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 }
 
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F5F1E8 !important;
-    color: #1A1A1A;
+    background-color: #F9F8F6 !important;
+    color: #412D15;
 }
 
 .section-title {
     font-family: 'Playfair Display', serif !important;
     font-style: italic !important;
     font-weight: 600 !important;
-    color: #1A2B4C !important;
+    color: #412D15 !important;
     font-size: 1.2rem !important;
     margin: 0 !important;
     line-height: 1.2 !important;
 }
 .section-caption {
     font-size: 0.72rem;
-    color: #6C727A;
+    color: #8A7A5F;
     margin: 0 0 0.35rem 0 !important;
 }
 
@@ -63,21 +63,22 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 }
 
 .stButton > button {
-    background-color: #111A2B !important;
-    color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 20px !important;
+    background-color: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
+    border-radius: 0 !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
     min-height: 26px !important;
     height: 26px !important;
-    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    border-color: #F1C40F !important;
-    background-color: #1A263D !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+    border-color: #1F150C !important;
+    background-color: #1F150C !important;
+    color: #F9F8F6 !important;
+    box-shadow: none !important;
 }
 
 .stTextInput > div > div > input,

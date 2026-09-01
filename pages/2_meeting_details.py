@@ -87,7 +87,7 @@ CUSTOM_CSS = """
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
-    background-color: #F5F1E8;
+    background-color: #F9F8F6;
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
@@ -356,6 +356,27 @@ div[data-testid="stExpander"],
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {
     box-shadow: none !important;
+}
+
+/* ===== PALETTE RECOLOR OVERRIDE (warm monochrome): tan buttons, brown ink ===== */
+.stButton > button,
+div[data-testid="stPopover"] > button {
+    background-color: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
+}
+.stButton > button:hover,
+div[data-testid="stPopover"] > button:hover {
+    background-color: #1F150C !important;
+    border-color: #1F150C !important;
+    color: #F9F8F6 !important;
+}
+[data-testid="stAppViewContainer"] .block-container {
+    background-color: #F9F8F6 !important;
+}
+.meeting-page h1, .meeting-page h2, .meeting-page h3,
+[data-testid="stAppViewContainer"] h3 {
+    color: #412D15 !important;
 }
 </style>
 """
@@ -792,7 +813,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
     style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
-    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#1A2B4C"), spaceBefore=12, spaceAfter=6)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#412D15"), spaceBefore=12, spaceAfter=6)
     style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
     style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
     style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
@@ -856,7 +877,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     t_act = Table(act_data, colWidths=[0.4 * inch, 3.5 * inch, 1.3 * inch, 1.3 * inch], repeatRows=1)
     t_act.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A2B4C')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#412D15')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),

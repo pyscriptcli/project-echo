@@ -39,9 +39,9 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #F5F1E8;
+        background-color: #F9F8F6;
         font-family: 'Inter', sans-serif;
-        color: #333333;
+        color: #412D15;
     }
     .block-container {
         padding-top: 2rem;
@@ -165,10 +165,10 @@ NOTEBOOK_CSS = """
     div[data-testid="stDownloadButton"] > button {
         border-radius: 18px !important;
         font-weight: 600 !important;
-        background-color: #111A2B !important;
-        color: #FFFFFF !important;
-        border: 1px solid #D4AF37 !important;
-        box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+        background-color: #C9B59C !important;
+        color: #412D15 !important;
+        border: 1px solid #412D15 !important;
+        box-shadow: none !important;
         transition: all 0.2s ease !important;
         min-height: 38px !important;
         display: flex !important;
@@ -180,24 +180,24 @@ NOTEBOOK_CSS = """
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,
     div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #1A2B4C !important;
-        border-color: #E6C44D !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
+        background-color: #1F150C !important;
+        border-color: #1F150C !important;
+        color: #F9F8F6 !important;
+        box-shadow: none !important;
     }
     
-    /* Secondary Buttons override (still deep charcoal + gold accent) */
+    /* Secondary Buttons override (still tan + brown) */
     button[kind="secondary"] {
-        background-color: #111A2B !important;
-        color: #E6C44D !important;
-        border: 1px solid #D4AF37 !important;
-        box-shadow: 0 2px 6px rgba(26, 43, 76, 0.14) !important;
+        background-color: #C9B59C !important;
+        color: #412D15 !important;
+        border: 1px solid #412D15 !important;
+        box-shadow: none !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #1A2B4C !important;
-        border-color: #E6C44D !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.25) !important;
+        background-color: #1F150C !important;
+        border-color: #1F150C !important;
+        color: #F9F8F6 !important;
+        box-shadow: none !important;
     }
     
     /* Notepad Editor Expansion */

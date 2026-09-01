@@ -12,11 +12,12 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 ## 1. Look & feel (the essentials)
 
-- Warm, editorial, "executive brief" aesthetic: a cream, grid-lined canvas with navy
-  and gold accents. Headings are elegant serif italics; body/UI text is clean sans.
+- Warm, editorial, monochrome "executive brief" aesthetic: a clean beige canvas with
+  warm-brown ink and tan accents. Headings are elegant serif italics; body/UI text is
+  clean sans. Flat & edgy: 0 radius, no shadows, no gridlines.
 - Pages hide Streamlit chrome (default header, footer, menu) and render custom cards.
-- Every custom control is styled via inline `<style>` inside `st.markdown(...)`, or the
-  shared `NOTEBOOK_CSS`/sidebar CSS. Keep this approach; don't add new UI frameworks.
+- Every custom control is styled via inline `<style>` inside `st.markdown(...)`, the
+  shared `components/theme.py`, or page CSS. Keep this approach; don't add UI frameworks.
 
 ---
 
@@ -24,17 +25,16 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| canvas | `#F5F1E8` | page background (or `#F3EFE6` variant) |
-| grid line | `rgba(0,0,0,0.03–0.05)` | subtle 80px background grid |
-| ink / headings | `#1A2B4C` | navy — section titles, key numbers, primary text |
-| charcoal | `#111A2B` | buttons, sidebar brand chip, active dots (`#111A2B`/`#1A263D`) |
-| gold | `#D4AF37` | accents, borders, active highlights |
-| bright gold | `#E6C44D` | hover states, bright accents (`#F1C40F` acceptable) |
-| muted ink | `#6C727A` | secondary captions / helper text |
-| slate | `#768390` | tertiary text, axis labels |
-| surface | `#FFFFFF` / `#F5F4F0` | cards / chips |
-| danger | `#E74C3C` (bg `#FDF0EF`) | overdue / destructive states |
-| due-today gold | `#8C6D23` (bg `#FFF9E8`) | "due today" chips |
+| canvas | `#F9F8F6` | page background (lightest, dominant) |
+| borders | `#EFE9E3` | separators, card borders, hairlines |
+| secondary | `#D9CFC7` | secondary borders, input borders, disabled/badges |
+| accent / buttons | `#C9B59C` | buttons, active highlights, accents |
+| ink / headings | `#412D15` | fonts, section titles, key numbers, button text |
+| deep ink | `#1F150C` | hover states, deepest accent |
+| muted ink | `#8A7A5F` | secondary captions / helper text |
+| surface | `#FFFFFF` | cards / chips / panels |
+| danger | `#A94442` (bg `#FDF0EF`) | overdue / destructive states |
+| due-today | `#8C6D23` (bg `#FFF9E8`) | "due today" chips |
 | status dot | `#6366F1` | meeting / "dot-meeting" indicator |
 
 Rules: never introduce a new color unless no token fits. Prefer the tokens above.

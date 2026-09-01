@@ -55,22 +55,22 @@ CUSTOM_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 .stApp {
-    background-color: #F5F1E8;
+    background-color: #F9F8F6;
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; max-width: 100% !important; }
-h3 { font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important; }
-.playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
+h3 { font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; color: #412D15 !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important; }
+.playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #412D15 !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 
 /* Containers & Inputs */
 div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(26,43,76,0.14) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
 .stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important; }
-.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #D4AF37 !important; }
+.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #C9B59C !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #111A2B !important; color: #FFFFFF !important; border: 1px solid #D4AF37 !important; border-radius: 0 !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: none !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #1A2B4C !important; border-color: #E6C44D !important; color: #FFFFFF !important; box-shadow: none !important; }
+.stButton > button { background-color: #C9B59C !important; color: #412D15 !important; border: 1px solid #412D15 !important; border-radius: 0 !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: none !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #1F150C !important; border-color: #1F150C !important; color: #F9F8F6 !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {
@@ -118,14 +118,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; max-height: 420px; overflow-y: auto; }
-.chat-ai { align-self: flex-start; background-color: #FFFFFF; border: 1px solid rgba(26,43,76,0.14); color: #1A1A1A; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
+.chat-ai { align-self: flex-start; background-color: #FFFFFF; border: 1px solid rgba(65,45,21,0.16); color: #412D15; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
 .chat-user { background-color: #222222; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 0; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: none; }
 
 /* Evidence & Badges */
 .evidence-quote-box {
-    background-color: #F8F9FA;
-    border-left: 3px solid #D4AF37;
+    background-color: #FFFFFF;
+    border-left: 3px solid #C9B59C;
     padding: 0.5rem 0.75rem;
     font-size: 0.82rem;
     color: #4A5568;
@@ -1031,7 +1031,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
     style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
-    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#1A2B4C"), spaceBefore=12, spaceAfter=6)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#412D15"), spaceBefore=12, spaceAfter=6)
     style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
     style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
     style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
@@ -1095,7 +1095,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     t_act = Table(act_data, colWidths=[0.4 * inch, 3.5 * inch, 1.3 * inch, 1.3 * inch], repeatRows=1)
     t_act.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A2B4C')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#412D15')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
@@ -1351,7 +1351,7 @@ if st.session_state["transcript"]:
             with t_col1:
                 escaped_tx = json.dumps(st.session_state["transcript"])
                 copy_html = f"""
-                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#222222;color:#FFFFFF;border:none;border-radius:50px;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.2s ease;box-shadow:0 4px 6px rgba(0,0,0,0.1);}}button:hover{{background-color:#D4AF37;box-shadow:0 6px 12px rgba(212,175,55,0.2);transform:translateY(-1px);}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
+                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Inter',sans-serif;}}button{{width:100%;height:36px;background-color:#C9B59C;color:#412D15;border:1px solid #412D15;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#1F150C;color:#F9F8F6;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
                 components.html(copy_html, height=36)
             with t_col2:

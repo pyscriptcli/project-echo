@@ -780,8 +780,35 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 .icon-grid button.active { border-color: #D4AF37; background: #D4AF37; color: #111A2B; }
 .custom-query-collapse-header { color: #1A2B4C; }
 
-/* Launcher modal backdrop — light navy so the light card reads as native */
+/* Launcher modal backdrop — light brown so the light card reads as native */
 #launcher-modal-scrim { background-color: rgba(26, 43, 76, 0.55) !important; }
+
+/* ===== PALETTE RECOLOR OVERRIDE (warm monochrome) — Atlas light chrome ===== */
+.tb-btn.primary-active,
+.trade-btn,
+.dimension-mode-btn.active {
+    background: #412D15 !important; color: #F9F8F6 !important; border-color: #412D15 !important;
+}
+.tb-btn, .dimension-mode-btn, .icon-action-btn {
+    color: #412D15 !important;
+}
+.tb-btn:hover, .tb-btn.active, .dimension-mode-btn:hover {
+    background: rgba(201, 181, 156, 0.30) !important; color: #412D15 !important;
+}
+.tb-sep { background: rgba(65, 45, 21, 0.18) !important; }
+#project-name-display, .custom-query-collapse-header {
+    color: #412D15 !important;
+}
+.save-badge { background: #F9F8F6 !important; color: #8A7A5F !important; border: 1px solid #EFE9E3 !important; }
+.save-badge.saving { color: #412D15 !important; border-color: rgba(201,181,156,0.6) !important; }
+.badge-count, .icon-grid button.active { background: #C9B59C !important; color: #412D15 !important; }
+.icon-grid button { border-color: #EFE9E3 !important; background: #F9F8F6 !important; color: #412D15 !important; }
+/* Dark folium overlay panel: swap blue accent -> warm tan/brown, keep dark shell */
+.tb-btn.primary-active, .trade-btn, .dimension-mode-btn.active,
+.badge-count, .layer-row input[type=checkbox], .layer-name-input:focus,
+.float-card input[type=range], .icon-grid button.active {
+    accent-color: #C9B59C; border-color: #C9B59C;
+}
 </style>
 </head>
 <body>

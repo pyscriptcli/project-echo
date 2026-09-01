@@ -44,7 +44,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #F5F1E8 !important;
+    background-color: #F9F8F6 !important;
     color: #2D2D2D;
 }
 
@@ -57,9 +57,9 @@ html, body, [class*="css"] {
 :root {
     --bg: #F3EFE6;
     --surface: #FFFFFF;
-    --ink: #1A2B4C;
-    --muted: #6C727A;
-    --gold: #D4AF37;
+    --ink: #412D15;
+    --muted: #8A7A5F;
+    --gold: #C9B59C;
     --danger: #E74C3C;
     --radius: 6px;
     --control-height: 28px;
@@ -271,7 +271,7 @@ h3 {
 }
 .cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
 .cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
-.cal-month-cell.weekend { background: #111A2B; border-color: #111A2B; }
+.cal-month-cell.weekend { background: #C9B59C; border-color: #C9B59C; }
 .cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
 
 .cal-month-day-num {
@@ -1219,9 +1219,9 @@ with tab_calendar:
             with header_cols[i]:
                 is_weekend = (i == 0 or i == 6)
                 header_style = (
-                    "background:#111A2B; color:#FFFFFF; border-radius:6px 6px 0 0;"
+                    "background:#C9B59C; color:#412D15; border-radius:6px 6px 0 0;"
                     if is_weekend
-                    else "background:#FFFFFF; color:#1A2B4C; border:1px solid rgba(0,0,0,0.06); border-bottom:none;"
+                    else "background:#FFFFFF; color:#412D15; border:1px solid rgba(65,45,21,0.15); border-bottom:none;"
                 )
                 st.markdown(
                     f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1252,7 +1252,7 @@ with tab_calendar:
                             dot = '<span class="today-dot"></span>' if is_today else ''
                             st.markdown(
                                 f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
-                                f"font-size:0.9rem;font-weight:600;color:#1A2B4C;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                f"font-size:0.9rem;font-weight:600;color:#412D15;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                 unsafe_allow_html=True
                             )
 
@@ -1272,7 +1272,7 @@ with tab_calendar:
 
                             if len(day_events) > 3:
                                 st.markdown(
-                                    f"<div style='font-size:0.58rem;color:#6C727A;padding-left:2px;'>+{len(day_events) - 3} more</div>",
+                                    f"<div style='font-size:0.58rem;color:#8A7A5F;padding-left:2px;'>+{len(day_events) - 3} more</div>",
                                     unsafe_allow_html=True
                                 )
 
