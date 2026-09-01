@@ -286,6 +286,8 @@ def _initials(name: str) -> str:
 
 
 def setup_page_layout():
+    from components.theme import inject_global_css
+    inject_global_css()  # flat & edgy shared theme + large gridlines
     st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
     with st.sidebar:

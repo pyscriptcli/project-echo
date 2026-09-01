@@ -56,8 +56,8 @@ Rules: never introduce a new color unless no token fits. Prefer the tokens above
 ## 4. Reusable components (copy these patterns, don't invent new ones)
 
 ### Cards & panels
-- `.left-card` — white panel, `1px solid rgba(0,0,0,0.08)`, `8px` radius, soft shadow,
-  `padding:1rem`. `.left-card-scroll` = scrollable variant.
+- Design direction: **flat & edgy** — `border-radius:0` everywhere, `box-shadow:none`, hairline `1px solid rgba(26,43,76,0.14)` borders, and **large gridlines** on the cream canvas (96px major + 24px fine, `rgba(26,43,76,0.10)`/`0.05`) via `components/theme.py`.
+- `.left-card` — white panel, hairline border, `0` radius, **no shadow**, `padding:1rem`. `.left-card-scroll` = scrollable variant.
 - `.meeting-card` with `.meeting-title` / `.meeting-sub` / `.meeting-desc`.
 - `.task-card` with `.task-card-header` / `.task-card-desc` / `.task-card-footer`,
   `.task-card-title`, status dot `.task-status-dot .dot-todo|.dot-in_progress|.dot-done|.dot-meeting`.
@@ -86,12 +86,12 @@ Rules: never introduce a new color unless no token fits. Prefer the tokens above
 
 ---
 
-## 5. Buttons (deep charcoal + gold, rounded, shadow)
+## 5. Buttons (deep charcoal + gold, squared/flat, no shadow)
 
-Global button style is applied in the sidebar/shared CSS + each page:
+Global button style is applied via `components/theme.py` (`inject_global_css`) + the sidebar.
 - Base: `background:#111A2B`, `color:#FFF`, `border:1px solid #D4AF37`,
-  `border-radius:18px`, Inter 600, soft shadow `0 4px 10px rgba(26,43,76,0.18)`.
-- Hover: `background:#1A2B4C`, `border-color:#E6C44D`, stronger gold shadow.
+  `border-radius:0` (flat/edgy), Inter 600, `letter-spacing:0.02em`, `text-transform:uppercase`, **no shadow**.
+- Hover: `background:#1A263D`, `border-color:#E6C44D`, still no shadow.
 - Secondary variant: same charcoal/gold but gold text (`#E6C44D`).
 - Cover **all** button types with the same theme: `stButton`, `stPopover` toggle,
   `stFormSubmitButton`, `stDownloadButton`. Don't let any button look unstyled.
