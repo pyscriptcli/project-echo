@@ -27,6 +27,7 @@ NAV_ITEMS = [
     ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
     ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
     ("pages/5_atlas.py", "Project Atlas", ":material/map:"),
+    ("pages/6_notebook.py", "Notebook", ":material/edit_note:"),
 ]
 
 SIDEBAR_CSS = """
