@@ -1,6 +1,6 @@
 # Project Echo
 
-**Project Echo** is a multi-page executive workflow suite for **PRIME Philippines**. It turns raw meeting transcripts into polished Minutes of Meeting (MoM), manages tasks and daily logs, and fronts it all with **Echo** — an AI assistant and agentic co-pilot that can act across the app.
+**Project Echo** is an executive AI Assistant. It turns raw meeting transcripts into polished Minutes of Meeting (MoM), manages tasks and daily logs, and fronts it all with **Echo** — an AI assistant and agentic co-pilot that can act across the app.
 
 Built with **Streamlit + Supabase**, powered by **DeepSeek / OpenRouter** LLMs, and styled with a warm, editorial navy-and-gold design system.
 
