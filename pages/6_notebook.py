@@ -3,6 +3,7 @@ import os
 import datetime
 import uuid
 import streamlit as st
+import pandas as pd
 
 # Add project root to sys.path to allow imports from components
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -19,16 +20,22 @@ st.set_page_config(
 )
 
 # ------------------------------
-# CSS (Monochrome & Minimalist)
+# CSS (UI Matched to Reference)
 # ------------------------------
 NOTEBOOK_CSS = """
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+
     /* Hide Streamlit default elements */
     #MainMenu, footer, header {visibility: hidden;}
+    
+    /* Background and typography */
     .stApp {
-        background-color: #FFFFFF;
+        background-color: #f4f1ea;
+        background-image: linear-gradient(#e5e0d8 1px, transparent 1px), linear-gradient(90deg, #e5e0d8 1px, transparent 1px);
+        background-size: 40px 40px;
         font-family: 'Inter', sans-serif;
-        color: #111111;
+        color: #333333;
     }
     .block-container {
         padding-top: 2rem;
@@ -38,67 +45,74 @@ NOTEBOOK_CSS = """
 
     /* Titles and subtitles */
     .notebook-title {
-        font-family: 'Helvetica Neue', sans-serif;
-        font-weight: 700;
+        font-family: 'Playfair Display', serif;
+        font-weight: 400;
+        font-style: italic;
         font-size: 2.2rem;
-        color: #000000;
+        color: #1a2b4c;
         margin-bottom: 0.25rem;
-        letter-spacing: -0.02em;
     }
     .notebook-subtitle {
         font-size: 0.95rem;
         color: #666666;
         margin-bottom: 2rem;
-        border-bottom: 1px solid #EAEAEA;
         padding-bottom: 1rem;
     }
 
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 1.5rem;
-        border-bottom: 1px solid #EAEAEA;
+        border-bottom: 1px solid #d4d0c8;
     }
     .stTabs [data-baseweb="tab"] {
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
         font-weight: 500;
-        font-size: 1rem;
-        color: #888888;
+        font-size: 1.1rem;
+        color: #666666;
         padding: 0.5rem 0.25rem;
+        background: transparent;
     }
     .stTabs [aria-selected="true"] {
-        color: #000000 !important;
-        border-bottom: 2px solid #000000;
+        color: #1a2b4c !important;
+        border-bottom: 2px solid #1a2b4c;
     }
 
-    /* Text Areas (Notepad & Daily Log) */
-    .stTextArea textarea {
-        background-color: #FAFAFA !important;
-        border: 1px solid #EAEAEA !important;
-        border-radius: 4px !important;
+    /* Containers */
+    .stTextArea textarea, .stTextInput input, .stSelectbox > div > div {
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 0.95rem !important;
-        color: #000000 !important;
-        padding: 1rem !important;
+        color: #333333 !important;
         box-shadow: none !important;
-        line-height: 1.5 !important;
     }
-    .stTextArea textarea:focus {
-        border-color: #CCCCCC !important;
+    
+    .gallery-container, .kanban-card, div[data-testid="stMetric"] {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     .status-footer {
         display: flex;
         justify-content: space-between;
-        color: #999999;
+        color: #718096;
         font-size: 0.8rem;
         margin-top: 0.5rem;
     }
 
     /* Kanban & Views */
     .view-header {
-        font-weight: 600;
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 1.5rem;
+        color: #1a2b4c;
         margin-bottom: 1rem;
-        color: #000000;
-        border-bottom: 1px solid #EEEEEE;
+        border-bottom: 1px solid #d4d0c8;
         padding-bottom: 0.5rem;
     }
     .kanban-header {
@@ -110,23 +124,14 @@ NOTEBOOK_CSS = """
     .kanban-header .label {
         font-weight: 600;
         font-size: 0.95rem;
-        color: #000000;
-    }
-    .kanban-card {
-        background-color: #FFFFFF;
-        border: 1px solid #EAEAEA;
-        border-radius: 4px;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        font-size: 0.9rem;
-        line-height: 1.4;
+        color: #1a2b4c;
     }
     .empty-state {
         text-align: center;
-        color: #AAAAAA;
+        color: #a0aec0;
         font-size: 0.85rem;
         padding: 2rem 0;
+        font-style: italic;
     }
     .day-col-header {
         text-align: center;
@@ -135,38 +140,36 @@ NOTEBOOK_CSS = """
         font-size: 0.9rem;
     }
 
-    /* Button Uniform Styling (Monochrome) */
+    /* Button Uniform Styling (Reference Matched) */
     .stButton > button, div[data-testid="stPopover"] > button {
-        border-radius: 4px;
-        font-weight: 500;
-        background-color: #FFFFFF;
-        color: #000000;
-        border: 1px solid #DDDDDD;
-        transition: all 0.2s;
-        min-height: 36px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.9rem;
+        border-radius: 24px !important;
+        font-weight: 500 !important;
+        background-color: #111827 !important;
+        color: #ffffff !important;
+        border: none !important;
+        transition: all 0.2s !important;
+        min-height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding: 0.25rem 1rem !important;
+        font-size: 0.9rem !important;
     }
     .stButton > button:hover, div[data-testid="stPopover"] > button:hover {
-        background-color: #F5F5F5;
-        border-color: #BBBBBB;
-        color: #000000;
+        background-color: #374151 !important;
+        color: #ffffff !important;
     }
     
-    /* Primary button override for the active note */
-    .stButton > button[kind="primary"] {
-        background-color: #111111;
-        color: #FFFFFF;
-        border: 1px solid #111111;
+    /* Secondary Note Gallery Buttons override */
+    button[kind="secondary"] {
+        background-color: transparent !important;
+        color: #1a2b4c !important;
+        border: 1px solid #cbd5e1 !important;
     }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #333333;
-        border-color: #333333;
-        color: #FFFFFF;
+    button[kind="secondary"]:hover {
+        background-color: #f8fafc !important;
+        color: #1a2b4c !important;
     }
 </style>
 """
@@ -238,11 +241,9 @@ def init_session():
         st.session_state.np_title = ""
         st.session_state.np_content = ""
 
-    # Daily Log init - replaced individual cards with a dictionary of texts per date
+    # Daily Log init
     if "dl_logs" not in st.session_state:
         st.session_state.dl_logs = {}
-        
-        # Populate a sample log for today
         today_str = datetime.date.today().isoformat()
         st.session_state.dl_logs[today_str] = {
             "client": "- Prep quarterly report\n- Send email update to Client A",
@@ -306,7 +307,7 @@ def render_notepad():
         st.button("+ New Note", on_click=create_new_doc, use_container_width=True)
         search_query = st.text_input("Search", placeholder="Search notes...", label_visibility="collapsed").lower()
         
-        st.markdown("<hr style='margin: 1rem 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 1rem 0; border: 0; border-top: 1px solid #d4d0c8;'>", unsafe_allow_html=True)
         
         filtered_docs = {
             k: v for k, v in st.session_state.nb_docs.items()
@@ -314,7 +315,7 @@ def render_notepad():
         }
         sorted_docs = sorted(filtered_docs.items(), key=lambda x: x[1]["updated"], reverse=True)
         
-        gallery_cont = st.container(height=450)
+        gallery_cont = st.container(height=450, border=False)
         with gallery_cont:
             if not sorted_docs:
                 st.markdown("<div class='empty-state'>No notes found</div>", unsafe_allow_html=True)
@@ -373,7 +374,6 @@ def render_notepad():
 # ------------------------------
 
 def render_day_view(selected_date):
-    """Day view with a single long text box per column for continuous logging."""
     date_str = selected_date.isoformat()
     
     if date_str not in st.session_state.dl_logs:
@@ -404,7 +404,6 @@ def render_day_view(selected_date):
                 st.session_state.dl_logs[date_str][col_key] = new_text
 
 def render_week_view(selected_date):
-    """Weekly board showing summaries of the daily logs."""
     start, end = _date_range("Week", selected_date)
     days = [start + datetime.timedelta(days=i) for i in range(7)]
     
@@ -415,8 +414,8 @@ def render_week_view(selected_date):
         with cols[i]:
             st.markdown(f"""
                 <div class="day-col-header">
-                    <div style="font-size: 0.8rem; color: #666;">{day.strftime('%a').upper()}</div>
-                    <div style="font-size: 1.1rem; color: #000;">{day.strftime('%d')}</div>
+                    <div style="font-size: 0.8rem; color: #718096;">{day.strftime('%a').upper()}</div>
+                    <div style="font-size: 1.1rem; color: #1a2b4c;">{day.strftime('%d')}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -431,14 +430,13 @@ def render_week_view(selected_date):
                     val = logs.get(col_def["key"], "").strip()
                     if val:
                         st.markdown(f"""
-                            <div class="kanban-card" style="font-size: 0.8rem; padding: 0.5rem;">
-                                <div style="color: #666; font-size: 0.65rem; margin-bottom: 0.2rem; font-weight: 600;">{col_def['label'].upper()}</div>
-                                <div style="white-space: pre-wrap;">{val}</div>
+                            <div class="kanban-card" style="font-size: 0.8rem; padding: 0.75rem;">
+                                <div style="color: #718096; font-size: 0.7rem; margin-bottom: 0.3rem; font-weight: 600;">{col_def['label'].upper()}</div>
+                                <div style="white-space: pre-wrap; color: #333333;">{val}</div>
                             </div>
                         """, unsafe_allow_html=True)
 
 def render_month_view(selected_date):
-    """Monthly list view showing all logs for the current month."""
     start, end = _date_range("Month", selected_date)
     st.markdown('<div class="view-header">Monthly Overview</div>', unsafe_allow_html=True)
     
@@ -458,14 +456,14 @@ def render_month_view(selected_date):
         return
 
     for d, logs in month_logs:
-        st.markdown(f"<div style='font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-family: \"Playfair Display\", serif; font-size: 1.1rem; color: #1a2b4c; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
         for col_def in COLUMNS:
             val = logs.get(col_def["key"], "").strip()
             if val:
                 st.markdown(f"""
-                    <div class="kanban-card" style="display: flex; gap: 1rem; padding: 0.75rem 1rem;">
-                        <span style="font-size: 0.85rem; color: #888; width: 100px; font-weight: 600; flex-shrink: 0;">{col_def['label']}</span>
-                        <span style="white-space: pre-wrap; font-size: 0.9rem;">{val}</span>
+                    <div class="kanban-card" style="display: flex; gap: 1rem; padding: 1rem;">
+                        <span style="font-size: 0.85rem; color: #718096; width: 100px; font-weight: 600; flex-shrink: 0;">{col_def['label']}</span>
+                        <span style="white-space: pre-wrap; font-size: 0.95rem; color: #333333;">{val}</span>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -496,6 +494,94 @@ def render_dailylog():
     elif view == "Month":
         render_month_view(date_val)
 
+
+# ------------------------------
+# Statistics View
+# ------------------------------
+
+def render_statistics():
+    st.markdown('<div class="notebook-title">Daily Log Statistics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="notebook-subtitle">Monitor your logging consistency and productivity.</div>', unsafe_allow_html=True)
+
+    if not st.session_state.dl_logs:
+        st.info("No logs available to generate statistics.")
+        return
+
+    # Parse all logged dates
+    valid_dates = []
+    for d_str, logs in st.session_state.dl_logs.items():
+        try:
+            d = datetime.date.fromisoformat(d_str)
+            valid_dates.append((d, logs))
+        except:
+            continue
+            
+    if not valid_dates:
+        st.info("No valid date records found.")
+        return
+
+    dates_only = [x[0] for x in valid_dates]
+    start_date = min(dates_only)
+    end_date = datetime.date.today()
+    
+    # Calculate days
+    total_days = (end_date - start_date).days + 1
+    
+    filled_dates = []
+    for d, logs in valid_dates:
+        if any(v.strip() for v in logs.values()):
+            filled_dates.append(d)
+            
+    missed_dates = []
+    for i in range(total_days):
+        current = start_date + datetime.timedelta(days=i)
+        if current not in filled_dates and current <= end_date:
+            missed_dates.append(current)
+
+    filled_count = len(filled_dates)
+    missed_count = len(missed_dates)
+    completeness = (filled_count / total_days) * 100 if total_days > 0 else 0
+
+    # Display Metrics
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Days Tracked", total_days)
+    col2.metric("Days Logged", filled_count)
+    col3.metric("Days Missed", missed_count)
+    col4.metric("Completeness", f"{completeness:.1f}%")
+
+    st.markdown("<hr style='border: 0; border-top: 1px solid #d4d0c8; margin: 2rem 0;'>", unsafe_allow_html=True)
+    
+    c1, c2 = st.columns([1, 1], gap="large")
+    
+    with c1:
+        st.markdown('<div class="view-header">Summary Table</div>', unsafe_allow_html=True)
+        
+        # Build Dataframe for recent logs
+        table_data = []
+        # show last 30 days or total days
+        check_days = min(total_days, 30)
+        for i in range(check_days):
+            d = end_date - datetime.timedelta(days=i)
+            status = "Logged" if d in filled_dates else "Missed"
+            table_data.append({"Date": d.strftime("%Y-%m-%d"), "Status": status})
+            
+        df = pd.DataFrame(table_data)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+    with c2:
+        st.markdown('<div class="view-header">Missed Dates</div>', unsafe_allow_html=True)
+        if not missed_dates:
+            st.success("You have a perfect streak! No missed dates.")
+        else:
+            missed_dates.sort(reverse=True)
+            for md in missed_dates:
+                st.markdown(f"""
+                    <div class="kanban-card" style="padding: 0.75rem 1rem; color: #e53e3e; font-size: 0.95rem;">
+                        <strong>{md.strftime('%A, %b %d, %Y')}</strong>
+                    </div>
+                """, unsafe_allow_html=True)
+
+
 # ------------------------------
 # Main app
 # ------------------------------
@@ -505,11 +591,14 @@ def main():
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     init_session()
 
-    tab_notepad, tab_dailylog = st.tabs(["Notepad", "Daily Log"])
+    tab_notepad, tab_dailylog, tab_stats = st.tabs(["Notepad", "Daily Log", "Statistics"])
+    
     with tab_notepad:
         render_notepad()
     with tab_dailylog:
         render_dailylog()
+    with tab_stats:
+        render_statistics()
 
 if __name__ == "__main__":
     main()
