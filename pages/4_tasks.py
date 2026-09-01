@@ -78,24 +78,6 @@ h3 {
 }
 
 /* ===================== GLOBAL CONTROLS ===================== */
-.stButton > button {
-    height: var(--control-height) !important;
-    min-height: var(--control-height) !important;
-    border-radius: var(--radius) !important;
-    font-size: 0.75rem !important;
-    padding: 0 0.6rem !important;
-    background: var(--surface) !important;
-    color: var(--ink) !important;
-    border: 1px solid rgba(26, 43, 76, 0.15) !important;
-    box-shadow: none !important;
-    transition: all 0.15s ease !important;
-}
-.stButton > button:hover {
-    border-color: var(--gold) !important;
-    background: #FFFDF6 !important;
-    box-shadow: 0 1px 3px rgba(212, 175, 55, 0.2) !important;
-}
-
 .stSelectbox > div > div,
 .stMultiselect > div > div,
 .stTextInput > div > div,

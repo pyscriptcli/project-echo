@@ -75,7 +75,7 @@ if "gal_search_q" not in st.session_state:
 if "gal_type_f" not in st.session_state:
     st.session_state["gal_type_f"] = "All Meetings"
 if "gal_date_range" not in st.session_state:
-    st.session_state["gal_date_range"] = (first_day_of_month, today)
+    st.session_state["gal_date_range"] = ()
 if "edit_meeting_details" not in st.session_state:
     st.session_state["edit_meeting_details"] = False
 
@@ -927,7 +927,7 @@ if st.session_state["view_mode"] == "gallery":
             elif dr and len(dr) == 1:
                 btn_label = f"{dr[0].strftime('%b %d, %Y')} •"
             else:
-                btn_label = f"{first_day_of_month.strftime('%b %d, %Y')} — {today.strftime('%b %d, %Y')} •"
+                btn_label = "All Dates •"
 
             with st.popover(btn_label, use_container_width=True):
                 pop_left, pop_right = st.columns([1.1, 2.3], gap="medium")
@@ -977,7 +977,7 @@ if st.session_state["view_mode"] == "gallery":
             if st.button("Reset", key="btn_reset_all_filters"):
                 st.session_state["gal_search_q"] = ""
                 st.session_state["gal_type_f"] = "All Meetings"
-                st.session_state["gal_date_range"] = (first_day_of_month, today)
+                st.session_state["gal_date_range"] = ()
                 st.rerun()
 
         # Filtering Logic Execution
@@ -1017,11 +1017,11 @@ if st.session_state["view_mode"] == "gallery":
             
             filtered_meetings.append(m)
 
-        is_filtered = bool(q_clean or active_type != "All Meetings" or active_dr != (first_day_of_month, today))
+        is_filtered = bool(q_clean or active_type != "All Meetings" or active_dr)
         if is_filtered:
             st.caption(f"Showing **{len(filtered_meetings)}** matching meeting archive(s)")
         else:
-            st.caption(f"Showing all **{len(filtered_meetings)}** meeting archive(s) for this month")
+            st.caption(f"Showing all **{len(filtered_meetings)}** meeting archive(s)")
 
         st.markdown("<hr style='margin: 0.5rem 0 1rem 0; border: none; border-top: 1px solid rgba(0,0,0,0.06);'>", unsafe_allow_html=True)
 
@@ -1052,11 +1052,6 @@ if st.session_state["view_mode"] == "gallery":
                             st.session_state["selected_meeting_id"] = m_id_val
                             st.session_state["view_mode"] = "details"
                             st.session_state["edit_meeting_details"] = False
-                            st.rerun()
-                        if st.button("Edit Meeting", key=f"edit_btn_{m_id_val}_{idx}", use_container_width=True):
-                            st.session_state["selected_meeting_id"] = m_id_val
-                            st.session_state["view_mode"] = "details"
-                            st.session_state["edit_meeting_details"] = True
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
 

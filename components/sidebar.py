@@ -252,9 +252,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
    Scoped to the main content area so the sidebar nav/sign-out
    keeps its own styling. Applied on every page via the sidebar.
    ============================================================ */
-[data-testid="stMain"] .stButton > button,
-[data-testid="stMain"] [data-testid="stPopover"] > button,
-[data-testid="stMain"] .stFormSubmitButton > button {
+.stButton > button,
+[data-testid="stPopover"] > button,
+.stFormSubmitButton > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37 !important;
@@ -264,9 +264,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
     transition: all 0.2s ease !important;
 }
-[data-testid="stMain"] .stButton > button:hover,
-[data-testid="stMain"] [data-testid="stPopover"] > button:hover,
-[data-testid="stMain"] .stFormSubmitButton > button:hover {
+.stButton > button:hover,
+[data-testid="stPopover"] > button:hover,
+.stFormSubmitButton > button:hover {
     background-color: #1A2B4C !important;
     border-color: #E6C44D !important;
     color: #FFFFFF !important;
