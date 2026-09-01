@@ -1,652 +1,746 @@
-# ============================================
-# Project Echo - Streamlit Application
-# Single File Implementation
-# ============================================
-
-# ============================================
-# SECTION 1: Imports and Environment Setup
-# ============================================
-
-import streamlit as st
-import uuid
-import datetime
+import sys
 import os
-from typing import Dict, List, Optional
+import datetime
+import uuid
+import streamlit as st
 
-# Supabase imports
-try:
-    from supabase import create_client, Client
-except ImportError:
-    st.error("Supabase package not installed. Please install with: pip install supabase")
-    st.stop()
+# Add project root to sys.path to allow imports from components
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# ============================================
-# SECTION 2: Design System Constants and CSS
-# ============================================
+from components.sidebar import setup_page_layout
 
-# Color Palette (Material Design inspired)
-COLORS = {
-    "primary": "#1E88E5",
-    "primary_dark": "#1565C0",
-    "secondary": "#26A69A",
-    "background": "#F5F7FA",
-    "card": "#FFFFFF",
-    "text": "#212121",
-    "text_light": "#757575",
-    "border": "#E0E0E0",
-    "danger": "#E53935",
-    "warning": "#FB8C00",
-    "success": "#43A047",
-    "info": "#039BE5",
-}
+# ------------------------------
+# Page configuration
+# ------------------------------
+st.set_page_config(
+    page_title="Project Echo - Notebook",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-# Font Families
-FONTS = {
-    "body": "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-    "heading": "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-}
-
-# Inline SVG icons for category headers (Material Icons)
-ICON_CLIENT = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-  <circle cx="9" cy="7" r="4"></circle>
-  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-</svg>
-"""
-
-ICON_ADMIN = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="3"></circle>
-  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-</svg>
-"""
-
-ICON_ADHOC = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-</svg>
-"""
-
-ICON_MEETING = """
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-  <line x1="16" y1="2" x2="16" y2="6"></line>
-  <line x1="8" y1="2" x2="8" y2="6"></line>
-  <line x1="3" y1="10" x2="21" y2="10"></line>
-  <path d="M8 14h.01"></path>
-  <path d="M12 14h.01"></path>
-  <path d="M16 14h.01"></path>
-  <path d="M8 18h.01"></path>
-  <path d="M12 18h.01"></path>
-  <path d="M16 18h.01"></path>
-</svg>
-"""
-
-# Global CSS as a string
-GLOBAL_CSS = f"""
+# ------------------------------
+# CSS
+# ------------------------------
+NOTEBOOK_CSS = """
 <style>
-    .stApp {{
-        font-family: {FONTS['body']};
-        background-color: {COLORS['background']};
-    }}
-    
-    h1, h2, h3, h4, h5, h6 {{
-        font-family: {FONTS['heading']};
-        color: {COLORS['text']};
-    }}
-    
-    .sidebar .sidebar-content {{
-        background-color: {COLORS['card']};
-    }}
-    
-    .kanban-column {{
-        background-color: {COLORS['card']};
+    /* Hide Streamlit default elements */
+    #MainMenu, footer, header {visibility: hidden;}
+    .stApp {
+        background-color: #F3EFE6;
+        font-family: 'Inter', sans-serif;
+    }
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }
+
+    /* Titles and subtitles */
+    .notebook-title {
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 2.8rem;
+        color: #1A2B4C;
+        margin-bottom: 0.25rem;
+    }
+    .notebook-subtitle {
+        font-size: 1rem;
+        color: #6C727A;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #D4AF37;
+        padding-bottom: 0.75rem;
+    }
+
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2rem;
+        border-bottom: 2px solid #D4AF37;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 1.2rem;
+        color: #1A2B4C;
+        padding: 0.5rem 1rem;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #D4AF37 !important;
+        border-bottom: 3px solid #D4AF37;
+    }
+
+    /* Notepad specific */
+    .doc-browser {
+        background-color: #FFFFFF;
+        padding: 1rem;
         border-radius: 8px;
-        padding: 10px;
-        margin: 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        min-height: 200px;
-    }}
-    
-    .kanban-header {{
+        border: 1px solid #E0E0E0;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-        color: {COLORS['text']};
-    }}
-    
-    .kanban-card {{
-        background-color: {COLORS['card']};
-        border: 1px solid {COLORS['border']};
-        border-radius: 6px;
-        padding: 10px;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }}
-    
-    .kanban-card-title {{
-        font-weight: 600;
-        color: {COLORS['text']};
-    }}
-    
-    .kanban-card-desc {{
-        color: {COLORS['text_light']};
-        font-size: 0.9rem;
-        margin: 4px 0;
-    }}
-    
-    .kanban-card-due {{
-        font-size: 0.8rem;
-        color: {COLORS['primary']};
-    }}
-    
-    .notepad-toolbar {{
+        gap: 1rem;
+    }
+    .toolbar {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
-        margin-bottom: 10px;
-    }}
-    
-    .auth-container {{
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 30px;
-        background: {COLORS['card']};
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }}
-    
-    .stButton > button {{
-        border-radius: 4px;
-        border: 1px solid {COLORS['border']};
-        background-color: {COLORS['card']};
-        color: {COLORS['text']};
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .editor-area textarea {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E0E0 !important;
+        border-radius: 8px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1rem !important;
+        color: #1A2B4C !important;
+        padding: 1rem !important;
+    }
+    .status-footer {
+        display: flex;
+        justify-content: space-between;
+        color: #6C727A;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        border-top: 1px solid #E0E0E0;
+        padding-top: 0.5rem;
+    }
+
+    /* Daily Log specific */
+    .filter-bar {
+        background-color: #FFFFFF;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #E0E0E0;
+        margin-bottom: 1rem;
+    }
+    .date-caption {
+        font-size: 0.9rem;
+        color: #6C727A;
+        margin-bottom: 0.75rem;
+    }
+    .kanban-board {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .kanban-column {
+        background-color: #FFFFFF;
+        border-radius: 8px;
+        border: 1px solid #E0E0E0;
+        padding: 0.75rem;
+        min-height: 400px;
+    }
+    .kanban-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        border-bottom: 2px solid #D4AF37;
+        padding-bottom: 0.5rem;
+    }
+    .kanban-header svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    .kanban-header .label {
+        font-weight: 600;
+        color: #1A2B4C;
+    }
+    .kanban-header .count {
+        background-color: #F3EFE6;
+        color: #1A2B4C;
+        border-radius: 12px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.8rem;
+        margin-left: auto;
+    }
+    .kanban-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E0E0E0;
+        border-radius: 6px;
+        padding: 0.6rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .kanban-card textarea {
+        background-color: transparent !important;
+        border: none !important;
+        resize: none !important;
+        font-size: 0.9rem !important;
+        color: #1A2B4C !important;
+        padding: 0 !important;
+        line-height: 1.4;
+    }
+    .card-meta {
+        font-size: 0.75rem;
+        color: #6C727A;
+        margin-top: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .empty-state {
+        text-align: center;
+        color: #6C727A;
+        font-style: italic;
+        padding: 2rem 0;
+    }
+
+    /* Popover styles */
+    div[data-testid="stPopover"] > div {
+        background-color: #FFFFFF;
+        border: 1px solid #D4AF37;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    /* Hide Streamlit widgets default styling where needed */
+    .stButton > button {
+        border-radius: 6px;
+        font-weight: 500;
+        background-color: #FFFFFF;
+        color: #1A2B4C;
+        border: 1px solid #D4AF37;
         transition: all 0.2s;
-    }}
-    
-    .stButton > button:hover {{
-        border-color: {COLORS['primary']};
-        color: {COLORS['primary']};
-    }}
+    }
+    .stButton > button:hover {
+        background-color: #F3EFE6;
+        border-color: #D4AF37;
+    }
+    .stButton > button[kind="primary"] {
+        background-color: #D4AF37;
+        color: #1A2B4C;
+        border: none;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #c4a030;
+    }
+
+    /* Ensure columns have equal height in kanban */
+    .stHorizontalBlock {
+        align-items: stretch;
+    }
 </style>
 """
 
-# Categories for Daily Log
-CATEGORIES = [
-    "Client Related Tasks",
-    "Admin Tasks",
-    "Adhoc Tasks",
-    "Meetings",
+# ------------------------------
+# Constants
+# ------------------------------
+
+COLUMNS = [
+    {"key": "client", "label": "Client Related Tasks", "color": "#3B82F6"},
+    {"key": "admin", "label": "Admin Tasks", "color": "#10B981"},
+    {"key": "adhoc", "label": "Adhoc Tasks", "color": "#F59E0B"},
+    {"key": "meeting", "label": "Meetings", "color": "#8B5CF6"},
 ]
 
-# ============================================
-# SECTION 3: Session State Initialization
-# ============================================
-
-def init_session() -> None:
-    """Initialize all session state variables."""
-    if "user" not in st.session_state:
-        st.session_state.user = None
-    
-    # Notepad state
-    if "notepad_content" not in st.session_state:
-        st.session_state.notepad_content = ""
-    if "notepad_notes" not in st.session_state:
-        st.session_state.notepad_notes = []  # list of dicts
-    if "notepad_current_id" not in st.session_state:
-        st.session_state.notepad_current_id = None
-    
-    # Daily Log state
-    if "daily_tasks" not in st.session_state:
-        st.session_state.daily_tasks = []  # list of dicts
-    if "show_add_task" not in st.session_state:
-        st.session_state.show_add_task = False
-    
-    # Auth state
-    if "auth_mode" not in st.session_state:
-        st.session_state.auth_mode = "login"  # "login" or "signup"
-    
-    # Supabase client (will be set later)
-    if "supabase_client" not in st.session_state:
-        st.session_state.supabase_client = None
-
-# ============================================
-# SECTION 4: Authentication and Supabase Functions
-# ============================================
-
-def get_supabase_client() -> Optional[Client]:
+SVG_DICT = {
+    "client": """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+        </svg>
+    """,
+    "admin": """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+    """,
+    "adhoc": """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+    """,
+    "meeting": """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
     """
-    Create Supabase client from environment variables or secrets.
-    Returns None if not configured (mock mode).
+}
+
+# ------------------------------
+# Helper functions
+# ------------------------------
+
+def _make_id():
+    """Generate a short UUID."""
+    return uuid.uuid4().hex[:8]
+
+def _date_range(view, date_obj):
     """
-    url = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY")
-    
-    if url and key:
-        try:
-            return create_client(url, key)
-        except Exception as e:
-            st.warning(f"Supabase connection failed: {e}. Running in mock mode.")
-            return None
+    Return (start_date, end_date) inclusive for the given view and reference date.
+    view: 'Day', 'Week', 'Month'
+    date_obj: datetime.date
+    """
+    if view == "Day":
+        return date_obj, date_obj
+    elif view == "Week":
+        start = date_obj - datetime.timedelta(days=date_obj.weekday())  # Monday
+        end = start + datetime.timedelta(days=6)
+        return start, end
+    elif view == "Month":
+        start = date_obj.replace(day=1)
+        # Last day of month
+        if date_obj.month == 12:
+            next_month = datetime.date(date_obj.year + 1, 1, 1)
+        else:
+            next_month = datetime.date(date_obj.year, date_obj.month + 1, 1)
+        end = next_month - datetime.timedelta(days=1)
+        return start, end
     else:
-        st.warning("Supabase credentials not found. Running in mock mode.")
-        return None
+        return date_obj, date_obj
 
-def sign_in(email: str, password: str) -> bool:
-    """Attempt to sign in user. Returns True on success."""
-    client = st.session_state.supabase_client
-    if client is None:
-        # Mock mode: accept any email/password with length >= 6
-        if len(password) >= 6:
-            st.session_state.user = {"email": email, "id": str(uuid.uuid4())}
-            return True
+def _format_date(d):
+    """Format datetime/date to short string."""
+    if isinstance(d, datetime.datetime):
+        return d.strftime("%b %d, %Y")
+    elif isinstance(d, datetime.date):
+        return d.strftime("%b %d, %Y")
+    return str(d)
+
+# ------------------------------
+# Session state initialization
+# ------------------------------
+
+def init_session():
+    """Initialize all session state variables."""
+    # Notepad documents
+    if "nb_docs" not in st.session_state:
+        st.session_state.nb_docs = {}
+        # Seed with a welcome document
+        welcome_id = _make_id()
+        st.session_state.nb_docs[welcome_id] = {
+            "title": "Welcome to Notebook",
+            "content": "This is your digital notebook.\n\nUse the tabs above to switch between Notepad and Daily Log.\n\nStart typing here...",
+            "created": datetime.datetime.now().isoformat(),
+            "updated": datetime.datetime.now().isoformat(),
+        }
+        st.session_state.nb_current_id = welcome_id
+    if "nb_current_id" not in st.session_state:
+        st.session_state.nb_current_id = list(st.session_state.nb_docs.keys())[0] if st.session_state.nb_docs else None
+
+    # Notepad clipboard and undo state
+    if "np_clipboard" not in st.session_state:
+        st.session_state.np_clipboard = ""
+    if "np_last_saved_content" not in st.session_state:
+        current_doc = st.session_state.nb_docs.get(st.session_state.nb_current_id)
+        st.session_state.np_last_saved_content = current_doc["content"] if current_doc else ""
+    if "np_redo_content" not in st.session_state:
+        st.session_state.np_redo_content = ""
+
+    # Daily Log
+    if "dl_tasks" not in st.session_state:
+        # Initialize empty dict with keys for each column
+        st.session_state.dl_tasks = {col["key"]: [] for col in COLUMNS}
+        # Seed with a couple of sample tasks
+        sample_date = datetime.datetime.now()
+        st.session_state.dl_tasks["client"].append({
+            "id": _make_id(),
+            "content": "Prepare quarterly report for client A",
+            "created": sample_date.isoformat()
+        })
+        st.session_state.dl_tasks["admin"].append({
+            "id": _make_id(),
+            "content": "Update internal documentation",
+            "created": sample_date.isoformat()
+        })
+        st.session_state.dl_tasks["meeting"].append({
+            "id": _make_id(),
+            "content": "Team sync meeting at 3 PM",
+            "created": sample_date.isoformat()
+        })
+    if "dl_date" not in st.session_state:
+        st.session_state.dl_date = datetime.date.today()
+    if "dl_view" not in st.session_state:
+        st.session_state.dl_view = "Day"
+    if "dl_search" not in st.session_state:
+        st.session_state.dl_search = ""
+
+# ------------------------------
+# Notepad CRUD helpers
+# ------------------------------
+
+def _new_doc():
+    """Create a new document and set as current."""
+    doc_id = _make_id()
+    now = datetime.datetime.now().isoformat()
+    st.session_state.nb_docs[doc_id] = {
+        "title": "Untitled.txt",
+        "content": "",
+        "created": now,
+        "updated": now,
+    }
+    st.session_state.nb_current_id = doc_id
+    st.session_state.np_last_saved_content = ""
+    st.session_state.np_redo_content = ""
+
+def _save_current_doc():
+    """Save the current doc (title and content) to session state."""
+    current_id = st.session_state.nb_current_id
+    if current_id and current_id in st.session_state.nb_docs:
+        doc = st.session_state.nb_docs[current_id]
+        doc["title"] = st.session_state.np_title
+        doc["content"] = st.session_state.np_content
+        doc["updated"] = datetime.datetime.now().isoformat()
+        st.session_state.np_last_saved_content = st.session_state.np_content
+        st.session_state.np_redo_content = ""
+        st.toast("Document saved", icon=":material/check:")
+
+def _delete_current_doc():
+    """Delete the current doc and switch to another if available."""
+    current_id = st.session_state.nb_current_id
+    if current_id and current_id in st.session_state.nb_docs:
+        del st.session_state.nb_docs[current_id]
+        if st.session_state.nb_docs:
+            st.session_state.nb_current_id = list(st.session_state.nb_docs.keys())[0]
+            doc = st.session_state.nb_docs[st.session_state.nb_current_id]
+            st.session_state.np_title = doc["title"]
+            st.session_state.np_content = doc["content"]
+            st.session_state.np_last_saved_content = doc["content"]
         else:
-            st.error("Password must be at least 6 characters")
-            return False
-    
-    try:
-        res = client.auth.sign_in_with_password({"email": email, "password": password})
-        if res.user:
-            st.session_state.user = {"email": email, "id": res.user.id}
-            return True
-        else:
-            st.error("Invalid credentials")
-            return False
-    except Exception as e:
-        st.error(f"Sign in failed: {e}")
-        return False
+            st.session_state.nb_current_id = None
+            st.session_state.np_title = ""
+            st.session_state.np_content = ""
+            st.session_state.np_last_saved_content = ""
+        st.session_state.np_redo_content = ""
+        st.toast("Document deleted", icon=":material/delete:")
 
-def sign_up(email: str, password: str) -> bool:
-    """Attempt to create a new user. Returns True on success."""
-    client = st.session_state.supabase_client
-    if client is None:
-        # Mock mode
-        if len(password) >= 6:
-            st.session_state.user = {"email": email, "id": str(uuid.uuid4())}
-            return True
-        else:
-            st.error("Password must be at least 6 characters")
-            return False
-    
-    try:
-        res = client.auth.sign_up({"email": email, "password": password})
-        if res.user:
-            st.session_state.user = {"email": email, "id": res.user.id}
-            return True
-        else:
-            st.error("Sign up failed")
-            return False
-    except Exception as e:
-        st.error(f"Sign up failed: {e}")
-        return False
+# ------------------------------
+# Render: Notepad
+# ------------------------------
 
-def sign_out() -> None:
-    """Sign out current user."""
-    client = st.session_state.supabase_client
-    if client is not None:
-        try:
-            client.auth.sign_out()
-        except:
-            pass
-    st.session_state.user = None
+def render_notepad():
+    st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
+    st.markdown('<div class="notebook-subtitle">Your personal document studio</div>', unsafe_allow_html=True)
 
-# ============================================
-# SECTION 5: Sidebar UI
-# ============================================
+    # Ensure np_title and np_content are in sync with current doc
+    current_id = st.session_state.nb_current_id
+    current_doc = st.session_state.nb_docs.get(current_id, None)
+    if current_doc:
+        # Use session_state keys for title and content to allow interactive editing
+        if "np_title" not in st.session_state or st.session_state.np_title != current_doc["title"]:
+            st.session_state.np_title = current_doc["title"]
+        if "np_content" not in st.session_state or st.session_state.np_content != current_doc["content"]:
+            st.session_state.np_content = current_doc["content"]
+    else:
+        st.session_state.np_title = ""
+        st.session_state.np_content = ""
 
-def render_sidebar():
-    """Render the sidebar with user info and app settings."""
-    with st.sidebar:
-        st.title("Project Echo")
-        
-        if st.session_state.user is None:
-            st.subheader("Authentication")
-            auth_mode = st.radio("Mode", ["Login", "Sign Up"], key="sidebar_auth_mode")
-            email = st.text_input("Email", key="sidebar_auth_email")
-            password = st.text_input("Password", type="password", key="sidebar_auth_password")
-            
-            if auth_mode == "Login":
-                if st.button("Login", key="sidebar_login_btn"):
-                    if sign_in(email, password):
-                        st.rerun()
+    # Document browser strip
+    with st.container():
+        col_browser, col_new = st.columns([4, 1])
+        with col_browser:
+            doc_options = list(st.session_state.nb_docs.keys())
+            if doc_options:
+                # Create a mapping from title to id for selectbox
+                # We'll use titles as display, but need to handle duplicate titles? Use id in key.
+                # We'll show title and update key to include id.
+                # Better: use selectbox with format_func to show title.
+                current_index = doc_options.index(current_id) if current_id in doc_options else 0
+                selected_id = st.selectbox(
+                    "Open document",
+                    options=doc_options,
+                    index=current_index,
+                    format_func=lambda x: st.session_state.nb_docs[x]["title"],
+                    key="np_doc_selector",
+                    label_visibility="collapsed"
+                )
+                # If selection changed, update current doc
+                if selected_id != current_id:
+                    st.session_state.nb_current_id = selected_id
+                    doc = st.session_state.nb_docs[selected_id]
+                    st.session_state.np_title = doc["title"]
+                    st.session_state.np_content = doc["content"]
+                    st.session_state.np_last_saved_content = doc["content"]
+                    st.session_state.np_redo_content = ""
+                    st.rerun()
             else:
-                if st.button("Sign Up", key="sidebar_signup_btn"):
-                    if sign_up(email, password):
-                        st.rerun()
-        else:
-            # Use .get() to safely retrieve email
-            user_email = st.session_state.user.get('email', 'User')
-            st.subheader(f"Welcome, {user_email}")
-            if st.button("Logout", key="sidebar_logout_btn"):
-                sign_out()
+                st.write("No documents yet.")
+        with col_new:
+            if st.button("New Document", key="np_new_btn", use_container_width=True, icon=":material/note_add:"):
+                _new_doc()
                 st.rerun()
-        
-        st.divider()
-        st.caption("Project Echo - Daily Productivity")
 
-# ============================================
-# SECTION 6: Notepad Tab
-# ============================================
-
-def render_notepad_tab():
-    """Render the Notepad tab with formatting toolbar and editor."""
-    st.header("Notepad")
-    
-    # Note management
-    col_note_select, col_new_note, col_save_note, col_delete_note = st.columns([3,1,1,1])
-    with col_note_select:
-        note_titles = ["[New Note]"] + [n["title"] for n in st.session_state.notepad_notes]
-        selected_index = 0
-        if st.session_state.notepad_current_id:
-            for i, n in enumerate(st.session_state.notepad_notes):
-                if n["id"] == st.session_state.notepad_current_id:
-                    selected_index = i + 1
-                    break
-        selected_title = st.selectbox(
-            "Select Note",
-            note_titles,
-            index=selected_index,
-            key="notepad_select_note"
-        )
-        if selected_title != "[New Note]":
-            for n in st.session_state.notepad_notes:
-                if n["title"] == selected_title:
-                    st.session_state.notepad_current_id = n["id"]
-                    st.session_state.notepad_content = n["content"]
-                    break
-        else:
-            st.session_state.notepad_current_id = None
-            st.session_state.notepad_content = ""
-    
-    with col_new_note:
-        if st.button("New", key="notepad_new_btn"):
-            st.session_state.notepad_current_id = None
-            st.session_state.notepad_content = ""
+    # Toolbar row: Save, Save As, Delete, Undo, Redo, Cut, Copy, Paste
+    st.markdown('<div class="toolbar">', unsafe_allow_html=True)
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
+    with col1:
+        if st.button("Save", key="np_save_btn", use_container_width=True, icon=":material/save:"):
+            _save_current_doc()
             st.rerun()
-    
-    with col_save_note:
-        if st.button("Save", key="notepad_save_btn"):
-            if st.session_state.notepad_current_id:
-                # Update existing note
-                for n in st.session_state.notepad_notes:
-                    if n["id"] == st.session_state.notepad_current_id:
-                        n["content"] = st.session_state.notepad_content
-                        n["updated_at"] = datetime.datetime.now().isoformat()
-                        break
-                st.success("Note updated")
-            else:
-                # Create new note
-                new_note = {
-                    "id": str(uuid.uuid4()),
-                    "title": f"Note {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",
-                    "content": st.session_state.notepad_content,
-                    "created_at": datetime.datetime.now().isoformat(),
-                    "updated_at": datetime.datetime.now().isoformat(),
+    with col2:
+        # Save As using popover
+        with st.popover("Save As", key="np_saveas_pop", use_container_width=True):
+            new_title = st.text_input("New title", value=st.session_state.np_title + " copy", key="np_saveas_title")
+            if st.button("Confirm Save As", key="np_saveas_confirm", use_container_width=True):
+                new_id = _make_id()
+                now = datetime.datetime.now().isoformat()
+                st.session_state.nb_docs[new_id] = {
+                    "title": new_title,
+                    "content": st.session_state.np_content,
+                    "created": now,
+                    "updated": now,
                 }
-                st.session_state.notepad_notes.append(new_note)
-                st.session_state.notepad_current_id = new_note["id"]
-                st.success("Note saved")
-    
-    with col_delete_note:
-        if st.button("Delete", key="notepad_delete_btn") and st.session_state.notepad_current_id:
-            st.session_state.notepad_notes = [n for n in st.session_state.notepad_notes if n["id"] != st.session_state.notepad_current_id]
-            st.session_state.notepad_current_id = None
-            st.session_state.notepad_content = ""
+                st.session_state.nb_current_id = new_id
+                st.session_state.np_title = new_title
+                st.session_state.np_last_saved_content = st.session_state.np_content
+                st.session_state.np_redo_content = ""
+                st.toast("Saved as new document", icon=":material/check:")
+                st.rerun()
+    with col3:
+        # Delete with confirmation popover
+        with st.popover("Delete", key="np_delete_pop", use_container_width=True):
+            st.warning("Are you sure you want to delete this document?")
+            if st.button("Confirm Delete", key="np_delete_confirm", use_container_width=True):
+                _delete_current_doc()
+                st.rerun()
+    with col4:
+        if st.button("Undo", key="np_undo_btn", use_container_width=True, icon=":material/undo:"):
+            # Revert to last saved content
+            if st.session_state.np_content != st.session_state.np_last_saved_content:
+                st.session_state.np_redo_content = st.session_state.np_content
+                st.session_state.np_content = st.session_state.np_last_saved_content
+                st.toast("Undone", icon=":material/undo:")
+                st.rerun()
+    with col5:
+        if st.button("Redo", key="np_redo_btn", use_container_width=True, icon=":material/redo:"):
+            # Restore content from redo buffer
+            if st.session_state.np_redo_content:
+                st.session_state.np_content = st.session_state.np_redo_content
+                st.session_state.np_redo_content = ""
+                st.toast("Redone", icon=":material/redo:")
+                st.rerun()
+    with col6:
+        if st.button("Cut", key="np_cut_btn", use_container_width=True, icon=":material/content_cut:"):
+            st.session_state.np_clipboard = st.session_state.np_content
+            st.session_state.np_content = ""
+            st.toast("Content cut to clipboard", icon=":material/content_cut:")
             st.rerun()
-    
-    st.divider()
-    
-    # Formatting toolbar
-    st.markdown('<div class="notepad-toolbar">', unsafe_allow_html=True)
-    toolbar_cols = st.columns(9)
-    with toolbar_cols[0]:
-        if st.button("Bold", key="notepad_bold_btn", help="Bold"):
-            st.session_state.notepad_content += "**bold text**"
-    with toolbar_cols[1]:
-        if st.button("Italic", key="notepad_italic_btn", help="Italic"):
-            st.session_state.notepad_content += "*italic text*"
-    with toolbar_cols[2]:
-        if st.button("Underline", key="notepad_underline_btn", help="Underline"):
-            st.session_state.notepad_content += "<u>underline</u>"
-    with toolbar_cols[3]:
-        if st.button("H1", key="notepad_h1_btn", help="Heading 1"):
-            st.session_state.notepad_content += "\n# Heading 1\n"
-    with toolbar_cols[4]:
-        if st.button("H2", key="notepad_h2_btn", help="Heading 2"):
-            st.session_state.notepad_content += "\n## Heading 2\n"
-    with toolbar_cols[5]:
-        if st.button("Bullet", key="notepad_bullet_btn", help="Bullet List"):
-            st.session_state.notepad_content += "\n- item 1\n- item 2\n"
-    with toolbar_cols[6]:
-        if st.button("Numbered", key="notepad_numbered_btn", help="Numbered List"):
-            st.session_state.notepad_content += "\n1. item 1\n2. item 2\n"
-    with toolbar_cols[7]:
-        if st.button("Link", key="notepad_link_btn", help="Insert Link"):
-            st.session_state.notepad_content += "[link text](http://example.com)"
-    with toolbar_cols[8]:
-        if st.button("Code", key="notepad_code_btn", help="Code Block"):
-            st.session_state.notepad_content += "\n```\ncode block\n```\n"
+    with col7:
+        if st.button("Copy", key="np_copy_btn", use_container_width=True, icon=":material/content_copy:"):
+            st.session_state.np_clipboard = st.session_state.np_content
+            st.toast("Content copied to clipboard", icon=":material/content_copy:")
+    with col8:
+        if st.button("Paste", key="np_paste_btn", use_container_width=True, icon=":material/content_paste:"):
+            if st.session_state.np_clipboard:
+                st.session_state.np_content = st.session_state.np_content + st.session_state.np_clipboard
+                st.toast("Clipboard content pasted", icon=":material/content_paste:")
+                st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Editor and Preview
-    editor_col, preview_col = st.columns(2)
-    with editor_col:
-        st.subheader("Editor")
-        # Use a temporary key and sync with session state
-        new_content = st.text_area(
-            "Content",
-            value=st.session_state.notepad_content,
-            height=400,
-            key="notepad_editor",
-            label_visibility="collapsed"
-        )
-        # Update session state on change
-        st.session_state.notepad_content = new_content
-    
-    with preview_col:
-        st.subheader("Preview")
-        st.markdown(st.session_state.notepad_content, unsafe_allow_html=True)
 
-# ============================================
-# SECTION 7: Daily Log Tab
-# ============================================
+    # Title input
+    st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document title")
 
-def render_daily_log_tab():
-    """Render the Daily Log tab with filters and Kanban board."""
-    st.header("Daily Log")
-    
+    # Editor
+    st.text_area(
+        "Content",
+        key="np_content",
+        height=500,
+        placeholder="Start typing... Use bullet points and paragraphs.",
+        label_visibility="collapsed",
+    )
+
+    # Detect changes to content after widget rendering
+    # If content changed from what we had before the widget, update doc and handle undo state
+    # But we can rely on st.session_state.np_content being the new value now.
+    # We need to update the current doc's content in session state (but not saved yet).
+    if current_id and current_id in st.session_state.nb_docs:
+        # We update the doc content as the user types (autosave)
+        st.session_state.nb_docs[current_id]["content"] = st.session_state.np_content
+        st.session_state.nb_docs[current_id]["title"] = st.session_state.np_title
+        # We can also update last_saved? No, that's only on explicit Save.
+        # But we might want to track unsaved changes? For simplicity, we autosave to session but not mark as saved.
+        # We'll handle 'Save' separately.
+
+    # Status footer
+    word_count = len(st.session_state.np_content.split())
+    char_count = len(st.session_state.np_content)
+    if current_doc:
+        updated_str = _format_date(datetime.datetime.fromisoformat(current_doc["updated"])) if "updated" in current_doc else "Not saved"
+    else:
+        updated_str = "No document"
+    st.markdown(f"""
+        <div class="status-footer">
+            <span>Words: {word_count} | Characters: {char_count}</span>
+            <span>Auto-save: On | Last saved: {updated_str}</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+# ------------------------------
+# Render: Daily Log
+# ------------------------------
+
+def render_dailylog():
+    st.markdown('<div class="notebook-title">Daily Log</div>', unsafe_allow_html=True)
+    st.markdown('<div class="notebook-subtitle">Kanban board for your daily tasks and meetings</div>', unsafe_allow_html=True)
+
     # Filter bar
-    filter_col1, filter_col2, filter_col3 = st.columns([2,2,1])
-    with filter_col1:
-        start_date = st.date_input("Start Date", value=datetime.date.today() - datetime.timedelta(days=7), key="dailylog_start_date")
-    with filter_col2:
-        end_date = st.date_input("End Date", value=datetime.date.today(), key="dailylog_end_date")
-    with filter_col3:
-        category_filter = st.selectbox("Category", ["All"] + CATEGORIES, key="dailylog_category_filter")
-    
-    # Add Task Dialog (toggle with button)
-    if st.button("Add Task", key="dailylog_add_task_btn"):
-        st.session_state.show_add_task = not st.session_state.show_add_task
-    if st.session_state.show_add_task:
-        with st.expander("Add New Task", expanded=True):
-            with st.form("dailylog_add_task_form"):
-                title = st.text_input("Title", key="dailylog_add_title")
-                description = st.text_area("Description", key="dailylog_add_desc")
-                due_date = st.date_input("Due Date", key="dailylog_add_due")
-                category = st.selectbox("Category", CATEGORIES, key="dailylog_add_category")
-                submitted = st.form_submit_button("Create Task")
-                if submitted:
-                    if title:
+    with st.container():
+        col_date, col_view, col_addtask, col_addmeet, col_search = st.columns([2, 2, 1, 1, 3])
+        with col_date:
+            st.date_input("Date", key="dl_date", value=st.session_state.dl_date, label_visibility="collapsed")
+        with col_view:
+            st.segmented_control(
+                "View",
+                options=["Day", "Week", "Month"],
+                key="dl_view",
+                default=st.session_state.dl_view,
+                label_visibility="collapsed"
+            )
+        with col_addtask:
+            with st.popover("+Task", key="dl_addtask_pop", use_container_width=True):
+                st.markdown("**Add Task**")
+                column_key = st.selectbox("Column", [c["key"] for c in COLUMNS], format_func=lambda x: next(c["label"] for c in COLUMNS if c["key"]==x), key="dl_addtask_col")
+                task_content = st.text_area("Content", key="dl_addtask_content", height=100)
+                if st.button("Add", key="dl_addtask_confirm", use_container_width=True):
+                    if task_content.strip():
                         new_task = {
-                            "id": str(uuid.uuid4()),
-                            "title": title,
-                            "description": description,
-                            "due_date": due_date.isoformat(),
-                            "category": category,
-                            "created_at": datetime.datetime.now().isoformat(),
+                            "id": _make_id(),
+                            "content": task_content.strip(),
+                            "created": datetime.datetime.now().isoformat()
                         }
-                        st.session_state.daily_tasks.append(new_task)
-                        st.session_state.show_add_task = False
+                        st.session_state.dl_tasks[column_key].append(new_task)
+                        st.toast("Task added", icon=":material/check:")
                         st.rerun()
                     else:
-                        st.error("Title is required")
-    
-    # Kanban board - ONE st.columns(4) call
-    client_col, admin_col, adhoc_col, meeting_col = st.columns(4)
-    
-    # Filter tasks by date range and category
-    filtered_tasks = st.session_state.daily_tasks
-    if category_filter != "All":
-        filtered_tasks = [t for t in filtered_tasks if t["category"] == category_filter]
-    
-    # Filter by date range (due_date within range)
-    start_str = start_date.isoformat()
-    end_str = end_date.isoformat()
-    filtered_tasks = [t for t in filtered_tasks if start_str <= t.get("due_date", "") <= end_str]
-    
-    # Group by category
-    tasks_by_category = {
-        "Client Related Tasks": [],
-        "Admin Tasks": [],
-        "Adhoc Tasks": [],
-        "Meetings": [],
-    }
-    for task in filtered_tasks:
-        cat = task.get("category")
-        if cat in tasks_by_category:
-            tasks_by_category[cat].append(task)
-    
-    # Helper to render column header with icon
-    def render_column_header(icon_svg: str, title: str):
-        st.markdown(
-            f'<div class="kanban-header">{icon_svg} <span style="margin-left:5px;">{title}</span></div>',
-            unsafe_allow_html=True
-        )
-    
-    # Column 1: Client Related Tasks
-    with client_col:
-        render_column_header(ICON_CLIENT, "Client Related Tasks")
-        st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_category["Client Related Tasks"]:
-            render_task_card(task)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Column 2: Admin Tasks
-    with admin_col:
-        render_column_header(ICON_ADMIN, "Admin Tasks")
-        st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_category["Admin Tasks"]:
-            render_task_card(task)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Column 3: Adhoc Tasks
-    with adhoc_col:
-        render_column_header(ICON_ADHOC, "Adhoc Tasks")
-        st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_category["Adhoc Tasks"]:
-            render_task_card(task)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Column 4: Meetings
-    with meeting_col:
-        render_column_header(ICON_MEETING, "Meetings")
-        st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_category["Meetings"]:
-            render_task_card(task)
-        st.markdown('</div>', unsafe_allow_html=True)
+                        st.warning("Task content cannot be empty")
+        with col_addmeet:
+            with st.popover("+Meet", key="dl_addmeet_pop", use_container_width=True):
+                st.markdown("**Add Meeting**")
+                meeting_content = st.text_area("Meeting notes", key="dl_addmeet_content", height=100)
+                if st.button("Add Meeting", key="dl_addmeet_confirm", use_container_width=True):
+                    if meeting_content.strip():
+                        new_task = {
+                            "id": _make_id(),
+                            "content": meeting_content.strip(),
+                            "created": datetime.datetime.now().isoformat()
+                        }
+                        st.session_state.dl_tasks["meeting"].append(new_task)
+                        st.toast("Meeting added", icon=":material/check:")
+                        st.rerun()
+                    else:
+                        st.warning("Meeting notes cannot be empty")
+        with col_search:
+            st.text_input("Search", key="dl_search", value=st.session_state.dl_search, placeholder="Search cards...", label_visibility="collapsed")
 
-def render_task_card(task: Dict):
-    """
-    Render a single kanban card with task details and category change selectbox.
-    """
-    with st.container():
-        st.markdown('<div class="kanban-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="kanban-card-title">{task["title"]}</div>', unsafe_allow_html=True)
-        if task.get("description"):
-            st.markdown(f'<div class="kanban-card-desc">{task["description"]}</div>', unsafe_allow_html=True)
-        if task.get("due_date"):
-            st.markdown(f'<div class="kanban-card-due">Due: {task["due_date"]}</div>', unsafe_allow_html=True)
-        
-        # Category change selectbox (native widget)
-        new_category = st.selectbox(
-            "Category",
-            CATEGORIES,
-            index=CATEGORIES.index(task["category"]),
-            key=f"dailylog_category_{task['id']}",
-            label_visibility="collapsed"
-        )
-        if new_category != task["category"]:
-            # Update task category
-            for t in st.session_state.daily_tasks:
-                if t["id"] == task["id"]:
-                    t["category"] = new_category
-                    st.rerun()
-        
-        # Delete button
-        if st.button("Delete", key=f"dailylog_delete_{task['id']}"):
-            st.session_state.daily_tasks = [t for t in st.session_state.daily_tasks if t["id"] != task["id"]]
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Compute date range
+    selected_date = st.session_state.dl_date
+    view = st.session_state.dl_view
+    start_date, end_date = _date_range(view, selected_date)
+    date_caption = f"Showing: {_format_date(start_date)} - {_format_date(end_date)}"
+    st.markdown(f'<div class="date-caption">{date_caption}</div>', unsafe_allow_html=True)
 
-# ============================================
-# SECTION 8: Main App Entry Point
-# ============================================
+    # Filter tasks by date range and search
+    search_query = st.session_state.dl_search.lower().strip()
+    filtered_tasks = {col_key: [] for col_key in st.session_state.dl_tasks}
+    for col_key, tasks in st.session_state.dl_tasks.items():
+        for task in tasks:
+            # Parse created datetime
+            try:
+                task_dt = datetime.datetime.fromisoformat(task["created"])
+                task_date = task_dt.date()
+            except:
+                task_date = datetime.date.today()  # fallback
+            # Date filter
+            if start_date <= task_date <= end_date:
+                # Search filter
+                if search_query and search_query not in task["content"].lower():
+                    continue
+                filtered_tasks[col_key].append(task)
+        # Sort newest first
+        filtered_tasks[col_key].sort(key=lambda x: x["created"], reverse=True)
+
+    # Kanban board: single row of 4 columns
+    cols = st.columns(4, gap="small")
+    for idx, col_def in enumerate(COLUMNS):
+        col_key = col_def["key"]
+        with cols[idx]:
+            # Column header
+            header_html = f"""
+            <div class="kanban-header">
+                {SVG_DICT[col_key]}
+                <span class="label">{col_def['label']}</span>
+                <span class="count">{len(filtered_tasks[col_key])}</span>
+            </div>
+            """
+            st.markdown(header_html, unsafe_allow_html=True)
+
+            # Tasks in this column
+            if not filtered_tasks[col_key]:
+                st.markdown('<div class="empty-state">No entries</div>', unsafe_allow_html=True)
+            else:
+                for task in filtered_tasks[col_key]:
+                    task_id = task["id"]
+                    # Card container
+                    with st.container():
+                        st.markdown('<div class="kanban-card">', unsafe_allow_html=True)
+                        # Editable content
+                        new_content = st.text_area(
+                            "Content",
+                            value=task["content"],
+                            key=f"dl_task_content_{task_id}",
+                            height=80,
+                            label_visibility="collapsed",
+                        )
+                        # Update content if changed
+                        if new_content != task["content"]:
+                            task["content"] = new_content
+                            # No need to rerun; Streamlit will update state.
+                        # Meta row: date and delete button
+                        col_meta_date, col_meta_del = st.columns([4, 1])
+                        with col_meta_date:
+                            st.markdown(f'<div class="card-meta">{_format_date(datetime.datetime.fromisoformat(task["created"]))}</div>', unsafe_allow_html=True)
+                        with col_meta_del:
+                            with st.popover("", key=f"dl_delete_pop_{task_id}", use_container_width=False, icon=":material/delete:"):
+                                st.markdown("**Delete this card?**")
+                                if st.button("Confirm", key=f"dl_delete_confirm_{task_id}", use_container_width=True):
+                                    # Remove task
+                                    st.session_state.dl_tasks[col_key] = [t for t in st.session_state.dl_tasks[col_key] if t["id"] != task_id]
+                                    st.toast("Card deleted", icon=":material/delete:")
+                                    st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+            # Add button at bottom of column
+            st.markdown('<div style="margin-top: 0.5rem;">', unsafe_allow_html=True)
+            with st.popover("+ Add", key=f"dl_add_btn_{col_key}", use_container_width=True):
+                st.markdown(f"**Add to {col_def['label']}**")
+                add_content = st.text_area("Content", key=f"dl_add_content_{col_key}", height=80)
+                if st.button("Add", key=f"dl_add_confirm_{col_key}", use_container_width=True):
+                    if add_content.strip():
+                        new_task = {
+                            "id": _make_id(),
+                            "content": add_content.strip(),
+                            "created": datetime.datetime.now().isoformat()
+                        }
+                        st.session_state.dl_tasks[col_key].append(new_task)
+                        st.toast("Card added", icon=":material/check:")
+                        st.rerun()
+                    else:
+                        st.warning("Content cannot be empty")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------
+# Main app
+# ------------------------------
 
 def main():
-    """Main application entry point."""
-    # Page configuration
-    st.set_page_config(
-        page_title="Project Echo",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-    
-    # Apply global CSS
-    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
-    
-    # Initialize session state
+    setup_page_layout()
+    st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     init_session()
-    
-    # Initialize Supabase client (once)
-    if st.session_state.supabase_client is None:
-        st.session_state.supabase_client = get_supabase_client()
-    
-    # Render sidebar
-    render_sidebar()
-    
-    # Main content
-    if st.session_state.user is None:
-        # Show authentication form in main area
-        st.markdown('<div class="auth-container">', unsafe_allow_html=True)
-        st.subheader("Login to Project Echo")
-        email = st.text_input("Email", key="main_auth_email")
-        password = st.text_input("Password", type="password", key="main_auth_password")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Login", key="main_login_btn"):
-                if sign_in(email, password):
-                    st.rerun()
-        with col2:
-            if st.button("Sign Up", key="main_signup_btn"):
-                if sign_up(email, password):
-                    st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        # Render main tabs
-        tabs = st.tabs(["Notepad", "Daily Log"])
-        with tabs[0]:
-            render_notepad_tab()
-        with tabs[1]:
-            render_daily_log_tab()
 
-# ============================================
-# SECTION 9: Run App
-# ============================================
+    tab_notepad, tab_dailylog = st.tabs(["Notepad", "Daily Log"])
+    with tab_notepad:
+        render_notepad()
+    with tab_dailylog:
+        render_dailylog()
 
 if __name__ == "__main__":
     main()
