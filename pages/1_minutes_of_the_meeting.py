@@ -235,6 +235,9 @@ def add_mom_row(dp: str = "", ap: str = "", dd: str = "", pic: str = ""):
 def preprocess_transcript_entities(transcript: str):
     if not transcript: return transcript, []
     context_data = fetch_echo_context()
+    # Safe default if fetch fails
+    if not isinstance(context_data, dict):
+        context_data = {}
     replacements = []
     
     phonetic_map = {
@@ -254,7 +257,12 @@ def preprocess_transcript_entities(transcript: str):
             cleaned = re.sub(pattern, canonical, cleaned, flags=re.IGNORECASE)
             replacements.append(f"Standardized entity: '{canonical}'")
 
-    for k, v in context_data.get('jargon', {}).items():
+    jargon = context_data.get('jargon', {})
+    if not isinstance(jargon, dict):
+        jargon = {}
+    for k, v in jargon.items():
+        if not isinstance(k, str) or not isinstance(v, str):
+            continue
         p = r'\b' + re.escape(k) + r'\b'
         if re.search(p, cleaned, flags=re.IGNORECASE) and k.lower() != v.lower():
             cleaned = re.sub(p, v, cleaned, flags=re.IGNORECASE)
@@ -499,10 +507,30 @@ Transcript: {transcript[:20000]}"""
     return "1. Project Updates\n2. Technical Implementation\n3. Timeline & Target Deadlines\n4. Resource Allocation & Next Steps"
 
 def match_evidence_and_synthesize(transcript, user_topics_str):
+    # Safe retrieval of context data
     context_data = fetch_echo_context()
-    team_list = ", ".join(context_data.get('team', []))
-    jargon_list = "\n".join([f"- {k}: {v}" for k, v in context_data.get('jargon', {}).items()])
-    projects = ", ".join(context_data.get('projects', []))
+    if not isinstance(context_data, dict):
+        context_data = {}
+    
+    # Extract and sanitize team, jargon, projects
+    team = context_data.get('team', [])
+    if not isinstance(team, list):
+        team = []
+    team_list = ", ".join([str(t) for t in team if t])
+    
+    jargon = context_data.get('jargon', {})
+    if not isinstance(jargon, dict):
+        jargon = {}
+    jargon_lines = []
+    for k, v in jargon.items():
+        if isinstance(k, str) and isinstance(v, str):
+            jargon_lines.append(f"- {k}: {v}")
+    jargon_list = "\n".join(jargon_lines)
+    
+    projects = context_data.get('projects', [])
+    if not isinstance(projects, list):
+        projects = []
+    projects_list = ", ".join([str(p) for p in projects if p])
 
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     system_prompt = (
@@ -510,7 +538,7 @@ def match_evidence_and_synthesize(transcript, user_topics_str):
         "Your task is to take the USER-DEFINED DISCUSSION POINTS/TOPICS, locate the EXACT supporting evidence in the transcript, "
         "and produce formal corporate summaries with concrete deliverables, assignees (mapped to PRIME team/clients), and target deadlines. "
         "You must cite verbatim quote evidence from the transcript for each point to guarantee zero hallucination."
-        f"\n\nSource Knowledge Base:\nTeam: {team_list}\nProjects: {projects}\nJargon:\n{jargon_list}"
+        f"\n\nSource Knowledge Base:\nTeam: {team_list}\nProjects: {projects_list}\nJargon:\n{jargon_list}"
     )
 
     user_prompt = f"""Match and synthesize evidence for each of the following user discussion points using the meeting transcript:
