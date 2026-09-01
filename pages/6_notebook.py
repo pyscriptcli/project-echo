@@ -127,9 +127,14 @@ def render_daily_log_tab():
             st.markdown(f'<div class=col-header style=border-bottom-color:{v["color"]};>{s} <span>{v["label"]}</span></div>', unsafe_allow_html=True)
             for t in st.session_state.get('dl_' + k, []):
                 st.markdown('<div class=task-card>', unsafe_allow_html=True)
-                st.text_area('Task', value=t['id'], key='dl_task_' + k + '_' + t['id'], label_visibility='collapsed')
-                if st.button(label=' ', icon=':material/delete:', key='dl_del_' + k + '_' + t['id'], help='Delete'):
-                    st.session_state['dl_' + k].remove(t); st.rerun()
+                edited = st.text_area('Task', value=t['content'], key='dl_task_' + k + '_' + t['id'], label_visibility='collapsed')
+                t['content'] = edited
+                mc = st.columns([1,1,1])
+                with mc[0]: st.caption(f"Due: {t.get('due_date', '')[:10]}")
+                with mc[1]: st.caption(v['label'])
+                with mc[2]:
+                    if st.button(label=' ', icon=':material/delete:', key='dl_del_' + k + '_' + t['id'], help='Delete'):
+                        st.session_state['dl_' + k].remove(t); st.rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             if st.button('Add', icon=':material/add:', key='dl_add_' + k, use_container_width=True):
                 st.session_state.dl_show_add = True; st.rerun()
