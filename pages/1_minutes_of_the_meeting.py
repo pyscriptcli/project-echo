@@ -63,7 +63,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
     background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px; color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
-.block-container { padding-top: 1.5rem !important; padding-right: 2rem !important; }
+.block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; max-width: 100% !important; }
 h3 { font-family: 'Playfair Display', serif !important; font-style: italic !important; font-weight: 400 !important; color: #1A2B4C !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.25rem !important; }
 .playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 

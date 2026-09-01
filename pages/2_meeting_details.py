@@ -96,7 +96,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
-.block-container { padding-top: 1.5rem !important; padding-right: 2.5rem !important; padding-left: 2.5rem !important; }
+.block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
 
 h3 {
     font-family: 'Playfair Display', serif !important; 
