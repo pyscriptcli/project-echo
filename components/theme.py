@@ -118,6 +118,49 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     box-shadow: none !important;
 }
 
+/* ---- Button placement: aligned, compressed, even spacing ---- */
+[data-testid="stElementContainer"]:has(button) {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+[data-testid="stElementContainer"]:has(button) .stButton,
+[data-testid="stElementContainer"] .stButton {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.stButton,
+.stDownloadButton,
+.stFormSubmitButton {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+/* Compress vertical rhythm between consecutive buttons */
+[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"],
+[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] {
+    gap: 0.35rem !important;
+}
+/* Align buttons side-by-side in the same row, even height, no ugly gaps */
+[data-testid="stHorizontalBlock"] [data-testid="stElementContainer"]:has(.stButton),
+[data-testid="stHorizontalBlock"] [data-testid="column"]:has(.stButton) {
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+[data-testid="stHorizontalBlock"] .stButton > button {
+    width: auto !important;
+    margin-right: 0.25rem !important;
+}
+/* Compress the row gap + inner column padding for button-only rows */
+[data-testid="stHorizontalBlock"]:has(.stButton) {
+    gap: 0.25rem !important;
+}
+[data-testid="stHorizontalBlock"]:has(.stButton) [data-testid="column"] {
+    gap: 0.25rem !important;
+    padding: 0 !important;
+}
+[data-testid="stHorizontalBlock"]:has(.stButton) [data-testid="column"] [data-testid="stElementContainer"] {
+    margin: 0 !important;
+}
+
 /* Section titles: flat, edgy, editorial */
 .section-title,
 .section-caption {
