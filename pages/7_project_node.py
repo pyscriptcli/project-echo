@@ -1,17 +1,18 @@
 # pages/7_project_node.py
 """
-Project Node — geographic POI scanner (native to Project Echo).
+Project Node — geographic POI scanner (native to Project Echo, MAP VIEW).
 
 Scans a coordinate + radius via the Overpass API for OpenStreetMap points of
-interest across category presets, lists the matched assets, and exports KML.
+interest across category presets, plots them on an in-page Leaflet (folium)
+map, lists the matched assets, and exports KML.
 
 Native to the app: uses require_login(), the shared sidebar/theme, DB client,
-and the app's stone/navy design tokens. No standalone branding.
+and the app's stone/navy design tokens. The scan controls live INSIDE the page
+(left panel), not in the global sidebar.
 """
 import json
 
 import requests
-
 import streamlit as st
 
 from utils.auth import require_login
@@ -167,11 +168,12 @@ def _fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 
         "https://overpass.kumi.systems/api/interpreter",
         "https://overpass.openstreetmap.fr/api/interpreter",
     ]
-    queries = []
-    for idx, q in enumerate(tags, start=1):
-        queries.append(f'nwr[{q}](around:{radius},{lat},{lon});')
-    query = "[out:json][timeout:25];(" + "".join(queries) + ");out center;" if queries else "[out:json][timeout:25];nwr(around:%d,%f,%f);out center;" % (
-        radius, lat, lon)
+    if tags:
+        query = "[out:json][timeout:25];(" + "".join(
+            f'nwr[{q}](around:{radius},{lat},{lon});' for q in tags
+        ) + ");out center;"
+    else:
+        query = "[out:json][timeout:25];nwr(around:%d,%f,%f);out center;" % (radius, lat, lon)
     hdr = {"User-Agent": "Project-Echo/1.0"}
     for ep in endpoints:
         try:
@@ -180,7 +182,7 @@ def _fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 
                 js = r.json()
                 return [
                     {
-                        "name": (e.get("tags") or {}).get("name", f"{e.get('type','node')} {e.get('id')}"),
+                        "name": (e.get("tags") or {}).get("name", f"{e.get('type', 'node')} {e.get('id')}"),
                         "type": e.get("type", "node"),
                         "lat": float((e.get("center") or e).get("lat", 0)),
                         "lon": float((e.get("center") or e).get("lon", 0)),
@@ -203,90 +205,129 @@ def compile_features_kml(features):
     return kml + "</Document></kml>"
 
 
+def _render_map(records, center_lat, center_lon, radius):
+    """Build an in-page folium map with POI markers + scan-radius circle."""
+    import folium
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=14, tiles="CartoDB Positron")
+    folium.Circle(
+        radius=radius,
+        location=[center_lat, center_lon],
+        color="#D7D3BF",
+        weight=1.5,
+        fill=True,
+        fill_color="#A59D84",
+        fill_opacity=0.10,
+    ).add_to(m)
+    for rec in records:
+        popup = folium.Popup(str(rec.get("name", "")), max_width=220)
+        folium.CircleMarker(
+            location=[rec["lat"], rec["lon"]],
+            radius=6,
+            color="#0D1B3E",
+            weight=1.5,
+            fill=True,
+            fill_color="#D7D3BF",
+            fill_opacity=0.95,
+            popup=popup,
+        ).add_to(m)
+    return m
+
+
 # ------------------------------------------------------------
-# UI
+# PAGE CONTENT — controls live INSIDE the page (left panel)
 # ------------------------------------------------------------
 st.markdown('<p class="section-title">Project Node</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="section-caption">Scan a coordinate radius for OpenStreetMap points of interest (POIs) and export them as KML.</p>',
+    '<p class="section-caption">Scan a coordinate radius for OpenStreetMap points of interest (POIs) and explore them on the map.</p>',
     unsafe_allow_html=True,
 )
 
-# --- Sidebar controls (native, styled by shared theme) ---
-with st.sidebar:
-    st.markdown('<div class="sb-brand-sub">Project Node</div>', unsafe_allow_html=True)
-    st.markdown("---")
+left_col, right_col = st.columns([1, 2.6])
 
-    location_input = st.text_input(
-        "Coordinates (lat, lon)", value=st.session_state.geo_coords, key="geo_coords_input"
-    )
-    radius_val = st.number_input(
-        "Radius (meters)", min_value=100, max_value=50000,
-        value=int(st.session_state.geo_radius), key="geo_radius_input", step=100,
-    )
-
-    selected_tags = []
-    with st.expander("Categories", expanded=True):
-        checked_any = False
-        for category, items in POI_CONFIG.items():
-            opts = st.multiselect(category, [i[0] for i in items], default=[] if st.session_state.get("_node_init", False) else [], key=f"cat_{category}")
-            if opts:
-                checked_any = True
-            for label, tag in items:
-                if label in opts:
-                    selected_tags.append(tag)
-
-    scan_ready = bool(location_input.strip()) and radius_val >= 100
-
-    if st.button("Scan Area", type="primary", key="scan_btn"):
-        if not scan_ready:
-            st.error("Provide valid coordinates and radius.")
-        else:
-            try:
-                lat_s, lon_s = [float(x.strip()) for x in location_input.split(",")[:2]]
-            except Exception:  # noqa: BLE001
-                lat_s, lon_s = 0.0, 0.0
-                st.error("Coordinates must be 'lat, lon' (e.g. 14.5995, 120.9842).")
-            if lat_s or lon_s:
-                st.session_state.geo_coords = location_input
-                st.session_state.geo_radius = int(radius_val)
-                st.session_state.last_scan_lat = lat_s
-                st.session_state.last_scan_lon = lon_s
-                with st.spinner("Scanning OpenStreetMap..."):
-                    tags = selected_tags or []
-                    recs = _fetch_pois(lat_s, lon_s, int(radius_val), tags)
-                    st.session_state.scanned_records = recs
-                st.rerun()
-
-# --- Top summary ---
-recs = st.session_state.scanned_records
-col_m, col_c = st.columns(2)
-col_m.metric("POIs Found", len(recs))
-col_c.caption(
-    f"Center: {st.session_state.get('last_scan_lat', 0):.4f}, {st.session_state.get('last_scan_lon', 0):.4f} · "
-    f"Radius: {st.session_state.get('geo_radius', 0)}m"
-)
-
-# --- Results table + KML export ---
-if recs:
-    rows = []
-    for r in recs:
-        rows.append(
-            {
-                "Name": str(r.get("name", ""))[:60],
-                "Type": r.get("type", "node"),
-                "Lat": round(r.get("lat", 0), 5),
-                "Lon": round(r.get("lon", 0), 5),
-            }
+# ---- In-page control panel ----
+with left_col:
+    with st.container(border=True):
+        st.markdown("#### Scan Controls")
+        location_input = st.text_input("Coordinates (lat, lon)", value=st.session_state.geo_coords, key="geo_coords_input")
+        radius_val = st.number_input(
+            "Radius (meters)", min_value=100, max_value=50000,
+            value=int(st.session_state.geo_radius), key="geo_radius_input", step=100,
         )
-    st.dataframe(rows, use_container_width=True, hide_index=True)
 
-    kml = compile_features_kml(recs)
-    st.download_button(
-        "Download KML", data=kml, file_name="project_node_scan.kml", mime="application/vnd.google-earth.kml+xml", type="primary",
-    )
+        selected_tags = []
+        with st.expander("Categories", expanded=True):
+            for category, items in POI_CONFIG.items():
+                labels = [i[0] for i in items]
+                chosen = st.multiselect(category, labels, default=[], key=f"cat_{category}")
+                for label, tag in items:
+                    if label in chosen:
+                        selected_tags.append(tag)
+
+        scan_ready = bool(location_input.strip()) and radius_val >= 100
+        if st.button("Scan Area", type="primary", key="scan_btn"):
+            if not scan_ready:
+                st.error("Provide valid coordinates and radius.")
+            else:
+                try:
+                    lat_s, lon_s = [float(x.strip()) for x in location_input.split(",")[:2]]
+                except Exception:  # noqa: BLE001
+                    lat_s, lon_s = 0.0, 0.0
+                    st.error("Coordinates must be 'lat, lon' (e.g. 14.5995, 120.9842).")
+                if lat_s or lon_s:
+                    st.session_state.geo_coords = location_input
+                    st.session_state.geo_radius = int(radius_val)
+                    st.session_state.last_scan_lat = lat_s
+                    st.session_state.last_scan_lon = lon_s
+                    with st.spinner("Scanning OpenStreetMap..."):
+                        recs = _fetch_pois(lat_s, lon_s, int(radius_val), selected_tags)
+                        st.session_state.scanned_records = recs
+                    st.rerun()
+
+        recs = st.session_state.scanned_records
+        st.metric("POIs Found", len(recs))
+        st.caption(
+            f"Center: {st.session_state.get('last_scan_lat', 0):.4f}, {st.session_state.get('last_scan_lon', 0):.4f} · "
+            f"Radius: {st.session_state.get('geo_radius', 0)}m"
+        )
+
+        if recs:
+            kml = compile_features_kml(recs)
+            st.download_button(
+                "Download KML", data=kml, file_name="project_node_scan.kml",
+                mime="application/vnd.google-earth.kml+xml", type="primary",
+            )
+
+# ---- Map view ----
+with right_col:
+    try:
+        import folium
+
+        map_obj = _render_map(
+            st.session_state.scanned_records,
+            st.session_state.get("last_scan_lat", 14.5995),
+            st.session_state.get("last_scan_lon", 120.9842),
+            int(st.session_state.get("geo_radius", 1000)),
+        )
+        st.components.v1.html(map_obj._repr_html_(), height=520, scrolling=False)
+    except Exception as exc:  # noqa: BLE001
+        st.info("Map preview unavailable; scanning results are still accessible below.")
+
+# ---- Results ----
+st.markdown("---")
+if st.session_state.scanned_records:
+    recs = st.session_state.scanned_records
+    rows = [
+        {
+            "Name": str(r.get("name", ""))[:60],
+            "Type": r.get("type", "node"),
+            "Lat": round(r.get("lat", 0), 5),
+            "Lon": round(r.get("lon", 0), 5),
+        }
+        for r in recs
+    ]
+    st.dataframe(rows, use_container_width=True, hide_index=True)
 else:
-    st.info("No results yet. Choose categories, or leave them empty to scan everything, then press **Scan Area**.")
+    st.info("No results yet. Choose categories (or leave empty to scan everything), then press **Scan Area**.")
 
 
 # ------------------------------------------------------------
