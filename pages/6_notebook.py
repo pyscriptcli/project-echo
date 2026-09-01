@@ -170,12 +170,13 @@ NOTEBOOK_CSS = """
         border: 0 none !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
-        min-height: 22px !important;
-        height: 22px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 0.1rem 0.45rem !important;
+        padding: 0.1rem 0.4rem !important;
+        width: auto !important;
         font-size: 0.68rem !important;
     }
     .stButton > button:hover,

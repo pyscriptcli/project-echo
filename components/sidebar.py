@@ -228,9 +228,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     color: #0D1B3E !important;
     border: 0 none !important;
     border-radius: 0 !important;
-    height: 22px !important;                      /* small, boxy */
-    min-height: 22px !important;
-    padding: 0 8px !important;                    /* compact padding */
+    height: 26px !important;                      /* original height, narrow */
+    min-height: 26px !important;
+    padding: 0 8px !important;                    /* compact horizontal padding */
     font-family: 'Inter', sans-serif !important;
     font-size: 0.68rem !important;                /* small text */
     font-weight: 600 !important;
@@ -259,9 +259,10 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
-    padding: 0.1rem 0.45rem !important;
-    min-height: 22px !important;
-    height: 22px !important;
+    padding: 0.1rem 0.4rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    width: auto !important;
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }

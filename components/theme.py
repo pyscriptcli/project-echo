@@ -100,9 +100,10 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     font-weight: 600 !important;
     letter-spacing: 0.02em;
     line-height: 1 !important;
-    padding: 0.1rem 0.45rem !important;
-    min-height: 22px !important;
-    height: 22px !important;
+    padding: 0.1rem 0.4rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    width: auto !important;
     box-shadow: none !important;
     transition: background-color 0.15s ease;
 }

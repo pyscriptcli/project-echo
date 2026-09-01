@@ -221,9 +221,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 0 !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
-    min-height: 22px !important;
-    height: 22px !important;
-    width: 100% !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    width: auto !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stFormSubmitButton > button:hover {
