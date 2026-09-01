@@ -118,6 +118,9 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     display: flex;
     flex-direction: column;
     gap: 0.25rem !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 /* ---------------- Brand block ---------------- */
