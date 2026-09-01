@@ -137,6 +137,14 @@ st.markdown(
     .block-container { padding: 0 !important; max-width: 100% !important; }
     [data-testid="stIFrame"] { height: 100vh !important; margin: 0 !important; }
     [data-testid="stIFrame"] iframe { height: 100vh !important; }
+    /* Flat & edgy: no rounded corners on custom atlas controls */
+    .trade-btn, .dimension-mode-btn, .dimension-mode-bar, .icon-action-btn,
+    .icon-grid button, .card-btn, .layer-card, .acc-header, .poi-badge,
+    .group-container, .save-badge, .float-card, .bound-select-row input[type=text],
+    .trade-controls, .trade-controls select, .float-card input[type=text],
+    .float-card select, .elastic-input, .group-title-input, .autocomplete-list,
+    .autocomplete-item, .btn-eyedropper
+    { border-radius: 0 !important; box-shadow: none !important; }
     </style>
     """,
     unsafe_allow_html=True,

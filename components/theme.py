@@ -92,7 +92,10 @@ div[data-testid="stVerticalBlockBorderWrapper"],
 
 /* App-wide buttons: charcoal + gold edge, squared */
 .stButton > button,
-.stDownloadButton > button {
+.stDownloadButton > button,
+.stFormSubmitButton > button,
+.stButton[kind="primary"] > button,
+[data-testid="stFormSubmitButton"] > button {
     background-color: var(--echo-charcoal) !important;
     color: var(--echo-white) !important;
     border: 1px solid var(--echo-gold) !important;
@@ -105,7 +108,9 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     transition: background-color 0.15s ease;
 }
 .stButton > button:hover,
-.stDownloadButton > button:hover {
+.stDownloadButton > button:hover,
+.stFormSubmitButton > button:hover,
+[data-testid="stFormSubmitButton"] > button:hover {
     background-color: var(--echo-charcoal-hover) !important;
     border-color: var(--echo-gold-bright) !important;
     box-shadow: none !important;
