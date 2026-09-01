@@ -12,6 +12,14 @@ import docx
 from rapidfuzz import process, fuzz
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
 from utils.skills import load_prompt
+from utils.auth import get_current_user
+from utils.agent import TOOLS, check_agent_access
+
+
+def _cur_user_id():
+    user = get_current_user()
+    return user["id"] if user and user.get("id") else None
+
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -957,6 +965,8 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
         st.session_state["knowledge_proposal"] = None
     if "echo_ui_uploaded_files" not in st.session_state:
         st.session_state["echo_ui_uploaded_files"] = []
+    if "echo_agent_mode" not in st.session_state:
+        st.session_state["echo_agent_mode"] = False
 
     safe_scroll_height = max(400, int(height) - 130) if height else 520
 
@@ -1004,6 +1014,25 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
                     st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
+
+                    st.markdown("---")
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AGENT MODE</span>", unsafe_allow_html=True)
+                    _agent_allowed = check_agent_access(_cur_user_id())
+                    if _agent_allowed:
+                        st.session_state["echo_agent_mode"] = st.checkbox(
+                            "Enable Agent mode",
+                            value=st.session_state.get("echo_agent_mode", False),
+                            help="Let Echo take actions (create/edit tasks, log entries, add knowledge) with your approval.",
+                        )
+                    else:
+                        st.session_state["echo_agent_mode"] = False
+                        st.markdown(
+                            "<span style='font-size:0.75rem; color:#666;'>Agent mode is locked. "
+                            "Please contact the developer for your access.</span>",
+                            unsafe_allow_html=True,
+                        )
+                    if st.session_state.get("echo_agent_mode", False):
+                        st.caption(f"{len(TOOLS)} actions available · writes require your approval")
                     
                     st.markdown("---")
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)

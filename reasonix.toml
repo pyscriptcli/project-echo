@@ -1,0 +1,7 @@
+[skills]
+paths = [
+  "./skills/superpowers",  # Adjust path to wherever you cloned the repo
+]
+
+[permissions]
+allow = ["Bash=cd /c/Windows/System32/project-echo && for f in pages/*.py; do echo \"=== $f ===\"; head -30 \"$f\" | grep -v \"^$\" | head -18; done", "Bash=cd /c/Windows/System32/project-echo && sed -n '1360,1400p' utils/echo_ai.py && echo \"=== ai.py ===\" && cat utils/ai.py && echo \"=== mom_templates head ===\" && head -5 mom_templates/mom_template_2.html", "Bash=cd /c/Windows/System32/project-echo && python -c \"import py_compile; py_compile.compile('utils/agent.py', doraise=True); print('agent.py compile OK')\" && cd /c/Windows/System32/project-echo && python -c \"\nfrom utils.skills import load_prompt\nc = load_prompt('echo_chat', context='ctx')\na = load_prompt('agent_controller', context='ctx')\nassert '{{' not in c and '{{' not in a\nassert 'You are Echo, an executive AI assistant' in c\nassert 'create_task' in a and 'search_meetings' in a\nprint('echo_chat + agent_controller skills load OK')\n\""]

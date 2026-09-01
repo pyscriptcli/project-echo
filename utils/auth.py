@@ -406,10 +406,34 @@ def add_admin_user(username: str, password: str, role: str = "member") -> bool:
 
 
 def get_all_users() -> List[Dict[str, Any]]:
-    """Return all admin users (id, username, created_at)."""
+    """Return all admin users (id, username, created_at, can_use_agent)."""
     supabase = get_supabase()
-    response = supabase.table("admin_users").select("id, username, created_at").order("created_at").execute()
+    response = supabase.table("admin_users").select("id, username, created_at, can_use_agent").order("created_at").execute()
     return response.data if response.data else []
+
+
+def can_use_agent(user_id) -> bool:
+    """RBAC gate: is this user granted agent-mode access?"""
+    if not user_id:
+        return False
+    try:
+        supabase = get_supabase()
+        resp = supabase.table("admin_users").select("can_use_agent").eq("id", user_id).limit(1).execute()
+        if not resp.data:
+            return False
+        return bool(resp.data[0].get("can_use_agent", False))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def set_agent_access(user_id, allowed: bool) -> bool:
+    """Grant or revoke agent-mode access for a user."""
+    supabase = get_supabase()
+    try:
+        resp = supabase.table("admin_users").update({"can_use_agent": bool(allowed)}).eq("id", user_id).execute()
+        return bool(resp.data)
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def get_user_usage() -> List[Dict[str, Any]]:

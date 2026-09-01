@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from utils.auth import require_login, add_admin_user, get_all_users, get_user_usage, logout
+from utils.auth import require_login, add_admin_user, get_all_users, get_user_usage, logout, set_agent_access
 
 # -------------------------------
 # Page configuration & styling
@@ -197,4 +197,31 @@ else:
     st.markdown("#### Detailed Usage")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------------------------------------------
+# Agentic AI Access (RBAC) — grant users the right to enable Agent mode
+# ------------------------------------------------------------------
+st.markdown('<div class="admin-card">', unsafe_allow_html=True)
+st.markdown("### Agentic AI Access")
+st.markdown("Control which users can enable **Agent mode** in Ask Echo. Users without access will see a \"contact the developer\" notice in the chat settings.")
+all_users = get_all_users()
+if not all_users:
+    st.info("No users found.")
+else:
+    for u in all_users:
+        uname = str(u.get("username") or "unknown")
+        uid = u.get("id")
+        cur = bool(u.get("can_use_agent", False))
+        c1, c2 = st.columns([3, 7])
+        with c1:
+            granted = st.checkbox("Enable Agent mode", value=cur, key=f"agent_gr_{uname}_{uid}")
+        with c2:
+            st.markdown(f"<b>{uname}</b> <span style='color:#888;font-size:0.8rem'>({uid})</span>", unsafe_allow_html=True)
+        if granted != cur:
+            if set_agent_access(uid, granted):
+                st.caption(f"{uname}: access {'granted' if granted else 'revoked'}")
+                st.rerun()
+            else:
+                st.warning(f"Could not update access for {uname}. Check that the agent_rbac_ddl.sql has been run.")
 st.markdown('</div>', unsafe_allow_html=True)
