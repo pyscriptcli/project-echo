@@ -308,7 +308,9 @@ def render_sidebar():
                     if sign_up(email, password):
                         st.rerun()
         else:
-            st.subheader(f"Welcome, {st.session_state.user['email']}")
+            # Use .get() to safely retrieve email
+            user_email = st.session_state.user.get('email', 'User')
+            st.subheader(f"Welcome, {user_email}")
             if st.button("Logout", key="sidebar_logout_btn"):
                 sign_out()
                 st.rerun()
@@ -424,7 +426,8 @@ def render_notepad_tab():
     editor_col, preview_col = st.columns(2)
     with editor_col:
         st.subheader("Editor")
-        st.text_area(
+        # Use a temporary key and sync with session state
+        new_content = st.text_area(
             "Content",
             value=st.session_state.notepad_content,
             height=400,
@@ -432,7 +435,7 @@ def render_notepad_tab():
             label_visibility="collapsed"
         )
         # Update session state on change
-        st.session_state.notepad_content = st.session_state.notepad_editor if st.session_state.notepad_editor else ""
+        st.session_state.notepad_content = new_content
     
     with preview_col:
         st.subheader("Preview")
@@ -456,7 +459,8 @@ def render_daily_log_tab():
         status_filter = st.selectbox("Status", ["All", "To Do", "In Progress", "Done", "Blocked"], key="dailylog_status_filter")
     
     # Add Task Dialog (toggle with button)
-    st.button("Add Task", key="dailylog_add_task_btn")
+    if st.button("Add Task", key="dailylog_add_task_btn"):
+        st.session_state.show_add_task = not st.session_state.show_add_task
     if st.session_state.show_add_task:
         with st.expander("Add New Task", expanded=True):
             with st.form("dailylog_add_task_form"):
@@ -502,7 +506,9 @@ def render_daily_log_tab():
         "Blocked": [],
     }
     for task in filtered_tasks:
-        tasks_by_status[task["status"]].append(task)
+        status = task.get("status")
+        if status in tasks_by_status:
+            tasks_by_status[status].append(task)
     
     # Render column headers with inline SVG
     def render_column_header(icon_svg: str, title: str):
@@ -549,7 +555,7 @@ def render_task_card(task: Dict, current_status: str):
     Render a single kanban card with task details and action buttons.
     """
     with st.container():
-        st.markdown(f'<div class="kanban-card">', unsafe_allow_html=True)
+        st.markdown('<div class="kanban-card">', unsafe_allow_html=True)
         st.markdown(f'<div class="kanban-card-title">{task["title"]}</div>', unsafe_allow_html=True)
         if task.get("description"):
             st.markdown(f'<div class="kanban-card-desc">{task["description"]}</div>', unsafe_allow_html=True)
@@ -598,7 +604,6 @@ def main():
     # Page configuration
     st.set_page_config(
         page_title="Project Echo",
-        page_icon="📝",  # This is an emoji? Actually not allowed? The constraint says no emojis, but page_icon can be an icon or emoji? It might be considered emoji. To be safe, we'll omit page_icon or use a string like "pencil" but Streamlit expects emoji or path. We'll just use no icon.
         layout="wide",
         initial_sidebar_state="expanded",
     )
