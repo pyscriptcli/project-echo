@@ -22,6 +22,90 @@ def _cur_user_id():
     return user["id"] if user and user.get("id") else None
 
 
+def _cur_username():
+    user = get_current_user()
+    return str(user.get("username") or "").strip() if user else ""
+
+
+def _fetch_all_tasks():
+    """Return all tasks (assignee/status/due/meeting) for deliverables matching."""
+    client = get_supabase_client_or_none()
+    if not client:
+        return []
+    try:
+        resp = client.table("tasks").select("title,status,assignee,due_date,meeting_id").execute()
+        return resp.data if resp.data else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def get_supabase_client_or_none():
+    from utils.db import get_supabase_client
+    try:
+        return get_supabase_client()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def build_user_deliverables_context(username: str, archive_records: list) -> str:
+    """Build a 'this week' deliverables block for the given user, from minutes + tasks.
+
+    Matches the username (case-insensitive) to minutes action items' Person-in-charge
+    and to tasks' assignee, so Echo can answer 'what are my deliverables this week'.
+    """
+    if not username:
+        return ""
+    name = username.lower()
+    today = datetime.datetime.today().date()
+    week_start = today - datetime.timedelta(days=today.weekday())
+    week_end = week_start + datetime.timedelta(days=6)
+
+    dm = []  # deliverables from minutes
+    for m in archive_records or []:
+        for item in (m.get("table_items") or []):
+            pic = str(item.get("Person-in-charge") or item.get("person_in_charge") or "").strip()
+            if pic and name in pic.lower():
+                dm.append({
+                    "source": "Minutes",
+                    "client": str(m.get("client_name") or "")[:40],
+                    "date": str(m.get("meeting_date") or "")[:10],
+                    "point": str(item.get("Discussion Points") or item.get("discussion_point") or "")[:120],
+                    "action": str(item.get("Action Plan") or item.get("action_plan") or "")[:120],
+                    "due": str(item.get("Indicative Delivery Date") or item.get("indicative_delivery_date") or "TBD")[:32],
+                    "pic": pic,
+                })
+
+    dt = []  # deliverables from tasks
+    for t in _fetch_all_tasks() or []:
+        asg = str(t.get("assignee") or "").strip()
+        due_raw = t.get("due_date")
+        due_date = None
+        try:
+            due_date = datetime.datetime.fromisoformat(str(due_raw)[:10]).date() if due_raw else None
+        except Exception:  # noqa: BLE001
+            due_date = None
+        if asg and name in asg.lower():
+            dt.append({
+                "source": "Task",
+                "title": str(t.get("title") or "")[:120],
+                "status": str(t.get("status") or ""),
+                "due": str(due_raw or "TBD")[:12],
+                "in_week": bool(due_date and week_start <= due_date <= week_end),
+            })
+
+    if not dm and not dt:
+        return f"CURRENT USER: {username}\nNo deliverables matched for this user in this week's data.\n"
+
+    lines = [f"CURRENT USER: {username} (match tasks/minutes to this name)", "THIS WEEK'S DELIVERABLES:"]
+    for d in (dm + dt)[:20]:
+        if d["source"] == "Minutes":
+            lines.append(f"- [Minutes] {d['client']} ({d['date']}) | {d['point']} | Action: {d['action']} | PIC: {d['pic']} | Due: {d['due']}")
+        else:
+            flag = " (this week)" if d.get("in_week") else ""
+            lines.append(f"- [Task] {d['title']} | Status: {d['status']} | Due: {d['due']}{flag}")
+    return "\n".join(lines)
+
+
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
@@ -1256,7 +1340,8 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 web_context=web_context,
                 model_name=target_model,
                 include_knowledge=st.session_state["echo_source_knowledge"],
-                uploaded_files=attached_files_list
+                uploaded_files=attached_files_list,
+                user_context=build_user_deliverables_context(_cur_username(), archives),
             )
             
             st.session_state["echo_ui_uploaded_files"] = []
@@ -1419,7 +1504,8 @@ def _query_echo_backend(
     web_context: str = "",
     model_name: str = "deepseek/deepseek-chat",
     include_knowledge: bool = True,
-    uploaded_files: list = None
+    uploaded_files: list = None,
+    user_context: str = "",
 ) -> tuple:
     # 1. Fuzzy Context Alignment using Knowledge Base Corpus
     aligned_question, corrections = _fuzzy_align_query(question)
@@ -1467,6 +1553,7 @@ ENTERPRISE KNOWLEDGE / STRUCTURED ENTITIES:
 CURRENT DATE & TIME: {current_date_str}
 {knowledge_section}
 {web_section}
+{user_context}
 """
 
     citation_rule = (

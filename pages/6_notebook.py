@@ -336,6 +336,10 @@ def init_session():
         first_doc = st.session_state.nb_docs.get(first_id, {}) if first_id else {}
         st.session_state.np_title = first_doc.get("title", "")
         st.session_state.np_content = first_doc.get("content", "")
+    if "nb_save_state" not in st.session_state:
+        st.session_state["nb_save_state"] = "saved"
+    if "nb_saved_at" not in st.session_state:
+        st.session_state["nb_saved_at"] = None
 
     # Daily Log init (view state only; log data is loaded per-date from Supabase)
     if "dl_logs" not in st.session_state:
@@ -391,9 +395,12 @@ def save_current_doc():
         st.session_state.nb_docs[cid]["title"] = st.session_state.np_title
         st.session_state.nb_docs[cid]["content"] = st.session_state.np_content
         st.session_state.nb_docs[cid]["updated"] = datetime.datetime.now().isoformat()
+        st.session_state["nb_save_state"] = "saving"
         user_id = _current_user_id()
         if user_id:
             upsert_doc(user_id, cid, st.session_state.np_title, st.session_state.np_content)
+        st.session_state["nb_save_state"] = "saved"
+        st.session_state["nb_saved_at"] = datetime.datetime.now().strftime("%I:%M:%S %p")
 
 @st.dialog("Notes Gallery", width="large")
 def notes_gallery_modal():
@@ -459,24 +466,34 @@ def render_notepad():
         doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
         
         # Title Input
-        st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
-        
-        # Content Area
+        st.text_input(
+            "Title",
+            key="np_title",
+            label_visibility="collapsed",
+            placeholder="Document Title",
+            on_change=save_current_doc,
+        )
+
+        # Content Area (auto-saves on every change)
         st.text_area(
             "Content",
             key="np_content",
             height=550,
             label_visibility="collapsed",
-            placeholder="Start typing your note here..."
+            placeholder="Start typing your note here...",
+            on_change=save_current_doc,
         )
 
         word_count = len(st.session_state.np_content.split())
-        updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
-        
+        auto_saved_at = st.session_state.get("nb_saved_at")
+        auto_saved_html = (
+            f'<span style="color:#2a6e3f;font-weight:600;">Auto-saved · {auto_saved_at}</span>'
+            if auto_saved_at else "<span>Auto-save on</span>"
+        )
         st.markdown(f"""
             <div class="status-footer">
                 <span>{word_count} words</span>
-                <span>Last saved: {updated_str}</span>
+                <span>{auto_saved_html}</span>
             </div>
         """, unsafe_allow_html=True)
     else:
