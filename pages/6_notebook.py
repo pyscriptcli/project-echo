@@ -39,16 +39,19 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #f6f4f0;
-        background-image: linear-gradient(#e8e6e1 1px, transparent 1px), linear-gradient(90deg, #e8e6e1 1px, transparent 1px);
-        background-size: 80px 80px;
+        background-color: #F5F1E8;
+        background-image: linear-gradient(to right, rgba(26,43,76,0.10) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(26,43,76,0.10) 1px, transparent 1px),
+                          linear-gradient(to right, rgba(26,43,76,0.05) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(26,43,76,0.05) 1px, transparent 1px);
+        background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
         font-family: 'Inter', sans-serif;
         color: #333333;
     }
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
+        max-width: 100%;
     }
 
     /* Titles and subtitles */

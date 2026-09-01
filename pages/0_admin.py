@@ -60,11 +60,11 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 
 .admin-card {
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0;
+    border: 1px solid rgba(26, 43, 76, 0.14);
     padding: 1rem 1.25rem;
     margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: none;
 }
 
 .stButton > button {
@@ -103,6 +103,10 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 # Authentication check
 # -------------------------------
 require_login(require_admin=True)
+
+# Apply the shared flat & edgy theme (large gridlines, 0 radius) to the admin page
+from components.theme import inject_global_css
+inject_global_css()
 
 # Sidebar: logout
 with st.sidebar:
