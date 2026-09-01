@@ -890,110 +890,23 @@ if isinstance(_dash_range, tuple) and len(_dash_range) == 2:
         st.rerun()
 
 # ------------------------------------------------------------
-# DASHBOARD TABS (Team Overview / Personal Stats)
 # ------------------------------------------------------------
-tab_team, tab_personal = st.tabs(["📊 Team Overview", "👥 Personal Stats"])
+# DASHBOARD (Team Overview KPIs)
+# ------------------------------------------------------------
+st.markdown(f'<p class="section-caption">Meetings & tasks for {st.session_state["start_date"].strftime("%b %d, %Y")} \u2014 {st.session_state["end_date"].strftime("%b %d, %Y")}</p>', unsafe_allow_html=True)
 
-# ---------- Team Overview ----------
-with tab_team:
-    st.markdown(f'<p class="section-caption">Meetings & tasks for {st.session_state["start_date"].strftime("%b %d, %Y")} — {st.session_state["end_date"].strftime("%b %d, %Y")}</p>', unsafe_allow_html=True)
-
-    # Simple KPI tiles
-    kpi_cells = [
-        ("Meetings", total_range_meetings),
-        ("Open Tasks", task_open),
-        ("Done", task_status["done"]),
-        ("Log Days", team_days_logged),
-    ]
-    kpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">'
-    for label, val in kpi_cells:
-        kpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
-    kpi_html += "</div>"
-    st.markdown(kpi_html, unsafe_allow_html=True)
-
-    # One chart: meetings per month
-    st.markdown('<p class="section-title">Meetings per Month</p>', unsafe_allow_html=True)
-    if meet_by_month:
-        keys = sorted(meet_by_month.keys())
-        vals = [meet_by_month[k] for k in keys]
-        fig, ax = plt.subplots(figsize=(7, 2.8), dpi=100)
-        ax.bar(keys, vals, color=style_ink, width=0.6)
-        current_key = today.strftime("%Y-%m")
-        for i, k in enumerate(keys):
-            if k == current_key:
-                ax.patches[i].set_color(style_gold)
-        ax.set_facecolor("white")
-        fig.patch.set_facecolor("white")
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.set_ylabel("Meetings", color=style_muted, fontsize=9)
-        ax.tick_params(colors=style_muted, labelsize=8)
-        plt.xticks(rotation=45, ha="right")
-        plt.tight_layout()
-        st.pyplot(fig, clear_figure=True)
-    else:
-        st.info("No meetings in this period.")
-
-    # Team task summary table
-    st.markdown('<p class="section-title">Team Task Summary</p>', unsafe_allow_html=True)
-    team_rows = []
-    for member in all_members:
-        ps = person_stats[member]
-        team_rows.append({
-            "Member": member, "Done": ps["tasks_done"], "Open": ps["tasks_open"],
-            "Overdue": ps["tasks_overdue"], "Days Logged": ps["days_logged"],
-        })
-    if team_rows:
-        st.dataframe(
-            pd.DataFrame(team_rows).sort_values("Done", ascending=False),
-            use_container_width=True, hide_index=True,
-        )
-    else:
-        st.info("No team members found.")
-
-# ---------- Personal Stats ----------
-with tab_personal:
-    st.markdown('<p class="section-title">Personal Stats</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="section-caption">Per-user breakdown across the whole team.</p>', unsafe_allow_html=True)
-
-    members_with_data = [m for m in all_members if person_stats[m]["tasks_open"] + person_stats[m]["tasks_done"] + person_stats[m]["days_logged"] > 0]
-    select_member = st.selectbox(
-        "Select a member", options=all_members, index=0,
-        format_func=lambda m: m if m in members_with_data or len(all_members) == 0 else f"(no data) {m}",
-    )
-    ps = person_stats.get(select_member, {"tasks_open": 0, "tasks_done": 0, "tasks_overdue": 0, "days_logged": 0, "cat_chars": {k: 0 for k in cat_keys}})
-
-    st.markdown(f'<p class="section-caption">Stats for <strong>{select_member}</strong> in the selected period.</p>', unsafe_allow_html=True)
-
-    # Simple per-member KPI tiles
-    p_done = ps["tasks_done"]; p_open = ps["tasks_open"]
-    pkpi = [
-        ("Done", p_done),
-        ("Open", p_open),
-        ("Overdue", ps["tasks_overdue"]),
-        ("Log Days", ps["days_logged"]),
-    ]
-    pkpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">'
-    for label, val in pkpi:
-        pkpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
-    pkpi_html += "</div>"
-    st.markdown(pkpi_html, unsafe_allow_html=True)
-
-    # Person tasks detail table
-    st.markdown('<p class="section-title">Task Detail</p>', unsafe_allow_html=True)
-    member_tasks = [t for t in tasks if _member_name_in_assignee(select_member, t.get("assignee"))]
-    if member_tasks:
-        person_tab = []
-        for t in member_tasks:
-            status_show = status_labels.get(t.get("status"), t.get("status", ""))
-            person_tab.append({
-                "Task": str(t.get("title", ""))[:60], "Status": status_show,
-                "Due": format_mm_dd_yyyy(parse_calendar_date(t.get("due_date"))) if parse_calendar_date(t.get("due_date")) else "—",
-                "Meeting": str(t.get("meeting_id") or "")[:24],
-            })
-        st.dataframe(pd.DataFrame(person_tab), use_container_width=True, hide_index=True)
-    else:
-        st.caption("No tasks assigned to this member.")
+# Simple KPI tiles
+kpi_cells = [
+    ("Meetings", total_range_meetings),
+    ("Open Tasks", task_open),
+    ("Done", task_status["done"]),
+    ("Log Days", team_days_logged),
+]
+kpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">'
+for label, val in kpi_cells:
+    kpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
+kpi_html += "</div>"
+st.markdown(kpi_html, unsafe_allow_html=True)
 
 # ------------------------------------------------------------
 # LAYOUT

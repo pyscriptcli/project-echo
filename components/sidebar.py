@@ -228,11 +228,11 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     color: #0D1B3E !important;
     border: 0 none !important;
     border-radius: 0 !important;
-    height: 28px !important;                      /* reduced height for “small” */
-    min-height: 28px !important;
-    padding: 0 12px !important;                   /* compact padding */
+    height: 22px !important;                      /* small, boxy */
+    min-height: 22px !important;
+    padding: 0 8px !important;                    /* compact padding */
     font-family: 'Inter', sans-serif !important;
-    font-size: 0.72rem !important;                /* slightly smaller text */
+    font-size: 0.68rem !important;                /* small text */
     font-weight: 600 !important;
     box-shadow: none !important;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
@@ -258,10 +258,10 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     border-radius: 0 !important;
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.72rem !important;
-    padding: 0.15rem 0.6rem !important;
-    min-height: 26px !important;
-    height: 26px !important;
+    font-size: 0.68rem !important;
+    padding: 0.1rem 0.45rem !important;
+    min-height: 22px !important;
+    height: 22px !important;
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }

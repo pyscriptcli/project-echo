@@ -69,7 +69,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 .stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #C1BAA1 !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #D7D3BF !important; color: #0D1B3E !important; border: 0 none !important; border-radius: 0 !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: none !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button { background-color: #D7D3BF !important; color: #0D1B3E !important; border: 0 none !important; border-radius: 0 !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 22px !important; min-height: 22px !important; box-shadow: none !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
 .stButton > button:hover { background-color: #C1BAA1 !important; border-color: #C1BAA1 !important; color: #0D1B3E !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */

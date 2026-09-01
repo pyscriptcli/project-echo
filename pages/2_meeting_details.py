@@ -364,6 +364,12 @@ div[data-testid="stPopover"] > button {
     background-color: #D7D3BF !important;
     color: #0D1B3E !important;
     border: 0 none !important;
+    font-size: 0.68rem !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 0.1rem 0.45rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {

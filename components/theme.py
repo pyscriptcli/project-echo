@@ -96,13 +96,13 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     color: var(--echo-ink) !important;
     border: 0 none !important;
     border-radius: 0 !important;
-    font-size: 0.72rem !important;
+    font-size: 0.68rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.02em;
-    line-height: 1.2 !important;
-    padding: 0.15rem 0.6rem !important;
-    min-height: 26px !important;
-    height: 26px !important;
+    line-height: 1 !important;
+    padding: 0.1rem 0.45rem !important;
+    min-height: 22px !important;
+    height: 22px !important;
     box-shadow: none !important;
     transition: background-color 0.15s ease;
 }

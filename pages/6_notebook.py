@@ -163,19 +163,20 @@ NOTEBOOK_CSS = """
     .stButton > button,
     div[data-testid="stPopover"] > button,
     div[data-testid="stDownloadButton"] > button {
-        border-radius: 18px !important;
+        border-radius: 0 !important;
         font-weight: 600 !important;
         background-color: #D7D3BF !important;
         color: #0D1B3E !important;
         border: 0 none !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
-        min-height: 38px !important;
+        min-height: 22px !important;
+        height: 22px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 0.25rem 1rem !important;
-        font-size: 0.9rem !important;
+        padding: 0.1rem 0.45rem !important;
+        font-size: 0.68rem !important;
     }
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,

@@ -220,7 +220,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 0 none !important;
     border-radius: 0 !important;
     font-weight: 600 !important;
-    min-height: 36px !important;
+    font-size: 0.68rem !important;
+    min-height: 22px !important;
+    height: 22px !important;
     width: 100% !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
