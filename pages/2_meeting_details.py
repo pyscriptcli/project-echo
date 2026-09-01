@@ -82,14 +82,17 @@ if "edit_meeting_details" not in st.session_state:
 # 3. Custom CSS & Pure SVG Icon Button Injection
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
-html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
+html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
-    background-color: #F3EFE6; 
-    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 80px 80px;
+    background-color: #F5F1E8;
+    background-image: linear-gradient(to right, rgba(26,43,76,0.10) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(26,43,76,0.10) 1px, transparent 1px),
+                      linear-gradient(to right, rgba(26,43,76,0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(26,43,76,0.05) 1px, transparent 1px);
+    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
@@ -343,6 +346,21 @@ div[data-baseweb="tab-highlight"] {
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
+}
+
+/* ===== UI FLAT & EDGY OVERRIDE (Phase 4): squared corners, no shadows ===== */
+.stButton > button,
+div[data-testid="stPopover"] > button,
+div[data-testid="stVerticalBlockBorderWrapper"],
+div[data-testid="stExpander"],
+.stDataFrame,
+[data-testid="stDataFrame"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.stButton > button:hover,
+div[data-testid="stPopover"] > button:hover {
+    box-shadow: none !important;
 }
 </style>
 """

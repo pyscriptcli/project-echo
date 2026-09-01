@@ -52,12 +52,15 @@ setup_page_layout()
 # 3. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
-html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 .stApp {
-    background-color: #F3EFE6; 
-    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 80px 80px; color: #2D2D2D;
+    background-color: #F5F1E8;
+    background-image: linear-gradient(to right, rgba(26,43,76,0.10) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(26,43,76,0.10) 1px, transparent 1px),
+                      linear-gradient(to right, rgba(26,43,76,0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(26,43,76,0.05) 1px, transparent 1px);
+    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px; color: #2D2D2D;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2rem !important; }
@@ -65,13 +68,13 @@ h3 { font-family: 'Playfair Display', serif !important; font-style: italic !impo
 .playfair-label { font-family: 'Playfair Display', serif !important; font-style: italic !important; color: #1A2B4C !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 
 /* Containers & Inputs */
-div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 12px !important; box-shadow: 14px 8px 24px rgba(0, 0, 0, 0.06), 4px 4px 10px rgba(0, 0, 0, 0.03) !important; border: 1px solid rgba(0, 0, 0, 0.05) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
+div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !important; border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(26,43,76,0.14) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
 .stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FAFAFA !important; border: 1px solid rgba(0,0,0,0.08) !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important; }
 .stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #D4AF37 !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #111A2B !important; color: #FFFFFF !important; border: 1px solid #D4AF37 !important; border-radius: 18px !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #1A2B4C !important; border-color: #E6C44D !important; color: #FFFFFF !important; box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important; }
+.stButton > button { background-color: #111A2B !important; color: #FFFFFF !important; border: 1px solid #D4AF37 !important; border-radius: 0 !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: none !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #1A2B4C !important; border-color: #E6C44D !important; color: #FFFFFF !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {
@@ -119,9 +122,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; max-height: 420px; overflow-y: auto; }
-.chat-ai { align-self: flex-start; background-color: #FFFFFF; border: 1px solid rgba(0,0,0,0.06); color: #1A1A1A; padding: 0.6rem 0.85rem; border-radius: 12px; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.chat-ai { align-self: flex-start; background-color: #FFFFFF; border: 1px solid rgba(26,43,76,0.14); color: #1A1A1A; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
-.chat-user { background-color: #222222; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 14px; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.chat-user { background-color: #222222; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 0; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: none; }
 
 /* Evidence & Badges */
 .evidence-quote-box {
