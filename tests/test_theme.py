@@ -21,9 +21,10 @@ class ThemeTests(unittest.TestCase):
         self.assertIn(".stButton > button,", captured["html"])
         self.assertIn("border-radius: 0 !important;\n", captured["html"])
 
-        # Hotfix spec: LARGE gridlines only (no 24px fine gridlines)
-        self.assertIn("background-size: 96px 96px, 96px 96px !important;", captured["html"])
-        self.assertNotIn("24px 24px", captured["html"])
+        # Hotfix spec: NO gridlines — clean flat cream canvas
+        self.assertIn("background-color: var(--echo-canvas) !important;", captured["html"])
+        self.assertNotIn("linear-gradient(to right", captured["html"])
+        self.assertNotIn("background-size:", captured["html"])
         # Hotfix spec: uniform compact charcoal/gold buttons
         self.assertIn("font-size: 0.72rem !important;", captured["html"])
         self.assertIn("min-height: 26px !important;", captured["html"])

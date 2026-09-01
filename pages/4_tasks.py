@@ -44,10 +44,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #F3EFE6 !important;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-    background-size: 80px 80px;
+    background-color: #F5F1E8 !important;
     color: #2D2D2D;
 }
 

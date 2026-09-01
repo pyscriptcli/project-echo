@@ -88,11 +88,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
     background-color: #F5F1E8;
-    background-image: linear-gradient(to right, rgba(26,43,76,0.10) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(26,43,76,0.10) 1px, transparent 1px),
-                      linear-gradient(to right, rgba(26,43,76,0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(26,43,76,0.05) 1px, transparent 1px);
-    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
     color: #2D2D2D;
 }
 .stApp > header { display: none !important; }

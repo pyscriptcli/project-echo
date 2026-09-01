@@ -35,11 +35,6 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 
 [data-testid="stAppViewContainer"], .stApp {
     background-color: #F5F1E8 !important;
-    background-image:
-        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px) !important;
-    background-size: 80px 80px !important;
-    background-position: 0 0 !important;
     color: #1A1A1A;
 }
 

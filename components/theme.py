@@ -61,13 +61,9 @@ def inject_global_css() -> None:
         "<style>\n"
         + tokens_css()
         + """
-/* ---- Canvas: cream + LARGE gridlines (editorial, real-estate feel) ---- */
+/* ---- Canvas: clean flat cream (gridlines removed) ---- */
 html, body, [data-testid="stAppViewContainer"], .stApp {
     background-color: var(--echo-canvas) !important;
-    background-image:
-        linear-gradient(to right, var(--echo-grid) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--echo-grid) 1px, transparent 1px) !important;
-    background-size: 96px 96px, 96px 96px !important;
     color: var(--echo-ink);
     font-family: var(--echo-body);
 }
