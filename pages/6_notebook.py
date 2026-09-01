@@ -25,6 +25,7 @@ NOTEBOOK_ICONS = {
     "paste": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>""",
     "bold": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 010 8H6z"/><line x1="6" y1="4" x2="6" y2="20"/></svg>""",
     "italic": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>""",
+    "underline": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>""",
     "bullet-list": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>""",
     "numbered-list": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><text x="2" y="8" font-size="6" font-weight="bold" fill="currentColor">1</text><text x="2" y="14" font-size="6" font-weight="bold" fill="currentColor">2</text><text x="2" y="20" font-size="6" font-weight="bold" fill="currentColor">3</text></svg>""",
     "add-task": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>""",
@@ -125,12 +126,13 @@ def render_notepad_tab():
     with c5:
         st.text_input('', value='Untitled.txt', key='nb_title', label_visibility='collapsed')
 
-    fc = st.columns(5)
-    with fc[0]: st.button('B', key='fmt_bold')
-    with fc[1]: st.button('I', key='fmt_italic')
-    with fc[2]: st.button('U', key='fmt_uline')
-    with fc[3]: st.button('List', key='fmt_list')
-    with fc[4]: st.button('OL', key='fmt_olist')
+    fc = st.columns(6)
+    with fc[0]: st.button('B', key='fmt_bold', help='Bold')
+    with fc[1]: st.button('I', key='fmt_italic', help='Italic')
+    with fc[2]: st.button('U', key='fmt_underline', help='Underline')
+    with fc[3]: st.button('•', key='fmt_list', help='Bullet List')
+    with fc[4]: st.button('1.', key='fmt_olist', help='Numbered List')
+    with fc[5]: st.button('☰', key='fmt_more', help='More formatting')
 
     content_key = 'nb_content'
     if content_key not in st.session_state:
@@ -233,7 +235,7 @@ def render_daily_log_tab():
                     with meta_c[0]: st.caption(f'Due: {t.get("due_date","")[:10]}')
                     with meta_c[1]: st.caption(v['label'])
                     with meta_c[2]:
-                        if st.button('x', key=f'dl_del_{k}_{t["id"]}'):
+                        if st.button('✕', key=f'dl_del_{k}_{t["id"]}'):
                             tasks.remove(t)
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
