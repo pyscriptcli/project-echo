@@ -70,6 +70,12 @@ NOTEBOOK_CSS = """
     }
 
     /* Notepad specific */
+    .gallery-container {
+        background-color: #FAFAFA;
+        border-radius: 6px;
+        padding: 1rem;
+        border: 1px solid #EAEAEA;
+    }
     .editor-area textarea {
         background-color: #FAFAFA !important;
         border: 1px solid #EAEAEA !important;
@@ -166,7 +172,7 @@ NOTEBOOK_CSS = """
         color: #000000;
         border: 1px solid #DDDDDD;
         transition: all 0.2s;
-        height: 36px !important;
+        min-height: 36px !important;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -177,6 +183,19 @@ NOTEBOOK_CSS = """
     .stButton > button:hover, div[data-testid="stPopover"] > button:hover {
         background-color: #F5F5F5;
         border-color: #BBBBBB;
+        color: #000000;
+    }
+    
+    /* Primary button override for the active note */
+    .stButton > button[kind="primary"] {
+        background-color: #111111;
+        color: #FFFFFF;
+        border: 1px solid #111111;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #333333;
+        border-color: #333333;
+        color: #FFFFFF;
     }
 </style>
 """
@@ -268,25 +287,22 @@ def init_session():
 # Notepad Logic
 # ------------------------------
 
-def handle_doc_switch():
-    cid = st.session_state.np_doc_selector
-    st.session_state.nb_current_id = cid
-    if cid and cid in st.session_state.nb_docs:
-        st.session_state.np_title = st.session_state.nb_docs[cid]["title"]
-        st.session_state.np_content = st.session_state.nb_docs[cid]["content"]
+def select_doc(doc_id):
+    st.session_state.nb_current_id = doc_id
+    if doc_id in st.session_state.nb_docs:
+        st.session_state.np_title = st.session_state.nb_docs[doc_id]["title"]
+        st.session_state.np_content = st.session_state.nb_docs[doc_id]["content"]
 
 def create_new_doc():
     new_id = _make_id()
     now = datetime.datetime.now().isoformat()
     st.session_state.nb_docs[new_id] = {
-        "title": "Untitled",
+        "title": "Untitled Note",
         "content": "",
         "created": now,
         "updated": now,
     }
-    st.session_state.nb_current_id = new_id
-    st.session_state.np_title = "Untitled"
-    st.session_state.np_content = ""
+    select_doc(new_id)
 
 def delete_current_doc():
     cid = st.session_state.nb_current_id
@@ -294,14 +310,11 @@ def delete_current_doc():
         del st.session_state.nb_docs[cid]
         if st.session_state.nb_docs:
             next_id = list(st.session_state.nb_docs.keys())[0]
-            st.session_state.nb_current_id = next_id
-            st.session_state.np_title = st.session_state.nb_docs[next_id]["title"]
-            st.session_state.np_content = st.session_state.nb_docs[next_id]["content"]
+            select_doc(next_id)
         else:
             st.session_state.nb_current_id = None
             st.session_state.np_title = ""
             st.session_state.np_content = ""
-        st.toast("Document deleted")
 
 def save_current_doc():
     cid = st.session_state.nb_current_id
@@ -309,66 +322,84 @@ def save_current_doc():
         st.session_state.nb_docs[cid]["title"] = st.session_state.np_title
         st.session_state.nb_docs[cid]["content"] = st.session_state.np_content
         st.session_state.nb_docs[cid]["updated"] = datetime.datetime.now().isoformat()
-        st.toast("Saved successfully")
 
 def render_notepad():
     st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">A minimal environment for your thoughts.</div>', unsafe_allow_html=True)
 
-    doc_options = list(st.session_state.nb_docs.keys())
-    has_docs = bool(doc_options)
+    # Note Gallery vs Editor Layout
+    col_gallery, col_editor = st.columns([1, 2.5], gap="large")
     
-    col1, col2, col3, col4 = st.columns([5, 1, 1, 1])
-    
-    with col1:
-        if has_docs:
-            current_index = doc_options.index(st.session_state.nb_current_id) if st.session_state.nb_current_id in doc_options else 0
-            st.selectbox(
-                "Open document",
-                options=doc_options,
-                index=current_index,
-                format_func=lambda x: st.session_state.nb_docs[x]["title"],
-                key="np_doc_selector",
-                on_change=handle_doc_switch,
-                label_visibility="collapsed"
+    with col_gallery:
+        st.button("+ New Note", on_click=create_new_doc, use_container_width=True)
+        search_query = st.text_input("Search", placeholder="Search notes...", label_visibility="collapsed").lower()
+        
+        st.markdown("<hr style='margin: 1rem 0;'>", unsafe_allow_html=True)
+        
+        filtered_docs = {
+            k: v for k, v in st.session_state.nb_docs.items()
+            if search_query in v["title"].lower() or search_query in v["content"].lower()
+        }
+        sorted_docs = sorted(filtered_docs.items(), key=lambda x: x[1]["updated"], reverse=True)
+        
+        gallery_cont = st.container(height=450)
+        with gallery_cont:
+            if not sorted_docs:
+                st.markdown("<div class='empty-state'>No notes found</div>", unsafe_allow_html=True)
+            for doc_id, doc in sorted_docs:
+                title = doc["title"] if doc["title"].strip() else "Untitled"
+                date_str = datetime.datetime.fromisoformat(doc["updated"]).strftime("%b %d")
+                
+                # Active note uses primary button styling (black in our CSS)
+                is_active = (doc_id == st.session_state.nb_current_id)
+                btn_type = "primary" if is_active else "secondary"
+                
+                st.button(
+                    f"{title} ({date_str})", 
+                    key=f"sel_{doc_id}", 
+                    on_click=select_doc, 
+                    args=(doc_id,), 
+                    use_container_width=True, 
+                    type=btn_type
+                )
+
+    with col_editor:
+        has_docs = bool(st.session_state.nb_docs)
+        if has_docs and st.session_state.nb_current_id in st.session_state.nb_docs:
+            doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
+            
+            # Action Toolbar
+            e_col1, e_col2, e_col3 = st.columns([6, 1, 1])
+            with e_col2:
+                st.button("Delete", on_click=delete_current_doc, use_container_width=True)
+            with e_col3:
+                st.button("Save", on_click=save_current_doc, use_container_width=True)
+
+            # Editor Inputs
+            st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
+            
+            st.markdown('<div class="editor-area">', unsafe_allow_html=True)
+            st.text_area(
+                "Content",
+                key="np_content",
+                height=400,
+                label_visibility="collapsed",
+                placeholder="Start typing..."
             )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # Meta Footer
+            word_count = len(st.session_state.np_content.split())
+            updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
+            
+            st.markdown(f"""
+                <div class="status-footer">
+                    <span>{word_count} words</span>
+                    <span>Last saved: {updated_str}</span>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            st.selectbox("Open", ["No documents"], disabled=True, label_visibility="collapsed")
-
-    with col2:
-        st.button("+ New", on_click=create_new_doc, use_container_width=True)
-
-    with col3:
-        st.button("Delete", on_click=delete_current_doc, use_container_width=True, disabled=not has_docs)
-
-    with col4:
-        st.button("Save", on_click=save_current_doc, use_container_width=True, disabled=not has_docs)
-
-    if has_docs and st.session_state.nb_current_id:
-        st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
-        
-        st.markdown('<div class="editor-area">', unsafe_allow_html=True)
-        st.text_area(
-            "Content",
-            key="np_content",
-            height=450,
-            label_visibility="collapsed",
-            placeholder="Start typing..."
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
-        word_count = len(st.session_state.np_content.split())
-        updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
-        
-        st.markdown(f"""
-            <div class="status-footer">
-                <span>{word_count} words</span>
-                <span>Last saved: {updated_str}</span>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("Your notepad is empty. Create a new document to begin.")
+            st.info("Select a note from the gallery or create a new one.")
 
 
 # ------------------------------
@@ -395,7 +426,6 @@ def render_day_view(selected_date):
     for idx, col_def in enumerate(COLUMNS):
         col_key = col_def["key"]
         with cols[idx]:
-            # Filter tasks for this category for the exact day
             tasks = [t for t in st.session_state.dl_tasks[col_key] 
                      if datetime.datetime.fromisoformat(t["created"]).date() == selected_date]
             tasks.sort(key=lambda x: x["created"], reverse=True)
@@ -432,7 +462,6 @@ def render_day_view(selected_date):
                             "content": add_content.strip(),
                             "created": t_ref.isoformat()
                         })
-                        st.toast("Task added")
                         st.rerun()
 
 def render_week_view(selected_date):
@@ -469,7 +498,6 @@ def render_month_view(selected_date):
     start, end = _date_range("Month", selected_date)
     st.markdown('<div class="view-header">Monthly Overview</div>', unsafe_allow_html=True)
     
-    # Collect all tasks for the month
     month_tasks = []
     for col_def in COLUMNS:
         col_key = col_def["key"]
@@ -487,7 +515,6 @@ def render_month_view(selected_date):
         st.info("No tasks recorded for this month.")
         return
 
-    # Group by date for rendering
     grouped_tasks = {}
     for task in month_tasks:
         d = task["date"]
@@ -496,7 +523,7 @@ def render_month_view(selected_date):
         grouped_tasks[d].append(task)
         
     for d, tasks in grouped_tasks.items():
-        st.markdown(f"**{d.strftime('%A, %b %d')}**")
+        st.markdown(f"<div style='font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
         for task in tasks:
             st.markdown(f"""
                 <div class="kanban-card" style="display: flex; gap: 1rem; align-items: center; padding: 0.5rem 1rem;">
@@ -531,7 +558,6 @@ def render_dailylog():
         render_week_view(date_val)
     elif view == "Month":
         render_month_view(date_val)
-
 
 # ------------------------------
 # Main app
