@@ -130,6 +130,8 @@ def _init_state():
     for k in ['client', 'admin', 'adhoc', 'meeting']:
         if f'dl_{k}' not in st.session_state:
             st.session_state[f'dl_{k}'] = []
+    if '_dl_id_counter' not in st.session_state:
+        st.session_state._dl_id_counter = 0
 
 # ---------------------------------------------------------------------------
 # NOTEPAD TAB
@@ -235,7 +237,8 @@ def render_daily_log_tab():
                                    key="dl_new_content", height=100)
             if st.button("Add", type="primary", key="dl_add_confirm", use_container_width=True):
                 if content.strip():
-                    new_id = hashlib.md5(content.encode()).hexdigest()[:8]
+                    st.session_state._dl_id_counter += 1
+                    new_id = f"t{st.session_state._dl_id_counter}"
                     st.session_state[f'dl_{cat_sel}'].append({
                         'id': new_id, 'content': content,
                         'due_date': st.session_state.dl_date.isoformat(), 'column_type': cat_sel,
@@ -251,7 +254,8 @@ def render_daily_log_tab():
             if st.button("Add Meeting", type="primary", key="dl_meet_confirm", use_container_width=True):
                 text = mt + '\n' + md if md else mt
                 if text.strip():
-                    new_id = hashlib.md5(text.encode()).hexdigest()[:8]
+                    st.session_state._dl_id_counter += 1
+                    new_id = f"t{st.session_state._dl_id_counter}"
                     st.session_state['dl_meeting'].append({
                         'id': new_id, 'content': text,
                         'due_date': st.session_state.dl_date.isoformat(), 'column_type': 'meeting',
