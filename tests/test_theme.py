@@ -14,23 +14,24 @@ class ThemeTests(unittest.TestCase):
             theme.inject_global_css()
 
         self.assertIn("<style>", captured["html"])
-        self.assertIn("--echo-canvas: #F9F8F6", captured["html"])
+        self.assertIn("--echo-canvas: #ECEBDE", captured["html"])
         self.assertIn("var(--echo-canvas)", captured["html"])
         self.assertIn("border-radius: var(--echo-radius)", captured["html"])
         # The rendered CSS must still contain literal CSS braces (proving no f-string mangling)
         self.assertIn(".stButton > button,", captured["html"])
         self.assertIn("border-radius: 0 !important;\n", captured["html"])
 
-        # New warm monochrome palette tokens
-        self.assertIn("--echo-ink: #412D15;", captured["html"])
-        self.assertIn("--echo-accent: #C9B59C;", captured["html"])
-        self.assertIn("--echo-borders: #EFE9E3;", captured["html"])
-        self.assertIn("--echo-secondary: #D9CFC7;", captured["html"])
-        # Buttons warm tan, brown text/border; hover deep brown
-        self.assertIn("background-color: var(--echo-accent) !important;", captured["html"])
-        self.assertNotIn("--echo-gold", captured["html"])
-        self.assertNotIn("--echo-charcoal", captured["html"])
-        self.assertNotIn("--echo-navy", captured["html"])
+        # New stone-ramp + navy palette tokens
+        self.assertIn("--echo-ink: #0D1B3E;", captured["html"])
+        self.assertIn("--echo-button: #D7D3BF;", captured["html"])
+        self.assertIn("--echo-canvas: #ECEBDE;", captured["html"])
+        self.assertIn("--echo-borders: #C1BAA1;", captured["html"])
+        self.assertIn("--echo-accent: #A59D84;", captured["html"])
+        # Buttons: #D7D3BF flat, navy text, NO border
+        self.assertIn("background-color: var(--echo-button) !important;", captured["html"])
+        self.assertNotIn("--echo-accent) !important;\n    color:", captured["html"])
+        self.assertNotIn("#C9B59C", captured["html"])
+        self.assertNotIn("#412D15", captured["html"])
 
 
 if __name__ == "__main__":

@@ -108,7 +108,7 @@ def build_user_deliverables_context(username: str, archive_records: list) -> str
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -116,14 +116,14 @@ SVG_ECHO_LOGO = """
 """
 
 SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
 </svg>
 """
 
 SVG_GLOBE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -131,7 +131,7 @@ SVG_GLOBE_ICON = """
 """
 
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
@@ -146,7 +146,7 @@ SVG_ALERT_ICON = """
 """
 
 SVG_FILE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
     <polyline points="14 2 14 8 20 8"></polyline>
 </svg>
@@ -237,9 +237,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button,
 .echo-top-controls div[data-testid="stButton"] > button {
-    background-color: #C9B59C !important;
-    color: #412D15 !important;
-    border: 1px solid #412D15 !important;
+    background-color: #D7D3BF !important;
+    color: #0D1B3E !important;
+    border: 0 none !important;
     border-radius: 20px !important;
     height: 28px !important;
     min-height: 28px !important;

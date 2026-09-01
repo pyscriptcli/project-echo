@@ -12,9 +12,9 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 ## 1. Look & feel (the essentials)
 
-- Warm, editorial, monochrome "executive brief" aesthetic: a clean beige canvas with
-  warm-brown ink and tan accents. Headings are elegant serif italics; body/UI text is
-  clean sans. Flat & edgy: 0 radius, no shadows, no gridlines.
+- Warm, editorial, stone-tone "executive brief" aesthetic: a light beige-grey canvas with
+  deeper stone tones for buttons/borders and deep navy text. Headings are elegant serif
+  italics; body/UI text is clean sans. Flat & edgy: 0 radius, no shadows, no gridlines.
 - Pages hide Streamlit chrome (default header, footer, menu) and render custom cards.
 - Every custom control is styled via inline `<style>` inside `st.markdown(...)`, the
   shared `components/theme.py`, or page CSS. Keep this approach; don't add UI frameworks.
@@ -25,19 +25,20 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| canvas | `#F9F8F6` | page background (lightest, dominant) |
-| borders | `#EFE9E3` | separators, card borders, hairlines |
-| secondary | `#D9CFC7` | secondary borders, input borders, disabled/badges |
-| accent / buttons | `#C9B59C` | buttons, active highlights, accents |
-| ink / headings | `#412D15` | fonts, section titles, key numbers, button text |
-| deep ink | `#1F150C` | hover states, deepest accent |
-| muted ink | `#8A7A5F` | secondary captions / helper text |
+| canvas | `#ECEBDE` | page background (lightest, dominant; also sidebar bg) |
+| borders | `#C1BAA1` | separators, card borders, hairline borders |
+| secondary | `#C1BAA1` | secondary borders, inputs, button hover |
+| buttons | `#D7D3BF` | all buttons (flat, NO border/shadow) |
+| accent | `#A59D84` | ACCENTS ONLY — active pills, small dividers, highlights |
+| ink / fonts | `#0D1B3E` | fonts, headings, key numbers, button text (deep navy) |
+| muted ink | `#6E6A6A` | secondary captions / helper text |
 | surface | `#FFFFFF` | cards / chips / panels |
 | danger | `#A94442` (bg `#FDF0EF`) | overdue / destructive states |
 | due-today | `#8C6D23` (bg `#FFF9E8`) | "due today" chips |
 | status dot | `#6366F1` | meeting / "dot-meeting" indicator |
 
 Rules: never introduce a new color unless no token fits. Prefer the tokens above.
+Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for separation.
 
 ---
 

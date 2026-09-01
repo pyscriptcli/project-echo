@@ -43,7 +43,7 @@ body::-webkit-scrollbar,
 }
 
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #F5F1E8 !important;
+    background-color: #ECEBDE !important;
 }
 
 .main, .block-container {

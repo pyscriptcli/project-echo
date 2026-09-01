@@ -39,9 +39,9 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #F9F8F6;
+        background-color: #ECEBDE;
         font-family: 'Inter', sans-serif;
-        color: #412D15;
+        color: #0D1B3E;
     }
     .block-container {
         padding-top: 2rem;
@@ -165,9 +165,9 @@ NOTEBOOK_CSS = """
     div[data-testid="stDownloadButton"] > button {
         border-radius: 18px !important;
         font-weight: 600 !important;
-        background-color: #C9B59C !important;
-        color: #412D15 !important;
-        border: 1px solid #412D15 !important;
+        background-color: #D7D3BF !important;
+        color: #0D1B3E !important;
+        border: 0 none !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
         min-height: 38px !important;
@@ -180,23 +180,23 @@ NOTEBOOK_CSS = """
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,
     div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #1F150C !important;
-        border-color: #1F150C !important;
-        color: #F9F8F6 !important;
+        background-color: #C1BAA1 !important;
+        border-color: #C1BAA1 !important;
+        color: #0D1B3E !important;
         box-shadow: none !important;
     }
     
-    /* Secondary Buttons override (still tan + brown) */
+    /* Secondary Buttons override (still #D7D3BF flat) */
     button[kind="secondary"] {
-        background-color: #C9B59C !important;
-        color: #412D15 !important;
-        border: 1px solid #412D15 !important;
+        background-color: #D7D3BF !important;
+        color: #0D1B3E !important;
+        border: 0 none !important;
         box-shadow: none !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #1F150C !important;
-        border-color: #1F150C !important;
-        color: #F9F8F6 !important;
+        background-color: #C1BAA1 !important;
+        border-color: #C1BAA1 !important;
+        color: #0D1B3E !important;
         box-shadow: none !important;
     }
     
