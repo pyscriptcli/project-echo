@@ -69,26 +69,22 @@ NOTEBOOK_CSS = """
         border-bottom: 2px solid #000000;
     }
 
-    /* Notepad specific */
-    .gallery-container {
-        background-color: #FAFAFA;
-        border-radius: 6px;
-        padding: 1rem;
-        border: 1px solid #EAEAEA;
-    }
-    .editor-area textarea {
+    /* Text Areas (Notepad & Daily Log) */
+    .stTextArea textarea {
         background-color: #FAFAFA !important;
         border: 1px solid #EAEAEA !important;
         border-radius: 4px !important;
-        font-family: 'Consolas', 'Courier New', monospace !important;
+        font-family: 'Inter', sans-serif !important;
         font-size: 0.95rem !important;
         color: #000000 !important;
-        padding: 1.5rem !important;
+        padding: 1rem !important;
         box-shadow: none !important;
+        line-height: 1.5 !important;
     }
-    .editor-area textarea:focus {
+    .stTextArea textarea:focus {
         border-color: #CCCCCC !important;
     }
+    
     .status-footer {
         display: flex;
         justify-content: space-between;
@@ -105,31 +101,16 @@ NOTEBOOK_CSS = """
         border-bottom: 1px solid #EEEEEE;
         padding-bottom: 0.5rem;
     }
-    .kanban-column {
-        background-color: #FAFAFA;
-        border-radius: 4px;
-        border: 1px solid #EAEAEA;
-        padding: 0.75rem;
-        min-height: 500px;
-    }
     .kanban-header {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
     .kanban-header .label {
         font-weight: 600;
         font-size: 0.95rem;
         color: #000000;
-    }
-    .kanban-header .count {
-        background-color: #EEEEEE;
-        color: #333333;
-        border-radius: 12px;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.75rem;
-        margin-left: auto;
     }
     .kanban-card {
         background-color: #FFFFFF;
@@ -140,16 +121,6 @@ NOTEBOOK_CSS = """
         box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         font-size: 0.9rem;
         line-height: 1.4;
-    }
-    .card-meta {
-        font-size: 0.7rem;
-        color: #999999;
-        margin-top: 0.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
     }
     .empty-state {
         text-align: center;
@@ -267,16 +238,18 @@ def init_session():
         st.session_state.np_title = ""
         st.session_state.np_content = ""
 
-    # Daily Log init
-    if "dl_tasks" not in st.session_state:
-        st.session_state.dl_tasks = {col["key"]: [] for col in COLUMNS}
-        sample_date = datetime.datetime.now()
-        st.session_state.dl_tasks["client"].append({
-            "id": _make_id(), "content": "Prepare quarterly report", "created": sample_date.isoformat()
-        })
-        st.session_state.dl_tasks["admin"].append({
-            "id": _make_id(), "content": "Update documentation", "created": sample_date.isoformat()
-        })
+    # Daily Log init - replaced individual cards with a dictionary of texts per date
+    if "dl_logs" not in st.session_state:
+        st.session_state.dl_logs = {}
+        
+        # Populate a sample log for today
+        today_str = datetime.date.today().isoformat()
+        st.session_state.dl_logs[today_str] = {
+            "client": "- Prep quarterly report\n- Send email update to Client A",
+            "admin": "- Update internal docs",
+            "adhoc": "",
+            "meeting": "- Sync at 3 PM\n- Discuss Q4 goals"
+        }
         
     if "dl_date" not in st.session_state:
         st.session_state.dl_date = datetime.date.today()
@@ -327,7 +300,6 @@ def render_notepad():
     st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">A minimal environment for your thoughts.</div>', unsafe_allow_html=True)
 
-    # Note Gallery vs Editor Layout
     col_gallery, col_editor = st.columns([1, 2.5], gap="large")
     
     with col_gallery:
@@ -350,7 +322,6 @@ def render_notepad():
                 title = doc["title"] if doc["title"].strip() else "Untitled"
                 date_str = datetime.datetime.fromisoformat(doc["updated"]).strftime("%b %d")
                 
-                # Active note uses primary button styling (black in our CSS)
                 is_active = (doc_id == st.session_state.nb_current_id)
                 btn_type = "primary" if is_active else "secondary"
                 
@@ -368,17 +339,14 @@ def render_notepad():
         if has_docs and st.session_state.nb_current_id in st.session_state.nb_docs:
             doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
             
-            # Action Toolbar
             e_col1, e_col2, e_col3 = st.columns([6, 1, 1])
             with e_col2:
                 st.button("Delete", on_click=delete_current_doc, use_container_width=True)
             with e_col3:
                 st.button("Save", on_click=save_current_doc, use_container_width=True)
 
-            # Editor Inputs
             st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
             
-            st.markdown('<div class="editor-area">', unsafe_allow_html=True)
             st.text_area(
                 "Content",
                 key="np_content",
@@ -386,9 +354,7 @@ def render_notepad():
                 label_visibility="collapsed",
                 placeholder="Start typing..."
             )
-            st.markdown('</div>', unsafe_allow_html=True)
 
-            # Meta Footer
             word_count = len(st.session_state.np_content.split())
             updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
             
@@ -406,66 +372,39 @@ def render_notepad():
 # Daily Log Views & Render
 # ------------------------------
 
-def get_tasks_for_date(target_date):
-    """Retrieve all tasks across categories for a specific date."""
-    daily_tasks = []
-    for col_def in COLUMNS:
-        col_key = col_def["key"]
-        for task in st.session_state.dl_tasks[col_key]:
-            try:
-                t_date = datetime.datetime.fromisoformat(task["created"]).date()
-            except:
-                t_date = datetime.date.today()
-            if t_date == target_date:
-                daily_tasks.append({"cat_label": col_def["label"], "cat_key": col_key, **task})
-    return sorted(daily_tasks, key=lambda x: x["created"], reverse=True)
-
 def render_day_view(selected_date):
-    """Standard Kanban grouped by Category"""
+    """Day view with a single long text box per column for continuous logging."""
+    date_str = selected_date.isoformat()
+    
+    if date_str not in st.session_state.dl_logs:
+        st.session_state.dl_logs[date_str] = {c["key"]: "" for c in COLUMNS}
+        
     cols = st.columns(4, gap="small")
     for idx, col_def in enumerate(COLUMNS):
         col_key = col_def["key"]
         with cols[idx]:
-            tasks = [t for t in st.session_state.dl_tasks[col_key] 
-                     if datetime.datetime.fromisoformat(t["created"]).date() == selected_date]
-            tasks.sort(key=lambda x: x["created"], reverse=True)
-
-            st.markdown(f"""<div class="kanban-header">
-                <span class="label">{col_def['label']}</span>
-                <span class="count">{len(tasks)}</span>
-            </div>""", unsafe_allow_html=True)
-
-            if not tasks:
-                st.markdown('<div class="empty-state">No tasks</div>', unsafe_allow_html=True)
-            else:
-                for task in tasks:
-                    task_id = task["id"]
-                    st.markdown(f"""
-                        <div class="kanban-card">
-                            <div>{task['content']}</div>
-                            <div class="card-meta">
-                                <span>{datetime.datetime.fromisoformat(task['created']).strftime('%H:%M')}</span>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    if st.button("Delete", key=f"del_{task_id}", help="Remove task"):
-                        st.session_state.dl_tasks[col_key] = [t for t in st.session_state.dl_tasks[col_key] if t["id"] != task_id]
-                        st.rerun()
-
-            with st.popover("+ Add", key=f"add_pop_{col_key}", use_container_width=True):
-                add_content = st.text_area("Content", key=f"add_content_{col_key}", height=80, label_visibility="collapsed")
-                if st.button("Confirm", key=f"add_confirm_{col_key}", use_container_width=True):
-                    if add_content.strip():
-                        t_ref = datetime.datetime.combine(selected_date, datetime.datetime.now().time())
-                        st.session_state.dl_tasks[col_key].append({
-                            "id": _make_id(),
-                            "content": add_content.strip(),
-                            "created": t_ref.isoformat()
-                        })
-                        st.rerun()
+            st.markdown(f"""
+                <div class="kanban-header">
+                    <span class="label">{col_def['label']}</span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            current_text = st.session_state.dl_logs[date_str].get(col_key, "")
+            
+            new_text = st.text_area(
+                f"{col_def['label']} Area",
+                value=current_text,
+                key=f"dl_area_{date_str}_{col_key}",
+                height=500,
+                label_visibility="collapsed",
+                placeholder=f"Log your {col_def['label'].lower()} tasks here..."
+            )
+            
+            if new_text != current_text:
+                st.session_state.dl_logs[date_str][col_key] = new_text
 
 def render_week_view(selected_date):
-    """Weekly board grouped by Days (Mon-Sun)"""
+    """Weekly board showing summaries of the daily logs."""
     start, end = _date_range("Week", selected_date)
     days = [start + datetime.timedelta(days=i) for i in range(7)]
     
@@ -481,56 +420,54 @@ def render_week_view(selected_date):
                 </div>
             """, unsafe_allow_html=True)
             
-            tasks = get_tasks_for_date(day)
-            if not tasks:
+            date_str = day.isoformat()
+            logs = st.session_state.dl_logs.get(date_str, {})
+            has_logs = any(logs.values())
+            
+            if not has_logs:
                 st.markdown('<div class="empty-state" style="padding: 1rem 0;">Empty</div>', unsafe_allow_html=True)
             else:
-                for task in tasks:
-                    st.markdown(f"""
-                        <div class="kanban-card" style="font-size: 0.8rem; padding: 0.5rem;">
-                            <div style="color: #666; font-size: 0.65rem; margin-bottom: 0.2rem; font-weight: 600;">{task['cat_label'].upper()}</div>
-                            {task['content']}
-                        </div>
-                    """, unsafe_allow_html=True)
+                for col_def in COLUMNS:
+                    val = logs.get(col_def["key"], "").strip()
+                    if val:
+                        st.markdown(f"""
+                            <div class="kanban-card" style="font-size: 0.8rem; padding: 0.5rem;">
+                                <div style="color: #666; font-size: 0.65rem; margin-bottom: 0.2rem; font-weight: 600;">{col_def['label'].upper()}</div>
+                                <div style="white-space: pre-wrap;">{val}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
 
 def render_month_view(selected_date):
-    """List grouped by Date for the entire Month"""
+    """Monthly list view showing all logs for the current month."""
     start, end = _date_range("Month", selected_date)
     st.markdown('<div class="view-header">Monthly Overview</div>', unsafe_allow_html=True)
     
-    month_tasks = []
-    for col_def in COLUMNS:
-        col_key = col_def["key"]
-        for task in st.session_state.dl_tasks[col_key]:
-            try:
-                t_date = datetime.datetime.fromisoformat(task["created"]).date()
-            except:
-                t_date = datetime.date.today()
-            if start <= t_date <= end:
-                month_tasks.append({"date": t_date, "cat_label": col_def["label"], **task})
-                
-    month_tasks.sort(key=lambda x: (x["date"], x["created"]), reverse=True)
+    month_logs = []
+    for date_str, logs in st.session_state.dl_logs.items():
+        try:
+            d = datetime.date.fromisoformat(date_str)
+        except:
+            continue
+        if start <= d <= end and any(logs.values()):
+            month_logs.append((d, logs))
+            
+    month_logs.sort(key=lambda x: x[0], reverse=True)
     
-    if not month_tasks:
+    if not month_logs:
         st.info("No tasks recorded for this month.")
         return
 
-    grouped_tasks = {}
-    for task in month_tasks:
-        d = task["date"]
-        if d not in grouped_tasks:
-            grouped_tasks[d] = []
-        grouped_tasks[d].append(task)
-        
-    for d, tasks in grouped_tasks.items():
+    for d, logs in month_logs:
         st.markdown(f"<div style='font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
-        for task in tasks:
-            st.markdown(f"""
-                <div class="kanban-card" style="display: flex; gap: 1rem; align-items: center; padding: 0.5rem 1rem;">
-                    <span style="font-size: 0.75rem; color: #888; width: 80px; font-weight: 600;">{task['cat_label']}</span>
-                    <span>{task['content']}</span>
-                </div>
-            """, unsafe_allow_html=True)
+        for col_def in COLUMNS:
+            val = logs.get(col_def["key"], "").strip()
+            if val:
+                st.markdown(f"""
+                    <div class="kanban-card" style="display: flex; gap: 1rem; padding: 0.75rem 1rem;">
+                        <span style="font-size: 0.85rem; color: #888; width: 100px; font-weight: 600; flex-shrink: 0;">{col_def['label']}</span>
+                        <span style="white-space: pre-wrap; font-size: 0.9rem;">{val}</span>
+                    </div>
+                """, unsafe_allow_html=True)
 
 def render_dailylog():
     st.markdown('<div class="notebook-title">Daily Log</div>', unsafe_allow_html=True)
