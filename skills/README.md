@@ -12,9 +12,14 @@ skills/
 ├── context/                 # shared, hard-coded context (org baseline, style rules)
 │   └── company_baseline.md
 └── prompts/                 # one file per AI skill (system prompt templates)
-    ├── echo_analyst.md      # Echo chat analyst (long-form Q&A, knowledge proposal)
-    ├── data_extractor.md    # extraction from text/PDF/DOCX/image → JSON items
-    └── global_analyst.md    # global team-archive Q&A analyst
+    ├── echo_analyst.md       # Echo chat analyst (long-form Q&A, knowledge proposal)
+    ├── data_extractor.md     # extraction from text/PDF/DOCX/image → JSON items
+    ├── global_analyst.md     # global team-archive Q&A analyst
+    ├── meeting_metadata.md   # transcript → meeting metadata JSON (type/client/attendees)
+    ├── topic_extractor.md    # transcript → 4–7 discussion topics
+    ├── minutes_generator.md  # transcript + user topics → evidence-matched deliverables (+ missed-point recs)
+    ├── ask_echo.md           # Ask Echo: answer + mutate the MoM table
+    └── minutes_style_learner.md  # mine approved minutes → style profile (few-shot learning)
 ```
 
 ## Notes

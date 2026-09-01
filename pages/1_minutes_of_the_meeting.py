@@ -32,7 +32,9 @@ import streamlit.components.v1 as components
 # Centralized DB & Components
 from utils.db import get_supabase_client, fetch_echo_context
 from components.sidebar import setup_page_layout
-from utils.auth import require_login
+from utils.auth import require_login, get_current_user
+from utils.skills import load_prompt
+from utils.minutes_memory import build_style_examples, store_approved_minutes
 
 # 1. Page Configuration (MUST be the first Streamlit command)
 st.set_page_config(
@@ -203,6 +205,7 @@ if "meeting_conf_desig" not in st.session_state: st.session_state["meeting_conf_
 # HITL & Enhancement States
 if "user_topics_text" not in st.session_state: st.session_state["user_topics_text"] = ""
 if "matched_evidence_items" not in st.session_state: st.session_state["matched_evidence_items"] = []
+if "recommended_missed_points" not in st.session_state: st.session_state["recommended_missed_points"] = []
 if "entity_corrections_log" not in st.session_state: st.session_state["entity_corrections_log"] = []
 if "speaker_mappings" not in st.session_state: st.session_state["speaker_mappings"] = {}
 
@@ -367,6 +370,21 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
             "raw_payload": {"meeting_details": meeting_details, "other_discussions": other_discussions}
         }
         client.table("meeting_archives").upsert(payload, on_conflict="meeting_id").execute()
+
+        # Minutes memory: learn this user's preferred style from the approved output
+        try:
+            _user = get_current_user()
+            if _user and _user.get("id"):
+                store_approved_minutes(
+                    user_id=_user["id"],
+                    meeting_id=meeting_id,
+                    approved_items=table_items,
+                    other_discussions=other_discussions,
+                    client_name=client_name,
+                )
+        except Exception as me:
+            pass  # memory loss must never block the save
+
         return True, "Successfully saved meeting to Supabase!"
     except Exception as e:
         return False, str(e)
@@ -467,10 +485,7 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = (
-        "You are Echo, a highly meticulous and rigorous Executive AI Analyst for PRIME Philippines. "
-        "Extract meeting metadata into valid JSON with zero hallucination."
-    )
+    system_prompt = load_prompt("meeting_metadata")
     user_prompt = f"""Extract metadata from this transcript into valid JSON:
 Schema: {{"meeting_type": "Internal, External, or Team", "client_name": "Company/Client name or empty string", "location": "Meeting location preset or custom name or empty string", "crd_attendees": ["Exact matching names from CRD member list"], "external_attendees": "Comma-separated list of external attendee names", "prepared_by": "Name of attendee from PRIME taking notes or empty string", "confirmed_by": "Primary external attendee/client rep or empty string"}}
 Transcript: {transcript[:15000]}"""
@@ -493,7 +508,7 @@ def suggest_discussion_topics_from_transcript(transcript):
         return "1. Project Status & Progress\n2. Key Deliverables & Timelines\n3. Client Alignment & Action Items"
     
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = "You are Echo, an Executive Analyst. Identify 4-7 primary discussion topics and milestone themes from the transcript. Return clean, concise titles."
+    system_prompt = load_prompt("topic_extractor")
     user_prompt = f"""Extract 4 to 7 key distinct discussion topics discussed in this transcript as valid JSON:
 Schema: {{"topics": ["Topic 1 title", "Topic 2 title", "Topic 3 title"]}}
 Transcript: {transcript[:20000]}"""
@@ -537,12 +552,20 @@ def match_evidence_and_synthesize(transcript, user_topics_str):
     projects_list = ", ".join([str(p) for p in projects if p])
 
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-    system_prompt = (
-        "You are Echo, Executive AI Analyst for PRIME Philippines. "
-        "Your task is to take the USER-DEFINED DISCUSSION POINTS/TOPICS, locate the EXACT supporting evidence in the transcript, "
-        "and produce formal corporate summaries with concrete deliverables, assignees (mapped to PRIME team/clients), and target deadlines. "
-        "You must cite verbatim quote evidence from the transcript for each point to guarantee zero hallucination."
-        f"\n\nSource Knowledge Base:\nTeam: {team_list}\nProjects: {projects_list}\nJargon:\n{jargon_list}"
+
+    # Style examples from approved past minutes (minutes memory / few-shot learning)
+    _uid = get_current_user().get("id") if get_current_user() else None
+    style_examples = build_style_examples(_uid, limit=3) if _uid else ""
+    st.session_state["mm_style_examples"] = style_examples
+
+    knowledge_section = (
+        f"Source Knowledge Base:\nTeam: {team_list}\nProjects: {projects_list}\nJargon:\n{jargon_list}"
+        if (team_list or projects_list or jargon_list) else ""
+    )
+    system_prompt = load_prompt(
+        "minutes_generator",
+        memory_examples=style_examples,
+        knowledge_base=knowledge_section,
     )
 
     user_prompt = f"""Match and synthesize evidence for each of the following user discussion points using the meeting transcript:
@@ -566,6 +589,12 @@ Format output strictly as JSON matching this schema:
       "confidence": "High, Medium, or Low"
     }}
   ],
+  "recommended_missed_points": [
+    {{
+      "topic_title": "Distinct topic found in the transcript but NOT in the user's input",
+      "evidence_quote": "Exact 1-2 sentence verbatim quote supporting this topic"
+    }}
+  ],
   "other_discussions": "Concise summary of peripheral matters, warm-up banter, or general context"
 }}"""
 
@@ -580,8 +609,14 @@ Format output strictly as JSON matching this schema:
             clean = re.sub(r"^```(?:json)?\s*", "", raw)
             clean = re.sub(r"\s*```$", "", clean).strip()
             data = json.loads(clean)
+            recs = data.get("recommended_missed_points", []) or []
+            if isinstance(recs, list):
+                st.session_state["recommended_missed_points"] = recs
+            else:
+                st.session_state["recommended_missed_points"] = []
             return data.get("matched_items", []), data.get("other_discussions", "")
     except Exception: pass
+    st.session_state["recommended_missed_points"] = []
     return [], ""
 
 # -------------------------------------------------------------
@@ -592,21 +627,8 @@ def ask_deepseek_with_mutation(transcript: str, question: str, chat_history: lis
     
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     table_json = current_df.to_json(orient="records")
-    
-    system_prompt = (
-        "You are Ask Echo, an authentic executive assistant for PRIME Philippines. "
-        "You can answer questions AND directly mutate the Minutes of Meeting (MoM) table if requested by the user. "
-        "When the user asks you to edit, change, assign, delete, or add table rows, formulate your natural language answer AND return an action schema in JSON.\n\n"
-        "Output strictly valid JSON with schema:\n"
-        "{\n"
-        "  \"reply\": \"Conversational explanation of the answer or changes made\",\n"
-        "  \"action\": null | {\n"
-        "      \"tool\": \"update_row\" | \"delete_row\" | \"add_row\",\n"
-        "      \"row_index\": 0,\n"
-        "      \"fields\": {\"Discussion Points\": \"...\", \"Action Plan\": \"...\", \"Indicative Delivery Date\": \"...\", \"Person-in-charge\": \"...\"}\n"
-        "  }\n"
-        "}"
-    )
+
+    system_prompt = load_prompt("ask_echo")
 
     messages = [{"role": "system", "content": system_prompt}]
     for msg in chat_history[-4:]: messages.append({"role": msg["role"], "content": msg["content"]})
@@ -1415,6 +1437,40 @@ if st.session_state["transcript"]:
                             st.error("Could not find matching transcript evidence. Please check transcript contents.")
         
         with hitl_tab2:
+            # Teacher-in-the-loop: recommend topics the user may have missed
+            missed_recs = st.session_state.get("recommended_missed_points", []) or []
+            if missed_recs:
+                st.markdown("<p class='playfair-label'>Recommended points you may have missed</p>", unsafe_allow_html=True)
+                st.markdown(
+                    "<p style='font-size:0.8rem; color:#666;'><i>Echo found these distinct topics in the transcript. "
+                    "Select any to add to your discussion list, then re-run evidence matching.</i></p>",
+                    unsafe_allow_html=True,
+                )
+                add_these = []
+                for ridx, rec in enumerate(missed_recs):
+                    rec_title = str(rec.get("topic_title") or "").strip()
+                    rec_quote = str(rec.get("evidence_quote") or "").strip()
+                    if not rec_title:
+                        continue
+                    col_c, col_q = st.columns([1.5, 8.5])
+                    with col_c:
+                        pick = st.checkbox("Add", key=f"chip_rec_{ridx}")
+                    with col_q:
+                        st.markdown(f"**{rec_title}**")
+                        if rec_quote:
+                            st.markdown(f'<div class="evidence-quote-box" style="font-size:0.78rem;"><b>Quote:</b> "{rec_quote}"</div>', unsafe_allow_html=True)
+                    if pick:
+                        add_these.append(rec_title)
+                if add_these:
+                    if st.button("Add selected to my topics & re-match", key="btn_add_missed"):
+                        current = (st.session_state.get("user_topics_text") or "").strip()
+                        new_lines = "\n".join(f"- {t}" for t in add_these)
+                        st.session_state["user_topics_text"] = (current + "\n" + new_lines).strip()
+                        st.session_state["recommended_missed_points"] = []
+                        st.success("Added recommended points to your discussion list. Re-run evidence matching in Tab 1.")
+                        st.rerun()
+                st.markdown("<hr style='margin:0.6rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+
             if not st.session_state["matched_evidence_items"]:
                 st.info("No evidence points matched yet. Complete Tab 1 to run evidence extraction.")
             else:
