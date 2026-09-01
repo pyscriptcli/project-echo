@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 from io import BytesIO
 
 # Document generation imports
@@ -24,6 +24,33 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
 from utils.auth import require_login
+
+# CRD team members for the attendee picker when editing meeting details.
+CRD_MEMBERS = [
+    "Sondi Tuazon", "Kristina Balajadia", "Meliza Zapata", "Dykstra Pineda",
+    "Cedtrix Rena", "Carlo Medina", "Dave Policarpio", "Irish Rima",
+]
+
+
+def _parse_time_range(tr):
+    """Parse '1:00 AM to 2:00 PM' into (start_time, end_time) or (None, None)."""
+    if not tr or " to " not in tr:
+        return None, None
+    parts = tr.split(" to ")
+
+    def _p(s):
+        s = (s or "").strip()
+        for fmt in ("%I:%M %p", "%I %p", "%H:%M"):
+            try:
+                return datetime.strptime(s, fmt).time()
+            except ValueError:
+                continue
+        return None
+
+    start = _p(parts[0]) if len(parts) > 0 else None
+    end = _p(parts[1]) if len(parts) > 1 else None
+    return start, end
+
 
 # 1. Page Config (MUST be first)
 st.set_page_config(
@@ -1072,22 +1099,66 @@ elif st.session_state["view_mode"] == "details":
                     st.rerun()
 
         if not st.session_state["edit_meeting_details"]:
+            md_ro = active_meeting.get("raw_payload", {})
+            md_ro = md_ro.get("meeting_details", {}) if isinstance(md_ro, dict) else {}
+            mtype_ro = str(active_meeting.get("meeting_type", "") or md_ro.get("meeting_type", "N/A"))
+            tr_ro = str(md_ro.get("time_range", "") or "N/A")
             d_r1_c1, d_r1_c2 = st.columns(2)
             with d_r1_c1:
                 st.write(f"**Date:** {active_meeting.get('meeting_date', 'N/A')}")
+                st.write(f"**Meeting Type:** {mtype_ro}")
+                st.write(f"**Time:** {tr_ro}")
                 st.write(f"**Prepared By:** {active_meeting.get('prepared_by', 'N/A')}")
             with d_r1_c2:
                 st.write(f"**Location:** {active_meeting.get('location', 'N/A')}")
                 st.write(f"**Confirmed By:** {active_meeting.get('confirmed_by', 'N/A')}")
         else:
+            # Richer editing: load existing meeting_details (raw_payload)
+            rp_ed = active_meeting.get("raw_payload", {})
+            md_ed = rp_ed.get("meeting_details", {}) if isinstance(rp_ed, dict) else {}
+
+            # Start / End times from time_range ("1:00 AM to 2:00 PM")
+            start_t, end_t = _parse_time_range(str(md_ed.get("time_range", "") or ""))
+
+            st.markdown("##### Meeting Details")
             e_r1_c1, e_r1_c2 = st.columns(2)
             with e_r1_c1:
-                edit_client = st.text_input("Client / Company", value=str(active_meeting.get("client_name", "")), key=f"e_client_{m_id}")
-                edit_date = st.text_input("Meeting Date", value=str(active_meeting.get("meeting_date", "")), key=f"e_date_{m_id}")
-                edit_prep = st.text_input("Prepared By", value=str(active_meeting.get("prepared_by", "")), key=f"e_prep_{m_id}")
+                edit_client = st.text_input("Client / Company / Department", value=str(active_meeting.get("client_name", "")), key=f"e_client_{m_id}")
+                edit_date = st.text_input("Date", value=str(active_meeting.get("meeting_date", "")), key=f"e_date_{m_id}")
+                edit_prep = st.text_input("Prepared By", value=str(active_meeting.get("prepared_by", "") or md_ed.get("prep_name", "")), key=f"e_prep_{m_id}")
+                edit_prep_desig = st.text_input("Prep Designation", value=str(md_ed.get("prep_desig", "")), key=f"e_prep_desig_{m_id}")
             with e_r1_c2:
                 edit_loc = st.text_input("Location", value=str(active_meeting.get("location", "")), key=f"e_loc_{m_id}")
-                edit_conf = st.text_input("Confirmed By", value=str(active_meeting.get("confirmed_by", "")), key=f"e_conf_{m_id}")
+                mtype_opts = ["Internal", "External", "Team"]
+                cur_type = str(active_meeting.get("meeting_type", "") or md_ed.get("meeting_type", "Internal"))
+                type_idx = mtype_opts.index(cur_type) if cur_type in mtype_opts else 0
+                edit_type = st.selectbox("Meeting Type", options=mtype_opts, index=type_idx, key=f"e_type_{m_id}")
+                edit_conf = st.text_input("Confirmed By", value=str(active_meeting.get("confirmed_by", "") or md_ed.get("conf_name", "")), key=f"e_conf_{m_id}")
+                edit_conf_desig = st.text_input("Conf Designation", value=str(md_ed.get("conf_desig", "")), key=f"e_conf_desig_{m_id}")
+
+            st.markdown("##### Schedule")
+            s_c1, s_c2 = st.columns(2)
+            with s_c1:
+                edit_start = st.time_input("Start Time", value=start_t or time(9, 0), key=f"e_start_{m_id}")
+            with s_c2:
+                edit_end = st.time_input("End Time", value=end_t or time(10, 0), key=f"e_end_{m_id}")
+
+            st.markdown("##### Attendees")
+            a_c1, a_c2 = st.columns(2)
+            with a_c1:
+                edit_crd = st.multiselect(
+                    "CRD Team Attendees",
+                    options=CRD_MEMBERS,
+                    default=[str(x) for x in (md_ed.get("prime_attendees") or [])],
+                    key=f"e_crd_{m_id}",
+                )
+            with a_c2:
+                edit_ext = st.text_area(
+                    "External Attendees",
+                    value=", ".join(str(x) for x in (md_ed.get("external_attendees") or [])),
+                    height=90,
+                    key=f"e_ext_{m_id}",
+                )
 
             st.write("")
             sm_c1, sm_c2 = st.columns([7.8, 2.2])
@@ -1099,19 +1170,43 @@ elif st.session_state["view_mode"] == "details":
                             st.error("Supabase client uninitialized.")
                         else:
                             try:
+                                ext_list = [x.strip() for x in edit_ext.split(",") if x.strip()]
+                                time_range_str = f"{edit_start.strftime('%I:%M %p')} to {edit_end.strftime('%I:%M %p')}"
+
+                                new_md = dict(md_ed)
+                                new_md.update({
+                                    "date": edit_date.strip(),
+                                    "time_range": time_range_str,
+                                    "meeting_type": edit_type,
+                                    "location": edit_loc.strip(),
+                                    "company_name": edit_client.strip(),
+                                    "prime_attendees": list(edit_crd),
+                                    "external_attendees": ext_list,
+                                    "prep_name": edit_prep.strip(),
+                                    "prep_desig": edit_prep_desig.strip(),
+                                    "conf_name": edit_conf.strip(),
+                                    "conf_desig": edit_conf_desig.strip(),
+                                })
+                                new_raw = dict(rp_ed) if isinstance(rp_ed, dict) else {}
+                                new_raw["meeting_details"] = new_md
+
                                 client.table("meeting_archives").update({
                                     "client_name": edit_client.strip(),
                                     "meeting_date": edit_date.strip(),
+                                    "meeting_type": edit_type,
                                     "location": edit_loc.strip(),
                                     "prepared_by": edit_prep.strip(),
-                                    "confirmed_by": edit_conf.strip()
+                                    "confirmed_by": edit_conf.strip(),
+                                    "raw_payload": new_raw,
                                 }).eq("meeting_id", m_id).execute()
-                                
+
                                 active_meeting["client_name"] = edit_client.strip()
                                 active_meeting["meeting_date"] = edit_date.strip()
+                                active_meeting["meeting_type"] = edit_type
                                 active_meeting["location"] = edit_loc.strip()
                                 active_meeting["prepared_by"] = edit_prep.strip()
                                 active_meeting["confirmed_by"] = edit_conf.strip()
+                                active_meeting["raw_payload"] = new_raw
 
                                 st.session_state["edit_meeting_details"] = False
                                 st.success("Meeting details updated successfully!")
