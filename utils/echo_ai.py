@@ -237,9 +237,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button,
 .echo-top-controls div[data-testid="stButton"] > button {
-    background-color: #111A2B !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
+    background-color: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
     border-radius: 20px !important;
     height: 28px !important;
     min-height: 28px !important;
