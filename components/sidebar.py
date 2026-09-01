@@ -254,7 +254,8 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
    ============================================================ */
 .stButton > button,
 [data-testid="stPopover"] > button,
-.stFormSubmitButton > button {
+.stFormSubmitButton > button,
+[data-testid="stDownloadButton"] > button {
     background-color: #111A2B !important;
     color: #FFFFFF !important;
     border: 1px solid #D4AF37 !important;
@@ -266,7 +267,8 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 }
 .stButton > button:hover,
 [data-testid="stPopover"] > button:hover,
-.stFormSubmitButton > button:hover {
+.stFormSubmitButton > button:hover,
+[data-testid="stDownloadButton"] > button:hover {
     background-color: #1A2B4C !important;
     border-color: #E6C44D !important;
     color: #FFFFFF !important;

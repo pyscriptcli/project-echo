@@ -141,25 +141,31 @@ NOTEBOOK_CSS = """
         font-size: 0.9rem;
     }
 
-    /* Button Uniform Styling (Reference Matched) */
-    .stButton > button, div[data-testid="stPopover"] > button {
-        border-radius: 24px !important;
-        font-weight: 500 !important;
-        background-color: #111827 !important;
-        color: #ffffff !important;
-        border: none !important;
-        transition: all 0.2s !important;
+    /* Button Uniform Styling — deep charcoal, gold accent, rounded, shadow */
+    .stButton > button,
+    div[data-testid="stPopover"] > button,
+    div[data-testid="stDownloadButton"] > button {
+        border-radius: 18px !important;
+        font-weight: 600 !important;
+        background-color: #111A2B !important;
+        color: #FFFFFF !important;
+        border: 1px solid #D4AF37 !important;
+        box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+        transition: all 0.2s ease !important;
         min-height: 38px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        width: 100% !important;
         padding: 0.25rem 1rem !important;
         font-size: 0.9rem !important;
     }
-    .stButton > button:hover, div[data-testid="stPopover"] > button:hover {
-        background-color: #374151 !important;
-        color: #ffffff !important;
+    .stButton > button:hover,
+    div[data-testid="stPopover"] > button:hover,
+    div[data-testid="stDownloadButton"] > button:hover {
+        background-color: #1A2B4C !important;
+        border-color: #E6C44D !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
     }
     
     /* Secondary Buttons override (used for cards/secondary actions) */

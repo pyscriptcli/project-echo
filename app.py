@@ -178,7 +178,8 @@ div[data-testid="stPopover"] > button {
     min-height: 32px !important;
     height: 32px !important;
 }
-.stButton > button {
+.stButton > button,
+[data-testid="stDownloadButton"] > button {
     background-color: #111A2B !important;
     color: #fff !important;
     border: 1px solid #D4AF37 !important;
@@ -187,6 +188,8 @@ div[data-testid="stPopover"] > button {
     padding: 0.2rem 0.75rem !important;
     min-height: 28px !important;
     height: 28px !important;
+    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    transition: all 0.2s ease !important;
 }
 
 /* ===== tasks.py Calendar Styles ===== */
