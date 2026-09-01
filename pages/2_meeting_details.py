@@ -1020,11 +1020,16 @@ if st.session_state["view_mode"] == "gallery":
                         st.markdown(f"<p class='card-meta'>Date: {d_val} &bull; {loc_val} &bull; Prepared by: {prep_val}</p>", unsafe_allow_html=True)
                         st.markdown(f"<p class='card-desc'>{preview_text}</p>", unsafe_allow_html=True)
                     with c_act:
-                        st.markdown('<div class="view-btn-wrapper">', unsafe_allow_html=True)
-                        if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}"):
+                        st.markdown('<div class="view-btn-wrapper" style="flex-direction:column; gap:6px; justify-content:center;">', unsafe_allow_html=True)
+                        if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}", use_container_width=True):
                             st.session_state["selected_meeting_id"] = m_id_val
                             st.session_state["view_mode"] = "details"
                             st.session_state["edit_meeting_details"] = False
+                            st.rerun()
+                        if st.button("Edit Meeting", key=f"edit_btn_{m_id_val}_{idx}", use_container_width=True):
+                            st.session_state["selected_meeting_id"] = m_id_val
+                            st.session_state["view_mode"] = "details"
+                            st.session_state["edit_meeting_details"] = True
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
 

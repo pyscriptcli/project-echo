@@ -75,6 +75,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     padding: 0.2rem 0.75rem !important;
     min-height: 26px !important;
     height: 26px !important;
+    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {

@@ -246,6 +246,32 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     color: #E6C44D !important;                    /* brighter gold */
     border-color: #E6C44D !important;
 }
+
+/* ============================================================
+   GLOBAL BUTTONS — deep charcoal, gold accent, rounded, shadow
+   Scoped to the main content area so the sidebar nav/sign-out
+   keeps its own styling. Applied on every page via the sidebar.
+   ============================================================ */
+[data-testid="stMain"] .stButton > button,
+[data-testid="stMain"] [data-testid="stPopover"] > button,
+[data-testid="stMain"] .stFormSubmitButton > button {
+    background-color: #111A2B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 18px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    transition: all 0.2s ease !important;
+}
+[data-testid="stMain"] .stButton > button:hover,
+[data-testid="stMain"] [data-testid="stPopover"] > button:hover,
+[data-testid="stMain"] .stFormSubmitButton > button:hover {
+    background-color: #1A2B4C !important;
+    border-color: #E6C44D !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
+}
 </style>
 """
 

@@ -771,6 +771,9 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 .icon-grid button { border: 1px solid rgba(26, 43, 76, 0.12); background: #F5F1E8; color: #3A4A63; }
 .icon-grid button.active { border-color: #D4AF37; background: #D4AF37; color: #111A2B; }
 .custom-query-collapse-header { color: #1A2B4C; }
+
+/* Launcher modal backdrop — light navy so the light card reads as native */
+#launcher-modal-scrim { background-color: rgba(26, 43, 76, 0.55) !important; }
 </style>
 </head>
 <body>
@@ -865,7 +868,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
             <button class="dimension-mode-btn active" id="btn3DMode">3D BUILDINGS</button>
         </div>
         <div class="acc-item" id="btnOpenTradeAreaPopup" style="cursor:pointer;">
-            <div class="acc-header" style="justify-content:flex-start; gap:8px; color:#38bdf8;">
+            <div class="acc-header" style="justify-content:flex-start; gap:8px; color:#1A2B4C;">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 <span>Trade Area Analysis</span>
                 <span style="margin-left:auto;">▸</span>
@@ -921,7 +924,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
                 <label class="layer-row"> <span>All Provinces</span> <input type="checkbox" data-g="bound_prov"></label>
                 <label class="layer-row"> <span>All Cities</span> <input type="checkbox" data-g="bound_city"></label>
                 <label class="layer-row"> <span>All Barangays</span> <input type="checkbox" data-g="bound_brgy"></label>
-                <div style="font-weight:600; font-size:11px; color:#f0f6fc; margin-top:4px;">Highlight Administrative Boundary</div>
+                <div style="font-weight:600; font-size:11px; color:#1A2B4C; margin-top:4px;">Highlight Administrative Boundary</div>
                 <div class="bound-select-row">
                     <input type="text" id="boundarySearchInput" placeholder="Search province, city, barangay..." autocomplete="off"/>
                     <div class="autocomplete-list" id="boundaryAutocompleteList"></div>
@@ -1003,7 +1006,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 
 <div id="popup-route-settings" class="float-card right-card">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:700; color:#f0f6fc;">Route (OSRM)</span>
+        <span style="font-weight:700; color:#1A2B4C;">Route (OSRM)</span>
         <button class="card-btn" id="closeRouteSettingsBtn">✕</button>
     </div>
     <div class="f-row"><span>Mode Selector</span>
@@ -1030,7 +1033,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 
 <div id="popup-shape-editor" class="float-card right-card">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:700; color:#f0f6fc;" id="editShapeTitle">Edit Feature</span>
+        <span style="font-weight:700; color:#1A2B4C;" id="editShapeTitle">Edit Feature</span>
         <button class="card-btn" id="closeEditorBtn">✕</button>
     </div>
     <div class="f-row"> <span>Name</span> <input type="text" id="eName" style="width:140px;"></div>
@@ -1082,7 +1085,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 
 <div id="popup-custom-map" class="float-card right-card">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:700; color:#f0f6fc;">Vector & Basemap Style</span>
+        <span style="font-weight:700; color:#1A2B4C;">Vector & Basemap Style</span>
         <button class="card-btn" id="closeCustomMapBtn">✕</button>
     </div>
     <div style="font-weight:600; font-size:11px; color:#768390; margin-top:4px;">BASEMAP PRESETS</div>
@@ -1132,7 +1135,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
         <div id="poiCategoryCheckboxes" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
         <div style="margin-top:8px;">
             <div style="font-weight:600; font-size:11px; color:#768390; margin-bottom:4px;">Custom POI Search (Amenity / Shop)</div>
-            <input type="text" id="customPoiSearchInput" placeholder="e.g. amenity=dentist or ev_charging" style="width:100%; background:rgba(0,0,0,0.4); color:#f0f6fc; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px; font-size:11px;"/>
+            <input type="text" id="customPoiSearchInput" placeholder="e.g. amenity=dentist or ev_charging" style="width:100%; background:#F5F1E8; color:#1A2B4C; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px; font-size:11px;"/>
         </div>
         <button class="trade-btn" id="btnScanTradeArea" style="margin-top:8px;">Scan POIs</button>
         <div id="tradeResults" class="poi-summary"></div>
@@ -1142,7 +1145,7 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
             <span style="font-size:14px;">▸</span>
         </div>
         <div id="customQueryBody" style="display:none;">
-            <textarea id="overpassQueryInput" rows="4" style="background:rgba(0,0,0,0.4); color:#f0f6fc; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px; font-size:12px; width:100%;"></textarea>
+            <textarea id="overpassQueryInput" rows="4" style="background:#F5F1E8; color:#1A2B4C; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px; font-size:12px; width:100%;"></textarea>
             <div class="f-row"> <span>Result type</span>
                 <select id="overpassResultType" style="width:110px;">
                     <option value="marker">Markers</option>
@@ -1185,11 +1188,11 @@ select option:hover, select option:checked { background-color: #D4AF37 !importan
 <!-- Attribute Table Modal (#popup-attribute-table) -->
 <div id="popup-attribute-table" class="float-card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-weight:700; color:#f0f6fc;" id="attrTableTitle">Attributes</span>
+        <span style="font-weight:700; color:#1A2B4C;" id="attrTableTitle">Attributes</span>
         <button class="card-btn" id="closeAttrTableBtn">✕</button>
     </div>
     <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-        <input type="text" id="attrTableSearch" placeholder="Find in table (filter)..." style="flex:1; background:rgba(0,0,0,0.4); color:#f0f6fc; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px 10px; font-size:11px;"/>
+        <input type="text" id="attrTableSearch" placeholder="Find in table (filter)..." style="flex:1; background:#F5F1E8; color:#1A2B4C; border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:6px 10px; font-size:11px;"/>
         <button id="btnAddAttrCol" class="trade-btn" style="padding:6px 10px; font-size:10px;">+ Add Column</button>
         <button id="btnAddAttrRow" class="trade-btn" style="padding:6px 10px; font-size:10px; background:#22272e; border:1px solid #2d333b;">+ Add Row</button>
     </div>
@@ -1552,14 +1555,14 @@ $('seg-btn-new').onclick = () => {
 function renderProjectsList() {
     const container = $('existing-projects-container');
     if (!ALL_PROJECTS || !ALL_PROJECTS.length) {
-        container.innerHTML = `<div style="color:rgba(255,255,255,0.5); font-size:12px; text-align:center; padding:16px;">No saved projects. Create your first workspace above.</div>`;
+        container.innerHTML = `<div style="color:#6C727A; font-size:12px; text-align:center; padding:16px;">No saved projects. Create your first workspace above.</div>`;
         return;
     }
     container.innerHTML = ALL_PROJECTS.map(p => `
         <div class="ios26-proj-item">
             <div style="display:flex; flex-direction:column; gap:2px; flex:1; cursor:pointer;" onclick="loadProjectDirectly('${p.id}')">
-                <span style="font-weight:700; font-size:13px; color:#ffffff;">${p.name || 'Untitled Project'}</span>
-                <span style="font-size:11px; color:rgba(255,255,255,0.5);">Updated: ${formatDateTime(p.updated_at || p.created_at)}</span>
+                <span style="font-weight:700; font-size:13px; color:#1A2B4C;">${p.name || 'Untitled Project'}</span>
+                <span style="font-size:11px; color:#6C727A;">Updated: ${formatDateTime(p.updated_at || p.created_at)}</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px;">
                 <button class="card-btn" onclick="openProjectEditModal(event, '${p.id}')" title="Edit Workspace Details">
@@ -2493,7 +2496,7 @@ function showFeaturePopup(f, clickLngLat) {
 
     const html = `
         <div id="popup-feature-info">
-            <div style="font-weight:700; margin-bottom:6px; color:#38bdf8; font-size:13px;">${f.name}</div>
+            <div style="font-weight:700; margin-bottom:6px; color:#1A2B4C; font-size:13px;">${f.name}</div>
             ${primaryImageHtml}
             <table class="tag-table">
                 ${tableRowsHtml}
@@ -2641,9 +2644,9 @@ $('btnScanTradeArea').onclick = async () => {
             osmTags: el.tags || { name: poiName, type: 'custom' }
         }, "Trade Area Scan", poiName);
     });
-    let html = `<div style="font-weight:700; color:#f0f6fc; margin-bottom:4px;">Grouped ${filtered.length} POIs:</div>`;
+    let html = `<div style="font-weight:700; color:#1A2B4C; margin-bottom:4px;">Grouped ${filtered.length} POIs:</div>`;
     for (const k in counts) {
-        html += `<div class="poi-badge"><span>${k}</span> <span style="font-weight:700; color:#38bdf8;">${counts[k]}</span></div>`;
+        html += `<div class="poi-badge"><span>${k}</span> <span style="font-weight:700; color:#8C6D23;">${counts[k]}</span></div>`;
     }
     $('tradeResults').innerHTML = html;
     hint(`Added ${filtered.length} POIs to "Trade Area Scan"!`);
@@ -3446,7 +3449,7 @@ function renderLayerCardHtml(f) {
                     <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
                         <input type="checkbox" data-act="labelToggle" data-id="${f.id}" ${f.props.showLabel ? 'checked' : ''} style="width:10px;height:10px;accent-color:#316dca;"/> Label
                     </label>
-                    <select data-act="labelPos" data-id="${f.id}" title="Label Position" style="font-size:9px; background:rgba(0,0,0,0.4); color:#adbac7; border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:1px 2px;">
+                    <select data-act="labelPos" data-id="${f.id}" title="Label Position" style="font-size:9px; background:#F5F1E8; color:#1A2B4C; border:1px solid rgba(26,43,76,0.16); border-radius:4px; padding:1px 2px;">
                         ${posOptions}
                     </select>
                 </span>
