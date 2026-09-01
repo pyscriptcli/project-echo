@@ -68,8 +68,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #FFFFFF !imp
 .stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #D4AF37 !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #222222 !important; color: #FFFFFF !important; border: none !important; border-radius: 50px !important; font-family: 'Montserrat', sans-serif !important; font-weight: 500 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #D4AF37 !important; color: #161616 !important; }
+.stButton > button { background-color: #111A2B !important; color: #FFFFFF !important; border: 1px solid #D4AF37 !important; border-radius: 18px !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; font-size: 0.82rem !important; height: 36px !important; box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important; transition: all 0.2s ease !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #1A2B4C !important; border-color: #E6C44D !important; color: #FFFFFF !important; box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {

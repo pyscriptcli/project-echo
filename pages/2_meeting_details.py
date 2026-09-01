@@ -140,25 +140,26 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Base Buttons */
 .stButton > button {
-    background-color: #161616 !important; 
+    background-color: #111A2B !important; 
     color: #FFFFFF !important; 
-    border: none !important; 
-    border-radius: 50px !important; 
-    font-family: 'Montserrat', sans-serif !important; 
-    font-weight: 500 !important; 
+    border: 1px solid #D4AF37 !important; 
+    border-radius: 18px !important; 
+    font-family: 'Inter', sans-serif !important; 
+    font-weight: 600 !important; 
     font-size: 0.82rem !important; 
-    height: 38px !important; 
-    padding: 0 1.5rem !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important; 
+    height: 36px !important; 
+    padding: 0 0.75rem !important;
+    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
 
 .stButton > button:hover { 
-    background-color: #D4AF37 !important; 
-    color: #161616 !important; 
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
+    background-color: #1A2B4C !important; 
+    color: #FFFFFF !important; 
+    border-color: #E6C44D !important;
+    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
+    transform: none !important;
 }
 
 /* Center Vertically & Right-Aligned View Meeting Button */
@@ -172,14 +173,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Topbar Date Picker Trigger Styling */
 div[data-testid="stPopover"] > button {
-    background-color: #FFFFFF !important;
-    color: #003B6F !important;
-    border: 1.5px solid #003B6F !important;
-    border-radius: 6px !important;
+    background-color: #111A2B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 18px !important;
     font-size: 0.84rem !important;
     font-weight: 600 !important;
-    height: 38px !important;
-    box-shadow: none !important;
+    height: 36px !important;
+    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
     width: 100% !important;
     text-align: left !important;
     justify-content: flex-start !important;
@@ -187,9 +188,9 @@ div[data-testid="stPopover"] > button {
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: #00274B !important;
-    background-color: #F8FAFC !important;
-    color: #00274B !important;
+    border-color: #E6C44D !important;
+    background-color: #1A2B4C !important;
+    color: #FFFFFF !important;
     transform: none !important;
 }
 
@@ -226,14 +227,16 @@ div[data-testid="stPopoverBody"] {
 }
 
 .stButton > button[key="btn_apply_modal_date"] {
-    background-color: #003B6F !important;
+    background-color: #111A2B !important;
     color: #FFFFFF !important;
-    border-radius: 4px !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 18px !important;
     height: 36px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_apply_modal_date"]:hover {
-    background-color: #00284D !important;
+    background-color: #1A2B4C !important;
+    border-color: #E6C44D !important;
     color: #FFFFFF !important;
     transform: none !important;
 }
@@ -253,14 +256,17 @@ div[data-testid="stPopoverBody"] {
 
 /* Details Action Buttons */
 .stButton > button[key="btn_toggle_edit_details"], .stButton > button[key="btn_cancel_edit_details"] {
-    background-color: #F4EAD4 !important;
-    color: #8C6D23 !important;
-    border: 1px solid rgba(201, 168, 76, 0.4) !important;
+    background-color: #111A2B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 18px !important;
     height: 34px !important;
+    font-weight: 600 !important;
 }
 .stButton > button[key="btn_toggle_edit_details"]:hover, .stButton > button[key="btn_cancel_edit_details"]:hover {
-    background-color: #D4AF37 !important;
-    color: #161616 !important;
+    background-color: #1A2B4C !important;
+    border-color: #E6C44D !important;
+    color: #FFFFFF !important;
 }
 
 /* Gallery Typography */
@@ -958,7 +964,7 @@ if st.session_state["view_mode"] == "gallery":
                 with pop_right:
                     picked_range = st.date_input(
                         "Custom Range",
-                        value=st.session_state["gal_date_range"] if st.session_state["gal_date_range"] else (first_day_of_month, today),
+                        value=st.session_state["gal_date_range"] if st.session_state["gal_date_range"] else None,
                         label_visibility="collapsed",
                         key="modal_date_picker"
                     )
