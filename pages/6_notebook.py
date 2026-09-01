@@ -9,6 +9,14 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from components.sidebar import setup_page_layout
+from utils.auth import get_current_user, require_login
+from utils.notebook_db import (
+    fetch_docs,
+    upsert_doc,
+    delete_doc,
+    fetch_logs_in_range,
+    upsert_log,
+)
 
 # ------------------------------
 # Page configuration
@@ -93,7 +101,7 @@ NOTEBOOK_CSS = """
     .kanban-card, div[data-testid="stMetric"], .dialog-card {
         background-color: #ffffff;
         border-radius: 8px;
-        padding: 1rem;
+        padding: 0.5rem 0.65rem;
         border: 1px solid #e2e8f0;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
@@ -120,18 +128,18 @@ NOTEBOOK_CSS = """
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.35rem;
     }
     .kanban-header .label {
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         color: #1a2b4c;
     }
     .empty-state {
         text-align: center;
         color: #a0aec0;
         font-size: 0.85rem;
-        padding: 2rem 0;
+        padding: 0.75rem 0;
         font-style: italic;
     }
     .day-col-header {
@@ -168,20 +176,23 @@ NOTEBOOK_CSS = """
         box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
     }
     
-    /* Secondary Buttons override (used for cards/secondary actions) */
+    /* Secondary Buttons override (still deep charcoal + gold accent) */
     button[kind="secondary"] {
-        background-color: transparent !important;
-        color: #1a2b4c !important;
-        border: 1px solid #cbd5e1 !important;
+        background-color: #111A2B !important;
+        color: #E6C44D !important;
+        border: 1px solid #D4AF37 !important;
+        box-shadow: 0 2px 6px rgba(26, 43, 76, 0.14) !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #f8fafc !important;
-        color: #1a2b4c !important;
+        background-color: #1A2B4C !important;
+        border-color: #E6C44D !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.25) !important;
     }
     
     /* Notepad Editor Expansion */
     .stTextArea {
-        margin-top: 1rem;
+        margin-top: 0.5rem;
     }
 </style>
 """
@@ -202,7 +213,7 @@ COLUMNS = [
 # ------------------------------
 
 def _make_id():
-    return uuid.uuid4().hex[:8]
+    return str(uuid.uuid4())
 
 def _date_range(view, date_obj):
     if view == "Day":
@@ -228,42 +239,95 @@ def _format_date(d):
         return d.strftime("%b %d, %Y")
     return str(d)
 
+
+def _current_user_id():
+    user = get_current_user()
+    return user["id"] if user and user.get("id") else None
+
+
+def _empty_log():
+    return {c["key"]: "" for c in COLUMNS}
+
+
+def _load_log(user_id, date_str):
+    """Return the {client, admin, adhoc, meeting} dict for a user+date.
+
+    Caches in st.session_state.dl_logs so edits are only re-read on refresh,
+    but the source of truth is Supabase (write-through on each edit).
+    """
+    if date_str in st.session_state.dl_logs:
+        return st.session_state.dl_logs[date_str]
+
+    loaded = _empty_log()
+    try:
+        d = datetime.date.fromisoformat(date_str)
+    except ValueError:
+        d = None
+    if user_id and d is not None:
+        rows = fetch_logs_in_range(user_id, d, d)
+        if rows:
+            row = rows[0]
+            for c in COLUMNS:
+                loaded[c["key"]] = row.get(c["key"]) or ""
+    st.session_state.dl_logs[date_str] = loaded
+    return loaded
+
+
+def _save_log(user_id, date_str, col_key, value):
+    """Auto-save a single category field to Supabase; keep session in sync."""
+    st.session_state.dl_logs.setdefault(date_str, _empty_log())
+    st.session_state.dl_logs[date_str][col_key] = value
+    if user_id:
+        try:
+            d = datetime.date.fromisoformat(date_str)
+        except ValueError:
+            return
+        upsert_log(user_id, d, st.session_state.dl_logs[date_str])
+
 # ------------------------------
 # Session state initialization
 # ------------------------------
 
 def init_session():
-    # Notepad init
+    current_user = get_current_user()
+    user_id = int(current_user["id"]) if current_user and current_user.get("id") else None
+
+    # Notepad init (per-user, DB-backed)
     if "nb_docs" not in st.session_state:
         st.session_state.nb_docs = {}
-        welcome_id = _make_id()
-        now = datetime.datetime.now().isoformat()
-        st.session_state.nb_docs[welcome_id] = {
-            "title": "Welcome to Notepad",
-            "content": "Minimal text editor.\n\nUse this space for quick drafts, notes, or ideas. Click 'Notes Gallery' to view your previous notes.",
-            "created": now,
-            "updated": now,
-        }
-        st.session_state.nb_current_id = welcome_id
-        st.session_state.np_title = "Welcome to Notepad"
-        st.session_state.np_content = "Minimal text editor.\n\nUse this space for quick drafts, notes, or ideas. Click 'Notes Gallery' to view your previous notes."
+
+        if user_id:
+            docs_rows = fetch_docs(user_id)
+            for row in docs_rows:
+                st.session_state.nb_docs[row["id"]] = {
+                    "title": row.get("title") or "Untitled",
+                    "content": row.get("content") or "",
+                    "created": row.get("created_at") or "",
+                    "updated": row.get("updated_at") or "",
+                }
+
+        # Seed a default welcome doc only when this user has none.
+        if not st.session_state.nb_docs:
+            welcome_id = _make_id()
+            now = datetime.datetime.now().isoformat()
+            st.session_state.nb_docs[welcome_id] = {
+                "title": "Welcome to Notepad",
+                "content": "Minimal text editor.\n\nUse this space for quick drafts, notes, or ideas. Click 'Notes Gallery' to view your previous notes.",
+                "created": now,
+                "updated": now,
+            }
+            # Nothing is persisted to Supabase until the user saves a note.
 
     if "nb_current_id" not in st.session_state:
-        st.session_state.nb_current_id = None
-        st.session_state.np_title = ""
-        st.session_state.np_content = ""
+        first_id = next(iter(st.session_state.nb_docs), None)
+        st.session_state.nb_current_id = first_id
+        first_doc = st.session_state.nb_docs.get(first_id, {}) if first_id else {}
+        st.session_state.np_title = first_doc.get("title", "")
+        st.session_state.np_content = first_doc.get("content", "")
 
-    # Daily Log init
+    # Daily Log init (view state only; log data is loaded per-date from Supabase)
     if "dl_logs" not in st.session_state:
         st.session_state.dl_logs = {}
-        today_str = datetime.date.today().isoformat()
-        st.session_state.dl_logs[today_str] = {
-            "client": "- Prep quarterly report\n- Send email update to Client A",
-            "admin": "- Update internal docs",
-            "adhoc": "",
-            "meeting": "- Sync at 3 PM\n- Discuss Q4 goals"
-        }
-        
     if "dl_date" not in st.session_state:
         st.session_state.dl_date = datetime.date.today()
     if "dl_view" not in st.session_state:
@@ -290,10 +354,17 @@ def create_new_doc():
     }
     select_doc(new_id)
 
+    user_id = _current_user_id()
+    if user_id:
+        upsert_doc(user_id, new_id, "Untitled Note", "")
+
 def delete_current_doc():
     cid = st.session_state.nb_current_id
     if cid and cid in st.session_state.nb_docs:
         del st.session_state.nb_docs[cid]
+        user_id = _current_user_id()
+        if user_id:
+            delete_doc(user_id, cid)
         if st.session_state.nb_docs:
             next_id = list(st.session_state.nb_docs.keys())[0]
             select_doc(next_id)
@@ -308,6 +379,9 @@ def save_current_doc():
         st.session_state.nb_docs[cid]["title"] = st.session_state.np_title
         st.session_state.nb_docs[cid]["content"] = st.session_state.np_content
         st.session_state.nb_docs[cid]["updated"] = datetime.datetime.now().isoformat()
+        user_id = _current_user_id()
+        if user_id:
+            upsert_doc(user_id, cid, st.session_state.np_title, st.session_state.np_content)
 
 @st.dialog("Notes Gallery", width="large")
 def notes_gallery_modal():
@@ -403,10 +477,9 @@ def render_notepad():
 
 def render_day_view(selected_date):
     date_str = selected_date.isoformat()
-    
-    if date_str not in st.session_state.dl_logs:
-        st.session_state.dl_logs[date_str] = {c["key"]: "" for c in COLUMNS}
-        
+    user_id = _current_user_id()
+    logs = _load_log(user_id, date_str)
+
     cols = st.columns(4, gap="small")
     for idx, col_def in enumerate(COLUMNS):
         col_key = col_def["key"]
@@ -416,20 +489,20 @@ def render_day_view(selected_date):
                     <span class="label">{col_def['label']}</span>
                 </div>
             """, unsafe_allow_html=True)
-            
-            current_text = st.session_state.dl_logs[date_str].get(col_key, "")
-            
+
+            current_text = logs.get(col_key, "")
+
             new_text = st.text_area(
                 f"{col_def['label']} Area",
                 value=current_text,
                 key=f"dl_area_{date_str}_{col_key}",
-                height=500,
+                height=300,
                 label_visibility="collapsed",
                 placeholder=f"Log your {col_def['label'].lower()} tasks here..."
             )
-            
+
             if new_text != current_text:
-                st.session_state.dl_logs[date_str][col_key] = new_text
+                _save_log(user_id, date_str, col_key, new_text)
 
 def render_week_view(selected_date):
     start, end = _date_range("Week", selected_date)
@@ -448,7 +521,7 @@ def render_week_view(selected_date):
             """, unsafe_allow_html=True)
             
             date_str = day.isoformat()
-            logs = st.session_state.dl_logs.get(date_str, {})
+            logs = _load_log(_current_user_id(), date_str)
             has_logs = any(logs.values())
             
             if not has_logs:
@@ -469,14 +542,18 @@ def render_month_view(selected_date):
     st.markdown('<div class="view-header">Monthly Overview</div>', unsafe_allow_html=True)
     
     month_logs = []
-    for date_str, logs in st.session_state.dl_logs.items():
+    user_id = _current_user_id()
+    for row in fetch_logs_in_range(user_id, start, end):
         try:
-            d = datetime.date.fromisoformat(date_str)
-        except:
+            d = datetime.date.fromisoformat(str(row["log_date"][:10]))
+        except (ValueError, TypeError):
             continue
-        if start <= d <= end and any(logs.values()):
+        logs = {
+            c["key"]: (row.get(c["key"]) or "") for c in COLUMNS
+        }
+        if any(logs.values()):
             month_logs.append((d, logs))
-            
+
     month_logs.sort(key=lambda x: x[0], reverse=True)
     
     if not month_logs:
@@ -531,19 +608,19 @@ def render_statistics():
     st.markdown('<div class="notebook-title">Daily Log Statistics</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">Monitor your logging consistency and productivity.</div>', unsafe_allow_html=True)
 
-    if not st.session_state.dl_logs:
-        st.info("No logs available to generate statistics.")
-        return
-
-    # Parse all logged dates
+    # Load the user's persisted daily logs (from last year -> today) per-user.
+    user_id = _current_user_id()
+    end_date = datetime.date.today()
+    start = end_date - datetime.timedelta(days=365)
     valid_dates = []
-    for d_str, logs in st.session_state.dl_logs.items():
+    for row in fetch_logs_in_range(user_id, start, end_date):
         try:
-            d = datetime.date.fromisoformat(d_str)
-            valid_dates.append((d, logs))
-        except:
+            d = datetime.date.fromisoformat(str(row["log_date"][:10]))
+        except (ValueError, TypeError):
             continue
-            
+        logs = {c["key"]: (row.get(c["key"]) or "") for c in COLUMNS}
+        valid_dates.append((d, logs))
+
     if not valid_dates:
         st.info("No valid date records found.")
         return
@@ -614,6 +691,7 @@ def render_statistics():
 # ------------------------------
 
 def main():
+    require_login()
     setup_page_layout()
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     init_session()
