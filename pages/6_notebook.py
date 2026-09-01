@@ -11,8 +11,7 @@ import streamlit as st
 import uuid
 import datetime
 import os
-import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 
 # Supabase imports
 try:
@@ -47,38 +46,41 @@ FONTS = {
     "heading": "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
 }
 
-# Inline SVG icons for column headers (Material Icons)
-ICON_TODO = """
+# Inline SVG icons for category headers (Material Icons)
+ICON_CLIENT = """
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10"></circle>
-  <circle cx="12" cy="12" r="6"></circle>
-  <circle cx="12" cy="12" r="2"></circle>
+  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+  <circle cx="9" cy="7" r="4"></circle>
+  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
 </svg>
 """
 
-ICON_INPROGRESS = """
+ICON_ADMIN = """
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 2v4"></path>
-  <path d="M12 18v4"></path>
-  <path d="M4.93 4.93l2.83 2.83"></path>
-  <path d="M16.24 16.24l2.83 2.83"></path>
-  <path d="M2 12h4"></path>
-  <path d="M18 12h4"></path>
-  <path d="M4.93 19.07l2.83-2.83"></path>
-  <path d="M16.24 7.76l2.83-2.83"></path>
+  <circle cx="12" cy="12" r="3"></circle>
+  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
 </svg>
 """
 
-ICON_DONE = """
+ICON_ADHOC = """
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 6L9 17l-5-5"></path>
+  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
 </svg>
 """
 
-ICON_BLOCKED = """
+ICON_MEETING = """
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="12" cy="12" r="10"></circle>
-  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+  <line x1="16" y1="2" x2="16" y2="6"></line>
+  <line x1="8" y1="2" x2="8" y2="6"></line>
+  <line x1="3" y1="10" x2="21" y2="10"></line>
+  <path d="M8 14h.01"></path>
+  <path d="M12 14h.01"></path>
+  <path d="M16 14h.01"></path>
+  <path d="M8 18h.01"></path>
+  <path d="M12 18h.01"></path>
+  <path d="M16 18h.01"></path>
 </svg>
 """
 
@@ -105,6 +107,7 @@ GLOBAL_CSS = f"""
         padding: 10px;
         margin: 5px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        min-height: 200px;
     }}
     
     .kanban-header {{
@@ -172,6 +175,14 @@ GLOBAL_CSS = f"""
     }}
 </style>
 """
+
+# Categories for Daily Log
+CATEGORIES = [
+    "Client Related Tasks",
+    "Admin Tasks",
+    "Adhoc Tasks",
+    "Meetings",
+]
 
 # ============================================
 # SECTION 3: Session State Initialization
@@ -456,7 +467,7 @@ def render_daily_log_tab():
     with filter_col2:
         end_date = st.date_input("End Date", value=datetime.date.today(), key="dailylog_end_date")
     with filter_col3:
-        status_filter = st.selectbox("Status", ["All", "To Do", "In Progress", "Done", "Blocked"], key="dailylog_status_filter")
+        category_filter = st.selectbox("Category", ["All"] + CATEGORIES, key="dailylog_category_filter")
     
     # Add Task Dialog (toggle with button)
     if st.button("Add Task", key="dailylog_add_task_btn"):
@@ -467,7 +478,7 @@ def render_daily_log_tab():
                 title = st.text_input("Title", key="dailylog_add_title")
                 description = st.text_area("Description", key="dailylog_add_desc")
                 due_date = st.date_input("Due Date", key="dailylog_add_due")
-                status = st.selectbox("Status", ["To Do", "In Progress", "Done", "Blocked"], key="dailylog_add_status")
+                category = st.selectbox("Category", CATEGORIES, key="dailylog_add_category")
                 submitted = st.form_submit_button("Create Task")
                 if submitted:
                     if title:
@@ -476,7 +487,7 @@ def render_daily_log_tab():
                             "title": title,
                             "description": description,
                             "due_date": due_date.isoformat(),
-                            "status": status,
+                            "category": category,
                             "created_at": datetime.datetime.now().isoformat(),
                         }
                         st.session_state.daily_tasks.append(new_task)
@@ -486,73 +497,72 @@ def render_daily_log_tab():
                         st.error("Title is required")
     
     # Kanban board - ONE st.columns(4) call
-    todo_col, inprogress_col, done_col, blocked_col = st.columns(4)
+    client_col, admin_col, adhoc_col, meeting_col = st.columns(4)
     
-    # Filter tasks by date range and status
+    # Filter tasks by date range and category
     filtered_tasks = st.session_state.daily_tasks
-    if status_filter != "All":
-        filtered_tasks = [t for t in filtered_tasks if t["status"] == status_filter]
+    if category_filter != "All":
+        filtered_tasks = [t for t in filtered_tasks if t["category"] == category_filter]
     
     # Filter by date range (due_date within range)
     start_str = start_date.isoformat()
     end_str = end_date.isoformat()
     filtered_tasks = [t for t in filtered_tasks if start_str <= t.get("due_date", "") <= end_str]
     
-    # Group by status
-    tasks_by_status = {
-        "To Do": [],
-        "In Progress": [],
-        "Done": [],
-        "Blocked": [],
+    # Group by category
+    tasks_by_category = {
+        "Client Related Tasks": [],
+        "Admin Tasks": [],
+        "Adhoc Tasks": [],
+        "Meetings": [],
     }
     for task in filtered_tasks:
-        status = task.get("status")
-        if status in tasks_by_status:
-            tasks_by_status[status].append(task)
+        cat = task.get("category")
+        if cat in tasks_by_category:
+            tasks_by_category[cat].append(task)
     
-    # Render column headers with inline SVG
+    # Helper to render column header with icon
     def render_column_header(icon_svg: str, title: str):
-        """Render a kanban column header with inline SVG icon."""
         st.markdown(
             f'<div class="kanban-header">{icon_svg} <span style="margin-left:5px;">{title}</span></div>',
             unsafe_allow_html=True
         )
     
-    # Column 1: To Do
-    with todo_col:
-        render_column_header(ICON_TODO, "To Do")
+    # Column 1: Client Related Tasks
+    with client_col:
+        render_column_header(ICON_CLIENT, "Client Related Tasks")
         st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_status["To Do"]:
-            render_task_card(task, "To Do")
+        for task in tasks_by_category["Client Related Tasks"]:
+            render_task_card(task)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Column 2: In Progress
-    with inprogress_col:
-        render_column_header(ICON_INPROGRESS, "In Progress")
+    # Column 2: Admin Tasks
+    with admin_col:
+        render_column_header(ICON_ADMIN, "Admin Tasks")
         st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_status["In Progress"]:
-            render_task_card(task, "In Progress")
+        for task in tasks_by_category["Admin Tasks"]:
+            render_task_card(task)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Column 3: Done
-    with done_col:
-        render_column_header(ICON_DONE, "Done")
+    # Column 3: Adhoc Tasks
+    with adhoc_col:
+        render_column_header(ICON_ADHOC, "Adhoc Tasks")
         st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_status["Done"]:
-            render_task_card(task, "Done")
+        for task in tasks_by_category["Adhoc Tasks"]:
+            render_task_card(task)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Column 4: Blocked
-    with blocked_col:
-        render_column_header(ICON_BLOCKED, "Blocked")
+    # Column 4: Meetings
+    with meeting_col:
+        render_column_header(ICON_MEETING, "Meetings")
         st.markdown('<div class="kanban-column">', unsafe_allow_html=True)
-        for task in tasks_by_status["Blocked"]:
-            render_task_card(task, "Blocked")
+        for task in tasks_by_category["Meetings"]:
+            render_task_card(task)
         st.markdown('</div>', unsafe_allow_html=True)
 
-def render_task_card(task: Dict, current_status: str):
+def render_task_card(task: Dict):
     """
-    Render a single kanban card with task details and action buttons.
+    Render a single kanban card with task details and category change selectbox.
     """
     with st.container():
         st.markdown('<div class="kanban-card">', unsafe_allow_html=True)
@@ -562,38 +572,26 @@ def render_task_card(task: Dict, current_status: str):
         if task.get("due_date"):
             st.markdown(f'<div class="kanban-card-due">Due: {task["due_date"]}</div>', unsafe_allow_html=True)
         
-        # Action buttons
-        action_cols = st.columns(3)
-        with action_cols[0]:
-            if current_status != "To Do":
-                if st.button("<-", key=f"dailylog_move_{task['id']}_prev", help="Move to previous column"):
-                    move_task(task["id"], "prev")
-        with action_cols[1]:
-            if current_status != "Done":
-                if st.button("->", key=f"dailylog_move_{task['id']}_next", help="Move to next column"):
-                    move_task(task["id"], "next")
-        with action_cols[2]:
-            if st.button("Delete", key=f"dailylog_delete_{task['id']}"):
-                delete_task(task["id"])
-        st.markdown('</div>', unsafe_allow_html=True)
-
-def move_task(task_id: str, direction: str):
-    """Move a task to the next/previous status column."""
-    status_order = ["To Do", "In Progress", "Done", "Blocked"]
-    for task in st.session_state.daily_tasks:
-        if task["id"] == task_id:
-            current_idx = status_order.index(task["status"])
-            if direction == "next" and current_idx < len(status_order)-1:
-                task["status"] = status_order[current_idx+1]
-            elif direction == "prev" and current_idx > 0:
-                task["status"] = status_order[current_idx-1]
+        # Category change selectbox (native widget)
+        new_category = st.selectbox(
+            "Category",
+            CATEGORIES,
+            index=CATEGORIES.index(task["category"]),
+            key=f"dailylog_category_{task['id']}",
+            label_visibility="collapsed"
+        )
+        if new_category != task["category"]:
+            # Update task category
+            for t in st.session_state.daily_tasks:
+                if t["id"] == task["id"]:
+                    t["category"] = new_category
+                    st.rerun()
+        
+        # Delete button
+        if st.button("Delete", key=f"dailylog_delete_{task['id']}"):
+            st.session_state.daily_tasks = [t for t in st.session_state.daily_tasks if t["id"] != task["id"]]
             st.rerun()
-            break
-
-def delete_task(task_id: str):
-    """Delete a task by ID."""
-    st.session_state.daily_tasks = [t for t in st.session_state.daily_tasks if t["id"] != task_id]
-    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================
 # SECTION 8: Main App Entry Point
