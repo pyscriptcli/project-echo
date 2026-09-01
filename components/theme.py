@@ -1,29 +1,33 @@
 """
-Project Echo — shared UI theme (flat & edgy, keeps the navy/charcoal/gold palette).
+Project Echo — shared UI theme (flat & edgy, warm monochrome palette).
 
 Single source of truth for the design system so every page stays consistent.
 `inject_global_css()` callable from any page (idempotent) emits one <style> block.
+
+Palette:
+  #F9F8F6  canvas (lightest, dominant background)
+  #EFE9E3  separators / card borders
+  #D9CFC7  secondary borders / inputs / badges
+  #C9B59C  buttons / primary accents
+  #412D15  ink / fonts / button text / headings
+  #1F150C  hover / deepest accent
 """
 import streamlit as st
 
 # --- Design tokens (CSS custom properties + Python constants, mirrored) ---
 TOKENS = {
-    "canvas": "#F5F1E8",
-    "canvas_grid": "rgba(26, 43, 76, 0.10)",       # large gridlines on canvas
-    "canvas_grid_fine": "rgba(26, 43, 76, 0.05)",
-    "navy": "#1A2B4C",
-    "charcoal": "#111A2B",
-    "charcoal_hover": "#1A263D",
-    "gold": "#D4AF37",
-    "gold_bright": "#E6C44D",
-    "muted": "#6C727A",
-    "slate": "#768390",
-    "ink": "#1A1A1A",
+    "canvas": "#F9F8F6",
+    "ink": "#412D15",
+    "ink_deep": "#1F150C",
+    "accent": "#C9B59C",
+    "borders": "#EFE9E3",
+    "secondary": "#D9CFC7",
     "white": "#FFFFFF",
+    "danger": "#A94442",
     "radius": "0px",             # flat / edgy — no rounded corners
     "radius_sm": "0px",
-    "border": "1px solid rgba(26,43,76,0.14)",
-    "border_strong": "2px solid #1A2B4C",
+    "border": "1px solid #EFE9E3",
+    "border_strong": "2px solid #412D15",
     "title_font": "'Playfair Display', serif",
     "body_font": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     "brand_font": "'Cormorant Garamond', 'Playfair Display', serif",
@@ -33,21 +37,17 @@ TOKENS = {
 def tokens_css() -> str:
     return """
     :root {
-        --echo-canvas: #F5F1E8;
-        --echo-grid: rgba(26,43,76,0.10);
-        --echo-grid-fine: rgba(26,43,76,0.05);
-        --echo-navy: #1A2B4C;
-        --echo-charcoal: #111A2B;
-        --echo-charcoal-hover: #1A263D;
-        --echo-gold: #D4AF37;
-        --echo-gold-bright: #E6C44D;
-        --echo-muted: #6C727A;
-        --echo-slate: #768390;
-        --echo-ink: #1A1A1A;
+        --echo-canvas: #F9F8F6;
+        --echo-ink: #412D15;
+        --echo-ink-deep: #1F150C;
+        --echo-accent: #C9B59C;
+        --echo-borders: #EFE9E3;
+        --echo-secondary: #D9CFC7;
         --echo-white: #FFFFFF;
+        --echo-danger: #A94442;
         --echo-radius: 0px;
-        --echo-border: 1px solid rgba(26,43,76,0.14);
-        --echo-border-strong: 2px solid #1A2B4C;
+        --echo-border: 1px solid #EFE9E3;
+        --echo-border-strong: 2px solid #412D15;
         --echo-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         --echo-title: 'Playfair Display', serif;
         --echo-brand: 'Cormorant Garamond', 'Playfair Display', serif;
@@ -84,16 +84,16 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     border-radius: var(--echo-radius) !important;
 }
 
-/* App-wide buttons: small, flat, box-shaped — deep charcoal + gold accent */
+/* App-wide buttons: small, flat, box-shaped — warm tan on brown ink */
 .stButton > button,
 [data-testid="stButton"] > button,
 .stDownloadButton > button,
 .stFormSubmitButton > button,
 .stButton[kind="primary"] > button,
 [data-testid="stFormSubmitButton"] > button {
-    background-color: var(--echo-charcoal) !important;
-    color: var(--echo-white) !important;
-    border: 1px solid var(--echo-gold) !important;
+    background-color: var(--echo-accent) !important;
+    color: var(--echo-ink) !important;
+    border: 1px solid var(--echo-ink) !important;
     border-radius: 0 !important;
     font-size: 0.72rem !important;
     font-weight: 600 !important;
@@ -110,19 +110,20 @@ div[data-testid="stVerticalBlockBorderWrapper"],
 .stDownloadButton > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stFormSubmitButton"] > button:hover {
-    background-color: var(--echo-charcoal-hover) !important;
-    border-color: var(--echo-gold-bright) !important;
+    background-color: var(--echo-ink-deep) !important;
+    border-color: var(--echo-ink-deep) !important;
+    color: var(--echo-canvas) !important;
     box-shadow: none !important;
 }
 
 /* Section titles: flat, edgy, editorial */
 .section-title,
 .section-caption {
-    border-left: 4px solid var(--echo-gold);
+    border-left: 4px solid var(--echo-accent);
     padding-left: 0.6rem;
 }
 .section-caption {
-    color: var(--echo-muted);
+    color: #8A7A5F;
 }
 
 /* Cards: squared, hairline grid border, no shadow */

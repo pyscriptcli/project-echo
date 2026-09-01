@@ -52,7 +52,7 @@ footer {
 }
 
 .stApp {
-    background-color: #F5F1E8 !important;
+    background-color: #F9F8F6 !important;
     font-family: 'Inter', sans-serif !important;
 }
 
@@ -198,9 +198,9 @@ div[data-testid="stPopover"] > button {
 :root {
     --bg: #F3EFE6;
     --surface: #FFFFFF;
-    --ink: #1A2B4C;
-    --muted: #6C727A;
-    --gold: #D4AF37;
+    --ink: #412D15;
+    --muted: #8A7A5F;
+    --gold: #C9B59C;
     --danger: #E74C3C;
     --radius: 6px;
     --control-height: 28px;
@@ -792,9 +792,9 @@ all_events = build_calendar_events()
 # ------------------------------------------------------------
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
-style_ink = "#1A2B4C"
-style_gold = "#D4AF37"
-style_muted = "#768390"
+style_ink = "#412D15"
+style_gold = "#C9B59C"
+style_muted = "#8A7A5F"
 
 # Task status buckets
 status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
@@ -1240,7 +1240,7 @@ with col_right:
 
                 st.markdown(
                     f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
-                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#8C6D23;border-bottom:2px solid #D4AF37;' if is_today else 'color:#1A2B4C;border-bottom:1px solid rgba(0,0,0,0.06);')}'"
+                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#412D15;border-bottom:2px solid #C9B59C;' if is_today else 'color:#412D15;border-bottom:1px solid rgba(65,45,21,0.15);')}'"
                     f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                     unsafe_allow_html=True
                 )
@@ -1274,9 +1274,9 @@ with col_right:
                 with header_cols[i]:
                     is_weekend = (i == 0 or i == 6)
                     header_style = (
-                        "background:#111A2B; color:#FFFFFF; border-radius:6px 6px 0 0;"
+                        "background:#C9B59C; color:#412D15; border-radius:6px 6px 0 0;"
                         if is_weekend
-                        else "background:#FFFFFF; color:#1A2B4C; border:1px solid rgba(0,0,0,0.06); border-bottom:none;"
+                        else "background:#FFFFFF; color:#412D15; border:1px solid rgba(65,45,21,0.15); border-bottom:none;"
                     )
                     st.markdown(
                         f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "

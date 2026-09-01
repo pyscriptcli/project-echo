@@ -100,9 +100,9 @@ section[data-testid="stSidebar"] {
     /* Base background + subtle deep charcoal & gold gradient overlay */
     background: linear-gradient(
         180deg,
-        rgba(26, 43, 76, 0.05) 0%,
-        rgba(212, 175, 55, 0.05) 100%
-    ), #F5F1E8 !important;
+        rgba(65, 45, 21, 0.04) 0%,
+        rgba(201, 181, 156, 0.05) 100%
+    ), #F9F8F6 !important;
     border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
     /* Noticeable drop shadow for separation */
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
@@ -130,7 +130,7 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     font-weight: 600;
     font-size: 2rem;
     line-height: 1;
-    color: #1A2B4C;
+    color: #412D15;
     letter-spacing: 0.01em;
 }
 .sb-brand-sub {
@@ -139,13 +139,13 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: #6C727A;
+    color: #8A7A5F;
     margin-top: 3px;
 }
 .sb-brand-rule {
     height: 1px;
     margin: 0.85rem 0 0.9rem 0;
-    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
+    background: linear-gradient(to right, rgba(201, 181, 156, 0.6), rgba(0, 0, 0, 0.05));
 }
 
 /* ---------------- Nav links (st.page_link) ---------------- */
@@ -170,13 +170,13 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
     background: rgba(0, 0, 0, 0.045) !important;
-    color: #111A2B !important;
+    color: #412D15 !important;
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-    background: rgba(212, 175, 55, 0.12) !important;
-    border-left-color: #D4AF37 !important;
-    color: #111A2B !important;
+    background: rgba(201, 181, 156, 0.22) !important;
+    border-left-color: #C9B59C !important;
+    color: #412D15 !important;
     font-weight: 600 !important;
 }
 
@@ -204,9 +204,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #111A2B;
-    color: #D4AF37;
-    border: 1px solid rgba(212, 175, 55, 0.6);
+    background: #C9B59C;
+    color: #412D15;
+    border: 1px solid rgba(65, 45, 21, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -220,18 +220,18 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #412D15;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ---------------- Sign Out — small deep charcoal with gold accent ---------------- */
+/* ---------------- Sign Out — small flat tan button ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: #111A2B !important;               /* deep charcoal background */
-    color: #D4AF37 !important;                    /* gold text */
-    border: 1px solid #D4AF37 !important;         /* gold border */
-    border-radius: 999px !important;
+    background: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
+    border-radius: 0 !important;
     height: 28px !important;                      /* reduced height for “small” */
     min-height: 28px !important;
     padding: 0 12px !important;                   /* compact padding */
@@ -242,13 +242,13 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: #1A2B4C !important;               /* lighter charcoal on hover */
-    color: #E6C44D !important;                    /* brighter gold */
-    border-color: #E6C44D !important;
+    background: #1F150C !important;
+    color: #F9F8F6 !important;
+    border-color: #1F150C !important;
 }
 
 /* ============================================================
-   GLOBAL BUTTONS — deep charcoal, gold accent, rounded, shadow
+   GLOBAL BUTTONS — flat tan, brown ink, squared (no radius)
    Scoped to the main content area so the sidebar nav/sign-out
    keeps its own styling. Applied on every page via the sidebar.
    ============================================================ */
@@ -256,23 +256,27 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button,
 .stFormSubmitButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #111A2B !important;
-    color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 18px !important;
+    background-color: #C9B59C !important;
+    color: #412D15 !important;
+    border: 1px solid #412D15 !important;
+    border-radius: 0 !important;
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
-    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    font-size: 0.72rem !important;
+    padding: 0.15rem 0.6rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover,
 [data-testid="stPopover"] > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stDownloadButton"] > button:hover {
-    background-color: #1A2B4C !important;
-    border-color: #E6C44D !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
+    background-color: #1F150C !important;
+    border-color: #1F150C !important;
+    color: #F9F8F6 !important;
+    box-shadow: none !important;
 }
 </style>
 """

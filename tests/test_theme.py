@@ -14,21 +14,23 @@ class ThemeTests(unittest.TestCase):
             theme.inject_global_css()
 
         self.assertIn("<style>", captured["html"])
-        self.assertIn("--echo-canvas: #F5F1E8", captured["html"])
+        self.assertIn("--echo-canvas: #F9F8F6", captured["html"])
         self.assertIn("var(--echo-canvas)", captured["html"])
         self.assertIn("border-radius: var(--echo-radius)", captured["html"])
         # The rendered CSS must still contain literal CSS braces (proving no f-string mangling)
         self.assertIn(".stButton > button,", captured["html"])
         self.assertIn("border-radius: 0 !important;\n", captured["html"])
 
-        # Hotfix spec: NO gridlines — clean flat cream canvas
-        self.assertIn("background-color: var(--echo-canvas) !important;", captured["html"])
-        self.assertNotIn("linear-gradient(to right", captured["html"])
-        self.assertNotIn("background-size:", captured["html"])
-        # Hotfix spec: uniform compact charcoal/gold buttons
-        self.assertIn("font-size: 0.72rem !important;", captured["html"])
-        self.assertIn("min-height: 26px !important;", captured["html"])
-        self.assertIn("border: 1px solid var(--echo-gold) !important;", captured["html"])
+        # New warm monochrome palette tokens
+        self.assertIn("--echo-ink: #412D15;", captured["html"])
+        self.assertIn("--echo-accent: #C9B59C;", captured["html"])
+        self.assertIn("--echo-borders: #EFE9E3;", captured["html"])
+        self.assertIn("--echo-secondary: #D9CFC7;", captured["html"])
+        # Buttons warm tan, brown text/border; hover deep brown
+        self.assertIn("background-color: var(--echo-accent) !important;", captured["html"])
+        self.assertNotIn("--echo-gold", captured["html"])
+        self.assertNotIn("--echo-charcoal", captured["html"])
+        self.assertNotIn("--echo-navy", captured["html"])
 
 
 if __name__ == "__main__":
