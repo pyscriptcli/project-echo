@@ -97,7 +97,19 @@ NOTEBOOK_CSS = """
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
         line-height: 1.6 !important;
     }
-    
+
+    /* Daily Log: hide the vertical scrollbar on edit boxes (text still scrolls) */
+    .dl-log-scroll .stTextArea textarea,
+    .dl-log-scroll textarea {
+        scrollbar-width: none;          /* Firefox */
+        -ms-overflow-style: none;       /* IE/Edge */
+    }
+    .dl-log-scroll textarea::-webkit-scrollbar {
+        display: none;                  /* Chrome/Safari/Edge */
+        width: 0;
+        height: 0;
+    }
+
     .kanban-card, div[data-testid="stMetric"], .dialog-card {
         background-color: #ffffff;
         border-radius: 8px;
@@ -492,6 +504,7 @@ def render_day_view(selected_date):
 
             current_text = logs.get(col_key, "")
 
+            st.markdown('<div class="dl-log-scroll">', unsafe_allow_html=True)
             new_text = st.text_area(
                 f"{col_def['label']} Area",
                 value=current_text,
@@ -500,6 +513,7 @@ def render_day_view(selected_date):
                 label_visibility="collapsed",
                 placeholder=f"Log your {col_def['label'].lower()} tasks here..."
             )
+            st.markdown('</div>', unsafe_allow_html=True)
 
             if new_text != current_text:
                 _save_log(user_id, date_str, col_key, new_text)

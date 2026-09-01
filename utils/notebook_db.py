@@ -132,6 +132,29 @@ def fetch_logs_in_range(user_id: str, start, end) -> list:
         return []
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def fetch_all_daily_logs(start, end) -> list:
+    """Return every daily_logs row in [start, end] (team-wide, for dashboard stats)."""
+    client = get_supabase_client()
+    if not client:
+        return []
+    start_iso = start.isoformat()
+    end_iso = end.isoformat()
+    try:
+        resp = (
+            client.table("daily_logs")
+            .select("*")
+            .gte("log_date", start_iso)
+            .lte("log_date", end_iso)
+            .execute()
+        )
+        return resp.data if resp and resp.data else []
+    except Exception as e:
+        logger.exception("fetch_all_daily_logs failed: %s", e)
+        st.warning(f"Could not load daily logs: {e}")
+        return []
+
+
 def upsert_log(user_id: str, log_date, fields: dict) -> bool:
     """Insert or update the (user_id, log_date) daily_logs row. Auto-saves on edit."""
     client = get_supabase_client()
@@ -148,6 +171,7 @@ def upsert_log(user_id: str, log_date, fields: dict) -> bool:
         )
         if resp.data:
             fetch_logs_in_range.clear()
+            fetch_all_daily_logs.clear()
             return True
         logger.error("daily_logs upsert returned no rows: %s", resp)
         return False

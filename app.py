@@ -7,9 +7,16 @@ import streamlit as st
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
-from utils.auth import init_supabase, require_login
+from utils.auth import init_supabase, require_login, get_all_users
+from utils.notebook_db import fetch_all_daily_logs
 
 st.set_page_config(
     page_title="Project Echo - Dashboard",
@@ -786,6 +793,280 @@ for m in supabase_records:
 # BUILD CALENDAR EVENTS
 # ------------------------------------------------------------
 all_events = build_calendar_events()
+
+# ------------------------------------------------------------
+# TEAM + PERSONAL STATS (dashboard)
+# ------------------------------------------------------------
+style_ink = "#1A2B4C"
+style_charcoal = "#111A2B"
+style_gold = "#D4AF37"
+style_muted = "#768390"
+
+# Task status buckets
+status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
+task_status = {"todo": 0, "in_progress": 0, "done": 0}
+task_overdue = 0
+for t in tasks:
+    s = t.get("status", "todo")
+    task_status[s] = task_status.get(s, 0) + 1
+    d = parse_calendar_date(t.get("due_date"))
+    if d and d < today and s != "done":
+        task_overdue += 1
+task_open = task_status["todo"] + task_status["in_progress"]
+task_total = len(tasks)
+completion = round((task_status["done"] / task_total) * 100) if task_total else 0
+
+# Meetings-over-time: count per month (team scope = range)
+meet_by_month = {}
+for m in filtered_records:
+    md = str(m.get("meeting_date", ""))[:10]
+    try:
+        pm = datetime.datetime.strptime(md, "%Y-%m-%d").date()
+    except ValueError:
+        continue
+    key = pm.strftime("%Y-%m")
+    meet_by_month[key] = meet_by_month.get(key, 0) + 1
+
+# Daily-log activity (team, date-scoped)
+dlog_rows = fetch_all_daily_logs(st.session_state["start_date"], st.session_state["end_date"])
+cat_keys = ["client", "admin", "adhoc", "meeting"]
+cat_labels = ["Client", "Admin", "Adhoc", "Meetings"]
+team_category = {k: 0 for k in cat_keys}
+team_days_logged = len(dlog_rows)
+team_total_char = 0
+for r in dlog_rows:
+    for k in cat_keys:
+        v = str(r.get(k) or "")
+        team_category[k] += len(v)
+        team_total_char += len(v)
+
+# Per-user stats: union of task assignees (display names) + admin usernames
+_user_rows = get_all_users()
+user_id_to_name = {str(u.get("id")): str(u.get("username") or "").strip() for u in _user_rows}
+display_set = set([name.strip() for name in SPECIFIC_PEOPLE if name.strip()])
+username_set = set(v for k, v in user_id_to_name.items() if v)
+all_members = sorted(display_set | username_set, key=lambda n: n.lower())
+
+def _member_name_in_assignee(member, assignee_str):
+    if not assignee_str:
+        return False
+    return member.lower() in str(assignee_str).lower()
+
+person_stats = {}
+for member in all_members:
+    person_stats[member] = {
+        "tasks_open": 0, "tasks_done": 0, "tasks_overdue": 0,
+        "days_logged": 0, "cat_chars": {k: 0 for k in cat_keys},
+    }
+    for t in tasks:
+        if _member_name_in_assignee(member, t.get("assignee")):
+            s = t.get("status", "todo")
+            if s == "done":
+                person_stats[member]["tasks_done"] += 1
+            else:
+                person_stats[member]["tasks_open"] += 1
+                dd = parse_calendar_date(t.get("due_date"))
+                if dd and dd < today:
+                    person_stats[member]["tasks_overdue"] += 1
+    # daily logs for this member: match uuid -> username -> member
+    member_ids = [uid for uid, nm in user_id_to_name.items() if nm == member]
+    for r in dlog_rows:
+        if str(r.get("user_id")) in member_ids:
+            person_stats[member]["days_logged"] += 1
+            for k in cat_keys:
+                person_stats[member]["cat_chars"][k] += len(str(r.get(k) or ""))
+
+# ------------------------------------------------------------
+# DASHBOARD TABS (Team Overview / Personal Stats)
+# ------------------------------------------------------------
+tab_team, tab_personal = st.tabs(["📊 Team Overview", "👥 Personal Stats"])
+
+# ---------- Team Overview ----------
+with tab_team:
+    # Level 1 — hero metric
+    st.markdown(
+        f"""
+        <div class="left-card" style="margin-bottom:0.6rem;">
+            <p class="section-title">Team Performance</p>
+            <p class="section-caption">Scope: {st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}</p>
+            <div style="display:flex;align-items:baseline;gap:0.75rem;flex-wrap:wrap;">
+                <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:3rem;color:{style_ink};line-height:1;">{completion}%</span>
+                <span style="color:{style_gold};font-weight:700;font-size:1rem;">task completion</span>
+            </div>
+            <p class="section-caption" style="margin-top:0.3rem;margin-bottom:0;">
+                {task_status['done']} done • {task_open} open • {task_overdue} overdue • {total_range_meetings} meetings • {team_days_logged} log days
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # KPI strip (compact tiles)
+    kpi_cells = [
+        ("Meetings", total_range_meetings),
+        ("Internal", total_internal_meetings),
+        ("External", total_external_meetings),
+        ("Open Tasks", task_open),
+        ("Overdue", task_overdue),
+        ("Log Days", team_days_logged),
+    ]
+    kpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(6,1fr);">'
+    for label, val in kpi_cells:
+        kpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
+    kpi_html += "</div>"
+    st.markdown(kpi_html, unsafe_allow_html=True)
+
+    # Level 2 — charts (mix: matplotlib trends + CSS bars for categories)
+    c_ch1, c_ch2 = st.columns(2, gap="medium")
+
+    if c_ch1:
+        with c_ch1:
+            st.markdown('<p class="section-title">Meetings per Month</p>', unsafe_allow_html=True)
+            if meet_by_month:
+                keys = sorted(meet_by_month.keys())
+                vals = [meet_by_month[k] for k in keys]
+                fig, ax = plt.subplots(figsize=(5, 2.6), dpi=100)
+                ax.bar(keys, vals, color=style_ink, width=0.6)
+                current_key = today.strftime("%Y-%m")
+                for i, k in enumerate(keys):
+                    if k == current_key:
+                        ax.patches[i].set_color(style_gold)
+                ax.set_facecolor("white")
+                fig.patch.set_facecolor("white")
+                ax.spines["top"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+                ax.set_ylabel("Meetings", color=style_muted, fontsize=9)
+                ax.tick_params(colors=style_muted, labelsize=8)
+                ax.set_title("", loc="left")
+                plt.xticks(rotation=45, ha="right")
+                plt.tight_layout()
+                st.pyplot(fig, clear_figure=True)
+            else:
+                st.info("No meetings in range.")
+
+    if c_ch2:
+        with c_ch2:
+            st.markdown('<p class="section-title">Task Status Split</p>', unsafe_allow_html=True)
+            if task_total:
+                st.markdown(
+                    f"""
+                    <div class="left-card" style="padding:0.75rem;">
+                        <div style="display:flex;gap:2px;height:18px;border-radius:6px;overflow:hidden;margin-bottom:0.6rem;">
+                            <div style="width:{100*task_status['todo']/max(task_total,1):.1f}%;background:{style_charcoal};" title="To Do"></div>
+                            <div style="width:{100*task_status['in_progress']/max(task_total,1):.1f}%;background:{style_ink};" title="In Progress"></div>
+                            <div style="width:{100*task_status['done']/max(task_total,1):.1f}%;background:{style_gold};" title="Done"></div>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.9rem;font-size:0.78rem;color:{style_muted};">
+                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_charcoal};margin-right:4px;"></span>To Do {task_status['todo']}</span>
+                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_ink};margin-right:4px;"></span>In Progress {task_status['in_progress']}</span>
+                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_gold};margin-right:4px;"></span>Done {task_status['done']}</span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.info("No tasks in range.")
+
+    # Category mix (CSS bars)
+    st.markdown('<p class="section-title">Daily Log Category Mix</p>', unsafe_allow_html=True)
+    cat_colors = [style_ink, style_gold, "#6B8E8E", style_muted]
+    if team_total_char:
+        for k, lab, col in zip(cat_keys, cat_labels, cat_colors):
+            share = team_category[k] / max(team_total_char, 1) * 100
+            st.markdown(
+                f"""
+                <div style="margin-bottom:0.45rem;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:{style_muted};margin-bottom:0.15rem;">
+                        <span>{lab}</span><span>{int(share)}%</span>
+                    </div>
+                    <div style="background:#EDEAE2;border-radius:6px;height:10px;overflow:hidden;">
+                        <div style="width:{share:.1f}%;background:{col};height:100%;border-radius:6px;"></div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.caption("No daily logs logged in range.")
+
+    # Level 3 — team task summary table
+    st.markdown('<p class="section-title">Team Task Summary</p>', unsafe_allow_html=True)
+    team_rows = []
+    for member in all_members:
+        ps = person_stats[member]
+        done = ps["tasks_done"]
+        open_ = ps["tasks_open"]
+        team_rows.append({
+            "Member": member, "Done": done, "Open": open_, "Overdue": ps["tasks_overdue"],
+            "Days Logged": ps["days_logged"],
+        })
+    if team_rows:
+        st.dataframe(
+            pd.DataFrame(team_rows).sort_values("Done", ascending=False),
+            use_container_width=True, hide_index=True,
+        )
+    else:
+        st.info("No team members found.")
+
+# ---------- Personal Stats ----------
+with tab_personal:
+    st.markdown('<p class="section-title">Personal Stats</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="section-caption">Per-user breakdown across the whole team.</p>', unsafe_allow_html=True)
+
+    members_with_data = [m for m in all_members if person_stats[m]["tasks_open"] + person_stats[m]["tasks_done"] + person_stats[m]["days_logged"] > 0]
+    select_member = st.selectbox(
+        "Select a member", options=all_members, index=0,
+        format_func=lambda m: m if m in members_with_data or len(all_members) == 0 else f"(no data) {m}",
+    )
+    ps = person_stats.get(select_member, {"tasks_open": 0, "tasks_done": 0, "tasks_overdue": 0, "days_logged": 0, "cat_chars": {k: 0 for k in cat_keys}})
+
+    # Person hero
+    p_done = ps["tasks_done"]; p_open = ps["tasks_open"]
+    p_pct = round(p_done / max(p_done + p_open, 1) * 100)
+    st.markdown(
+        f"""
+        <div class="left-card" style="margin-bottom:0.6rem;">
+            <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:2.2rem;color:{style_ink};">{select_member}</span>
+            <p class="section-caption" style="margin-top:0.3rem;margin-bottom:0;"><span style="color:{style_gold};font-weight:700;">{p_pct}%</span> completion • {p_done} done • {p_open} open • {ps['tasks_overdue']} overdue • {ps['days_logged']} log days</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Person category mix (CSS bars)
+    st.markdown('<p class="section-title">Category Mix</p>', unsafe_allow_html=True)
+    p_total = sum(ps["cat_chars"].values())
+    if p_total:
+        for k, lab, col in zip(cat_keys, cat_labels, cat_colors):
+            share = ps["cat_chars"][k] / max(p_total, 1) * 100
+            st.markdown(
+                f"""
+                <div style="margin-bottom:0.4rem;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:{style_muted};margin-bottom:0.12rem;"><span>{lab}</span><span>{int(share)}%</span></div>
+                    <div style="background:#EDEAE2;border-radius:6px;height:9px;overflow:hidden;"><div style="width:{share:.1f}%;background:{col};height:100%;"></div></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.caption("No daily-log activity for this member.")
+
+    # Person tasks detail table
+    st.markdown('<p class="section-title">Task Detail</p>', unsafe_allow_html=True)
+    member_tasks = [t for t in tasks if _member_name_in_assignee(select_member, t.get("assignee"))]
+    if member_tasks:
+        person_tab = []
+        for t in member_tasks:
+            status_show = status_labels.get(t.get("status"), t.get("status", ""))
+            person_tab.append({
+                "Task": str(t.get("title", ""))[:60], "Status": status_show,
+                "Due": format_mm_dd_yyyy(parse_calendar_date(t.get("due_date"))) if parse_calendar_date(t.get("due_date")) else "—",
+                "Meeting": str(t.get("meeting_id") or "")[:24],
+            })
+        st.dataframe(pd.DataFrame(person_tab), use_container_width=True, hide_index=True)
+    else:
+        st.caption("No tasks assigned to this member.")
 
 # ------------------------------------------------------------
 # LAYOUT
