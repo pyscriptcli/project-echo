@@ -12,291 +12,12 @@ import time
 import random
 
 from utils.auth import require_login
-
-# ------------------------------------------------------------------------
-# SIDEBAR INTEGRATION (from components/sidebar.py)
-# ------------------------------------------------------------------------
-
-NAV_ITEMS = [
-    ("app.py", "Dashboard", ":material/dashboard:"),
-    ("pages/3_echo_ai.py", "Ask Echo.ai", ":material/smart_toy:"),
-    ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
-    ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
-    ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
-]
-
-SIDEBAR_CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
-
-/* ---------------- Hide app chrome (header kept alive, zero-height) ---------------- */
-header[data-testid="stHeader"],
-.stApp > header {
-    background: transparent !important;
-    height: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    overflow: visible !important;
-}
-[data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
-[data-testid="stMainMenu"],
-[data-testid="stToolbar"],
-#MainMenu,
-footer {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-}
-
-/* Hide Streamlit's auto-generated page list */
-[data-testid="stSidebarNav"] { display: none !important; }
-
-/* ---------------- Collapse prevention: hide ALL collapse/expand controls ---------------- */
-section[data-testid="stSidebar"] button:has(span[data-testid="stIconMaterial"]),
-[data-testid="stSidebarHeader"] button,
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"],
-[data-testid="stSidebarResizeHandle"],
-[data-testid="stSidebarResizeControl"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    width: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-}
-
-/* ---------------- Force-open lock: sidebar cannot visually collapse ---------------- */
-section[data-testid="stSidebar"] {
-    display: flex !important;
-    flex-direction: column !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: none !important;
-    min-width: 250px !important;
-    width: 250px !important;
-    max-width: 250px !important;
-    pointer-events: auto !important;
-}
-
-/* ---------------- Main content breathing room ---------------- */
-.block-container {
-    padding-top: 1.5rem !important;
-    padding-left: 2.2rem !important;
-    padding-right: 2.2rem !important;
-    max-width: 100% !important;
-}
-
-/* ---------------- Sidebar shell ---------------- */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(
-        180deg,
-        rgba(26, 43, 76, 0.05) 0%,
-        rgba(212, 175, 55, 0.05) 100%
-    ), #F5F1E8 !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1), 2px 0 6px rgba(0, 0, 0, 0.05) !important;
-}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 1.15rem 0.9rem 1rem 0.9rem !important;
-}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid="stVerticalBlock"] {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem !important;
-}
-
-/* ---------------- Brand block ---------------- */
-.sb-brand {
-    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
-    font-style: italic;
-    font-weight: 600;
-    font-size: 2rem;
-    line-height: 1;
-    color: #1A2B4C;
-    letter-spacing: 0.01em;
-}
-.sb-brand-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.62rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: #6C727A;
-    margin-top: 3px;
-}
-.sb-brand-rule {
-    height: 1px;
-    margin: 0.85rem 0 0.9rem 0;
-    background: linear-gradient(to right, rgba(212, 175, 55, 0.55), rgba(0, 0, 0, 0.05));
-}
-
-/* ---------------- Nav links (st.page_link) ---------------- */
-section[data-testid="stSidebar"] [data-testid="stPageLink"] {
-    margin: 0 !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
-    border-radius: 6px !important;
-    padding: 6px 10px !important;
-    border-left: 3px solid transparent !important;
-    color: #24344F !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.83rem !important;
-    font-weight: 500 !important;
-    text-decoration: none !important;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
-    margin: 0 !important;
-    font-size: 0.83rem !important;
-    color: inherit !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
-    background: rgba(0, 0, 0, 0.045) !important;
-    color: #111A2B !important;
-}
-section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
-section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-    background: rgba(212, 175, 55, 0.12) !important;
-    border-left-color: #D4AF37 !important;
-    color: #111A2B !important;
-    font-weight: 600 !important;
-}
-
-/* ---------------- Footer (pinned to bottom, separate container) ---------------- */
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) {
-    margin-top: auto !important;
-    flex-shrink: 0 !important;
-}
-.sb-footer-scope { display: none !important; }
-
-.sb-user-wrap {
-    border-top: 1px solid rgba(0, 0, 0, 0.07);
-    padding-top: 0.8rem;
-    margin-top: 0.9rem;
-    margin-bottom: 0.55rem;
-}
-.sb-user {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 0;
-    margin-bottom: 0.55rem;
-}
-.sb-user-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #111A2B;
-    color: #D4AF37;
-    border: 1px solid rgba(212, 175, 55, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
-}
-.sb-user-name {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #1A2B4C;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ---------------- Sign Out — small deep charcoal with gold accent ---------------- */
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: #111A2B !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 999px !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    padding: 0 12px !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: #1A2B4C !important;
-    color: #E6C44D !important;
-    border-color: #E6C44D !important;
-}
-</style>
-"""
-
-def _initials(name: str) -> str:
-    parts = [p for p in re.split(r"[\s._\-]+", (name or "").strip()) if p]
-    if len(parts) >= 2:
-        return (parts[0][0] + parts[1][0]).upper()
-    return (name or "—")[:2].upper()
-
-def get_current_user():
-    """Placeholder — replace with your actual auth logic."""
-    return st.session_state.get("user", None)
-
-def logout():
-    st.session_state.pop("user", None)
-
-def setup_page_layout():
-    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
-
-    with st.sidebar:
-        st.markdown(
-            '<div class="sb-brand">Echo</div>'
-            '<div class="sb-brand-sub">AI Assistant</div>'
-            '<div class="sb-brand-rule"></div>',
-            unsafe_allow_html=True,
-        )
-
-        for path, label, icon in NAV_ITEMS:
-            st.page_link(path, label=label, icon=icon, use_container_width=True)
-
-        user = get_current_user()
-        with st.container():
-            st.markdown('<span class="sb-footer-scope"></span>', unsafe_allow_html=True)
-
-            if user:
-                username = str(user.get("username", "user"))
-                st.markdown(
-                    f'<div class="sb-user-wrap">'
-                    f'<div class="sb-user">'
-                    f'<span class="sb-user-avatar">{_initials(username)}</span>'
-                    f'<span class="sb-user-name">{username}</span>'
-                    f'</div></div>',
-                    unsafe_allow_html=True,
-                )
-                if st.button("Sign Out", key="sb_logout", use_container_width=True):
-                    logout()
-                    st.rerun()
-            else:
-                st.markdown(
-                    '<div class="sb-user-wrap">'
-                    '<div class="sb-user">'
-                    '<span class="sb-user-avatar">—</span>'
-                    '<span class="sb-user-name">Guest</span>'
-                    '</div></div>',
-                    unsafe_allow_html=True,
-                )
+from components.sidebar import setup_page_layout
 
 # ------------------------------------------------------------------------
 # ROBUST OVERPASS API QUERY FUNCTION (PYTHON)
 # ------------------------------------------------------------------------
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 90) -> list:
     """
@@ -342,10 +63,10 @@ def fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 9
                         'type': str(poi_type),
                         'tags': tags_dict
                     })
-                logging.info(f"Successfully fetched {len(results)} POIs from {endpoint}")
+                logger.info("Successfully fetched %d POIs from %s", len(results), endpoint)
                 return results
             except Exception as e:
-                logging.warning(f"Endpoint {endpoint} failed: {e}. Retries left: {retries-1}")
+                logger.warning("Endpoint %s failed: %s. Retries left: %d", endpoint, e, retries - 1)
                 retries -= 1
                 if retries == 0:
                     break
@@ -353,7 +74,7 @@ def fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 9
                 time.sleep(delay + jitter)
                 delay *= 2
                 
-    logging.info("All Overpass endpoints failed. Falling back to OSMnx...")
+    logger.info("All Overpass endpoints failed. Falling back to OSMnx...")
     try:
         import osmnx as ox
         import geopandas as gpd
@@ -387,10 +108,10 @@ def fetch_pois(lat: float, lon: float, radius: int, tags: list, timeout: int = 9
                 'type': str(poi_type) if pd.notna(poi_type) else 'Node',
                 'tags': {k: v for k, v in row.items() if k not in ['geometry', 'name', 'amenity', 'shop', 'building']}
             })
-        logging.info(f"Successfully fetched {len(results)} POIs via OSMnx fallback")
+        logger.info("Successfully fetched %d POIs via OSMnx fallback", len(results))
         return results
     except Exception as e:
-        logging.error(f"OSMnx fallback also failed: {e}")
+        logger.error("OSMnx fallback also failed: %s", e)
         return []
 
 # ------------------------------------------------------------------------
@@ -408,12 +129,28 @@ require_login()
 # Call the custom sidebar
 setup_page_layout()
 
+# Full-screen map: remove page padding and let the map iframe fill the viewport
+# (the header is hidden by the sidebar CSS, so the map can go edge-to-edge).
+st.markdown(
+    """
+    <style>
+    .block-container { padding: 0 !important; max-width: 100% !important; }
+    [data-testid="stIFrame"] { height: 100vh !important; margin: 0 !important; }
+    [data-testid="stIFrame"] iframe { height: 100vh !important; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ------------------------------------------------------------------------
 # 2. SUPABASE REST INTEGRATION
 # ------------------------------------------------------------------------
-SUPABASE_URL = st.secrets.get("supabase", {}).get("url", "https://cyczyaswxkpdcremqnkn.supabase.co")
-SUPABASE_KEY = st.secrets.get("supabase", {}).get("key", "sb_publishable_pUppHGjwmT1mLlhWGZH6Og_4GcCLCPR")
-BASE_API_URL = SUPABASE_URL.replace("/rest/v1/", "").rstrip("/") + "/rest/v1"
+# Credentials come ONLY from secrets (never hardcoded), matching utils/db.py.
+# NOTE: the map's live editor is a client-side app, so it uses this key in the
+# browser to save work. map_projects MUST have strict Row-Level Security (RLS).
+SUPABASE_URL = str(st.secrets.get("SUPABASE_URL", st.secrets.get("supabase", {}).get("url", ""))).strip()
+SUPABASE_KEY = str(st.secrets.get("SUPABASE_KEY", st.secrets.get("supabase", {}).get("key", ""))).strip()
+BASE_API_URL = (SUPABASE_URL.replace("/rest/v1/", "").rstrip("/") + "/rest/v1") if SUPABASE_URL else ""
 
 def get_headers():
     return {
@@ -424,16 +161,22 @@ def get_headers():
     }
 
 def fetch_projects():
+    """Fetch map projects server-side. Returns (projects, error_msg|None)."""
+    if not BASE_API_URL or not SUPABASE_KEY:
+        return [], "Supabase is not configured. Add SUPABASE_URL/SUPABASE_KEY to secrets."
     try:
         url = f"{BASE_API_URL}/map_projects?select=id,name,created_at,updated_at,basemap,zoom,center,features,custom_groups,layer_visibilities&order=updated_at.desc"
-        res = requests.get(url, headers=get_headers(), timeout=6)
+        res = requests.get(url, headers=get_headers(), timeout=10)
         if res.status_code == 200:
-            return res.json()
-        return []
-    except Exception:
-        return []
+            return res.json(), None
+        return [], f"Projects API returned status {res.status_code}."
+    except Exception as e:
+        logger.warning("Failed to fetch map_projects: %s", e)
+        return [], "Could not load projects. Check Supabase configuration."
 
-ALL_PROJECTS_LIST = fetch_projects()
+ALL_PROJECTS_LIST, PROJECTS_ERROR = fetch_projects()
+if PROJECTS_ERROR:
+    st.warning(PROJECTS_ERROR)
 
 # ------------------------------------------------------------------------
 # 3. POI TAXONOMY & VECTOR BASEMAP THEMES
@@ -645,6 +388,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
 @font-face {
     font-family: 'Century Gothic Custom';
     src: local('Century Gothic'), local('CenturyGothic'), local('AppleGothic'), sans-serif;
@@ -909,6 +653,124 @@ select option:hover, select option:checked { background-color: #2563eb !importan
 .color-input-combo input[type=text] { width: 75px; font-family: monospace; font-size: 11px; padding: 3px 5px; }
 .btn-eyedropper { width: 24px; height: 24px; display: grid; place-items: center; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #adbac7; cursor: pointer; padding: 0; }
 .btn-eyedropper:hover { color: #fff; background: rgba(255,255,255,0.2); }
+
+/* ============================================================
+   NATIVE ECHO UI OVERRIDE — align Atlas chrome with the app
+   (Playfair Display + Inter, navy/gold on light surfaces)
+   ============================================================ */
+* { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+#top-toolbar-bar {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(26, 43, 76, 0.14);
+    box-shadow: 0 10px 30px rgba(26, 43, 76, 0.16);
+    color: #1A2B4C;
+}
+.tb-btn { color: #40506B; }
+.tb-btn:hover { background: rgba(212, 175, 55, 0.20); color: #111A2B; }
+.tb-btn.active { background: rgba(212, 175, 55, 0.28); color: #111A2B; }
+.tb-btn.primary-active { background: #111A2B; color: #F5F1E8; }
+.tb-sep { background: rgba(26, 43, 76, 0.15); }
+#project-name-display { color: #1A2B4C; font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; }
+.save-badge { background: #F5F1E8; color: #6C727A; border: 1px solid rgba(26, 43, 76, 0.14); }
+.save-badge.saving { color: #8C6D23; border-color: rgba(212, 175, 55, 0.5); }
+.save-badge.saved { color: #1e7d3c; border-color: rgba(30, 125, 60, 0.4); }
+.save-badge.unsaved { color: #B23A3A; border-color: rgba(178, 58, 58, 0.4); }
+
+.left-panel, .float-card {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(26, 43, 76, 0.12);
+    box-shadow: 0 14px 40px rgba(26, 43, 76, 0.18);
+    color: #3A4A63;
+}
+.panel-header { border-bottom: 1px solid rgba(26, 43, 76, 0.10); }
+.panel-title, .layers-heading, .acc-header {
+    color: #1A2B4C;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+}
+.icon-action-btn { border: 1px solid rgba(26, 43, 76, 0.12); background: #F5F1E8; color: #3A4A63; }
+.icon-action-btn:hover { background: rgba(212, 175, 55, 0.22); color: #111A2B; }
+.acc-item { border-bottom: 1px solid rgba(26, 43, 76, 0.08); }
+.layer-row, .poi-summary { color: #3A4A63; }
+.layer-row input[type=checkbox] { accent-color: #D4AF37; }
+.layer-card { background: #F5F1E8; border: 1px solid rgba(26, 43, 76, 0.10); }
+.layer-name-input { color: #1A2B4C; }
+.group-container { background: rgba(26, 43, 76, 0.04); border: 1px solid rgba(26, 43, 76, 0.10); }
+.group-header { background: rgba(26, 43, 76, 0.05); }
+.group-title-input { color: #1A2B4C; }
+.group-styling-panel { background: rgba(26, 43, 76, 0.05); border-top: 1px solid rgba(26, 43, 76, 0.08); }
+.trade-controls { background: rgba(26, 43, 76, 0.04); border: 1px solid rgba(26, 43, 76, 0.10); }
+.trade-btn { background: #111A2B; color: #F5F1E8; border: 1px solid #D4AF37; border-radius: 18px; }
+.trade-btn:hover { background: #1A2B4C; }
+.dimension-mode-bar { background: rgba(26, 43, 76, 0.06); border: 1px solid rgba(26, 43, 76, 0.10); }
+.dimension-mode-btn { color: #3A4A63; }
+.dimension-mode-btn.active { background: #111A2B; color: #F5F1E8; }
+.badge-count { background: #D4AF37; color: #111A2B; }
+.poi-badge { background: rgba(26, 43, 76, 0.05); color: #3A4A63; }
+.bound-select-row input[type=text],
+.float-card input[type=text], .float-card select,
+.trade-controls select {
+    background: #F5F1E8; color: #1A2B4C;
+    border: 1px solid rgba(26, 43, 76, 0.16);
+}
+.float-card input[type=text]:focus, .bound-select-row input[type=text]:focus { border-color: #D4AF37; }
+.float-card input[type=range] { accent-color: #D4AF37; }
+.autocomplete-list { background: #FFFFFF; border: 1px solid rgba(26, 43, 76, 0.12); }
+.autocomplete-item { color: #3A4A63; border-bottom: 1px solid rgba(26, 43, 76, 0.06); }
+.autocomplete-item:hover { background: rgba(212, 175, 55, 0.12); color: #111A2B; }
+.btn-eyedropper { background: #F5F1E8; border: 1px solid rgba(26, 43, 76, 0.12); color: #3A4A63; }
+.btn-eyedropper:hover { background: rgba(212, 175, 55, 0.22); color: #111A2B; }
+
+.ios26-card {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(26, 43, 76, 0.14);
+    box-shadow: 0 32px 80px -12px rgba(26, 43, 76, 0.35);
+    color: #1A2B4C;
+}
+.ios26-title { color: #1A2B4C; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; }
+.ios26-subtitle { color: #6C727A; }
+.ios26-seg { background: rgba(26, 43, 76, 0.06); border: 1px solid rgba(26, 43, 76, 0.10); }
+.ios26-seg-btn { color: #3A4A63; }
+.ios26-seg-btn.active { background: #111A2B; color: #F5F1E8; }
+.ios26-label { color: #6C727A; }
+.ios26-input { background: #F5F1E8; border: 1px solid rgba(26, 43, 76, 0.16); color: #1A2B4C; }
+.ios26-input:focus { border-color: #D4AF37; }
+.ios26-proj-item { background: #F5F1E8; border: 1px solid rgba(26, 43, 76, 0.10); }
+.ios26-proj-item:hover { background: rgba(212, 175, 55, 0.10); border-color: rgba(212, 175, 55, 0.4); }
+.ios26-action-btn { background: #111A2B; color: #F5F1E8; border: 1px solid #D4AF37; border-radius: 18px; box-shadow: 0 8px 20px rgba(26, 43, 76, 0.2); }
+.ios26-action-btn:hover { background: #1A2B4C; }
+.file-input-label { background: #111A2B; border: 1px solid #D4AF37; border-radius: 12px; color: #F5F1E8; }
+.file-input-label:hover { background: #1A2B4C; }
+
+#map-context-menu { background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(26, 43, 76, 0.14); }
+.ctx-item { color: #1A2B4C; }
+.ctx-item:hover { background: rgba(212, 175, 55, 0.16); }
+.ctx-item svg { color: #3A4A63; }
+.ctx-coords { color: #6C727A; border-bottom: 1px solid rgba(26, 43, 76, 0.10); }
+.ctx-divider { background: rgba(26, 43, 76, 0.10); }
+#hint-toast { background: rgba(26, 43, 76, 0.96); color: #F5F1E8; border: 1px solid rgba(212, 175, 55, 0.4); }
+
+.maplibregl-popup-content {
+    background: rgba(255, 255, 255, 0.98) !important; color: #1A2B4C !important;
+    border: 1px solid rgba(26, 43, 76, 0.14) !important;
+    box-shadow: 0 12px 32px rgba(26, 43, 76, 0.18) !important;
+}
+.maplibregl-popup-tip { border-top-color: rgba(255, 255, 255, 0.98) !important; }
+
+.attr-table th { background: #1A2B4C; color: #F5F1E8; }
+.attr-table td { border-bottom: 1px solid rgba(26, 43, 76, 0.08); }
+.attr-table input[type="text"] { background: #F5F1E8; border: 1px solid rgba(26, 43, 76, 0.14); color: #1A2B4C; }
+.attr-table input[type="text"]:focus { border-color: #D4AF37; }
+.tag-table th, .tag-table td { border: 1px solid rgba(26, 43, 76, 0.12); }
+.tag-table th { background: #F5F1E8; color: #1A2B4C; }
+
+select, select option { background-color: #F5F1E8 !important; color: #1A2B4C !important; }
+select option:hover, select option:checked { background-color: #D4AF37 !important; color: #111A2B !important; }
+.icon-grid button { border: 1px solid rgba(26, 43, 76, 0.12); background: #F5F1E8; color: #3A4A63; }
+.icon-grid button.active { border-color: #D4AF37; background: #D4AF37; color: #111A2B; }
+.custom-query-collapse-header { color: #1A2B4C; }
 </style>
 </head>
 <body>
@@ -4306,5 +4168,11 @@ try:
         .replace("__BG__", THEMES.get(initial_theme, THEMES["Midnight Blue"])["overlay"])
     )
     components.html(html, height=1000, scrolling=False)
-except Exception as e:
-    st.error(f"Failed to load application: {e}")
+except Exception:
+    logger.exception("Project Atlas failed to render")
+    st.error(
+        "Project Atlas hit an unexpected error while loading. "
+        "Please refresh the page. If the problem persists, check the server logs."
+    )
+    if st.button("Reload Atlas"):
+        st.rerun()
