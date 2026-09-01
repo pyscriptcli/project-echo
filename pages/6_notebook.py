@@ -219,9 +219,11 @@ def render_daily_log_tab():
     with r2:
         st.segmented_control("View", ["Day", "Week", "Month"], key="dl_view", label_visibility="collapsed")
     with r3:
-        st.button("Task", icon=":material/add_task:", key="dl_add_task_btn", use_container_width=True)
+        if st.button("Task", icon=":material/add_task:", key="dl_add_task_btn", use_container_width=True):
+            st.session_state.dl_show_add = True
     with r4:
-        st.button("Meet", icon=":material/event_available:", key="dl_add_meet_btn", use_container_width=True)
+        if st.button("Meet", icon=":material/event_available:", key="dl_add_meet_btn", use_container_width=True):
+            st.session_state.dl_show_meet = True
     with r5:
         st.text_input("Search", placeholder="Search...", label_visibility="collapsed", key="dl_search")
 
@@ -267,8 +269,10 @@ def render_daily_log_tab():
     kanban_cols = st.columns(4, gap="small")
     for idx, (k, v) in enumerate(COLUMN_CONFIG.items()):
         with kanban_cols[idx]:
+            # Use SVG icon from NOTEBOOK_ICONS for column header (works in HTML)
+            col_icon_svg = NOTEBOOK_ICONS.get(v["icon"], "")
             st.markdown(f'<div class="col-header" style="border-bottom-color:{v["color"]};">'
-                        f'{mi(v["icon"])} <span>{v["label"]}</span></div>', unsafe_allow_html=True)
+                        f'{col_icon_svg} <span>{v["label"]}</span></div>', unsafe_allow_html=True)
             tasks = st.session_state.get(f'dl_{k}', [])
             search_term = st.session_state.get('dl_search', '').strip().lower()
 
@@ -305,10 +309,7 @@ st.set_page_config(page_title="Project Echo - Notebook", layout="wide", initial_
 setup_page_layout()
 st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs([
-    f"{mi('edit_note')} Notepad",
-    f"{mi('calendar_month')} Daily Log",
-])
+tab1, tab2 = st.tabs(["Notepad", "Daily Log"])
 with tab1:
     render_notepad_tab()
 with tab2:
