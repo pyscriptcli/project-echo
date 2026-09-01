@@ -290,7 +290,7 @@ def _save_log(user_id, date_str, col_key, value):
 
 def init_session():
     current_user = get_current_user()
-    user_id = int(current_user["id"]) if current_user and current_user.get("id") else None
+    user_id = _current_user_id() if current_user else None
 
     # Notepad init (per-user, DB-backed)
     if "nb_docs" not in st.session_state:
