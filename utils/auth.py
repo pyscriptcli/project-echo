@@ -436,6 +436,22 @@ def set_agent_access(user_id, allowed: bool) -> bool:
         return False
 
 
+def set_user_password(user_id, new_password: str) -> bool:
+    """Reset a user's password. Plaintext is passed in the UI, stored bcrypt-hashed."""
+    problems = validate_password_strength(new_password or "")
+    if problems:
+        st.error(" ".join(problems))
+        return False
+    hashed = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    supabase = get_supabase()
+    try:
+        resp = supabase.table("admin_users").update({"password_hash": hashed}).eq("id", user_id).execute()
+        return bool(resp.data)
+    except Exception:  # noqa: BLE001
+        st.error("Password update failed. Please try again.")
+        return False
+
+
 def get_user_usage() -> List[Dict[str, Any]]:
     """Return aggregated usage per user."""
     supabase = get_supabase()

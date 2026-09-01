@@ -14,6 +14,7 @@ from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_con
 from utils.skills import load_prompt
 from utils.auth import get_current_user
 from utils.agent import TOOLS, check_agent_access
+from utils.limits import check_rate_limit, record_usage, token_balance
 
 
 def _cur_user_id():
@@ -1033,7 +1034,20 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         )
                     if st.session_state.get("echo_agent_mode", False):
                         st.caption(f"{len(TOOLS)} actions available · writes require your approval")
-                    
+
+                    st.markdown("---")
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>TOKEN USAGE</span>", unsafe_allow_html=True)
+                    _tb = token_balance(_cur_user_id())
+                    st.markdown(
+                        f"<div style='font-size:0.78rem; line-height:1.6; color:#333;'>"
+                        f"<div>Today: <b>{_tb['day_used']:,}</b> / {_tb['day_limit']:,} tokens "
+                        f"<span style='color:#666;'>({_tb['day_chats_remaining']} chats left)</span></div>"
+                        f"<div>This week: <b>{_tb['week_used']:,}</b> / {_tb['week_limit']:,} tokens "
+                        f"<span style='color:#666;'>({_tb['week_chats_remaining']} chats left)</span></div>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
+
                     st.markdown("---")
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
                     if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
@@ -1182,6 +1196,20 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             st.markdown('</div>', unsafe_allow_html=True)
 
         if active_prompt:
+            # Enforce per-user rate limit before spending tokens
+            _uid = _cur_user_id()
+            _rl = check_rate_limit(_uid)
+            if not _rl["allowed"]:
+                with chat_box:
+                    st.markdown(
+                        f'<div class="echo-msg-row-assistant"><div class="echo-assistant-header">'
+                        f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                        f'<span class="echo-assistant-title">Echo</span></div>'
+                        f'<div class="echo-assistant-body">{_rl["why"]}</div></div>',
+                        unsafe_allow_html=True,
+                    )
+                st.rerun()
+
             attached_files_list = st.session_state["echo_ui_uploaded_files"] if st.session_state["echo_ui_uploaded_files"] else []
             prompt_content_display = active_prompt
             if attached_files_list:
@@ -1234,6 +1262,10 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             st.session_state["echo_ui_uploaded_files"] = []
             
             thinking_placeholder.empty()
+            # Record usage for telemetry + token balance (estimate tokens)
+            _est_tokens = (len(active_prompt or "") + len(answer or "")) // 4
+            record_usage(_uid, _est_tokens, action="chat")
+
             st.session_state["global_chat_history"].append({
                 "role": "assistant",
                 "content": answer,
