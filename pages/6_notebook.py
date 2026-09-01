@@ -29,18 +29,18 @@ NOTEBOOK_CSS = """
     /* Hide Streamlit default elements */
     #MainMenu, footer, header {visibility: hidden;}
     
-    /* Background and typography */
+    /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #f4f1ea;
-        background-image: linear-gradient(#e5e0d8 1px, transparent 1px), linear-gradient(90deg, #e5e0d8 1px, transparent 1px);
-        background-size: 40px 40px;
+        background-color: #f6f4f0;
+        background-image: linear-gradient(#e8e6e1 1px, transparent 1px), linear-gradient(90deg, #e8e6e1 1px, transparent 1px);
+        background-size: 80px 80px;
         font-family: 'Inter', sans-serif;
         color: #333333;
     }
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 1400px;
+        max-width: 1200px;
     }
 
     /* Titles and subtitles */
@@ -82,14 +82,15 @@ NOTEBOOK_CSS = """
     .stTextArea textarea, .stTextInput input, .stSelectbox > div > div {
         background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         font-family: 'Inter', sans-serif !important;
-        font-size: 0.95rem !important;
+        font-size: 1rem !important;
         color: #333333 !important;
-        box-shadow: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        line-height: 1.6 !important;
     }
     
-    .gallery-container, .kanban-card, div[data-testid="stMetric"] {
+    .kanban-card, div[data-testid="stMetric"], .dialog-card {
         background-color: #ffffff;
         border-radius: 8px;
         padding: 1rem;
@@ -161,7 +162,7 @@ NOTEBOOK_CSS = """
         color: #ffffff !important;
     }
     
-    /* Secondary Note Gallery Buttons override */
+    /* Secondary Buttons override (used for cards/secondary actions) */
     button[kind="secondary"] {
         background-color: transparent !important;
         color: #1a2b4c !important;
@@ -170,6 +171,11 @@ NOTEBOOK_CSS = """
     button[kind="secondary"]:hover {
         background-color: #f8fafc !important;
         color: #1a2b4c !important;
+    }
+    
+    /* Notepad Editor Expansion */
+    .stTextArea {
+        margin-top: 1rem;
     }
 </style>
 """
@@ -228,13 +234,13 @@ def init_session():
         now = datetime.datetime.now().isoformat()
         st.session_state.nb_docs[welcome_id] = {
             "title": "Welcome to Notepad",
-            "content": "Minimal text editor.\n\nUse this space for quick drafts or notes.",
+            "content": "Minimal text editor.\n\nUse this space for quick drafts, notes, or ideas. Click 'Notes Gallery' to view your previous notes.",
             "created": now,
             "updated": now,
         }
         st.session_state.nb_current_id = welcome_id
         st.session_state.np_title = "Welcome to Notepad"
-        st.session_state.np_content = "Minimal text editor.\n\nUse this space for quick drafts or notes."
+        st.session_state.np_content = "Minimal text editor.\n\nUse this space for quick drafts, notes, or ideas. Click 'Notes Gallery' to view your previous notes."
 
     if "nb_current_id" not in st.session_state:
         st.session_state.nb_current_id = None
@@ -258,7 +264,7 @@ def init_session():
         st.session_state.dl_view = "Day"
 
 # ------------------------------
-# Notepad Logic
+# Notepad Logic & Modals
 # ------------------------------
 
 def select_doc(doc_id):
@@ -297,76 +303,92 @@ def save_current_doc():
         st.session_state.nb_docs[cid]["content"] = st.session_state.np_content
         st.session_state.nb_docs[cid]["updated"] = datetime.datetime.now().isoformat()
 
+@st.dialog("Notes Gallery", width="large")
+def notes_gallery_modal():
+    search_query = st.text_input("Search", placeholder="Search by title or content...", label_visibility="collapsed").lower()
+    
+    st.markdown("<hr style='border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0;'>", unsafe_allow_html=True)
+    
+    filtered_docs = {
+        k: v for k, v in st.session_state.nb_docs.items()
+        if search_query in v["title"].lower() or search_query in v["content"].lower()
+    }
+    sorted_docs = sorted(filtered_docs.items(), key=lambda x: x[1]["updated"], reverse=True)
+    
+    if not sorted_docs:
+        st.markdown("<div class='empty-state'>No notes found. Create a new one to get started!</div>", unsafe_allow_html=True)
+        return
+
+    # Create a responsive grid layout
+    cols = st.columns(3, gap="medium")
+    for idx, (doc_id, doc) in enumerate(sorted_docs):
+        with cols[idx % 3]:
+            title = doc["title"] if doc["title"].strip() else "Untitled"
+            date_str = datetime.datetime.fromisoformat(doc["updated"]).strftime("%b %d, %Y")
+            preview = doc["content"][:80] + "..." if len(doc["content"]) > 80 else doc["content"]
+            if not preview.strip():
+                preview = "Empty note"
+            
+            with st.container(border=True):
+                st.markdown(f"<div style='font-family: \"Playfair Display\", serif; font-size: 1.1rem; font-weight: 600; color: #1a2b4c; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.75rem; color: #a0aec0; margin-bottom: 0.8rem;'>{date_str}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.85rem; color: #4a5568; height: 3.5rem; overflow: hidden; margin-bottom: 1rem; line-height: 1.4;'>{preview}</div>", unsafe_allow_html=True)
+                
+                # Active styling logic
+                btn_type = "primary" if doc_id == st.session_state.nb_current_id else "secondary"
+                if st.button("Edit Note", key=f"open_modal_{doc_id}", use_container_width=True, type=btn_type):
+                    select_doc(doc_id)
+                    st.rerun()
+
 def render_notepad():
     st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-subtitle">A minimal environment for your thoughts.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="notebook-subtitle">A distraction-free environment for your thoughts.</div>', unsafe_allow_html=True)
 
-    col_gallery, col_editor = st.columns([1, 2.5], gap="large")
+    # Top Toolbar
+    col1, col2, col3, col4, col5 = st.columns([1.5, 1.5, 4, 1.5, 1.5])
     
-    with col_gallery:
-        st.button("+ New Note", on_click=create_new_doc, use_container_width=True)
-        search_query = st.text_input("Search", placeholder="Search notes...", label_visibility="collapsed").lower()
-        
-        st.markdown("<hr style='margin: 1rem 0; border: 0; border-top: 1px solid #d4d0c8;'>", unsafe_allow_html=True)
-        
-        filtered_docs = {
-            k: v for k, v in st.session_state.nb_docs.items()
-            if search_query in v["title"].lower() or search_query in v["content"].lower()
-        }
-        sorted_docs = sorted(filtered_docs.items(), key=lambda x: x[1]["updated"], reverse=True)
-        
-        gallery_cont = st.container(height=450, border=False)
-        with gallery_cont:
-            if not sorted_docs:
-                st.markdown("<div class='empty-state'>No notes found</div>", unsafe_allow_html=True)
-            for doc_id, doc in sorted_docs:
-                title = doc["title"] if doc["title"].strip() else "Untitled"
-                date_str = datetime.datetime.fromisoformat(doc["updated"]).strftime("%b %d")
-                
-                is_active = (doc_id == st.session_state.nb_current_id)
-                btn_type = "primary" if is_active else "secondary"
-                
-                st.button(
-                    f"{title} ({date_str})", 
-                    key=f"sel_{doc_id}", 
-                    on_click=select_doc, 
-                    args=(doc_id,), 
-                    use_container_width=True, 
-                    type=btn_type
-                )
+    with col1:
+        if st.button("Notes Gallery", use_container_width=True):
+            notes_gallery_modal()
+    with col2:
+        st.button("+ New Note", on_click=create_new_doc, use_container_width=True, type="secondary")
+    
+    has_docs = bool(st.session_state.nb_docs)
+    
+    with col4:
+        st.button("Delete Note", on_click=delete_current_doc, use_container_width=True, type="secondary", disabled=not has_docs)
+    with col5:
+        st.button("Save Changes", on_click=save_current_doc, use_container_width=True, disabled=not has_docs)
 
-    with col_editor:
-        has_docs = bool(st.session_state.nb_docs)
-        if has_docs and st.session_state.nb_current_id in st.session_state.nb_docs:
-            doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
-            
-            e_col1, e_col2, e_col3 = st.columns([6, 1, 1])
-            with e_col2:
-                st.button("Delete", on_click=delete_current_doc, use_container_width=True)
-            with e_col3:
-                st.button("Save", on_click=save_current_doc, use_container_width=True)
+    # Main Editor Area
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    
+    if has_docs and st.session_state.nb_current_id in st.session_state.nb_docs:
+        doc_meta = st.session_state.nb_docs[st.session_state.nb_current_id]
+        
+        # Title Input
+        st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
+        
+        # Content Area
+        st.text_area(
+            "Content",
+            key="np_content",
+            height=550,
+            label_visibility="collapsed",
+            placeholder="Start typing your note here..."
+        )
 
-            st.text_input("Title", key="np_title", label_visibility="collapsed", placeholder="Document Title")
-            
-            st.text_area(
-                "Content",
-                key="np_content",
-                height=400,
-                label_visibility="collapsed",
-                placeholder="Start typing..."
-            )
-
-            word_count = len(st.session_state.np_content.split())
-            updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
-            
-            st.markdown(f"""
-                <div class="status-footer">
-                    <span>{word_count} words</span>
-                    <span>Last saved: {updated_str}</span>
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("Select a note from the gallery or create a new one.")
+        word_count = len(st.session_state.np_content.split())
+        updated_str = _format_date(datetime.datetime.fromisoformat(doc_meta["updated"]))
+        
+        st.markdown(f"""
+            <div class="status-footer">
+                <span>{word_count} words</span>
+                <span>Last saved: {updated_str}</span>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("Your notepad is empty. Click '+ New Note' to create one.")
 
 
 # ------------------------------
@@ -558,7 +580,6 @@ def render_statistics():
         
         # Build Dataframe for recent logs
         table_data = []
-        # show last 30 days or total days
         check_days = min(total_days, 30)
         for i in range(check_days):
             d = end_date - datetime.timedelta(days=i)
