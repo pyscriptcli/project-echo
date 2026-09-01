@@ -11,7 +11,7 @@ from utils.auth import require_auth
 from utils.db import get_supabase_client
 
 # ---------------------------------------------------------------------------
-# SVG ICON REGISTRY
+# SVG ICON REGISTRY (unchanged, all SVGs are valid)
 # ---------------------------------------------------------------------------
 NOTEBOOK_ICONS = {
     "new": """<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l-3 3m0 0l-3-3m3 3V2M4 9v2a3 3 0 003 3h2"/><path d="M4 14v2a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>""",
@@ -45,9 +45,8 @@ NOTEBOOK_ICONS = {
 }
 
 # ---------------------------------------------------------------------------
-# ICON HELPER
+# ICON HELPER – used only for static HTML rendering (e.g., headers)
 # ---------------------------------------------------------------------------
-
 def icon(name, size=18, label=None):
     svg = NOTEBOOK_ICONS.get(name, '')
     if not svg:
@@ -60,9 +59,8 @@ def icon(name, size=18, label=None):
     return html
 
 # ---------------------------------------------------------------------------
-# PAGE CSS
+# PAGE CSS (unchanged)
 # ---------------------------------------------------------------------------
-
 NOTEBOOK_CSS = '''
 <style>
 .stApp { background-color: #F3EFE6 !important; }
@@ -81,7 +79,6 @@ h1.page-title { font-family: 'Playfair Display', serif !important; font-style: i
 # ---------------------------------------------------------------------------
 # COLUMN CONFIG
 # ---------------------------------------------------------------------------
-
 COLUMN_CONFIG = {
     "client":  {"label": "Client Related Tasks", "icon": "client-tasks", "color": "#3B82F6"},
     "admin":   {"label": "Admin Tasks",          "icon": "admin-tasks",  "color": "#10B981"},
@@ -106,33 +103,34 @@ def _get_date_range(view_mode, focus_date):
 # ---------------------------------------------------------------------------
 # NOTEPAD TAB
 # ---------------------------------------------------------------------------
-
 def render_notepad_tab():
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="page-title">Notepad</h1>', unsafe_allow_html=True)
     st.markdown('<p style="color:#6C727A;margin:0 0 1rem 0;">Create, open, save, and edit text documents with bullet list support.</p>', unsafe_allow_html=True)
 
+    # Use plain text buttons with emojis for actions
     c1, c2, c3, c4, c5 = st.columns([1,1,1,1,3])
     with c1:
-        if st.button(icon('new', label='New'), use_container_width=True):
+        if st.button("📄 New", use_container_width=True):
             st.session_state.update({'nb_content': '', 'nb_title': 'Untitled.txt'})
     with c2:
-        st.button(icon('open', label='Open'), use_container_width=True)
+        st.button("📂 Open", use_container_width=True)
     with c3:
-        if st.button(icon('save', label='Save'), use_container_width=True):
+        if st.button("💾 Save", use_container_width=True):
             st.toast('Document saved', icon='checkmark')
     with c4:
-        st.button(icon('save-as', label='Save As'), use_container_width=True)
+        st.button("💾 Save As", use_container_width=True)
     with c5:
         st.text_input('', value='Untitled.txt', key='nb_title', label_visibility='collapsed')
 
+    # Formatting row – plain text
     fc = st.columns(6)
-    with fc[0]: st.button('B', key='fmt_bold', help='Bold')
-    with fc[1]: st.button('I', key='fmt_italic', help='Italic')
-    with fc[2]: st.button('U', key='fmt_underline', help='Underline')
-    with fc[3]: st.button('•', key='fmt_list', help='Bullet List')
-    with fc[4]: st.button('1.', key='fmt_olist', help='Numbered List')
-    with fc[5]: st.button('☰', key='fmt_more', help='More formatting')
+    with fc[0]: st.button("B", key='fmt_bold', help="Bold")
+    with fc[1]: st.button("I", key='fmt_italic', help="Italic")
+    with fc[2]: st.button("U", key='fmt_underline', help="Underline")
+    with fc[3]: st.button("•", key='fmt_list', help="Bullet List")
+    with fc[4]: st.button("1.", key='fmt_olist', help="Numbered List")
+    with fc[5]: st.button("☰", key='fmt_more', help="More formatting")
 
     content_key = 'nb_content'
     if content_key not in st.session_state:
@@ -143,12 +141,13 @@ def render_notepad_tab():
         placeholder='Start typing...\n- Use - or * for bullets\n- Press Enter for next bullet'
     )
 
+    # Edit actions – plain text
     ec = st.columns(6)
-    with ec[0]: st.button(icon('undo', label='Undo'), use_container_width=True)
-    with ec[1]: st.button(icon('redo', label='Redo'), use_container_width=True)
-    with ec[2]: st.button(icon('cut', label='Cut'), use_container_width=True)
-    with ec[3]: st.button(icon('copy', label='Copy'), use_container_width=True)
-    with ec[4]: st.button(icon('paste', label='Paste'), use_container_width=True)
+    with ec[0]: st.button("↩ Undo", use_container_width=True)
+    with ec[1]: st.button("↪ Redo", use_container_width=True)
+    with ec[2]: st.button("✂ Cut", use_container_width=True)
+    with ec[3]: st.button("📋 Copy", use_container_width=True)
+    with ec[4]: st.button("📋 Paste", use_container_width=True)
     with ec[5]:
         words = len(st.session_state.get('nb_content','').split())
         st.caption(f'Words: {words}')
@@ -156,7 +155,6 @@ def render_notepad_tab():
 # ---------------------------------------------------------------------------
 # DAILY LOG TAB
 # ---------------------------------------------------------------------------
-
 def render_daily_log_tab():
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="page-title">Daily Log</h1>', unsafe_allow_html=True)
@@ -176,10 +174,10 @@ def render_daily_log_tab():
     with r2:
         st.segmented_control('View', ['Day','Week','Month'], key='dl_view', label_visibility='collapsed')
     with r3:
-        if st.button('+Task', key='dl_add_task_btn', use_container_width=True):
+        if st.button("➕ Task", key='dl_add_task_btn', use_container_width=True):
             st.session_state.dl_show_add = True
     with r4:
-        if st.button('+Meet', key='dl_add_meet_btn', use_container_width=True):
+        if st.button("📅 Meet", key='dl_add_meet_btn', use_container_width=True):
             st.session_state.dl_show_meet = True
     with r5:
         st.text_input('Search', placeholder='Search...', label_visibility='collapsed', key='dl_search')
@@ -219,6 +217,7 @@ def render_daily_log_tab():
     kanban_cols = st.columns(4, gap='small')
     for idx, (k, v) in enumerate(COLUMN_CONFIG.items()):
         with kanban_cols[idx]:
+            # Use icon() only here – static HTML is safe
             st.markdown(f'<div class="col-header" style="border-bottom-color:{v["color"]};">{icon(v["icon"], size=18, label=v["label"])}</div>', unsafe_allow_html=True)
             tasks = st.session_state.get(f'dl_{k}', [])
             search_term = st.session_state.get('dl_search', '').strip().lower()
@@ -239,19 +238,21 @@ def render_daily_log_tab():
                             tasks.remove(t)
                             st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
-            if st.button(icon('add-task', label='Add'), key=f'dl_add_{k}', use_container_width=True):
+            # Use plain text for the "Add" button
+            if st.button("➕ Add", key=f'dl_add_{k}', use_container_width=True):
                 st.session_state.dl_show_add = True
                 st.rerun()
 
 # ---------------------------------------------------------------------------
 # MAIN PAGE
 # ---------------------------------------------------------------------------
-
 st.set_page_config(page_title='Project Echo - Notebook', layout='wide', initial_sidebar_state='expanded')
 setup_page_layout()
 st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs([icon('new', size=20, label='Notepad'), icon('calendar-day', size=20, label='Daily Log')])
+# Use plain text (with emojis) for tab labels – HTML is not allowed in st.tabs()
+tab1, tab2 = st.tabs(["📝 Notepad", "📅 Daily Log"])
+
 with tab1:
     render_notepad_tab()
 with tab2:
