@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from utils.auth import require_auth, add_admin_user, get_all_users, get_user_usage, logout
+from utils.auth import require_login, add_admin_user, get_all_users, get_user_usage, logout
 
 # -------------------------------
 # Page configuration & styling
@@ -102,7 +102,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 # -------------------------------
 # Authentication check
 # -------------------------------
-require_auth()
+require_login(require_admin=True)
 
 # -------------------------------
 # Sidebar: logout button
@@ -132,20 +132,25 @@ with st.form("create_user_form", clear_on_submit=True):
         new_password = st.text_input("Password", type="password", placeholder="Min 8 characters")
         confirm_password = st.text_input("Confirm Password", type="password")
 
+    new_role = st.selectbox(
+        "Role",
+        options=["member", "admin"],
+        index=0,
+        help="Admins can create users and access the Admin Console.",
+    )
+
     submitted = st.form_submit_button("Create User")
     if submitted:
         if not new_username or not new_password:
             st.error("Username and password are required.")
         elif new_password != confirm_password:
             st.error("Passwords do not match.")
-        elif len(new_password) < 8:
-            st.error("Password must be at least 8 characters long.")
         else:
-            success = add_admin_user(new_username, new_password)
+            success = add_admin_user(new_username, new_password, role=new_role)
             if success:
                 st.success(f"User '{new_username}' created successfully.")
             else:
-                st.error("Username already exists or creation failed.")
+                st.error("User creation failed. Check the username is unique and the password meets the policy.")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------

@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from components.sidebar import setup_page_layout
 from utils.echo_ai import render_echo_chat
+from utils.auth import require_login
 
 # 1. Page Configuration
 st.set_page_config(
@@ -14,6 +15,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+require_login()
 setup_page_layout()
 
 # 2. Large Architectural Grid Canvas (Matching Meeting Gallery)

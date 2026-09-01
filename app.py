@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
-from utils.auth import init_supabase, login, logout, is_authenticated
+from utils.auth import init_supabase, require_login
 
 st.set_page_config(
     page_title="Project Echo - Dashboard",
@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-supabase = init_supabase()
+
 
 st.markdown("""
 <style>
@@ -355,156 +355,11 @@ h3 {
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# LOGIN SCREEN
+# AUTH GATE — enforced on every page (login required)
 # ------------------------------------------------------------
-if not is_authenticated():
-    st.markdown("""
-    <style>
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: #FFFFFF !important;
-        border: 1px solid rgba(0,0,0,0.06) !important;
-        border-radius: 12px !important;
-        border-top: 3px solid #D4AF37 !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
-        padding: 2rem !important;
-        margin: 2rem auto !important;
-        max-width: 450px !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+require_login()
 
-    .login-icon {
-        text-align: center;
-        margin-bottom: 0.5rem;
-        color: #1A2B4C;
-    }
-    .login-icon svg {
-        width: 56px;
-        height: 56px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-
-    .login-brand {
-        font-family: 'Playfair Display', serif;
-        font-style: italic;
-        font-size: 2rem;
-        font-weight: 600;
-        color: #1A2B4C;
-        text-align: center;
-    }
-    .login-tagline {
-        font-size: 0.9rem;
-        color: #6C727A;
-        text-align: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .stTextInput input {
-        background-color: #FAFAFA !important;
-        border: 1px solid rgba(0,0,0,0.1) !important;
-        border-radius: 6px !important;
-        font-size: 0.85rem !important;
-        padding: 0.5rem 0.75rem !important;
-    }
-    .stTextInput input:focus {
-        border-color: #D4AF37 !important;
-        box-shadow: 0 0 0 2px rgba(212,175,55,0.15) !important;
-        background: #FFFFFF !important;
-    }
-
-    .stFormSubmitButton > button {
-        background-color: #111A2B !important;
-        color: #FFFFFF !important;
-        border: 1px solid #D4AF37 !important;
-        border-radius: 50px !important;
-        font-weight: 600 !important;
-        min-height: 36px !important;
-        width: 100% !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .stFormSubmitButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-    }
-
-    .login-error {
-        background: #FDF0EF;
-        border-left: 3px solid #E74C3C;
-        color: #9B1C1C;
-        padding: 0.5rem 0.75rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        margin-top: 0.75rem;
-    }
-    .login-warning {
-        background: #FFFBEB;
-        border-left: 3px solid #F59E0B;
-        color: #92400E;
-        padding: 0.5rem 0.75rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        with st.container(border=True):
-            st.markdown(
-                '<div class="login-brand">Project Echo</div>'
-                '<div class="login-tagline">Sign in to your AI Assistant</div>',
-                unsafe_allow_html=True
-            )
-
-            with st.form("login_form", clear_on_submit=False):
-                username = st.text_input(
-                    "Username",
-                    key="login_username",
-                    placeholder="Enter your username",
-                    autocomplete="username"
-                )
-                password = st.text_input(
-                    "Password",
-                    type="password",
-                    key="login_password",
-                    placeholder="Enter your password",
-                    autocomplete="current-password"
-                )
-                submitted = st.form_submit_button(
-                    "Sign In",
-                    use_container_width=True,
-                    type="primary"
-                )
-
-            if submitted:
-                errors = []
-                if not username.strip():
-                    errors.append("Username is required.")
-                if not password.strip():
-                    errors.append("Password is required.")
-                if errors:
-                    for e in errors:
-                        st.markdown(f'<div class="login-error">{e}</div>', unsafe_allow_html=True)
-                else:
-                    with st.spinner("Signing in..."):
-                        success, error_msg, user = login(username, password)
-                    if success:
-                        st.session_state["user"] = user
-                        st.rerun()
-                    else:
-                        st.markdown(f'<div class="login-error">{error_msg}</div>', unsafe_allow_html=True)
-
-            if password and password.isalpha() and password.isupper():
-                st.markdown(
-                    '<div class="login-warning">Caps Lock is on.</div>',
-                    unsafe_allow_html=True
-                )
-
-    st.stop()
+supabase = init_supabase()
 
 # ------------------------------------------------------------
 # DASHBOARD (AUTHENTICATED)

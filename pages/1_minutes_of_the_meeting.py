@@ -32,6 +32,7 @@ import streamlit.components.v1 as components
 # Centralized DB & Components
 from utils.db import get_supabase_client, fetch_echo_context
 from components.sidebar import setup_page_layout
+from utils.auth import require_login
 
 # 1. Page Configuration (MUST be the first Streamlit command)
 st.set_page_config(
@@ -40,7 +41,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Render Global Navigation
+# 2. Enforce login before rendering anything
+require_login()
+
+# 3. Render Global Navigation
 setup_page_layout()
 
 # 3. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)

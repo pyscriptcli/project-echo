@@ -8,7 +8,7 @@ import streamlit as st
 from datetime import date, timedelta, datetime
 import calendar
 
-from utils.auth import require_auth
+from utils.auth import require_login
 from utils.db import get_supabase_client, fetch_meeting_archives
 from components.sidebar import setup_page_layout
 
@@ -19,11 +19,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Render the custom navigation bar
-setup_page_layout()
+# 2. Authentication check (must run before rendering the sidebar)
+require_login()
 
-# 3. Authentication check
-require_auth()
+# 3. Render the custom navigation bar
+setup_page_layout()
 
 # 4. Custom CSS
 st.markdown("""

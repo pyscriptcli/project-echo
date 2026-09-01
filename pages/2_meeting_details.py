@@ -23,6 +23,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
+from utils.auth import require_login
 
 # 1. Page Config (MUST be first)
 st.set_page_config(
@@ -30,6 +31,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+require_login()
 setup_page_layout()
 
 # Default date filter to "This Month"

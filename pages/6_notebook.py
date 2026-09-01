@@ -8,6 +8,7 @@ import streamlit as st
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from components.sidebar import setup_page_layout
+from utils.auth import require_login
 
 # ------------------------------
 # Page configuration
@@ -655,6 +656,7 @@ def render_dailylog():
 # ------------------------------
 
 def main():
+    require_login()
     setup_page_layout()
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     init_session()

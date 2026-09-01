@@ -11,6 +11,8 @@ import logging
 import time
 import random
 
+from utils.auth import require_login
+
 # ------------------------------------------------------------------------
 # SIDEBAR INTEGRATION (from components/sidebar.py)
 # ------------------------------------------------------------------------
@@ -399,6 +401,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",  # Sidebar is now visible and locked open
 )
+
+# Enforce login before rendering anything
+require_login()
 
 # Call the custom sidebar
 setup_page_layout()
