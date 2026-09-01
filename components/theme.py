@@ -57,10 +57,10 @@ def tokens_css() -> str:
 
 def inject_global_css() -> None:
     """Emit the shared flat & edgy theme. Idempotent per page run."""
-    css = f"""
-<style>
-{tokens_css()}
-
+    css = (
+        "<style>\n"
+        + tokens_css()
+        + """
 /* ---- Canvas: cream + LARGE gridlines (editorial, real-estate feel) ---- */
 html, body, [data-testid="stAppViewContainer"], .stApp {
     background-color: var(--echo-canvas) !important;
@@ -139,4 +139,5 @@ div[data-testid="stVerticalBlockBorderWrapper"],
 }
 </style>
 """
+    )
     st.markdown(css, unsafe_allow_html=True)
