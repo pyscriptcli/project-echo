@@ -67,7 +67,11 @@ def store_approved_minutes(
         return False
     except Exception as e:
         logger.exception("store_approved_minutes failed: %s", e)
-        st.error(f"Could not save minutes memory: {e}")
+        err = str(e)
+        if "PGRST205" in err or "Could not find the table" in err:
+            st.error("The minutes memory table is missing. Run `supabase/full_schema_ddl.sql`.")
+        else:
+            st.error(f"Could not save minutes memory: {e}")
         return False
 
 

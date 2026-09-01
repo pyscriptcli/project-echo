@@ -61,7 +61,11 @@ def set_user_limits(user_id: str, daily_limit: int, weekly_limit: int) -> bool:
         return False
     except Exception as e:  # noqa: BLE001
         logger.exception("set_user_limits failed: %s", e)
-        st.error(f"Could not save limits: {e}")
+        err = str(e)
+        if any(m in err for m in ("PGRST205", "Could not find the table", "relation .* does not exist")):
+            st.error("The limits table is missing. Run `supabase/full_schema_ddl.sql` (creates `usage_limits`).")
+        else:
+            st.error(f"Could not save limits: {e}")
         return False
 
 
@@ -72,7 +76,12 @@ def record_usage(user_id: str, tokens_used: int, action: str = "chat") -> bool:
         return False
     try:
         client.table("user_usage").insert(
-            {"user_id": user_id, "tokens_used": int(tokens_used or 0), "action": action}
+            {
+                "user_id": user_id,
+                "tokens_used": int(tokens_used or 0),
+                "event_type": action or "chat",
+                "metadata": {"action": action or "chat"},
+            }
         ).execute()
         _usage_caches.clear()
         return True

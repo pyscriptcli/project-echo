@@ -177,5 +177,9 @@ def upsert_log(user_id: str, log_date, fields: dict) -> bool:
         return False
     except Exception as e:
         logger.exception("upsert_log failed: %s", e)
-        st.error(f"Could not save your daily log: {e}")
+        err = str(e)
+        if "unique or exclusion constraint" in err or "42P10" in err:
+            st.error("Daily-log saving needs a unique (user, date) constraint. Run `supabase/full_schema_ddl.sql`.")
+        else:
+            st.error(f"Could not save your daily log: {e}")
         return False
