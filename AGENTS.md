@@ -28,6 +28,7 @@ Streamlit multi-page meeting-management suite for PRIME Philippines ("Echo"): me
 
 ## Conventions
 - Every page: `st.set_page_config(...)` first, then `sys.path.append(project root)`, then `require_login()` and `setup_page_layout()`.
+- **Coding:** Follow **`coding_skills.md`** (project structure, data/AI/error conventions, naming, and the icon rules: **no emojis — SVG/Material icons only, monochrome**).
 - **UI/UX:** Any new or edited UI must follow **`UI_skill.md`** at the repo root (design tokens, component classes, layout idioms). Reuse its tokens/components; don't introduce new colors/classes unless nothing fits.
 - Config only via Streamlit secrets (`SUPABASE_URL`, `SUPABASE_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`) — `.streamlit/secrets.toml` is gitignored; never commit secrets.
 - Design tokens (inline CSS via `st.markdown`): bg cream `#F5F1E8`, headings navy `#1A2B4C`, buttons charcoal `#111A2B` with gold accent `#D4AF37`; fonts Playfair Display (titles) + Inter (body). Keep these tokens consistent across pages.
