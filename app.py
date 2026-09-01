@@ -11,7 +11,6 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
@@ -798,7 +797,6 @@ all_events = build_calendar_events()
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
 style_ink = "#1A2B4C"
-style_charcoal = "#111A2B"
 style_gold = "#D4AF37"
 style_muted = "#768390"
 
@@ -814,7 +812,6 @@ for t in tasks:
         task_overdue += 1
 task_open = task_status["todo"] + task_status["in_progress"]
 task_total = len(tasks)
-completion = round((task_status["done"] / task_total) * 100) if task_total else 0
 
 # Meetings-over-time: count per month (team scope = range)
 meet_by_month = {}
@@ -830,15 +827,7 @@ for m in filtered_records:
 # Daily-log activity (team, date-scoped)
 dlog_rows = fetch_all_daily_logs(st.session_state["start_date"], st.session_state["end_date"])
 cat_keys = ["client", "admin", "adhoc", "meeting"]
-cat_labels = ["Client", "Admin", "Adhoc", "Meetings"]
-team_category = {k: 0 for k in cat_keys}
 team_days_logged = len(dlog_rows)
-team_total_char = 0
-for r in dlog_rows:
-    for k in cat_keys:
-        v = str(r.get(k) or "")
-        team_category[k] += len(v)
-        team_total_char += len(v)
 
 # Per-user stats: union of task assignees (display names) + admin usernames
 _user_rows = get_all_users()
@@ -877,129 +866,86 @@ for member in all_members:
                 person_stats[member]["cat_chars"][k] += len(str(r.get(k) or ""))
 
 # ------------------------------------------------------------
+# DASHBOARD DATE FILTER (shared by both tabs)
+# ------------------------------------------------------------
+_dash_fc = st.columns([3.2, 1, 1], gap="small")
+with _dash_fc[0]:
+    _dash_range = st.date_input(
+        "Dashboard period",
+        value=(st.session_state["start_date"], st.session_state["end_date"]),
+        key="dash_date_range",
+    )
+with _dash_fc[1]:
+    if st.button("This Month", key="dash_this_month", use_container_width=True):
+        st.session_state["start_date"] = today.replace(day=1)
+        _, _last = calendar.monthrange(today.year, today.month)
+        st.session_state["end_date"] = today.replace(day=_last)
+        st.rerun()
+with _dash_fc[2]:
+    if st.button("All", key="dash_all", use_container_width=True):
+        st.session_state["start_date"] = datetime.date(2000, 1, 1)
+        st.session_state["end_date"] = today
+        st.rerun()
+
+if isinstance(_dash_range, tuple) and len(_dash_range) == 2:
+    if st.session_state["start_date"] != _dash_range[0] or st.session_state["end_date"] != _dash_range[1]:
+        st.session_state["start_date"] = _dash_range[0]
+        st.session_state["end_date"] = _dash_range[1]
+        st.rerun()
+
+# ------------------------------------------------------------
 # DASHBOARD TABS (Team Overview / Personal Stats)
 # ------------------------------------------------------------
 tab_team, tab_personal = st.tabs(["📊 Team Overview", "👥 Personal Stats"])
 
 # ---------- Team Overview ----------
 with tab_team:
-    # Level 1 — hero metric
-    st.markdown(
-        f"""
-        <div class="left-card" style="margin-bottom:0.6rem;">
-            <p class="section-title">Team Performance</p>
-            <p class="section-caption">Scope: {st.session_state['start_date'].strftime('%b %d, %Y')} — {st.session_state['end_date'].strftime('%b %d, %Y')}</p>
-            <div style="display:flex;align-items:baseline;gap:0.75rem;flex-wrap:wrap;">
-                <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:3rem;color:{style_ink};line-height:1;">{completion}%</span>
-                <span style="color:{style_gold};font-weight:700;font-size:1rem;">task completion</span>
-            </div>
-            <p class="section-caption" style="margin-top:0.3rem;margin-bottom:0;">
-                {task_status['done']} done • {task_open} open • {task_overdue} overdue • {total_range_meetings} meetings • {team_days_logged} log days
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<p class="section-caption">Meetings & tasks for {st.session_state["start_date"].strftime("%b %d, %Y")} — {st.session_state["end_date"].strftime("%b %d, %Y")}</p>', unsafe_allow_html=True)
 
-    # KPI strip (compact tiles)
+    # Simple KPI tiles
     kpi_cells = [
         ("Meetings", total_range_meetings),
-        ("Internal", total_internal_meetings),
-        ("External", total_external_meetings),
         ("Open Tasks", task_open),
-        ("Overdue", task_overdue),
+        ("Done", task_status["done"]),
         ("Log Days", team_days_logged),
     ]
-    kpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(6,1fr);">'
+    kpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">'
     for label, val in kpi_cells:
         kpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
     kpi_html += "</div>"
     st.markdown(kpi_html, unsafe_allow_html=True)
 
-    # Level 2 — charts (mix: matplotlib trends + CSS bars for categories)
-    c_ch1, c_ch2 = st.columns(2, gap="medium")
-
-    if c_ch1:
-        with c_ch1:
-            st.markdown('<p class="section-title">Meetings per Month</p>', unsafe_allow_html=True)
-            if meet_by_month:
-                keys = sorted(meet_by_month.keys())
-                vals = [meet_by_month[k] for k in keys]
-                fig, ax = plt.subplots(figsize=(5, 2.6), dpi=100)
-                ax.bar(keys, vals, color=style_ink, width=0.6)
-                current_key = today.strftime("%Y-%m")
-                for i, k in enumerate(keys):
-                    if k == current_key:
-                        ax.patches[i].set_color(style_gold)
-                ax.set_facecolor("white")
-                fig.patch.set_facecolor("white")
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                ax.set_ylabel("Meetings", color=style_muted, fontsize=9)
-                ax.tick_params(colors=style_muted, labelsize=8)
-                ax.set_title("", loc="left")
-                plt.xticks(rotation=45, ha="right")
-                plt.tight_layout()
-                st.pyplot(fig, clear_figure=True)
-            else:
-                st.info("No meetings in range.")
-
-    if c_ch2:
-        with c_ch2:
-            st.markdown('<p class="section-title">Task Status Split</p>', unsafe_allow_html=True)
-            if task_total:
-                st.markdown(
-                    f"""
-                    <div class="left-card" style="padding:0.75rem;">
-                        <div style="display:flex;gap:2px;height:18px;border-radius:6px;overflow:hidden;margin-bottom:0.6rem;">
-                            <div style="width:{100*task_status['todo']/max(task_total,1):.1f}%;background:{style_charcoal};" title="To Do"></div>
-                            <div style="width:{100*task_status['in_progress']/max(task_total,1):.1f}%;background:{style_ink};" title="In Progress"></div>
-                            <div style="width:{100*task_status['done']/max(task_total,1):.1f}%;background:{style_gold};" title="Done"></div>
-                        </div>
-                        <div style="display:flex;flex-wrap:wrap;gap:0.9rem;font-size:0.78rem;color:{style_muted};">
-                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_charcoal};margin-right:4px;"></span>To Do {task_status['todo']}</span>
-                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_ink};margin-right:4px;"></span>In Progress {task_status['in_progress']}</span>
-                            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{style_gold};margin-right:4px;"></span>Done {task_status['done']}</span>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.info("No tasks in range.")
-
-    # Category mix (CSS bars)
-    st.markdown('<p class="section-title">Daily Log Category Mix</p>', unsafe_allow_html=True)
-    cat_colors = [style_ink, style_gold, "#6B8E8E", style_muted]
-    if team_total_char:
-        for k, lab, col in zip(cat_keys, cat_labels, cat_colors):
-            share = team_category[k] / max(team_total_char, 1) * 100
-            st.markdown(
-                f"""
-                <div style="margin-bottom:0.45rem;">
-                    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:{style_muted};margin-bottom:0.15rem;">
-                        <span>{lab}</span><span>{int(share)}%</span>
-                    </div>
-                    <div style="background:#EDEAE2;border-radius:6px;height:10px;overflow:hidden;">
-                        <div style="width:{share:.1f}%;background:{col};height:100%;border-radius:6px;"></div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    # One chart: meetings per month
+    st.markdown('<p class="section-title">Meetings per Month</p>', unsafe_allow_html=True)
+    if meet_by_month:
+        keys = sorted(meet_by_month.keys())
+        vals = [meet_by_month[k] for k in keys]
+        fig, ax = plt.subplots(figsize=(7, 2.8), dpi=100)
+        ax.bar(keys, vals, color=style_ink, width=0.6)
+        current_key = today.strftime("%Y-%m")
+        for i, k in enumerate(keys):
+            if k == current_key:
+                ax.patches[i].set_color(style_gold)
+        ax.set_facecolor("white")
+        fig.patch.set_facecolor("white")
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.set_ylabel("Meetings", color=style_muted, fontsize=9)
+        ax.tick_params(colors=style_muted, labelsize=8)
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
+        st.pyplot(fig, clear_figure=True)
     else:
-        st.caption("No daily logs logged in range.")
+        st.info("No meetings in this period.")
 
-    # Level 3 — team task summary table
+    # Team task summary table
     st.markdown('<p class="section-title">Team Task Summary</p>', unsafe_allow_html=True)
     team_rows = []
     for member in all_members:
         ps = person_stats[member]
-        done = ps["tasks_done"]
-        open_ = ps["tasks_open"]
         team_rows.append({
-            "Member": member, "Done": done, "Open": open_, "Overdue": ps["tasks_overdue"],
-            "Days Logged": ps["days_logged"],
+            "Member": member, "Done": ps["tasks_done"], "Open": ps["tasks_open"],
+            "Overdue": ps["tasks_overdue"], "Days Logged": ps["days_logged"],
         })
     if team_rows:
         st.dataframe(
@@ -1021,36 +967,21 @@ with tab_personal:
     )
     ps = person_stats.get(select_member, {"tasks_open": 0, "tasks_done": 0, "tasks_overdue": 0, "days_logged": 0, "cat_chars": {k: 0 for k in cat_keys}})
 
-    # Person hero
-    p_done = ps["tasks_done"]; p_open = ps["tasks_open"]
-    p_pct = round(p_done / max(p_done + p_open, 1) * 100)
-    st.markdown(
-        f"""
-        <div class="left-card" style="margin-bottom:0.6rem;">
-            <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:2.2rem;color:{style_ink};">{select_member}</span>
-            <p class="section-caption" style="margin-top:0.3rem;margin-bottom:0;"><span style="color:{style_gold};font-weight:700;">{p_pct}%</span> completion • {p_done} done • {p_open} open • {ps['tasks_overdue']} overdue • {ps['days_logged']} log days</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<p class="section-caption">Stats for <strong>{select_member}</strong> in the selected period.</p>', unsafe_allow_html=True)
 
-    # Person category mix (CSS bars)
-    st.markdown('<p class="section-title">Category Mix</p>', unsafe_allow_html=True)
-    p_total = sum(ps["cat_chars"].values())
-    if p_total:
-        for k, lab, col in zip(cat_keys, cat_labels, cat_colors):
-            share = ps["cat_chars"][k] / max(p_total, 1) * 100
-            st.markdown(
-                f"""
-                <div style="margin-bottom:0.4rem;">
-                    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:{style_muted};margin-bottom:0.12rem;"><span>{lab}</span><span>{int(share)}%</span></div>
-                    <div style="background:#EDEAE2;border-radius:6px;height:9px;overflow:hidden;"><div style="width:{share:.1f}%;background:{col};height:100%;"></div></div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-    else:
-        st.caption("No daily-log activity for this member.")
+    # Simple per-member KPI tiles
+    p_done = ps["tasks_done"]; p_open = ps["tasks_open"]
+    pkpi = [
+        ("Done", p_done),
+        ("Open", p_open),
+        ("Overdue", ps["tasks_overdue"]),
+        ("Log Days", ps["days_logged"]),
+    ]
+    pkpi_html = '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">'
+    for label, val in pkpi:
+        pkpi_html += f'<div class="kpi-card"><span class="kpi-title">{label}</span><span class="kpi-value">{val}</span></div>'
+    pkpi_html += "</div>"
+    st.markdown(pkpi_html, unsafe_allow_html=True)
 
     # Person tasks detail table
     st.markdown('<p class="section-title">Task Detail</p>', unsafe_allow_html=True)

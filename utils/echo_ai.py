@@ -11,6 +11,7 @@ from datetime import datetime
 import docx
 from rapidfuzz import process, fuzz
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
+from utils.skills import load_prompt
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
@@ -1243,14 +1244,7 @@ def _perform_web_search(query: str) -> tuple:
 
 
 def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> list:
-    system_prompt = (
-        "You are an enterprise data extraction engine for PRIME Philippines. "
-        "Analyze the input (text, PDF content, DOCX content, or scanned images/diagrams) and extract all entities, properties, procedures, definitions, or table records. "
-        "For complex, tabular, or scouting logs that have varying schemas, assign 'category': 'knowledge', 'key': [Main Entity Name or Code], "
-        "and 'value': a compact JSON string capturing all available key-value pairs. "
-        "For team members, jargon, or projects, assign 'category' to 'team', 'jargon', or 'projects' respectively with a string or JSON 'value'. "
-        "Always return a valid JSON object with key 'items' containing an array of objects with: 'category', 'key', 'value', 'priority' (integer 1-5)."
-    )
+    system_prompt = load_prompt("data_extractor")
 
     if image_data_url:
         api_key = str(st.secrets.get("OPENROUTER_API_KEY", st.secrets.get("OPENAI_API_KEY", ""))).strip()
@@ -1419,18 +1413,11 @@ CURRENT DATE & TIME: {current_date_str}
         if web_context else ""
     )
 
-    system_prompt = (
-        "You are Echo, an executive AI analyst for PRIME Philippines. "
-        f"The current date is {current_date_str}. Directly answer temporal inquiries accurately. "
-        "Synthesize available sources, structured knowledge, and meeting archives accurately. Format responses concisely using Markdown headings, lists, and tables where appropriate. No emojis. "
-        f"{citation_rule}\n\n"
-        "Determine if the user input defines a new team member role, acronym, project specification, property update, or general entity that should be preserved in the persistent Knowledge Base. "
-        "Always respond in JSON format matching the schema:\n"
-        "{\n"
-        "  \"response\": \"Your thorough markdown response to the user\",\n"
-        "  \"propose_knowledge\": null OR {\"category\": \"knowledge|team|jargon|projects\", \"key\": \"Term/Entity Name\", \"value\": \"Definition or JSON string\", \"priority\": 2}\n"
-        "}\n\n"
-        f"{context_string}\n"
+    system_prompt = load_prompt(
+        "echo_analyst",
+        current_date=current_date_str,
+        citation_rule=citation_rule,
+        context=context_string,
     )
 
     messages = [{"role": "system", "content": f"{system_prompt}\n\nMeeting Archives:\n{archive_context[:24000]}"}]

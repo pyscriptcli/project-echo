@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+from utils.skills import load_prompt
 
 def query_global_team_archive(question: str, archive_records: list, chat_history: list) -> str:
     api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
@@ -10,11 +11,7 @@ def query_global_team_archive(question: str, archive_records: list, chat_history
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1)
 
-    system_prompt = (
-        "You are Echo Global, an executive AI analyst for PRIME Philippines. "
-        "Answer user questions accurately by synthesizing past meeting records, deadlines, and assigned persons-in-charge. "
-        "Format responses in concise, professional corporate English with clean markdown bullet points."
-    )
+    system_prompt = load_prompt("global_analyst")
 
     messages = [{"role": "system", "content": f"{system_prompt}\n\nArchives:\n{archive_context[:28000]}"}]
     for msg in chat_history[-6:]:
