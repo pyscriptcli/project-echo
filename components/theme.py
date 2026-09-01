@@ -66,10 +66,8 @@ html, body, [data-testid="stAppViewContainer"], .stApp {
     background-color: var(--echo-canvas) !important;
     background-image:
         linear-gradient(to right, var(--echo-grid) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--echo-grid) 1px, transparent 1px),
-        linear-gradient(to right, var(--echo-grid-fine) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--echo-grid-fine) 1px, transparent 1px) !important;
-    background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px !important;
+        linear-gradient(to bottom, var(--echo-grid) 1px, transparent 1px) !important;
+    background-size: 96px 96px, 96px 96px !important;
     color: var(--echo-ink);
     font-family: var(--echo-body);
 }
@@ -90,8 +88,9 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     border-radius: var(--echo-radius) !important;
 }
 
-/* App-wide buttons: charcoal + gold edge, squared */
+/* App-wide buttons: small, flat, box-shaped — deep charcoal + gold accent */
 .stButton > button,
+[data-testid="stButton"] > button,
 .stDownloadButton > button,
 .stFormSubmitButton > button,
 .stButton[kind="primary"] > button,
@@ -100,14 +99,18 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     color: var(--echo-white) !important;
     border: 1px solid var(--echo-gold) !important;
     border-radius: 0 !important;
-    font-size: 0.8rem !important;
+    font-size: 0.72rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
+    line-height: 1.2 !important;
+    padding: 0.15rem 0.6rem !important;
+    min-height: 26px !important;
+    height: 26px !important;
     box-shadow: none !important;
     transition: background-color 0.15s ease;
 }
 .stButton > button:hover,
+[data-testid="stButton"] > button:hover,
 .stDownloadButton > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stFormSubmitButton"] > button:hover {

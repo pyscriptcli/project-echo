@@ -21,6 +21,14 @@ class ThemeTests(unittest.TestCase):
         self.assertIn(".stButton > button,", captured["html"])
         self.assertIn("border-radius: 0 !important;\n", captured["html"])
 
+        # Hotfix spec: LARGE gridlines only (no 24px fine gridlines)
+        self.assertIn("background-size: 96px 96px, 96px 96px !important;", captured["html"])
+        self.assertNotIn("24px 24px", captured["html"])
+        # Hotfix spec: uniform compact charcoal/gold buttons
+        self.assertIn("font-size: 0.72rem !important;", captured["html"])
+        self.assertIn("min-height: 26px !important;", captured["html"])
+        self.assertIn("border: 1px solid var(--echo-gold) !important;", captured["html"])
+
 
 if __name__ == "__main__":
     unittest.main()
