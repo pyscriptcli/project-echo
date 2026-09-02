@@ -26,7 +26,7 @@ class ThemeTests(unittest.TestCase):
         self.assertIn("border-radius: 0 !important;\n", html)
 
     def test_theme_tokens(self):
-        """The shared theme exposes the gray-azure / navy / dark-gray palette."""
+        """The shared theme exposes the #d9d9d9 / navy / #a3acd5 palette."""
         import components.theme as theme
 
         captured = {}
@@ -34,15 +34,15 @@ class ThemeTests(unittest.TestCase):
             theme.inject_global_css()
 
         html = captured["html"]
-        # Gray-azure canvas, deep-navy ink, dark-gray buttons
-        self.assertIn("--echo-canvas: #A3ACB5;", html)
+        # Canvas / navy ink / blue-gray buttons
+        self.assertIn("--echo-canvas: #d9d9d9;", html)
         self.assertIn("--echo-ink: #0D1B3E;", html)
-        self.assertIn("--echo-button: #333333;", html)
-        self.assertIn("--echo-gold: #333333;", html)
+        self.assertIn("--echo-button: #a3acd5;", html)
+        self.assertIn("--echo-gold: #a3acd5;", html)
         # Bebas Neue loaded and used for numbers
         self.assertIn("Bebas+Neue", html)
         self.assertIn("--echo-number:", html)
-        # Buttons: dark-gray bg, white text
+        # Buttons: blue-gray bg, navy text
         self.assertIn("background-color: var(--echo-button) !important;", html)
         self.assertIn("color: #FFFFFF !important;", html)
 

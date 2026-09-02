@@ -34,7 +34,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 }
 
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #A3ACB5 !important;
+    background-color: #d9d9d9 !important;
     color: #2A3441;
 }
 
@@ -64,9 +64,9 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 }
 
 .stButton > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
@@ -76,9 +76,9 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    border-color: #1f1f1f !important;
-    background-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    border-color: #8fa2d6 !important;
+    background-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
     box-shadow: none !important;
 }
 

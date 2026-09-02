@@ -44,7 +44,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #A3ACB5 !important;
+    background-color: #d9d9d9 !important;
     color: #2A3441;
 }
 
@@ -55,11 +55,11 @@ html, body, [class*="css"] {
 }
 
 :root {
-    --bg: #A3ACB5;
+    --bg: #d9d9d9;
     --surface: #F9FAFB;
     --ink: #0D1B3E;
     --muted: #5A607A;
-    --gold: #333333;
+    --gold: #a3acd5;
     --danger: #C0392B;
     --radius: 0px;
     --control-height: 28px;

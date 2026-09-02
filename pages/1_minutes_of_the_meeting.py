@@ -55,7 +55,7 @@ CUSTOM_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .stApp {
-    background-color: #A3ACB5;
+    background-color: #d9d9d9;
     color: #2A3441;
 }
 .stApp > header { display: none !important; }
@@ -69,8 +69,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #F9FAFB !imp
 .stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #0D1B3E !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #333333 !important; color: #FFFFFF !important; border: 1px solid #333333 !important; border-radius: 0 !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 28px !important; min-height: 28px !important; padding: 0.1rem 0.5rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #1f1f1f !important; border-color: #1f1f1f !important; color: #FFFFFF !important; box-shadow: none !important; }
+.stButton > button { background-color: #a3acd5 !important; color: #0D1B3E !important; border: 1px solid #a3acd5 !important; border-radius: 0 !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 28px !important; min-height: 28px !important; padding: 0.1rem 0.5rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #8fa2d6 !important; border-color: #8fa2d6 !important; color: #0D1B3E !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {
@@ -1351,7 +1351,7 @@ if st.session_state["transcript"]:
             with t_col1:
                 escaped_tx = json.dumps(st.session_state["transcript"])
                 copy_html = f"""
-                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#333333;color:#FFFFFF;border:1px solid #333333;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#1f1f1f;color:#FFFFFF;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
+                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#a3acd5;color:#0D1B3E;border:1px solid #a3acd5;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#8fa2d6;color:#0D1B3E;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
                 components.html(copy_html, height=36)
             with t_col2:

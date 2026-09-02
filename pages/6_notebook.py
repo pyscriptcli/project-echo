@@ -39,7 +39,7 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #A3ACB5;
+        background-color: #d9d9d9;
         font-family: 'Montserrat', sans-serif;
         color: #2A3441;
     }
@@ -81,7 +81,7 @@ NOTEBOOK_CSS = """
     }
     .stTabs [aria-selected="true"] {
         color: #0D1B3E !important;
-        border-bottom: 2px solid #333333;
+        border-bottom: 2px solid #a3acd5;
     }
 
     /* Containers */
@@ -165,9 +165,9 @@ NOTEBOOK_CSS = """
     div[data-testid="stDownloadButton"] > button {
         border-radius: 0 !important;
         font-weight: 600 !important;
-        background-color: #333333 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #333333 !important;
+        background-color: #a3acd5 !important;
+        color: #0D1B3E !important;
+        border: 1px solid #a3acd5 !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
         min-height: 28px !important;
@@ -182,23 +182,23 @@ NOTEBOOK_CSS = """
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,
     div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #1f1f1f !important;
-        border-color: #1f1f1f !important;
-        color: #FFFFFF !important;
+        background-color: #8fa2d6 !important;
+        border-color: #8fa2d6 !important;
+        color: #0D1B3E !important;
         box-shadow: none !important;
     }
     
-    /* Secondary Buttons override (dark gray) */
+    /* Secondary Buttons override */
     button[kind="secondary"] {
-        background-color: #333333 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #333333 !important;
+        background-color: #a3acd5 !important;
+        color: #0D1B3E !important;
+        border: 1px solid #a3acd5 !important;
         box-shadow: none !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #1f1f1f !important;
-        border-color: #1f1f1f !important;
-        color: #FFFFFF !important;
+        background-color: #8fa2d6 !important;
+        border-color: #8fa2d6 !important;
+        color: #0D1B3E !important;
         box-shadow: none !important;
     }
     

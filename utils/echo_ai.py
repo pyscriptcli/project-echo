@@ -237,9 +237,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button,
 .echo-top-controls div[data-testid="stButton"] > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     height: 28px !important;
     min-height: 28px !important;
@@ -253,8 +253,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button:hover,
 .echo-top-controls div[data-testid="stButton"] > button:hover {
-    border-color: #1f1f1f !important;
-    background-color: #1f1f1f !important;
+    border-color: #8fa2d6 !important;
+    background-color: #8fa2d6 !important;
     box-shadow: none !important;
 }
 
@@ -494,15 +494,15 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button {
-    background-color: rgba(212, 175, 55, 0.15) !important;
-    color: #D4AF37 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
     border-radius: 50% !important;
     transition: all 0.2s ease-in-out !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button:hover {
-    background-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    background-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
     box-shadow: none !important;
 }
 

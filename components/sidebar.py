@@ -98,7 +98,7 @@ section[data-testid="stSidebar"] {
 /* ---------------- Sidebar shell ---------------- */
 section[data-testid="stSidebar"] {
     /* Gray azure background, hairline navy border, subtle shadow */
-    background: #A3ACB5 !important;
+    background: #d9d9d9 !important;
     border-right: 1px solid rgba(13, 27, 62, 0.15) !important;
     box-shadow: 4px 0 14px rgba(13, 27, 62, 0.12), 2px 0 6px rgba(13, 27, 62, 0.05) !important;
 }
@@ -223,9 +223,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 
 /* ---------------- Sign Out — small dark-gray button ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     height: 26px !important;                      /* original height, narrow */
     min-height: 26px !important;
@@ -237,13 +237,13 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: #1f1f1f !important;
-    color: #FFFFFF !important;
-    border-color: #1f1f1f !important;
+    background: #8fa2d6 !important;
+    color: #0D1B3E !important;
+    border-color: #8fa2d6 !important;
 }
 
 /* ============================================================
-   GLOBAL BUTTONS — dark gray bg, white text
+   GLOBAL BUTTONS — blue-gray bg (#a3acd5), navy text
    Scoped to the main content area so the sidebar nav/sign-out
    keeps its own styling. Applied on every page via the sidebar.
    ============================================================ */
@@ -251,9 +251,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button,
 .stFormSubmitButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
@@ -269,9 +269,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stDownloadButton"] > button:hover {
-    background-color: #1f1f1f !important;
-    border-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    background-color: #8fa2d6 !important;
+    border-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
     box-shadow: none !important;
 }
 </style>

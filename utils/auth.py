@@ -216,9 +216,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .stFormSubmitButton > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
@@ -228,8 +228,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stFormSubmitButton > button:hover {
-    background-color: #1f1f1f !important;
-    border-color: #1f1f1f !important;
+    background-color: #8fa2d6 !important;
+    border-color: #8fa2d6 !important;
 }
 
 .login-error {

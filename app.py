@@ -52,7 +52,7 @@ footer {
 }
 
 .stApp {
-    background-color: #A3ACB5 !important;
+    background-color: #d9d9d9 !important;
     font-family: 'Montserrat', sans-serif !important;
     color: #2A3441;
 }
@@ -174,9 +174,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 
 div[data-testid="stPopover"] { margin-bottom: 0 !important; }
 div[data-testid="stPopover"] > button {
-    background-color: #333333 !important;
-    color: #ffffff !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-size: 0.75rem !important;
     min-height: 32px !important;
@@ -184,9 +184,9 @@ div[data-testid="stPopover"] > button {
 }
 .stButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #333333 !important;
-    color: #ffffff !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
@@ -198,11 +198,11 @@ div[data-testid="stPopover"] > button {
 
 /* ===== tasks.py Calendar Styles ===== */
 :root {
-    --bg: #A3ACB5;
+    --bg: #d9d9d9;
     --surface: rgba(255, 255, 255, 0.8);
     --ink: #0D1B3E;
     --muted: #5A607A;
-    --gold: #333333;
+    --gold: #a3acd5;
     --danger: #E5484D;
     --radius: 0px;
     --control-height: 28px;
@@ -797,7 +797,7 @@ all_events = build_calendar_events()
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
 style_ink = "#0D1B3E"
-style_gold = "#333333"
+style_gold = "#a3acd5"
 style_muted = "#5A607A"
 
 # Task status buckets
@@ -1159,7 +1159,7 @@ with col_right:
 
                 st.markdown(
                     f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
-                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#0D1B3E;border-bottom:2px solid #333333;' if is_today else 'color:#0D1B3E;border-bottom:1px solid rgba(13,27,62,0.3);')}'"
+                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#0D1B3E;border-bottom:2px solid #a3acd5;' if is_today else 'color:#0D1B3E;border-bottom:1px solid rgba(13,27,62,0.3);')}'"
                     f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                     unsafe_allow_html=True
                 )

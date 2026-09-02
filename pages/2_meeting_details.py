@@ -87,7 +87,7 @@ CUSTOM_CSS = """
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
-    background-color: #A3ACB5;
+    background-color: #d9d9d9;
     color: #2A3441;
 }
 .stApp > header { display: none !important; }
@@ -138,9 +138,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Base Buttons */
 .stButton > button {
-    background-color: #333333 !important; 
-    color: #FFFFFF !important; 
-    border: 1px solid #333333 !important; 
+    background-color: #a3acd5 !important; 
+    color: #0D1B3E !important; 
+    border: 1px solid #a3acd5 !important; 
     border-radius: 0 !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 600 !important; 
@@ -153,9 +153,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .stButton > button:hover { 
-    background-color: #1f1f1f !important; 
-    color: #FFFFFF !important; 
-    border-color: #1f1f1f !important;
+    background-color: #8fa2d6 !important; 
+    color: #0D1B3E !important; 
+    border-color: #8fa2d6 !important;
     box-shadow: none !important;
     transform: none !important;
 }
@@ -171,9 +171,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Topbar Date Picker Trigger Styling */
 div[data-testid="stPopover"] > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     font-size: 0.84rem !important;
     font-weight: 600 !important;
@@ -186,9 +186,9 @@ div[data-testid="stPopover"] > button {
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: #1f1f1f !important;
-    background-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    border-color: #8fa2d6 !important;
+    background-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
     transform: none !important;
 }
 
@@ -225,17 +225,17 @@ div[data-testid="stPopoverBody"] {
 }
 
 .stButton > button[key="btn_apply_modal_date"] {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     height: 36px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_apply_modal_date"]:hover {
-    background-color: #1f1f1f !important;
-    border-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    background-color: #8fa2d6 !important;
+    border-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
     transform: none !important;
 }
 
@@ -243,7 +243,7 @@ div[data-testid="stPopoverBody"] {
 .stButton > button[key="btn_back_gallery"] {
     background-color: transparent !important;
     color: #0D1B3E !important;
-    border: 1px solid rgba(13, 27, 62, 0.3) !important;
+    border: 1px solid #a3acd5 !important;
     width: auto !important;
     min-width: 170px !important;
 }
@@ -254,17 +254,17 @@ div[data-testid="stPopoverBody"] {
 
 /* Details Action Buttons */
 .stButton > button[key="btn_toggle_edit_details"], .stButton > button[key="btn_cancel_edit_details"] {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     border-radius: 0 !important;
     height: 34px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_toggle_edit_details"]:hover, .stButton > button[key="btn_cancel_edit_details"]:hover {
-    background-color: #1f1f1f !important;
-    border-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    background-color: #8fa2d6 !important;
+    border-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
 }
 
 /* Gallery Typography */
@@ -361,9 +361,9 @@ div[data-testid="stPopover"] > button:hover {
 /* ===== PALETTE RECOLOR OVERRIDE: dark-gray bg, white text ===== */
 .stButton > button,
 div[data-testid="stPopover"] > button {
-    background-color: #333333 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
+    background-color: #a3acd5 !important;
+    color: #0D1B3E !important;
+    border: 1px solid #a3acd5 !important;
     font-size: 0.68rem !important;
     height: 28px !important;
     min-height: 28px !important;
@@ -374,12 +374,12 @@ div[data-testid="stPopover"] > button {
 }
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {
-    background-color: #1f1f1f !important;
-    border-color: #1f1f1f !important;
-    color: #FFFFFF !important;
+    background-color: #8fa2d6 !important;
+    border-color: #8fa2d6 !important;
+    color: #0D1B3E !important;
 }
 [data-testid="stAppViewContainer"] .block-container {
-    background-color: #A3ACB5 !important;
+    background-color: #d9d9d9 !important;
 }
 .meeting-page h1, .meeting-page h2, .meeting-page h3,
 [data-testid="stAppViewContainer"] h3 {

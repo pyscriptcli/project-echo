@@ -5,10 +5,10 @@ Single source of truth for the design system so every page stays consistent.
 `inject_global_css()` callable from any page (idempotent) emits one <style> block.
 
 Palette:
-  #A3ACB5  canvas (gray azure) / also sidebar bg
+  #d9d9d9  canvas / also sidebar bg
   #0D1B3E  ink / header fonts (deep navy blue)
-  #333333  buttons (dark gray)
-  #F9FAFB  panels / cards (near-white, light on gray-azure)
+  #a3acd5  buttons (blue-gray / periwinkle)
+  #F9FAFB  panels / cards (light on canvas)
   #5A607A  muted body text
 
 Typography:
@@ -21,13 +21,13 @@ import streamlit as st
 
 # --- Design tokens (CSS custom properties + Python constants, mirrored) ---
 TOKENS = {
-    "canvas": "#A3ACB5",
+    "canvas": "#d9d9d9",
     "panel": "#F9FAFB",
     "ink": "#0D1B3E",
     "muted": "#5A607A",
-    "gold": "#333333",
-    "button": "#333333",
-    "button_hover_bg": "#1f1f1f",
+    "gold": "#a3acd5",
+    "button": "#a3acd5",
+    "button_hover_bg": "#8fa2d6",
     "borders": "rgba(13,27,62,0.15)",
     "white": "#FFFFFF",
     "danger": "#C0392B",
@@ -46,13 +46,13 @@ TOKENS = {
 def tokens_css() -> str:
     return """
     :root {
-        --echo-canvas: #A3ACB5;
+        --echo-canvas: #d9d9d9;
         --echo-panel: #F9FAFB;
         --echo-ink: #0D1B3E;
         --echo-muted: #5A607A;
-        --echo-gold: #333333;
-        --echo-button: #333333;
-        --echo-button-hover-bg: #1f1f1f;
+        --echo-gold: #a3acd5;
+        --echo-button: #a3acd5;
+        --echo-button-hover-bg: #8fa2d6;
         --echo-borders: rgba(13,27,62,0.15);
         --echo-white: #FFFFFF;
         --echo-danger: #C0392B;
@@ -105,7 +105,7 @@ div[data-testid="stVerticalBlockBorderWrapper"],
 .stFormSubmitButton > button,
 [data-testid="stFormSubmitButton"] > button {
     background-color: var(--echo-button) !important;
-    color: #FFFFFF !important;
+    color: #0D1B3E !important;
     border: 1px solid var(--echo-button) !important;
     border-radius: 0 !important;
     font-family: var(--echo-body) !important;
@@ -126,7 +126,7 @@ div[data-testid="stVerticalBlockBorderWrapper"],
 .stFormSubmitButton > button:hover,
 [data-testid="stFormSubmitButton"] > button:hover {
     background-color: var(--echo-button-hover-bg) !important;
-    color: #FFFFFF !important;
+    color: #0D1B3E !important;
     border-color: var(--echo-button-hover-bg) !important;
     box-shadow: none !important;
 }
@@ -272,7 +272,7 @@ div[data-baseweb="select"] > div,
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     color: #0D1B3E !important;
     background-color: transparent !important;
-    border-bottom: 2px solid #333333 !important;
+    border-bottom: 2px solid #a3acd5 !important;
 }
 
 /* ---- Muted/helper text ---- */
