@@ -27,8 +27,6 @@ NAV_ITEMS = [
     ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
     ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
     ("pages/6_notebook.py", "Notebook", ":material/edit_note:"),
-    ("pages/5_atlas.py", "Project Atlas", ":material/map:"),
-    ("pages/7_project_node.py", "Project Node", ":material/hub:"),
     ("pages/8_documents.py", "Documents", ":material/description:"),
 ]
 

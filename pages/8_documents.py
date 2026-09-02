@@ -53,13 +53,6 @@ setup_page_layout()
 DOCUMENTS_PAGE_CSS = """
 <style>
 /* Documents page — custom classes styled with Project Echo tokens */
-.workspace-card {
-    background-color: rgba(255, 255, 255, 0.9);
-    border: 1px solid #C1BAA1;
-    border-radius: 0;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-}
 .editor-card {
     background-color: rgba(255, 255, 255, 0.9);
     border: 2px solid #A59D84;
@@ -75,6 +68,21 @@ DOCUMENTS_PAGE_CSS = """
     border-left: 4px solid #A59D84;
     padding-left: 0.6rem;
     margin-bottom: 0.6rem;
+}
+.docs-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.9rem;
+    color: #0D1B3E;
+    line-height: 1.1;
+    margin: 0 0 0.2rem 0;
+}
+.docs-caption {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #6E6A6A;
+    margin: 0 0 0.5rem 0;
 }
 .saved-indicator {
     background-color: #D7D3BF;
@@ -999,6 +1007,7 @@ def docx_bytes_to_pdf(docx_bytes):
         )
 
 
+def get_download_filename(template_name, file_type):
     """Generate filename: Generated_TemplateName_Date"""
     # Remove template_ prefix and file extension
     base_name = re.sub(r'^template_', '', template_name or "Document")
@@ -1085,9 +1094,9 @@ if "show_type_mapping" not in st.session_state: st.session_state.show_type_mappi
 if "temp_form_data" not in st.session_state: st.session_state.temp_form_data = {}
 
 # --- PAGE HEADER (native) ---
-st.markdown('<p class="section-title">Documents</p>', unsafe_allow_html=True)
+st.markdown('<p class="docs-title">Documents</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="section-caption">Generate branded documents from PPTX/DOCX templates with text, image, and map placeholders.</p>',
+    '<p class="docs-caption">Generate branded documents from PPTX/DOCX templates with text, image, and map placeholders.</p>',
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -1104,7 +1113,6 @@ else:
         st.session_state.restore_form_data = False
 
     st.markdown("<hr style='margin: 4px 0 12px 0;'>", unsafe_allow_html=True)
-    st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-header">Templates</div>', unsafe_allow_html=True)
 
     col_template1, col_template2 = st.columns(2)
@@ -1205,7 +1213,6 @@ else:
         template_name = st.session_state.saved_template_name or "Unsaved Template"
         is_github = os.path.exists(os.path.join(TEMPLATES_DIR, template_name))
         st.markdown(f'<div class="saved-indicator">Active: {template_name}{"" if is_github else ""} ({st.session_state.template_type.upper()})</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     text_data, image_data, field_types = {}, {}, {}
 
@@ -1363,7 +1370,6 @@ else:
 
     # --- DOWNLOAD & CLEANUP SECTION ---
     if st.session_state.template_bytes is not None:
-        st.markdown('<div class="workspace-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-header">Download Document</div>', unsafe_allow_html=True)
 
         base_template_name = re.sub(r'\.(pptx|docx)$', '', st.session_state.saved_template_name or "Generated_Document")
@@ -1413,6 +1419,5 @@ else:
                                       help=f"PDF export unavailable: {pdf_error}")
                 except Exception as e:
                     st.error(f"Error generating document: {str(e)}")
-        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.info("Please upload or select a template to begin")
