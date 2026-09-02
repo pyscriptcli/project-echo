@@ -944,7 +944,61 @@ def generate_docx_bytes(template_bytes, text_inputs, image_inputs):
     doc.save(doc_stream)
     return doc_stream.getvalue()
 
-def get_download_filename(template_name, file_type):
+
+def docx_bytes_to_pdf(docx_bytes):
+    """Convert generated DOCX bytes to PDF bytes.
+
+    Engine auto-detect: try `docx2pdf` (wraps installed Microsoft Word / LibreOffice)
+    first, then fall back to a LibreOffice `soffice` headless subprocess. Raises a
+    clear error if no usable converter is installed.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        docx_path = os.path.join(td, "input.docx")
+        pdf_path = os.path.join(td, "output.pdf")
+        with open(docx_path, "wb") as f:
+            f.write(docx_bytes)
+
+        # Engine 1: docx2pdf (uses installed MS Word, or LibreOffice if configured).
+        try:
+            import docx2pdf
+        except Exception:
+            docx2pdf = None
+
+        if docx2pdf is not None:
+            try:
+                docx2pdf.convert(docx_path, pdf_path)
+                if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0:
+                    with open(pdf_path, "rb") as f:
+                        return f.read()
+            except Exception:
+                pass  # fall through to LibreOffice
+
+        # Engine 2: LibreOffice headless.
+        soffice = shutil.which("soffice") or shutil.which("libreoffice")
+        if soffice is not None:
+            try:
+                result = subprocess.run(
+                    [soffice, "--headless", "--convert-to", "pdf", "--outdir", td, docx_path],
+                    capture_output=True,
+                    timeout=180,
+                )
+                # LibreOffice writes output.pdf in `td`.
+                if result.returncode == 0 and os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0:
+                    with open(pdf_path, "rb") as f:
+                        return f.read()
+            except Exception:
+                pass
+
+        raise RuntimeError(
+            "No DOCX→PDF converter available. Install Microsoft Word (docx2pdf) or "
+            "LibreOffice (`soffice`) on this machine to export PDFs."
+        )
+
+
     """Generate filename: Generated_TemplateName_Date"""
     # Remove template_ prefix and file extension
     base_name = re.sub(r'^template_', '', template_name or "Document")
@@ -1335,11 +1389,28 @@ else:
             else:
                 try:
                     docx_data = generate_docx_bytes(st.session_state.template_bytes, text_data, image_data)
-                    st.download_button(
-                        label="Download DOCX", data=docx_data, file_name=get_download_filename(base_template_name, "docx"),
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True, key="download_docx", on_click=purge_all_temporary_data
-                    )
+                    col_docx, col_pdf = st.columns(2)
+                    with col_docx:
+                        st.download_button(
+                            label="Download DOCX", data=docx_data, file_name=get_download_filename(base_template_name, "docx"),
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            use_container_width=True, key="download_docx", on_click=purge_all_temporary_data
+                        )
+                    with col_pdf:
+                        try:
+                            pdf_data = docx_bytes_to_pdf(docx_data)
+                        except Exception as e:
+                            pdf_data = None
+                            pdf_error = str(e)
+                        if pdf_data is not None:
+                            st.download_button(
+                                label="Download PDF", data=pdf_data, file_name=get_download_filename(base_template_name, "pdf"),
+                                mime="application/pdf", use_container_width=True, key="download_pdf",
+                                on_click=purge_all_temporary_data
+                            )
+                        else:
+                            st.button("Download PDF", disabled=True, use_container_width=True, key="download_pdf_disabled",
+                                      help=f"PDF export unavailable: {pdf_error}")
                 except Exception as e:
                     st.error(f"Error generating document: {str(e)}")
         st.markdown('</div>', unsafe_allow_html=True)

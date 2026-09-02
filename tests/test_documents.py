@@ -16,9 +16,10 @@ class DocumentsIntegrationTests(unittest.TestCase):
         with open("pages/8_documents.py", encoding="utf-8") as f:
             source = f.read()
 
-        # Standalone imports the app build does not use should be gone.
-        for unused in ("subprocess", "tempfile", "base64", "traceback"):
-            self.assertNotIn(f"import {unused}", source)
+        # Standalone top-level imports the app build does not use should be gone.
+        # (subprocess/tempfile now legitimately appear inside docx_bytes_to_pdf.)
+        for sig in ("import io\nimport subprocess", "import base64", "import traceback"):
+            self.assertNotIn(sig, source)
 
         # Storage must point at the committed repo templates folder, not a
         # past-project hardcoded path or a standalone "OpenFlux" identity.
@@ -54,6 +55,52 @@ class DocumentsIntegrationTests(unittest.TestCase):
         self.assertIn("def load_template_from_file(template_name)", source)
         self.assertIn("def extract_placeholders(template_bytes, template_type)", source)
         self.assertIn("def fetch_tile_with_retry(url_template, zoom, x, y, max_retries=3)", source)
+
+    def test_docx_to_pdf_export_wired(self):
+        """The .docx download flow must offer a PDF export and use the shared
+        helper, never writing to the DB."""
+        with open("pages/8_documents.py", encoding="utf-8") as f:
+            source = f.read()
+
+        self.assertIn("def docx_bytes_to_pdf(docx_bytes)", source)
+        self.assertIn('label="Download PDF"', source)
+        self.assertIn('get_download_filename(base_template_name, "pdf")', source)
+        self.assertIn("download_pdf_disabled", source)
+
+
+class DocxToPdfHelperTests(unittest.TestCase):
+    def test_raises_clear_error_when_no_converter(self):
+        """With neither docx2pdf nor LibreOffice available, the helper must raise
+        a RuntimeError explaining what's missing (not crash obscurely)."""
+        import importlib.util
+        import sys
+
+        # Cannot import the page module without a Streamlit runtime; instead test
+        # the pure logic by extracting the function source and compiling it.
+        with open("pages/8_documents.py", encoding="utf-8") as f:
+            source = f.read()
+        marker = "def docx_bytes_to_pdf(docx_bytes):"
+        start = source.index(marker)
+        # Include a minimal header so exec has the pieces the function uses.
+        ns = {"os": __import__("os")}
+        head = "import os\n"
+        exec(head + source[start:source.index("\n\ndef ", start)], ns)
+        fn = ns["docx_bytes_to_pdf"]
+
+        # Force the no-engine path: make docx2pdf import fail and no soffice on PATH.
+        sys.modules["docx2pdf"] = None  # importlib.import_module("docx2pdf") raises ImportError
+        import shutil
+        orig_which = shutil.which
+        shutil.which = lambda name, **kw: None
+        try:
+            with self.assertRaises(RuntimeError) as ctx:
+                fn(b"%PDF-fake-minimal-docx-bytes")
+            self.assertIn("docx2pdf", str(ctx.exception))
+            self.assertIn("LibreOffice", str(ctx.exception))
+            self.assertIn("soffice", str(ctx.exception))
+        finally:
+            shutil.which = orig_which
+            sys.modules.pop("docx2pdf", None)
 
 
 if __name__ == "__main__":

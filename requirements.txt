@@ -39,5 +39,6 @@ openpyxl>=3.1.2
 pandas>=2.2.0
 python-pptx>=1.0.0
 python-docx>=1.1.0
+docx2pdf>=0.1.8   # optional: DOCX→PDF on the Documents page (needs MS Word or LibreOffice installed)
 rapidfuzz>=3.6.0
 bcrypt

@@ -22,7 +22,7 @@ Built with **Streamlit + Supabase**, powered by **DeepSeek / OpenRouter** LLMs, 
 
 **? Atlas** — map / point-of-interest explorer.
 
-**? Documents** — generate branded PPTX/DOCX documents from templates (text, image, and map placeholders) with CTA presets; generated locally and exported — nothing is saved to the database.
+**? Documents** — generate branded PPTX/DOCX documents from templates (text, image, and map placeholders) with CTA presets and DOCX→PDF export; generated locally and exported — nothing is saved to the database.
 
 **? Admin** — multi-tab console: accounts & password management, usage telemetry, Agent-access RBAC, and per-user token rate limits.
 
