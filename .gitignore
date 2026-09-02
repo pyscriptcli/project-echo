@@ -9,5 +9,8 @@ env/
 # Streamlit
 .streamlit/secrets.toml
 
+# App runtime uploads (Documents page)
+stored_templates/
+
 # Misc
 .DS_Store

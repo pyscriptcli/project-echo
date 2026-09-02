@@ -22,6 +22,8 @@ Built with **Streamlit + Supabase**, powered by **DeepSeek / OpenRouter** LLMs, 
 
 **? Atlas** — map / point-of-interest explorer.
 
+**? Documents** — generate branded PPTX/DOCX documents from templates (text, image, and map placeholders) with CTA presets; generated locally and exported — nothing is saved to the database.
+
 **? Admin** — multi-tab console: accounts & password management, usage telemetry, Agent-access RBAC, and per-user token rate limits.
 
 ---
@@ -51,7 +53,9 @@ project-echo/
 │   ├── 3_echo_ai.py          # Ask Echo (AI + agent)
 │   ├── 4_tasks.py
 │   ├── 5_atlas.py
-│   └── 6_notebook.py         # Notepad (auto-save) + Daily Log
+│   ├── 6_notebook.py         # Notepad (auto-save) + Daily Log
+│   └── 7_project_node.py
+├── documents_template/       # Committed PPTX/DOCX templates for the Documents page
 ├── components/               # Shared UI (sidebar, calendar filters)
 ├── utils/                    # Data / auth / AI / skills logic
 │   ├── auth.py               # login, sessions, RBAC, passwords
