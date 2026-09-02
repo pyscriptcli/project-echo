@@ -236,6 +236,7 @@ def _render_map(records, center_lat, center_lon, radius):
 # ------------------------------------------------------------
 # PAGE CONTENT — controls live INSIDE the page (left panel)
 # ------------------------------------------------------------
+st.markdown('<p class="page-eyebrow">Explorer</p>', unsafe_allow_html=True)
 st.markdown('<p class="section-title">Project Node</p>', unsafe_allow_html=True)
 st.markdown(
     '<p class="section-caption">Scan a coordinate radius for OpenStreetMap points of interest (POIs) and explore them on the map.</p>',

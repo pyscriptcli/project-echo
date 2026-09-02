@@ -52,8 +52,8 @@ footer {
 }
 
 .stApp {
-    background-color: #ECEBDE !important;
-    font-family: 'Inter', sans-serif !important;
+    background-color: #0A1128 !important;
+    font-family: 'Montserrat', sans-serif !important;
 }
 
 .block-container {
@@ -87,11 +87,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 }
 
 .left-card {
-    background: rgba(255,255,255,0.95);
-    border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 8px;
+    background: rgba(16,30,56,0.9);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 0;
     padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: none;
+    color: #F5F5F0;
     flex-shrink: 0;
 }
 
@@ -103,16 +104,16 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 }
 
 .section-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-weight: 600;
-    color: #0D1B3E;
-    font-size: 1.1rem;
+    font-weight: 500;
+    color: #F5F5F0;
+    font-size: 1.5rem;
     margin: 0 0 0.2rem 0;
 }
 .section-caption {
-    font-size: 0.75rem;
-    color: #6C727A;
+    font-size: 0.8rem;
+    color: #8A9BAE;
     margin: 0 0 0.8rem 0;
 }
 
@@ -122,50 +123,50 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     gap: 0.5rem;
 }
 .kpi-card {
-    background: #fff;
-    border-radius: 4px;
+    background: #101E38;
+    border-radius: 0;
     padding: 0.5rem 0.65rem;
-    border: 1px solid rgba(0,0,0,0.07);
-    border-left: 3.5px solid #D7D3BF;
+    border: 1px solid rgba(212,175,55,0.2);
+    border-left: 3.5px solid #D4AF37;
 }
 .kpi-title {
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #6C727A;
+    color: #8A9BAE;
 }
 .kpi-value {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #0D1B3E;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: #F5F5F0;
 }
 
 .meeting-card {
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 4px;
+    background: #101E38;
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 0;
     padding: 0.6rem 0.75rem;
     margin-bottom: 0.5rem;
 }
 .meeting-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #0D1B3E;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #F5F5F0;
     margin: 0 0 0.1rem 0;
 }
 .meeting-sub {
     font-size: 0.65rem;
-    color: #6C727A;
+    color: #8A9BAE;
     margin-bottom: 0.3rem;
 }
 .meeting-desc {
     font-size: 0.75rem;
-    color: #2D2D2D;
+    color: #C9D2DE;
     line-height: 1.35;
     margin: 0;
 }
@@ -196,12 +197,12 @@ div[data-testid="stPopover"] > button {
 
 /* ===== tasks.py Calendar Styles ===== */
 :root {
-    --bg: #F3EFE6;
-    --surface: #FFFFFF;
-    --ink: #0D1B3E;
-    --muted: #6E6A6A;
-    --gold: #D7D3BF;
-    --danger: #E74C3C;
+    --bg: #0A1128;
+    --surface: #101E38;
+    --ink: #F5F5F0;
+    --muted: #8A9BAE;
+    --gold: #D4AF37;
+    --danger: #E5484D;
     --radius: 6px;
     --control-height: 28px;
 }
@@ -301,8 +302,8 @@ h3 {
     box-sizing: border-box;
 }
 .cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
-.cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
-.cal-month-cell.weekend { background: #D7D3BF; border-color: #D7D3BF; }
+.cal-month-cell.dim { background: rgba(138, 155, 174, 0.05); border: none; }
+.cal-month-cell.weekend { background: rgba(212, 175, 55, 0.12); border-color: rgba(212, 175, 55, 0.3); }
 .cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
 
 .cal-month-day-num {
@@ -792,9 +793,9 @@ all_events = build_calendar_events()
 # ------------------------------------------------------------
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
-style_ink = "#0D1B3E"
-style_gold = "#D7D3BF"
-style_muted = "#6E6A6A"
+style_ink = "#F5F5F0"
+style_gold = "#D4AF37"
+style_muted = "#8A9BAE"
 
 # Task status buckets
 status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
@@ -893,6 +894,8 @@ if isinstance(_dash_range, tuple) and len(_dash_range) == 2:
 # ------------------------------------------------------------
 # DASHBOARD (Team Overview KPIs)
 # ------------------------------------------------------------
+st.markdown('<p class="page-eyebrow">Project Echo</p>', unsafe_allow_html=True)
+st.markdown('<p class="page-title">Dashboard</p>', unsafe_allow_html=True)
 st.markdown(f'<p class="section-caption">Meetings & tasks for {st.session_state["start_date"].strftime("%b %d, %Y")} \u2014 {st.session_state["end_date"].strftime("%b %d, %Y")}</p>', unsafe_allow_html=True)
 
 # Simple KPI tiles
@@ -992,7 +995,7 @@ with col_right:
         # Title + Add Task button
         title_col, add_col = st.columns([3, 1], gap="medium")
         with title_col:
-            st.markdown('<h2 style="font-family:\'Playfair Display\', serif; font-style:italic; color:#0D1B3E; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Cormorant Garamond\', serif; font-style:italic; color:#F5F5F0; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         with add_col:
             if st.button("+ Add Task", key="cal_add_task_global", use_container_width=True):
                 st.session_state["cal_new_task_date"] = today
@@ -1153,7 +1156,7 @@ with col_right:
 
                 st.markdown(
                     f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
-                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#0D1B3E;border-bottom:2px solid #D7D3BF;' if is_today else 'color:#0D1B3E;border-bottom:1px solid rgba(13,27,62,0.15);')}'"
+                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#D4AF37;border-bottom:2px solid #D4AF37;' if is_today else 'color:#F5F5F0;border-bottom:1px solid rgba(212,175,55,0.3);')}'"
                     f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                     unsafe_allow_html=True
                 )
@@ -1187,9 +1190,9 @@ with col_right:
                 with header_cols[i]:
                     is_weekend = (i == 0 or i == 6)
                     header_style = (
-                        "background:#D7D3BF; color:#0D1B3E; border-radius:6px 6px 0 0;"
+                        "background:rgba(212,175,55,0.25); color:#F5F5F0;"
                         if is_weekend
-                        else "background:#FFFFFF; color:#0D1B3E; border:1px solid rgba(13,27,62,0.15); border-bottom:none;"
+                        else "background:#101E38; color:#F5F5F0; border:1px solid rgba(212,175,55,0.25); border-bottom:none;"
                     )
                     st.markdown(
                         f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1209,8 +1212,8 @@ with col_right:
                             if in_month:
                                 dot = '<span class="today-dot"></span>' if is_today else ''
                                 st.markdown(
-                                    f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
-                                    f"font-size:0.9rem;font-weight:600;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                    f"<div style='display:flex;align-items:center;gap:4px;font-family:Cormorant Garamond,serif;"
+                                    f"font-size:0.95rem;font-weight:500;color:#F5F5F0;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                     unsafe_allow_html=True
                                 )
 
@@ -1230,7 +1233,7 @@ with col_right:
 
                                 if len(day_events) > 3:
                                     st.markdown(
-                                        f"<div style='font-size:0.58rem;color:#6C727A;padding-left:2px;'>+{len(day_events) - 3} more</div>",
+                                        f"<div style='font-size:0.58rem;color:#8A9BAE;padding-left:2px;'>+{len(day_events) - 3} more</div>",
                                         unsafe_allow_html=True
                                     )
 
@@ -1242,7 +1245,7 @@ with col_right:
                             else:
                                 st.markdown(
                                     f"<div style='font-family:Playfair Display,serif;font-size:0.9rem;font-weight:600;"
-                                    f"color:rgba(0,0,0,0.3);padding:1px 2px 3px 2px;'>{day_val.day}</div>",
+                                    f"color:rgba(138,155,174,0.3);padding:1px 2px 3px 2px;'>{day_val.day}</div>",
                                     unsafe_allow_html=True
                                 )
 

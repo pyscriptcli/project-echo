@@ -87,26 +87,26 @@ CUSTOM_CSS = """
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
-    background-color: #ECEBDE;
-    color: #2D2D2D;
+    background-color: #0A1128;
+    color: #F5F5F0;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
 
 h3 {
-    font-family: 'Playfair Display', serif !important; 
+    font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important; 
-    font-weight: 400 !important; 
-    color: #1A2B4C !important; 
+    font-weight: 500 !important; 
+    color: #F5F5F0 !important; 
     letter-spacing: 0.02em; 
     margin-bottom: 0.25rem; 
-    font-size: 1.35rem !important;
+    font-size: 1.5rem !important;
 }
 
 .playfair-label {
-    font-family: 'Playfair Display', serif !important; 
+    font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important;
-    color: #1A2B4C !important; 
+    color: #F5F5F0 !important; 
     font-size: 1.05rem !important; 
     margin-bottom: 0.25rem !important; 
     display: block;
@@ -114,10 +114,10 @@ h3 {
 
 /* 3D Drop Shadow Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #FFFFFF !important; 
-    border-radius: 12px !important;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.04) !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important; 
+    background-color: #101E38 !important; 
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
@@ -358,32 +358,32 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: none !important;
 }
 
-/* ===== PALETTE RECOLOR OVERRIDE: #D7D3BF buttons, navy ink, no border ===== */
+/* ===== PALETTE RECOLOR OVERRIDE: navy bg, gold border, cream text ===== */
 .stButton > button,
 div[data-testid="stPopover"] > button {
-    background-color: #D7D3BF !important;
-    color: #0D1B3E !important;
-    border: 0 none !important;
+    background-color: #101E38 !important;
+    color: #F5F5F0 !important;
+    border: 1px solid #D4AF37 !important;
     font-size: 0.68rem !important;
-    height: 26px !important;
-    min-height: 26px !important;
-    padding: 0.1rem 0.4rem !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0.1rem 0.5rem !important;
     border-radius: 0 !important;
     width: auto !important;
     box-shadow: none !important;
 }
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {
-    background-color: #C1BAA1 !important;
-    border-color: #C1BAA1 !important;
-    color: #0D1B3E !important;
+    background-color: #D4AF37 !important;
+    border-color: #D4AF37 !important;
+    color: #0A1128 !important;
 }
 [data-testid="stAppViewContainer"] .block-container {
-    background-color: #ECEBDE !important;
+    background-color: #0A1128 !important;
 }
 .meeting-page h1, .meeting-page h2, .meeting-page h3,
 [data-testid="stAppViewContainer"] h3 {
-    color: #0D1B3E !important;
+    color: #F5F5F0 !important;
 }
 </style>
 """

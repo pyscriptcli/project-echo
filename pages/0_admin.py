@@ -30,42 +30,43 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     padding-bottom: 1.5rem !important;
     padding-right: 2.2rem !important;
     padding-left: 2.2rem !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #ECEBDE !important;
-    color: #0D1B3E;
+    background-color: #0A1128 !important;
+    color: #F5F5F0;
 }
 
 .section-title {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
-    font-weight: 600 !important;
-    color: #0D1B3E !important;
-    font-size: 1.2rem !important;
+    font-weight: 500 !important;
+    color: #F5F5F0 !important;
+    font-size: 1.6rem !important;
     margin: 0 !important;
     line-height: 1.2 !important;
 }
 .section-caption {
-    font-size: 0.72rem;
-    color: #6E6A6A;
+    font-size: 0.8rem;
+    color: #8A9BAE;
     margin: 0 0 0.35rem 0 !important;
 }
 
 .admin-card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(16, 30, 56, 0.85);
     border-radius: 0;
-    border: 1px solid rgba(26, 43, 76, 0.14);
+    border: 1px solid rgba(212, 175, 55, 0.2);
     padding: 1rem 1.25rem;
     margin-bottom: 1rem;
     box-shadow: none;
+    color: #F5F5F0;
 }
 
 .stButton > button {
-    background-color: #D7D3BF !important;
-    color: #0D1B3E !important;
-    border: 0 none !important;
+    background-color: #101E38 !important;
+    color: #F5F5F0 !important;
+    border: 1px solid #D4AF37 !important;
     border-radius: 0 !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
@@ -75,9 +76,9 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    border-color: #C1BAA1 !important;
-    background-color: #C1BAA1 !important;
-    color: #0D1B3E !important;
+    border-color: #D4AF37 !important;
+    background-color: #D4AF37 !important;
+    color: #0A1128 !important;
     box-shadow: none !important;
 }
 
@@ -111,6 +112,7 @@ with st.sidebar:
         logout()
         st.rerun()
 
+st.markdown('<p class="page-eyebrow">Project Echo</p>', unsafe_allow_html=True)
 st.markdown('<p class="section-title">Admin Console</p>', unsafe_allow_html=True)
 st.markdown('<p class="section-caption">Manage accounts, monitor telemetry, configure agent access & rate limits.</p>', unsafe_allow_html=True)
 

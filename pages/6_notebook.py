@@ -39,9 +39,9 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #ECEBDE;
-        font-family: 'Inter', sans-serif;
-        color: #0D1B3E;
+        background-color: #0A1128;
+        font-family: 'Montserrat', sans-serif;
+        color: #F5F5F0;
     }
     .block-container {
         padding-top: 2rem;
@@ -51,16 +51,16 @@ NOTEBOOK_CSS = """
 
     /* Titles and subtitles */
     .notebook-title {
-        font-family: 'Playfair Display', serif;
-        font-weight: 400;
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 500;
         font-style: italic;
-        font-size: 2.2rem;
-        color: #1a2b4c;
+        font-size: 2.4rem;
+        color: #F5F5F0;
         margin-bottom: 0.25rem;
     }
     .notebook-subtitle {
-        font-size: 0.95rem;
-        color: #666666;
+        font-size: 1rem;
+        color: #8A9BAE;
         margin-bottom: 2rem;
         padding-bottom: 1rem;
     }
@@ -68,30 +68,30 @@ NOTEBOOK_CSS = """
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 1.5rem;
-        border-bottom: 1px solid #d4d0c8;
+        border-bottom: 1px solid rgba(212,175,55,0.3);
     }
     .stTabs [data-baseweb="tab"] {
-        font-family: 'Playfair Display', serif;
+        font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         font-weight: 500;
         font-size: 1.1rem;
-        color: #666666;
+        color: #8A9BAE;
         padding: 0.5rem 0.25rem;
         background: transparent;
     }
     .stTabs [aria-selected="true"] {
-        color: #1a2b4c !important;
-        border-bottom: 2px solid #1a2b4c;
+        color: #D4AF37 !important;
+        border-bottom: 2px solid #D4AF37;
     }
 
     /* Containers */
     .stTextArea textarea, .stTextInput input, .stSelectbox > div > div {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        font-family: 'Inter', sans-serif !important;
+        background-color: #101E38 !important;
+        border: 1px solid rgba(212,175,55,0.3) !important;
+        border-radius: 0 !important;
+        font-family: 'Montserrat', sans-serif !important;
         font-size: 1rem !important;
-        color: #333333 !important;
+        color: #F5F5F0 !important;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
         line-height: 1.6 !important;
     }
@@ -143,7 +143,7 @@ NOTEBOOK_CSS = """
     .kanban-header .label {
         font-weight: 600;
         font-size: 0.85rem;
-        color: #1a2b4c;
+        color: #F5F5F0;
     }
     .empty-state {
         text-align: center;
@@ -159,46 +159,46 @@ NOTEBOOK_CSS = """
         font-size: 0.9rem;
     }
 
-    /* Button Uniform Styling — deep charcoal, gold accent, rounded, shadow */
+    /* Button Uniform Styling — navy, gold border, flat */
     .stButton > button,
     div[data-testid="stPopover"] > button,
     div[data-testid="stDownloadButton"] > button {
         border-radius: 0 !important;
         font-weight: 600 !important;
-        background-color: #D7D3BF !important;
-        color: #0D1B3E !important;
-        border: 0 none !important;
+        background-color: #101E38 !important;
+        color: #F5F5F0 !important;
+        border: 1px solid #D4AF37 !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
-        min-height: 26px !important;
-        height: 26px !important;
+        min-height: 28px !important;
+        height: 28px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 0.1rem 0.4rem !important;
+        padding: 0.1rem 0.5rem !important;
         width: auto !important;
         font-size: 0.68rem !important;
     }
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,
     div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #C1BAA1 !important;
-        border-color: #C1BAA1 !important;
-        color: #0D1B3E !important;
+        background-color: #D4AF37 !important;
+        border-color: #D4AF37 !important;
+        color: #0A1128 !important;
         box-shadow: none !important;
     }
     
-    /* Secondary Buttons override (still #D7D3BF flat) */
+    /* Secondary Buttons override (navy/gold) */
     button[kind="secondary"] {
-        background-color: #D7D3BF !important;
-        color: #0D1B3E !important;
-        border: 0 none !important;
+        background-color: #101E38 !important;
+        color: #F5F5F0 !important;
+        border: 1px solid #D4AF37 !important;
         box-shadow: none !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #C1BAA1 !important;
-        border-color: #C1BAA1 !important;
-        color: #0D1B3E !important;
+        background-color: #D4AF37 !important;
+        border-color: #D4AF37 !important;
+        color: #0A1128 !important;
         box-shadow: none !important;
     }
     
@@ -429,9 +429,9 @@ def notes_gallery_modal():
                 preview = "Empty note"
             
             with st.container(border=True):
-                st.markdown(f"<div style='font-family: \"Playfair Display\", serif; font-size: 1.1rem; font-weight: 600; color: #1a2b4c; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size: 0.75rem; color: #a0aec0; margin-bottom: 0.8rem;'>{date_str}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size: 0.85rem; color: #4a5568; height: 3.5rem; overflow: hidden; margin-bottom: 1rem; line-height: 1.4;'>{preview}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.2rem; font-weight: 600; color: #F5F5F0; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.75rem; color: #8A9BAE; margin-bottom: 0.8rem;'>{date_str}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.85rem; color: #C9D2DE; height: 3.5rem; overflow: hidden; margin-bottom: 1rem; line-height: 1.4;'>{preview}</div>", unsafe_allow_html=True)
                 
                 # Active styling logic
                 btn_type = "primary" if doc_id == st.session_state.nb_current_id else "secondary"
@@ -440,6 +440,7 @@ def notes_gallery_modal():
                     st.rerun()
 
 def render_notepad():
+    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">A distraction-free environment for your thoughts.</div>', unsafe_allow_html=True)
 
@@ -547,7 +548,7 @@ def render_week_view(selected_date):
             st.markdown(f"""
                 <div class="day-col-header">
                     <div style="font-size: 0.8rem; color: #718096;">{day.strftime('%a').upper()}</div>
-                    <div style="font-size: 1.1rem; color: #1a2b4c;">{day.strftime('%d')}</div>
+                    <div style="font-size: 1.1rem; color: #F5F5F0;">{day.strftime('%d')}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -592,7 +593,7 @@ def render_month_view(selected_date):
         return
 
     for d, logs in month_logs:
-        st.markdown(f"<div style='font-family: \"Playfair Display\", serif; font-size: 1.1rem; color: #1a2b4c; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.2rem; color: #F5F5F0; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
         for col_def in COLUMNS:
             val = logs.get(col_def["key"], "").strip()
             if val:
@@ -604,6 +605,7 @@ def render_month_view(selected_date):
                 """, unsafe_allow_html=True)
 
 def render_dailylog():
+    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-title">Daily Log</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">Organize and track your daily operations.</div>', unsafe_allow_html=True)
 
@@ -636,6 +638,7 @@ def render_dailylog():
 # ------------------------------
 
 def render_statistics():
+    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-title">Daily Log Statistics</div>', unsafe_allow_html=True)
     st.markdown('<div class="notebook-subtitle">Monitor your logging consistency and productivity.</div>', unsafe_allow_html=True)
 

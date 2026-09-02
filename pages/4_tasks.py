@@ -44,8 +44,8 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #ECEBDE !important;
-    color: #2D2D2D;
+    background-color: #0A1128 !important;
+    color: #F5F5F0;
 }
 
 .block-container {
@@ -55,12 +55,12 @@ html, body, [class*="css"] {
 }
 
 :root {
-    --bg: #F3EFE6;
-    --surface: #FFFFFF;
-    --ink: #0D1B3E;
-    --muted: #6E6A6A;
-    --gold: #D7D3BF;
-    --danger: #E74C3C;
+    --bg: #0A1128;
+    --surface: #101E38;
+    --ink: #F5F5F0;
+    --muted: #8A9BAE;
+    --gold: #D4AF37;
+    --danger: #E5484D;
     --radius: 6px;
     --control-height: 28px;
 }
@@ -179,8 +179,9 @@ h3 {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--ink);
-    color: #fff;
+    background: #101E38;
+    border: 1px solid rgba(212,175,55,0.4);
+    color: #D4AF37;
     font-size: 0.52rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -194,9 +195,9 @@ h3 {
     border-radius: 10px;
     font-size: 0.62rem;
     font-weight: 600;
-    background: #F5F4F0;
+    background: #101E38;
     color: var(--muted);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(212,175,55,0.2);
     white-space: nowrap;
 }
 .due-chip.overdue {
@@ -270,21 +271,21 @@ h3 {
     box-sizing: border-box;
 }
 .cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
-.cal-month-cell.dim { background: rgba(0, 0, 0, 0.02); border: none; }
-.cal-month-cell.weekend { background: #D7D3BF; border-color: #D7D3BF; }
+.cal-month-cell.dim { background: rgba(138, 155, 174, 0.05); border: none; }
+.cal-month-cell.weekend { background: rgba(212, 175, 55, 0.12); border-color: rgba(212, 175, 55, 0.3); }
 .cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
 
 .cal-month-day-num {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: var(--ink);
     padding: 1px 2px 3px 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #fff; }
+.cal-month-cell.weekend .cal-month-day-num { color: #D4AF37; }
 
 .today-dot {
     width: 6px;
@@ -1219,9 +1220,9 @@ with tab_calendar:
             with header_cols[i]:
                 is_weekend = (i == 0 or i == 6)
                 header_style = (
-                    "background:#D7D3BF; color:#0D1B3E; border-radius:6px 6px 0 0;"
+                    "background:rgba(212,175,55,0.25); color:#F5F5F0;"
                     if is_weekend
-                    else "background:#FFFFFF; color:#0D1B3E; border:1px solid rgba(13,27,62,0.15); border-bottom:none;"
+                    else "background:#101E38; color:#F5F5F0; border:1px solid rgba(212,175,55,0.25); border-bottom:none;"
                 )
                 st.markdown(
                     f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1252,7 +1253,7 @@ with tab_calendar:
                             dot = '<span class="today-dot"></span>' if is_today else ''
                             st.markdown(
                                 f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
-                                f"font-size:0.9rem;font-weight:600;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                f"font-size:0.95rem;font-weight:500;color:#F5F5F0;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                 unsafe_allow_html=True
                             )
 
