@@ -29,18 +29,17 @@ class DocumentsIntegrationTests(unittest.TestCase):
 
     def test_local_only_and_native_token_presence(self):
         """The page must be wired into the native Echo shell (require_login/
-        setup_page_layout), carry the local-only notice, and use the dark navy/gold tokens."""
+        setup_page_layout), carry the local-only notice, and use the navy/gray tokens."""
         with open("pages/8_documents.py", encoding="utf-8") as f:
             source = f.read()
 
         self.assertIn("require_login()", source)
         self.assertIn("setup_page_layout()", source)
         self.assertIn("Documents are generated and exported locally", source)
-        # Native dark navy & gold palette tokens.
-        self.assertIn("rgba(16, 30, 56", source)
-        self.assertIn("#101E38", source)
-        self.assertIn("#D4AF37", source)
-        self.assertIn("#F5F5F0", source)
+        # Native gray-azure / navy / dark-gray palette tokens.
+        self.assertIn("#0D1B3E", source)
+        self.assertIn("rgba(249, 250, 251", source)
+        self.assertNotIn("#D4AF37", source)
         # No DB write should exist anywhere in the page.
         self.assertNotIn("import supabase", source)
         self.assertNotIn("utils.db", source)

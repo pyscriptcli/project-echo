@@ -27,7 +27,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&family=Bebas+Neue&display=swap');
 
 /* ---- Header: hide content, NOT the element (sidebar expand button lives there) ---- */
 header[data-testid="stHeader"],
@@ -52,8 +52,9 @@ footer {
 }
 
 .stApp {
-    background-color: #0A1128 !important;
+    background-color: #A3ACB5 !important;
     font-family: 'Montserrat', sans-serif !important;
+    color: #2A3441;
 }
 
 .block-container {
@@ -87,12 +88,12 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 }
 
 .left-card {
-    background: rgba(16,30,56,0.9);
-    border: 1px solid rgba(212,175,55,0.2);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(13, 27, 62, 0.12);
     border-radius: 0;
     padding: 1rem;
     box-shadow: none;
-    color: #F5F5F0;
+    color: #2A3441;
     flex-shrink: 0;
 }
 
@@ -106,14 +107,14 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 .section-title {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-weight: 500;
-    color: #F5F5F0;
-    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0D1B3E;
+    font-size: 1.6rem;
     margin: 0 0 0.2rem 0;
 }
 .section-caption {
     font-size: 0.8rem;
-    color: #8A9BAE;
+    color: #5A607A;
     margin: 0 0 0.8rem 0;
 }
 
@@ -123,30 +124,30 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     gap: 0.5rem;
 }
 .kpi-card {
-    background: #101E38;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: 0;
     padding: 0.5rem 0.65rem;
-    border: 1px solid rgba(212,175,55,0.2);
-    border-left: 3.5px solid #D4AF37;
+    border: 1px solid rgba(13, 27, 62, 0.12);
+    border-left: 3.5px solid #0D1B3E;
 }
 .kpi-title {
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #8A9BAE;
+    color: #5A607A;
 }
 .kpi-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 1.35rem;
-    font-weight: 500;
-    color: #F5F5F0;
+    font-family: 'Bebas Neue', 'Cormorant Garamond', serif;
+    font-style: normal;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: #0D1B3E;
 }
 
 .meeting-card {
-    background: #101E38;
-    border: 1px solid rgba(212,175,55,0.2);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(13, 27, 62, 0.12);
     border-radius: 0;
     padding: 0.6rem 0.75rem;
     margin-bottom: 0.5rem;
@@ -154,65 +155,65 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 .meeting-title {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #F5F5F0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0D1B3E;
     margin: 0 0 0.1rem 0;
 }
 .meeting-sub {
     font-size: 0.65rem;
-    color: #8A9BAE;
+    color: #5A607A;
     margin-bottom: 0.3rem;
 }
 .meeting-desc {
-    font-size: 0.75rem;
-    color: #C9D2DE;
+    font-size: 0.78rem;
+    color: #3A4454;
     line-height: 1.35;
     margin: 0;
 }
 
 div[data-testid="stPopover"] { margin-bottom: 0 !important; }
 div[data-testid="stPopover"] > button {
-    background-color: #111A2B !important;
-    color: #fff !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 20px !important;
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     font-size: 0.75rem !important;
     min-height: 32px !important;
     height: 32px !important;
 }
 .stButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #111A2B !important;
-    color: #fff !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 20px !important;
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
     min-height: 28px !important;
     height: 28px !important;
-    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
 
 /* ===== tasks.py Calendar Styles ===== */
 :root {
-    --bg: #0A1128;
-    --surface: #101E38;
-    --ink: #F5F5F0;
-    --muted: #8A9BAE;
-    --gold: #D4AF37;
+    --bg: #A3ACB5;
+    --surface: rgba(255, 255, 255, 0.8);
+    --ink: #0D1B3E;
+    --muted: #5A607A;
+    --gold: #333333;
     --danger: #E5484D;
-    --radius: 6px;
+    --radius: 0px;
     --control-height: 28px;
 }
 
 h3 {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
     font-weight: 600 !important;
     color: var(--ink) !important;
-    font-size: 1.35rem !important;
+    font-size: 1.4rem !important;
     margin-bottom: 0.2rem !important;
 }
 
@@ -225,7 +226,9 @@ h3 {
     min-height: var(--control-height) !important;
     border-radius: var(--radius) !important;
     font-size: 0.78rem !important;
-    border-color: rgba(26, 43, 76, 0.15) !important;
+    border-color: rgba(13, 27, 62, 0.2) !important;
+    background: rgba(255,255,255,0.8) !important;
+    color: #2A3441 !important;
 }
 
 .assignee-avatar {
@@ -235,7 +238,7 @@ h3 {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--ink);
+    background: #0D1B3E;
     color: #fff;
     font-size: 0.52rem;
     font-weight: 700;
@@ -250,20 +253,20 @@ h3 {
     border-radius: 10px;
     font-size: 0.62rem;
     font-weight: 600;
-    background: #F5F4F0;
-    color: var(--muted);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    color: #3A4454;
+    border: 1px solid rgba(13, 27, 62, 0.12);
     white-space: nowrap;
 }
 .due-chip.overdue {
     background: #FDF0EF;
     color: var(--danger);
-    border-color: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.3);
 }
 .due-chip.due-today {
     background: #FFF9E8;
     color: #8C6D23;
-    border-color: rgba(212, 175, 55, 0.25);
+    border-color: rgba(212, 175, 55, 0.35);
 }
 
 .cal-filter-row {
@@ -294,29 +297,29 @@ h3 {
 
 .cal-month-cell {
     background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(13, 27, 62, 0.1);
     border-radius: var(--radius);
     padding: 4px;
     min-height: 78px;
     height: auto !important;
     box-sizing: border-box;
 }
-.cal-month-cell:hover { border-color: rgba(212, 175, 55, 0.4); }
-.cal-month-cell.dim { background: rgba(138, 155, 174, 0.05); border: none; }
-.cal-month-cell.weekend { background: rgba(212, 175, 55, 0.12); border-color: rgba(212, 175, 55, 0.3); }
-.cal-month-cell.today { border: 1px solid rgba(212, 175, 55, 0.75); }
+.cal-month-cell:hover { border-color: rgba(13, 27, 62, 0.35); }
+.cal-month-cell.dim { background: rgba(255, 255, 255, 0.35); border: none; }
+.cal-month-cell.weekend { background: rgba(13, 27, 62, 0.06); border-color: rgba(13, 27, 62, 0.18); }
+.cal-month-cell.today { border: 2px solid #0D1B3E; }
 
 .cal-month-day-num {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-family: 'Bebas Neue', 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
     color: var(--ink);
     padding: 1px 2px 3px 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #fff; }
+.cal-month-cell.weekend .cal-month-day-num { color: #0D1B3E; }
 
 .today-dot {
     width: 6px;
@@ -793,9 +796,9 @@ all_events = build_calendar_events()
 # ------------------------------------------------------------
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
-style_ink = "#F5F5F0"
-style_gold = "#D4AF37"
-style_muted = "#8A9BAE"
+style_ink = "#0D1B3E"
+style_gold = "#333333"
+style_muted = "#5A607A"
 
 # Task status buckets
 status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
@@ -995,7 +998,7 @@ with col_right:
         # Title + Add Task button
         title_col, add_col = st.columns([3, 1], gap="medium")
         with title_col:
-            st.markdown('<h2 style="font-family:\'Cormorant Garamond\', serif; font-style:italic; color:#F5F5F0; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Cormorant Garamond\', serif; font-style:italic; color:#0D1B3E; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         with add_col:
             if st.button("+ Add Task", key="cal_add_task_global", use_container_width=True):
                 st.session_state["cal_new_task_date"] = today
@@ -1156,7 +1159,7 @@ with col_right:
 
                 st.markdown(
                     f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
-                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#D4AF37;border-bottom:2px solid #D4AF37;' if is_today else 'color:#F5F5F0;border-bottom:1px solid rgba(212,175,55,0.3);')}'"
+                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#0D1B3E;border-bottom:2px solid #333333;' if is_today else 'color:#0D1B3E;border-bottom:1px solid rgba(13,27,62,0.3);')}'"
                     f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                     unsafe_allow_html=True
                 )
@@ -1190,9 +1193,9 @@ with col_right:
                 with header_cols[i]:
                     is_weekend = (i == 0 or i == 6)
                     header_style = (
-                        "background:rgba(212,175,55,0.25); color:#F5F5F0;"
+                        "background:rgba(51,51,51,0.15); color:#0D1B3E;"
                         if is_weekend
-                        else "background:#101E38; color:#F5F5F0; border:1px solid rgba(212,175,55,0.25); border-bottom:none;"
+                        else "background:rgba(255,255,255,0.8); color:#0D1B3E; border:1px solid rgba(13,27,62,0.18); border-bottom:none;"
                     )
                     st.markdown(
                         f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1212,8 +1215,8 @@ with col_right:
                             if in_month:
                                 dot = '<span class="today-dot"></span>' if is_today else ''
                                 st.markdown(
-                                    f"<div style='display:flex;align-items:center;gap:4px;font-family:Cormorant Garamond,serif;"
-                                    f"font-size:0.95rem;font-weight:500;color:#F5F5F0;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                    f"<div style='display:flex;align-items:center;gap:4px;font-family:&quot;Bebas Neue&quot;,serif;"
+                                    f"font-size:1.25rem;font-weight:400;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                     unsafe_allow_html=True
                                 )
 
@@ -1233,7 +1236,7 @@ with col_right:
 
                                 if len(day_events) > 3:
                                     st.markdown(
-                                        f"<div style='font-size:0.58rem;color:#8A9BAE;padding-left:2px;'>+{len(day_events) - 3} more</div>",
+                                        f"<div style='font-size:0.58rem;color:#5A607A;padding-left:2px;'>+{len(day_events) - 3} more</div>",
                                         unsafe_allow_html=True
                                     )
 

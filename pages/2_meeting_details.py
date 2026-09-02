@@ -87,8 +87,8 @@ CUSTOM_CSS = """
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
 .stApp {
-    background-color: #0A1128;
-    color: #F5F5F0;
+    background-color: #A3ACB5;
+    color: #2A3441;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
@@ -96,8 +96,8 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 h3 {
     font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important; 
-    font-weight: 500 !important; 
-    color: #F5F5F0 !important; 
+    font-weight: 600 !important; 
+    color: #0D1B3E !important; 
     letter-spacing: 0.02em; 
     margin-bottom: 0.25rem; 
     font-size: 1.5rem !important;
@@ -106,7 +106,7 @@ h3 {
 .playfair-label {
     font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important;
-    color: #F5F5F0 !important; 
+    color: #0D1B3E !important; 
     font-size: 1.05rem !important; 
     margin-bottom: 0.25rem !important; 
     display: block;
@@ -114,10 +114,10 @@ h3 {
 
 /* 3D Drop Shadow Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #101E38 !important; 
+    background-color: #F9FAFB !important; 
     border-radius: 0px !important;
     box-shadow: none !important;
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border: 1px solid rgba(13, 27, 62, 0.12) !important;
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
@@ -133,30 +133,30 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 .stTextArea textarea:focus, .stTextInput input:focus {
     background-color: #FFFFFF !important; 
-    border-color: #D4AF37 !important;
+    border-color: #0D1B3E !important;
 }
 
 /* Base Buttons */
 .stButton > button {
-    background-color: #111A2B !important; 
+    background-color: #333333 !important; 
     color: #FFFFFF !important; 
-    border: 1px solid #D4AF37 !important; 
-    border-radius: 18px !important; 
-    font-family: 'Inter', sans-serif !important; 
+    border: 1px solid #333333 !important; 
+    border-radius: 0 !important; 
+    font-family: 'Montserrat', sans-serif !important; 
     font-weight: 600 !important; 
     font-size: 0.82rem !important; 
     height: 36px !important; 
     padding: 0 0.75rem !important;
-    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important; 
+    box-shadow: none !important; 
     transition: all 0.2s ease !important; 
     width: 100% !important;
 }
 
 .stButton > button:hover { 
-    background-color: #1A2B4C !important; 
+    background-color: #1f1f1f !important; 
     color: #FFFFFF !important; 
-    border-color: #E6C44D !important;
-    box-shadow: 0 6px 14px rgba(212, 175, 55, 0.25) !important;
+    border-color: #1f1f1f !important;
+    box-shadow: none !important;
     transform: none !important;
 }
 
@@ -171,14 +171,14 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Topbar Date Picker Trigger Styling */
 div[data-testid="stPopover"] > button {
-    background-color: #111A2B !important;
+    background-color: #333333 !important;
     color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 18px !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     font-size: 0.84rem !important;
     font-weight: 600 !important;
     height: 36px !important;
-    box-shadow: 0 4px 10px rgba(26, 43, 76, 0.18) !important;
+    box-shadow: none !important;
     width: 100% !important;
     text-align: left !important;
     justify-content: flex-start !important;
@@ -186,8 +186,8 @@ div[data-testid="stPopover"] > button {
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: #E6C44D !important;
-    background-color: #1A2B4C !important;
+    border-color: #1f1f1f !important;
+    background-color: #1f1f1f !important;
     color: #FFFFFF !important;
     transform: none !important;
 }
@@ -225,16 +225,16 @@ div[data-testid="stPopoverBody"] {
 }
 
 .stButton > button[key="btn_apply_modal_date"] {
-    background-color: #111A2B !important;
+    background-color: #333333 !important;
     color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 18px !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     height: 36px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_apply_modal_date"]:hover {
-    background-color: #1A2B4C !important;
-    border-color: #E6C44D !important;
+    background-color: #1f1f1f !important;
+    border-color: #1f1f1f !important;
     color: #FFFFFF !important;
     transform: none !important;
 }
@@ -242,50 +242,50 @@ div[data-testid="stPopoverBody"] {
 /* Back Button Pill */
 .stButton > button[key="btn_back_gallery"] {
     background-color: transparent !important;
-    color: #1A2B4C !important;
-    border: 1px solid rgba(26, 43, 76, 0.3) !important;
+    color: #0D1B3E !important;
+    border: 1px solid rgba(13, 27, 62, 0.3) !important;
     width: auto !important;
     min-width: 170px !important;
 }
 .stButton > button[key="btn_back_gallery"]:hover {
-    background-color: #1A2B4C !important;
+    background-color: #0D1B3E !important;
     color: #FFFFFF !important;
 }
 
 /* Details Action Buttons */
 .stButton > button[key="btn_toggle_edit_details"], .stButton > button[key="btn_cancel_edit_details"] {
-    background-color: #111A2B !important;
+    background-color: #333333 !important;
     color: #FFFFFF !important;
-    border: 1px solid #D4AF37 !important;
-    border-radius: 18px !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     height: 34px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_toggle_edit_details"]:hover, .stButton > button[key="btn_cancel_edit_details"]:hover {
-    background-color: #1A2B4C !important;
-    border-color: #E6C44D !important;
+    background-color: #1f1f1f !important;
+    border-color: #1f1f1f !important;
     color: #FFFFFF !important;
 }
 
 /* Gallery Typography */
 .card-title {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
-    font-size: 1.25rem !important;
-    color: #1A2B4C !important;
+    font-size: 1.3rem !important;
+    color: #0D1B3E !important;
     margin: 0 0 0.25rem 0 !important;
     line-height: 1.3 !important;
 }
 
 .card-meta {
     font-size: 0.84rem !important;
-    color: #666666 !important;
+    color: #5A607A !important;
     margin-bottom: 0.55rem !important;
 }
 
 .card-desc {
     font-size: 0.88rem !important;
-    color: #2D2D2D !important;
+    color: #3A4454 !important;
     line-height: 1.5 !important;
     margin: 0 !important;
 }
@@ -296,7 +296,7 @@ button[data-baseweb="tab"] {
     border: none !important;
     font-size: 1.05rem !important;
     font-weight: 500 !important;
-    color: #1A2B4C !important;
+    color: #0D1B3E !important;
     padding: 0.5rem 1rem !important;
 }
 
@@ -358,12 +358,12 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: none !important;
 }
 
-/* ===== PALETTE RECOLOR OVERRIDE: navy bg, gold border, cream text ===== */
+/* ===== PALETTE RECOLOR OVERRIDE: dark-gray bg, white text ===== */
 .stButton > button,
 div[data-testid="stPopover"] > button {
-    background-color: #101E38 !important;
-    color: #F5F5F0 !important;
-    border: 1px solid #D4AF37 !important;
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
     font-size: 0.68rem !important;
     height: 28px !important;
     min-height: 28px !important;
@@ -374,16 +374,16 @@ div[data-testid="stPopover"] > button {
 }
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {
-    background-color: #D4AF37 !important;
-    border-color: #D4AF37 !important;
-    color: #0A1128 !important;
+    background-color: #1f1f1f !important;
+    border-color: #1f1f1f !important;
+    color: #FFFFFF !important;
 }
 [data-testid="stAppViewContainer"] .block-container {
-    background-color: #0A1128 !important;
+    background-color: #A3ACB5 !important;
 }
 .meeting-page h1, .meeting-page h2, .meeting-page h3,
 [data-testid="stAppViewContainer"] h3 {
-    color: #F5F5F0 !important;
+    color: #0D1B3E !important;
 }
 </style>
 """

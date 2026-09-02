@@ -44,8 +44,8 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background-color: #0A1128 !important;
-    color: #F5F5F0;
+    background-color: #A3ACB5 !important;
+    color: #2A3441;
 }
 
 .block-container {
@@ -55,13 +55,13 @@ html, body, [class*="css"] {
 }
 
 :root {
-    --bg: #0A1128;
-    --surface: #101E38;
-    --ink: #F5F5F0;
-    --muted: #8A9BAE;
-    --gold: #D4AF37;
-    --danger: #E5484D;
-    --radius: 6px;
+    --bg: #A3ACB5;
+    --surface: #F9FAFB;
+    --ink: #0D1B3E;
+    --muted: #5A607A;
+    --gold: #333333;
+    --danger: #C0392B;
+    --radius: 0px;
     --control-height: 28px;
 }
 
@@ -179,9 +179,9 @@ h3 {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #101E38;
-    border: 1px solid rgba(212,175,55,0.4);
-    color: #D4AF37;
+    background: #0D1B3E;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #FFFFFF;
     font-size: 0.52rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -195,9 +195,9 @@ h3 {
     border-radius: 10px;
     font-size: 0.62rem;
     font-weight: 600;
-    background: #101E38;
-    color: var(--muted);
-    border: 1px solid rgba(212,175,55,0.2);
+    background: #FFFFFF;
+    color: #3A4454;
+    border: 1px solid rgba(13,27,62,0.15);
     white-space: nowrap;
 }
 .due-chip.overdue {
@@ -285,7 +285,7 @@ h3 {
     color: var(--ink);
     padding: 1px 2px 3px 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #D4AF37; }
+.cal-month-cell.weekend .cal-month-day-num { color: #0D1B3E; }
 
 .today-dot {
     width: 6px;
@@ -1220,9 +1220,9 @@ with tab_calendar:
             with header_cols[i]:
                 is_weekend = (i == 0 or i == 6)
                 header_style = (
-                    "background:rgba(212,175,55,0.25); color:#F5F5F0;"
+                    "background:rgba(51,51,51,0.15); color:#0D1B3E;"
                     if is_weekend
-                    else "background:#101E38; color:#F5F5F0; border:1px solid rgba(212,175,55,0.25); border-bottom:none;"
+                    else "background:rgba(255,255,255,0.8); color:#0D1B3E; border:1px solid rgba(13,27,62,0.18); border-bottom:none;"
                 )
                 st.markdown(
                     f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1252,8 +1252,8 @@ with tab_calendar:
                         if in_month:
                             dot = '<span class="today-dot"></span>' if is_today else ''
                             st.markdown(
-                                f"<div style='display:flex;align-items:center;gap:4px;font-family:Playfair Display,serif;"
-                                f"font-size:0.95rem;font-weight:500;color:#F5F5F0;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                f"<div style='display:flex;align-items:center;gap:4px;font-family:Bebas Neue,serif;"
+                                f"font-size:1.25rem;font-weight:400;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                 unsafe_allow_html=True
                             )
 

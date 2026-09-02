@@ -55,22 +55,22 @@ CUSTOM_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .stApp {
-    background-color: #0A1128;
-    color: #F5F5F0;
+    background-color: #A3ACB5;
+    color: #2A3441;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; max-width: 100% !important; }
-h3 { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; font-weight: 500 !important; color: #F5F5F0 !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.4rem !important; }
-.playfair-label { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; color: #F5F5F0 !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
+h3 { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; font-weight: 600 !important; color: #0D1B3E !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.5rem !important; }
+.playfair-label { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; color: #0D1B3E !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 
 /* Containers & Inputs */
-div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #101E38 !important; border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(212,175,55,0.2) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
-.stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #0A1128 !important; border: 1px solid rgba(212,175,55,0.3) !important; border-radius: 0 !important; box-shadow: none !important; color: #F5F5F0 !important; }
-.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #101E38 !important; border-color: #D4AF37 !important; }
+div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #F9FAFB !important; border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(13,27,62,0.12) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
+.stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FFFFFF !important; border: 1px solid rgba(13,27,62,0.2) !important; border-radius: 0 !important; box-shadow: none !important; color: #2A3441 !important; }
+.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #0D1B3E !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #101E38 !important; color: #F5F5F0 !important; border: 1px solid #D4AF37 !important; border-radius: 0 !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 26px !important; min-height: 26px !important; padding: 0.1rem 0.4rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #D4AF37 !important; border-color: #D4AF37 !important; color: #0A1128 !important; box-shadow: none !important; }
+.stButton > button { background-color: #333333 !important; color: #FFFFFF !important; border: 1px solid #333333 !important; border-radius: 0 !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 28px !important; min-height: 28px !important; padding: 0.1rem 0.5rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #1f1f1f !important; border-color: #1f1f1f !important; color: #FFFFFF !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {
@@ -118,17 +118,17 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #101E38 !imp
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; max-height: 420px; overflow-y: auto; }
-.chat-ai { align-self: flex-start; background-color: #101E38; border: 1px solid rgba(212,175,55,0.2); color: #F5F5F0; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
+.chat-ai { align-self: flex-start; background-color: #F9FAFB; border: 1px solid rgba(13,27,62,0.12); color: #2A3441; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
 .chat-user { background-color: #222222; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 0; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: none; }
 
 /* Evidence & Badges */
 .evidence-quote-box {
-    background-color: #101E38;
-    border-left: 3px solid #D4AF37;
+    background-color: #F9FAFB;
+    border-left: 3px solid #0D1B3E;
     padding: 0.5rem 0.75rem;
     font-size: 0.82rem;
-    color: #C9D2DE;
+    color: #3A4454;
     margin: 0.4rem 0;
     font-style: italic;
     border-radius: 0;
@@ -1351,7 +1351,7 @@ if st.session_state["transcript"]:
             with t_col1:
                 escaped_tx = json.dumps(st.session_state["transcript"])
                 copy_html = f"""
-                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#101E38;color:#F5F5F0;border:1px solid #D4AF37;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#D4AF37;color:#0A1128;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
+                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#333333;color:#FFFFFF;border:1px solid #333333;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#1f1f1f;color:#FFFFFF;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
                 components.html(copy_html, height=36)
             with t_col2:

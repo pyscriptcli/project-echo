@@ -176,10 +176,10 @@ LOGIN_CSS = """
 <style>
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
-    border: 1px solid rgba(0,0,0,0.06) !important;
-    border-radius: 12px !important;
-    border-top: 3px solid #C1BAA1 !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+    border: 1px solid rgba(13,27,62,0.12) !important;
+    border-radius: 0 !important;
+    border-top: 3px solid #0D1B3E !important;
+    box-shadow: 0 10px 30px rgba(13,27,62,0.10) !important;
     padding: 2rem !important;
     margin: 2rem auto !important;
     max-width: 450px !important;
@@ -187,7 +187,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .login-brand {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-size: 2rem;
     font-weight: 600;
@@ -196,28 +196,29 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 .login-tagline {
     font-size: 0.9rem;
-    color: #6E6A6A;
+    color: #5A607A;
     text-align: center;
     margin-bottom: 1.5rem;
 }
 
 .stTextInput input {
-    background-color: #FAFAFA !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(13,27,62,0.15) !important;
     border-radius: 0 !important;
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
+    color: #2A3441 !important;
 }
 .stTextInput input:focus {
-    border-color: #C1BAA1 !important;
-    box-shadow: 0 0 0 2px rgba(212,175,55,0.15) !important;
+    border-color: #0D1B3E !important;
+    box-shadow: none !important;
     background: #FFFFFF !important;
 }
 
 .stFormSubmitButton > button {
-    background-color: #D7D3BF !important;
-    color: #0D1B3E !important;
-    border: 0 none !important;
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
     border-radius: 0 !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
@@ -227,8 +228,8 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stFormSubmitButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    background-color: #1f1f1f !important;
+    border-color: #1f1f1f !important;
 }
 
 .login-error {

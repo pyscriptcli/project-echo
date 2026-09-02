@@ -237,10 +237,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button,
 .echo-top-controls div[data-testid="stButton"] > button {
-    background-color: #D7D3BF !important;
-    color: #0D1B3E !important;
-    border: 0 none !important;
-    border-radius: 20px !important;
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
+    border-radius: 0 !important;
     height: 28px !important;
     min-height: 28px !important;
     padding: 0 0.55rem !important;
@@ -253,8 +253,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button:hover,
 .echo-top-controls div[data-testid="stButton"] > button:hover {
-    border-color: #F1C40F !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+    border-color: #1f1f1f !important;
+    background-color: #1f1f1f !important;
+    box-shadow: none !important;
 }
 
 .echo-chat-box-container {
@@ -500,9 +501,9 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button:hover {
-    background-color: #D4AF37 !important;
+    background-color: #1f1f1f !important;
     color: #FFFFFF !important;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+    box-shadow: none !important;
 }
 
 .echo-attach-col-target div[data-testid="stPopover"] {

@@ -97,10 +97,10 @@ section[data-testid="stSidebar"] {
 
 /* ---------------- Sidebar shell ---------------- */
 section[data-testid="stSidebar"] {
-    /* Deep navy background, gold hairline, subtle shadow for separation */
-    background: #0A1128 !important;
-    border-right: 1px solid rgba(212, 175, 55, 0.15) !important;
-    box-shadow: 4px 0 14px rgba(0, 0, 0, 0.45), 2px 0 6px rgba(0, 0, 0, 0.25) !important;
+    /* Gray azure background, hairline navy border, subtle shadow */
+    background: #A3ACB5 !important;
+    border-right: 1px solid rgba(13, 27, 62, 0.15) !important;
+    box-shadow: 4px 0 14px rgba(13, 27, 62, 0.12), 2px 0 6px rgba(13, 27, 62, 0.05) !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -125,7 +125,7 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     font-weight: 600;
     font-size: 2rem;
     line-height: 1;
-    color: #F5F5F0;
+    color: #0D1B3E;
     letter-spacing: 0.01em;
 }
 .sb-brand-sub {
@@ -134,13 +134,13 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: #8A9BAE;
+    color: #5A607A;
     margin-top: 3px;
 }
 .sb-brand-rule {
     height: 1px;
     margin: 0.85rem 0 0.9rem 0;
-    background: linear-gradient(to right, rgba(212, 175, 55, 0.6), rgba(212, 175, 55, 0.05));
+    background: linear-gradient(to right, rgba(13, 27, 62, 0.4), rgba(13, 27, 62, 0.04));
 }
 
 /* ---------------- Nav links (st.page_link) ---------------- */
@@ -151,7 +151,7 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
     border-radius: 6px !important;
     padding: 6px 10px !important;
     border-left: 3px solid transparent !important;
-    color: #C9D2DE !important;
+    color: #1F2A44 !important;
     font-family: 'Inter', sans-serif !important;
     font-size: 0.83rem !important;
     font-weight: 500 !important;
@@ -164,15 +164,15 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
     color: inherit !important;
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
-    background: rgba(212, 175, 55, 0.08) !important;
-    color: #F5F5F0 !important;
+    background: rgba(13, 27, 62, 0.08) !important;
+    color: #0D1B3E !important;
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-    background: rgba(212, 175, 55, 0.12) !important;
-    border-left-color: #D4AF37 !important;
-    color: #F5F5F0 !important;
-    font-weight: 600 !important;
+    background: rgba(13, 27, 62, 0.12) !important;
+    border-left-color: #0D1B3E !important;
+    color: #0D1B3E !important;
+    font-weight: 700 !important;
 }
 
 /* ---------------- Footer (pinned to bottom, separate container) ---------------- */
@@ -183,7 +183,7 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 .sb-footer-scope { display: none !important; }
 
 .sb-user-wrap {
-    border-top: 1px solid rgba(212, 175, 55, 0.15);
+    border-top: 1px solid rgba(13, 27, 62, 0.15);
     padding-top: 0.8rem;
     margin-top: 0.9rem;
     margin-bottom: 0.55rem;
@@ -199,9 +199,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #101E38;
-    color: #D4AF37;
-    border: 1px solid rgba(212, 175, 55, 0.5);
+    background: #0D1B3E;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -215,17 +215,17 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #F5F5F0;
+    color: #0D1B3E;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ---------------- Sign Out — gold-bordered dark button ---------------- */
+/* ---------------- Sign Out — small dark-gray button ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: #101E38 !important;
-    color: #F5F5F0 !important;
-    border: 1px solid #D4AF37 !important;
+    background: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
     border-radius: 0 !important;
     height: 26px !important;                      /* original height, narrow */
     min-height: 26px !important;
@@ -237,13 +237,13 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: #D4AF37 !important;
-    color: #0A1128 !important;
-    border-color: #D4AF37 !important;
+    background: #1f1f1f !important;
+    color: #FFFFFF !important;
+    border-color: #1f1f1f !important;
 }
 
 /* ============================================================
-   GLOBAL BUTTONS — navy bg, gold border, cream text
+   GLOBAL BUTTONS — dark gray bg, white text
    Scoped to the main content area so the sidebar nav/sign-out
    keeps its own styling. Applied on every page via the sidebar.
    ============================================================ */
@@ -251,9 +251,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button,
 .stFormSubmitButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #101E38 !important;
-    color: #F5F5F0 !important;
-    border: 1px solid #D4AF37 !important;
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
     border-radius: 0 !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
@@ -269,9 +269,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stDownloadButton"] > button:hover {
-    background-color: #D4AF37 !important;
-    border-color: #D4AF37 !important;
-    color: #0A1128 !important;
+    background-color: #1f1f1f !important;
+    border-color: #1f1f1f !important;
+    color: #FFFFFF !important;
     box-shadow: none !important;
 }
 </style>

@@ -25,8 +25,8 @@ class ThemeTests(unittest.TestCase):
         self.assertIn(".stButton > button,", html)
         self.assertIn("border-radius: 0 !important;\n", html)
 
-    def test_dark_navy_gold_tokens(self):
-        """The shared theme exposes the dark navy & gold palette."""
+    def test_theme_tokens(self):
+        """The shared theme exposes the gray-azure / navy / dark-gray palette."""
         import components.theme as theme
 
         captured = {}
@@ -34,19 +34,17 @@ class ThemeTests(unittest.TestCase):
             theme.inject_global_css()
 
         html = captured["html"]
-        # Dark navy & gold palette
-        self.assertIn("--echo-canvas: #0A1128;", html)
-        self.assertIn("--echo-panel: #101E38;", html)
-        self.assertIn("--echo-ink: #F5F5F0;", html)
-        self.assertIn("--echo-muted: #8A9BAE;", html)
-        self.assertIn("--echo-gold: #D4AF37;", html)
-        # No legacy light/stone tokens remain
-        self.assertNotIn("#ECEBDE", html)
-        self.assertNotIn("#D7D3BF", html)
-        self.assertNotIn("#C1BAA1", html)
-        # Buttons: navy bg, gold border, cream text
-        self.assertIn("border: 1px solid var(--echo-gold) !important;", html)
-        self.assertIn("color: var(--echo-ink) !important;", html)
+        # Gray-azure canvas, deep-navy ink, dark-gray buttons
+        self.assertIn("--echo-canvas: #A3ACB5;", html)
+        self.assertIn("--echo-ink: #0D1B3E;", html)
+        self.assertIn("--echo-button: #333333;", html)
+        self.assertIn("--echo-gold: #333333;", html)
+        # Bebas Neue loaded and used for numbers
+        self.assertIn("Bebas+Neue", html)
+        self.assertIn("--echo-number:", html)
+        # Buttons: dark-gray bg, white text
+        self.assertIn("background-color: var(--echo-button) !important;", html)
+        self.assertIn("color: #FFFFFF !important;", html)
 
     def test_unified_page_header_hierarchy(self):
         """Page headers use a single Cormorant Garamond hierarchy (title/subtitle) and
