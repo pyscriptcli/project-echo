@@ -52,9 +52,8 @@ project-echo/
 │   ├── 2_meeting_details.py
 │   ├── 3_echo_ai.py          # Ask Echo (AI + agent)
 │   ├── 4_tasks.py
-│   ├── 5_atlas.py
 │   ├── 6_notebook.py         # Notepad (auto-save) + Daily Log
-│   └── 7_project_node.py
+│   └── 8_documents.py
 ├── documents_template/       # Committed PPTX/DOCX templates for the Documents page
 ├── components/               # Shared UI (sidebar, calendar filters)
 ├── utils/                    # Data / auth / AI / skills logic
