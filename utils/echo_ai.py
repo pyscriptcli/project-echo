@@ -7,7 +7,7 @@ import io
 import pandas as pd
 from pypdf import PdfReader
 from PIL import Image
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import docx
 from rapidfuzz import process, fuzz
 from utils.db import fetch_meeting_archives, fetch_echo_context, upsert_echo_context
@@ -56,9 +56,9 @@ def build_user_deliverables_context(username: str, archive_records: list) -> str
     if not username:
         return ""
     name = username.lower()
-    today = datetime.datetime.today().date()
-    week_start = today - datetime.timedelta(days=today.weekday())
-    week_end = week_start + datetime.timedelta(days=6)
+    today = datetime.today().date()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
 
     dm = []  # deliverables from minutes
     for m in archive_records or []:
@@ -81,7 +81,7 @@ def build_user_deliverables_context(username: str, archive_records: list) -> str
         due_raw = t.get("due_date")
         due_date = None
         try:
-            due_date = datetime.datetime.fromisoformat(str(due_raw)[:10]).date() if due_raw else None
+            due_date = datetime.fromisoformat(str(due_raw)[:10]).date() if due_raw else None
         except Exception:  # noqa: BLE001
             due_date = None
         if asg and name in asg.lower():
