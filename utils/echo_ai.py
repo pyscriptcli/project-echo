@@ -153,8 +153,9 @@ SVG_FILE_ICON = """
 """
 
 MODEL_REGISTRY = {
-    "⚡ Fast - deepseek chat": "deepseek/deepseek-chat",
-    "🧠 Thinking - deepseek reasoning": "deepseek/deepseek-reasoner",
+    "⚡ DeepSeek V4 Flash": "deepseek-v4-flash",
+    "⚡ Fast - deepseek chat": "deepseek-v4-flash",
+    "🧠 Thinking - deepseek reasoning": "deepseek-v4-flash",
     "👁 Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
 }
 
@@ -1040,7 +1041,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model_label" not in st.session_state:
-        st.session_state["echo_selected_model_label"] = "⚡ Fast - deepseek chat"
+        st.session_state["echo_selected_model_label"] = "⚡ DeepSeek V4 Flash"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -1080,13 +1081,13 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
                     
                     model_options = [
-                        "⚡ Fast - deepseek chat",
+                        "⚡ DeepSeek V4 Flash",
                         "🧠 Thinking - deepseek reasoning",
                         "👁 Vision - qwen vl"
                     ]
-                    current_model = st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
+                    current_model = st.session_state.get("echo_selected_model_label", "⚡ DeepSeek V4 Flash")
                     if current_model not in model_options:
-                        current_model = "⚡ Fast - deepseek chat"
+                        current_model = "⚡ DeepSeek V4 Flash"
                         
                     st.session_state["echo_selected_model_label"] = st.selectbox(
                         "Model",
@@ -1326,10 +1327,13 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
 
-            selected_label = st.session_state.get("echo_selected_model_label", "⚡ Fast - deepseek chat")
-            default_model = MODEL_REGISTRY.get(selected_label, "deepseek/deepseek-chat")
+            selected_label = st.session_state.get("echo_selected_model_label", "⚡ DeepSeek V4 Flash")
+            default_model = MODEL_REGISTRY.get(selected_label, "deepseek-v4-flash")
 
-            if attached_files_list:
+            # Vision (qwen) is only required when an actual image is attached.
+            # PDF/DOCX/txt attachments are extracted to text and stay on DeepSeek.
+            _has_image = any(str(getattr(f, "type", "")).startswith("image/") for f in (attached_files_list or []))
+            if _has_image:
                 target_model = "qwen/qwen2.5-vl-72b-instruct"
             else:
                 target_model = default_model
@@ -1426,7 +1430,7 @@ def _extract_context_with_ai(raw_text: str = "", image_data_url: str = None) -> 
         url = "https://api.deepseek.com/chat/completions" if "DEEPSEEK_API_KEY" in st.secrets else "https://openrouter.ai/api/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
-            "model": "deepseek-chat" if "DEEPSEEK_API_KEY" in st.secrets else "deepseek/deepseek-chat",
+            "model": "deepseek-v4-flash" if "DEEPSEEK_API_KEY" in st.secrets else "deepseek/deepseek-chat",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": raw_text[:20000]}
@@ -1503,7 +1507,7 @@ def _query_echo_backend(
     archive_records: list, 
     chat_history: list, 
     web_context: str = "",
-    model_name: str = "deepseek/deepseek-chat",
+    model_name: str = "deepseek-v4-flash",
     include_knowledge: bool = True,
     uploaded_files: list = None,
     user_context: str = "",
@@ -1514,15 +1518,26 @@ def _query_echo_backend(
     openrouter_key = str(st.secrets.get("OPENROUTER_API_KEY", "")).strip()
     deepseek_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
 
-    if "qwen" in model_name or "openrouter" in model_name or ("/" in model_name and openrouter_key):
-        api_key = openrouter_key if openrouter_key else deepseek_key
+    # Transport decision is content-aware:
+    #  - Images/vision REQUIRE OpenRouter (DeepSeek's API is text-only).
+    #  - Everything else (text chat, and PDF/DOCX/txt which are extracted to text)
+    #    goes to the DeepSeek API using the DeepSeek model id.
+    _needs_vision = "qwen" in model_name or any(
+        str(getattr(f, "type", "")).startswith("image/") for f in (uploaded_files or [])
+    )
+
+    if _needs_vision:
+        # Vision must use the OpenRouter key + the qwen vision model.
+        api_key = openrouter_key
         api_url = "https://openrouter.ai/api/v1/chat/completions"
     else:
-        api_key = deepseek_key if deepseek_key else openrouter_key
-        api_url = "https://api.deepseek.com/chat/completions" if deepseek_key else "https://openrouter.ai/api/v1/chat/completions"
+        # DeepSeek-only for text chat / extracted attachments.
+        api_key = deepseek_key
+        api_url = "https://api.deepseek.com/chat/completions"
 
     if not api_key:
-        return "API Key configuration missing. Please verify Streamlit Secrets.", None
+        hint = "Add OPENROUTER_API_KEY for image/vision." if _needs_vision else "Add DEEPSEEK_API_KEY."
+        return f"API Key configuration missing. Please verify Streamlit Secrets. {hint}", None
 
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     archive_context = json.dumps(archive_records, indent=1) if archive_records else "[]"
