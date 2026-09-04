@@ -208,6 +208,9 @@ if "recommended_missed_points" not in st.session_state: st.session_state["recomm
 if "entity_corrections_log" not in st.session_state: st.session_state["entity_corrections_log"] = []
 if "speaker_mappings" not in st.session_state: st.session_state["speaker_mappings"] = {}
 
+# Transcription Mode Setting
+if "transcription_mode" not in st.session_state: st.session_state["transcription_mode"] = "Chunks"
+
 # -------------------------------------------------------------
 # Centralized State Reducer
 # -------------------------------------------------------------
@@ -443,36 +446,52 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
         res = subprocess.run(["ffmpeg", "-y", "-threads", "1", "-i", src_path, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "libmp3lame", "-b:a", "24k", compressed_mp3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if res.returncode != 0: return None
         comp_size_mb = os.path.getsize(compressed_mp3) / (1024 * 1024)
-        progress_bar.progress(45, text="Evaluating audio duration & routing (45%)...")
-        if comp_size_mb <= 10.0 and GROQ_API_KEY:
-            status_placeholder.info("Processing via Groq Whisper Primary...")
-            progress_bar.progress(70, text="Transcribing via Groq Whisper (70%)...")
-            with open(compressed_mp3, "rb") as f: text = _call_groq_whisper(f.read(), "audio.mp3")
+        
+        # Check transcription mode
+        if st.session_state.get("transcription_mode", "Chunks") == "Full":
+            progress_bar.progress(45, text="Full transcription mode: Processing entire audio with OpenAI (45%)...")
+            status_placeholder.info("Processing full audio via OpenAI...")
+            with open(compressed_mp3, "rb") as f:
+                text = _call_openai_transcribe(f.read(), "audio.mp3")
             if text:
-                progress_bar.progress(100, text="Transcription completed (100%)!")
+                progress_bar.progress(100, text="Full transcription completed (100%)!")
+                time.sleep(0.3)
                 status_placeholder.empty()
                 return text
-        status_placeholder.info("Processing recording via OpenAI...")
-        progress_bar.progress(55, text="Preparing audio segments for OpenAI (55%)...")
-        segment_pattern = src_path + "_seg_%03d.mp3"
-        subprocess.run(["ffmpeg", "-y", "-i", compressed_mp3, "-f", "segment", "-segment_time", "600", "-c", "copy", segment_pattern], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        seg_dir = os.path.dirname(src_path)
-        base_name = os.path.basename(src_path) + "_seg_"
-        segments = sorted([os.path.join(seg_dir, f) for f in os.listdir(seg_dir) if f.startswith(base_name)])
-        full_transcript = []
-        for idx, seg in enumerate(segments):
-            pct = int(55 + ((idx + 1) / len(segments)) * 40)
-            progress_bar.progress(pct, text=f"Transcribing segment {idx + 1} of {len(segments)} ({pct}%)...")
-            with open(seg, "rb") as f:
-                t = _call_openai_transcribe(f.read(), f"part_{idx}.mp3")
-                if t: full_transcript.append(t)
-            time.sleep(0.2)
-            try: os.remove(seg)
-            except Exception: pass
-        progress_bar.progress(100, text="Transcription completed successfully (100%)!")
-        time.sleep(0.3)
-        status_placeholder.empty()
-        return " ".join(full_transcript)
+            else:
+                return None
+        else:
+            # Chunks mode (original behavior)
+            progress_bar.progress(45, text="Evaluating audio duration & routing (45%)...")
+            if comp_size_mb <= 10.0 and GROQ_API_KEY:
+                status_placeholder.info("Processing via Groq Whisper Primary...")
+                progress_bar.progress(70, text="Transcribing via Groq Whisper (70%)...")
+                with open(compressed_mp3, "rb") as f: text = _call_groq_whisper(f.read(), "audio.mp3")
+                if text:
+                    progress_bar.progress(100, text="Transcription completed (100%)!")
+                    status_placeholder.empty()
+                    return text
+            status_placeholder.info("Processing recording via OpenAI...")
+            progress_bar.progress(55, text="Preparing audio segments for OpenAI (55%)...")
+            segment_pattern = src_path + "_seg_%03d.mp3"
+            subprocess.run(["ffmpeg", "-y", "-i", compressed_mp3, "-f", "segment", "-segment_time", "600", "-c", "copy", segment_pattern], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            seg_dir = os.path.dirname(src_path)
+            base_name = os.path.basename(src_path) + "_seg_"
+            segments = sorted([os.path.join(seg_dir, f) for f in os.listdir(seg_dir) if f.startswith(base_name)])
+            full_transcript = []
+            for idx, seg in enumerate(segments):
+                pct = int(55 + ((idx + 1) / len(segments)) * 40)
+                progress_bar.progress(pct, text=f"Transcribing segment {idx + 1} of {len(segments)} ({pct}%)...")
+                with open(seg, "rb") as f:
+                    t = _call_openai_transcribe(f.read(), f"part_{idx}.mp3")
+                    if t: full_transcript.append(t)
+                time.sleep(0.2)
+                try: os.remove(seg)
+                except Exception: pass
+            progress_bar.progress(100, text="Transcription completed successfully (100%)!")
+            time.sleep(0.3)
+            status_placeholder.empty()
+            return " ".join(full_transcript)
     except Exception:
         return None
     finally:
@@ -1237,6 +1256,22 @@ with col_details:
                     engine_options = ["AI - DeepSeek", "Non-AI - Python Heuristic"]
                     selected_eng = st.selectbox("MoM Generation Engine", options=engine_options, index=engine_options.index(st.session_state["selected_engine"]) if st.session_state["selected_engine"] in engine_options else 0)
                     st.session_state["selected_engine"] = selected_eng
+                    
+                    # Transcription Mode Setting
+                    trans_mode_options = ["Chunks", "Full"]
+                    selected_trans_mode = st.selectbox(
+                        "Transcription Mode", 
+                        options=trans_mode_options, 
+                        index=trans_mode_options.index(st.session_state["transcription_mode"]) if st.session_state["transcription_mode"] in trans_mode_options else 0,
+                        help="Chunks: Split audio into segments (Groq for small files, OpenAI for chunks). Full: Process entire audio as one file using OpenAI only."
+                    )
+                    st.session_state["transcription_mode"] = selected_trans_mode
+                    
+                    if st.session_state["transcription_mode"] == "Full":
+                        st.caption("⚠️ Full mode processes the entire audio file using OpenAI only. This may take longer for large files.")
+                    else:
+                        st.caption("Chunks mode uses Groq for files under 10MB, and chunked OpenAI for larger files.")
+                        
                 with set_col2:
                     st.markdown("**Diagnostics**")
                     st.write(f"• **Session Tokens:** `{st.session_state['tokens_used']:,}`")
