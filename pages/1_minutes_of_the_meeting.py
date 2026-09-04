@@ -1415,13 +1415,13 @@ if st.session_state["transcript"]:
                         st.rerun()
             
             st.session_state["user_topics_text"] = st.text_area(
-                "Discussion Points / Agenda List (Curation Canvas):", 
+                "Discussion Points:", 
                 value=st.session_state["user_topics_text"], 
                 height=130, 
                 placeholder="1. Architecture updates\n2. Q3 Delivery Deadlines\n3. Client Integration Requirements"
             )
             
-            if st.button("Match Transcript Evidence & Synthesize Actions", key="btn_match_evidence"):
+            if st.button("Match Transcript", key="btn_match_evidence"):
                 if not st.session_state["user_topics_text"].strip():
                     st.warning("Please enter or generate at least one discussion topic first.")
                 else:
