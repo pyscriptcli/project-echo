@@ -409,32 +409,63 @@ def extract_text_from_file(uploaded_file):
         return ""
 
 def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
+    """Transcribe with OpenAI returning timestamped [MM:SS] segments."""
     if not OPENAI_API_KEY: return None
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
     vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
     files = {
         "file": (filename, audio_bytes), 
         "model": (None, "gpt-4o-mini-transcribe"), 
-        "response_format": (None, "json"),
+        "response_format": (None, "verbose_json"),
         "prompt": (None, vocab_prompt)
     }
     try:
         resp = requests.post(OPENAI_AUDIO_URL, headers=headers, files=files, timeout=180)
-        return resp.json().get("text", "") if resp.status_code == 200 else None
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        segments = data.get("segments")
+        if segments and isinstance(segments, list):
+            lines = []
+            for seg in segments:
+                start = seg.get("start", 0)
+                text = seg.get("text", "").strip()
+                if text:
+                    mins, secs = int(start // 60), int(start % 60)
+                    lines.append(f"[{mins:02d}:{secs:02d}] {text}")
+            if lines:
+                return "\n".join(lines)
+        return data.get("text", "")
     except Exception: return None
 
 def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
+    """Transcribe with Groq Whisper returning timestamped [MM:SS] segments."""
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
     files = {
         "file": (filename, audio_bytes), 
         "model": (None, "whisper-large-v3-turbo"), 
-        "response_format": (None, "json"),
+        "response_format": (None, "verbose_json"),
         "prompt": (None, vocab_prompt)
     }
     try:
         resp = requests.post(GROQ_AUDIO_URL, headers=headers, files=files, timeout=60)
-        return resp.json().get("text", "") if resp.status_code == 200 else None
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        # Try verbose_json segments first, fall back to plain text
+        segments = data.get("segments") or data.get("chunks")
+        if segments and isinstance(segments, list):
+            lines = []
+            for seg in segments:
+                start = seg.get("start", 0)
+                text = seg.get("text", "").strip()
+                if text:
+                    mins, secs = int(start // 60), int(start % 60)
+                    lines.append(f"[{mins:02d}:{secs:02d}] {text}")
+            if lines:
+                return "\n".join(lines)
+        return data.get("text", "")
     except Exception: return None
 
 def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, status_placeholder):
@@ -514,7 +545,11 @@ def suggest_discussion_topics_from_transcript(transcript):
     
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
     system_prompt = load_prompt("topic_extractor")
-    user_prompt = f"""Extract 4 to 7 key distinct discussion topics discussed in this transcript as valid JSON:
+    user_prompt = f"""Extract 4 to 7 key distinct discussion topics discussed in this transcript as valid JSON.
+The transcript has [MM:SS] timestamps — use them to identify meeting flow and group consecutive segments into coherent topics.
+Look for natural transitions (e.g. "Let's move to...", "Next item...", "Now for...") as topic boundaries.
+Order topics chronologically by when they first appear in the timestamps.
+
 Schema: {{"topics": ["Topic 1 title", "Topic 2 title", "Topic 3 title"]}}
 Transcript: {transcript[:20000]}"""
     payload = {"model": "deepseek-chat", "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1, "max_tokens": 500}
@@ -573,7 +608,13 @@ def match_evidence_and_synthesize(transcript, user_topics_str):
         knowledge_base=knowledge_section,
     )
 
-    user_prompt = f"""Match and synthesize evidence for each of the following user discussion points using the meeting transcript:
+    user_prompt = f"""Match and synthesize evidence for each of the following user discussion points using the meeting transcript.
+The transcript has [MM:SS] timestamps — use them to:
+1. Identify meeting flow and group relevant evidence to the correct discussion topics
+2. Note who is speaking when the evidence_quote occurs (look at the speaker tag or surrounding context)
+3. Return evidence quotes WITH their [MM:SS] prefix so the user can locate them
+
+In the evidence_quote field, include the timestamp prefix (e.g. "[01:23] The text...") for traceability.
 
 USER DISCUSSION TOPICS:
 {user_topics_str}
