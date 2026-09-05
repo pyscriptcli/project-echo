@@ -26,6 +26,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, ListFlowable, ListItem
+import components.doc_fonts as docfonts
+docfonts.ensure_pdf_fonts()
 import requests
 import streamlit.components.v1 as components
 
@@ -677,7 +679,7 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
     r_title = p_title.add_run("MINUTES OF THE MEETING")
     r_title.bold = True
     r_title.underline = True
-    r_title.font.name = "Arial"
+    r_title.font.name = docfonts.WORD_BODY
     r_title.font.size = Pt(11)
 
     company_target = meeting_details.get("external_attendees", [])
@@ -688,7 +690,7 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
     p_sub.paragraph_format.space_after = Pt(12)
     r_sub = p_sub.add_run(f"PRIME PHILIPPINES & {primary_client_rep.upper()}")
     r_sub.bold = True
-    r_sub.font.name = "Arial"
+    r_sub.font.name = docfonts.WORD_BODY
     r_sub.font.size = Pt(11)
 
     date_str = meeting_details.get("date", "____________")
@@ -697,11 +699,11 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
     
     p_date = doc.add_paragraph(full_date)
     p_date.paragraph_format.space_after = Pt(2)
-    for r in p_date.runs: r.font.name, r.font.size = "Arial", Pt(10)
+    for r in p_date.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(10)
 
     p_loc = doc.add_paragraph(f"Location: {meeting_details.get('location', '____________')}")
     p_loc.paragraph_format.space_after = Pt(2)
-    for r in p_loc.runs: r.font.name, r.font.size = "Arial", Pt(10)
+    for r in p_loc.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(10)
 
     prime_atts = meeting_details.get("prime_attendees", [])
     ext_atts = meeting_details.get("external_attendees", [])
@@ -710,7 +712,7 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
     p_att.paragraph_format.space_after = Pt(2)
     p_att.paragraph_format.tab_stops.add_tab_stop(Inches(1.35), WD_TAB_ALIGNMENT.LEFT)
     r_att_label = p_att.add_run("Attended by:")
-    r_att_label.font.name, r_att_label.font.size = "Arial", Pt(10)
+    r_att_label.font.name, r_att_label.font.size = docfonts.WORD_BODY, Pt(10)
     
     first_attendee = True
     for att in ext_atts:
@@ -721,7 +723,7 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
         else: p.add_run("\t")
         comp_label = f", {meeting_details.get('company_name')}" if meeting_details.get('company_name') else ""
         r = p.add_run(f"{att}{comp_label}")
-        r.font.name, r.font.size = "Arial", Pt(10)
+        r.font.name, r.font.size = docfonts.WORD_BODY, Pt(10)
         first_attendee = False
 
     for att in prime_atts:
@@ -730,19 +732,19 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
         if not first_attendee: p.paragraph_format.left_indent = Inches(1.35)
         else: p.add_run("\t")
         r = p.add_run(f"{att} – PRIME Philippines")
-        r.font.name, r.font.size = "Arial", Pt(10)
+        r.font.name, r.font.size = docfonts.WORD_BODY, Pt(10)
         first_attendee = False
 
     p_line = doc.add_paragraph()
     p_line.paragraph_format.space_before = Pt(4)
     p_line.paragraph_format.space_after = Pt(6)
     r_line = p_line.add_run("_________________________________________________________________________________")
-    r_line.font.name, r_line.font.color.rgb = "Arial", RGBColor(160, 160, 160)
+    r_line.font.name, r_line.font.color.rgb = docfonts.WORD_BODY, RGBColor(105, 114, 125)
 
     client_display = meeting_details.get('company_name', '').strip() or "the Client"
     p_intro = doc.add_paragraph(f"During the meeting held last {date_str}, PRIME Philippines, represented by the attendee/s shown above, met with {client_display} to discuss opportunities for collaboration.")
     p_intro.paragraph_format.space_after = Pt(10)
-    for r in p_intro.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+    for r in p_intro.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(9.5)
 
     table = doc.add_table(rows=len(df)+1, cols=4)
     table.alignment, table.style, table.autofit, table.allow_autofit = WD_TABLE_ALIGNMENT.CENTER, "Table Grid", False, False
@@ -752,10 +754,10 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
     for i, header in enumerate(headers):
         cell = table.rows[0].cells[i]
         cell.width, cell.text = col_widths[i], header
-        set_cell_shading(cell, "FFFF00")
+        set_cell_shading(cell, "C9AB4C")
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        if p.runs: p.runs[0].font.bold, p.runs[0].font.size, p.runs[0].font.name = True, Pt(9), "Arial"
+        if p.runs: p.runs[0].font.bold, p.runs[0].font.size, p.runs[0].font.name = True, Pt(9), docfonts.WORD_BODY
 
     for i, row in df.iterrows():
         cells = table.rows[i+1].cells
@@ -764,46 +766,46 @@ def export_to_word_template_1(df, meeting_details, other_discussions):
             cell.width = col_widths[c_idx]
             p = cell.paragraphs[0]
             if c_idx in [2, 3]: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(8.5), "Arial"
+            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(8.5), docfonts.WORD_BODY
 
     doc.add_paragraph()
     p_note = doc.add_paragraph("*Note: The indicative delivery date serves as reference point and still subject to changes. Furthermore, it depends on the progress of both parties.")
     p_note.paragraph_format.space_after = Pt(8)
-    p_note.runs[0].italic, p_note.runs[0].font.name, p_note.runs[0].font.size = True, "Arial", Pt(8)
+    p_note.runs[0].italic, p_note.runs[0].font.name, p_note.runs[0].font.size = True, docfonts.WORD_BODY, Pt(8)
 
     if other_discussions.strip():
         p_od_head = doc.add_paragraph()
         p_od_head.paragraph_format.space_before, p_od_head.paragraph_format.space_after = Pt(6), Pt(4)
         r_od_head = p_od_head.add_run("Other Discussions:")
-        r_od_head.bold, r_od_head.font.size, r_od_head.font.name = True, Pt(10), "Arial"
+        r_od_head.bold, r_od_head.font.size, r_od_head.font.name = True, Pt(10), docfonts.WORD_BODY
         p_od = doc.add_paragraph(other_discussions)
         p_od.paragraph_format.space_after = Pt(12)
-        for r in p_od.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+        for r in p_od.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(9.5)
 
     p_prep_label = doc.add_paragraph("Prepared by:")
     p_prep_label.paragraph_format.space_before = Pt(12)
     p_prep_label.paragraph_format.space_after = Pt(2)
-    p_prep_label.runs[0].font.name, p_prep_label.runs[0].font.bold, p_prep_label.runs[0].font.size = "Arial", True, Pt(9.5)
+    p_prep_label.runs[0].font.name, p_prep_label.runs[0].font.bold, p_prep_label.runs[0].font.size = docfonts.WORD_BODY, True, Pt(9.5)
     p_prep_line = doc.add_paragraph("_______________________________")
     p_prep_line.paragraph_format.space_after = Pt(2)
-    p_prep_line.runs[0].font.name = "Arial"
+    p_prep_line.runs[0].font.name = docfonts.WORD_BODY
     prep_name = meeting_details.get("prep_name", "").strip() or "____________________"
     prep_desig = meeting_details.get("prep_desig", "").strip() or "PRIME Philippines"
     p_prep_info = doc.add_paragraph(f"{prep_name}\n{prep_desig}")
     p_prep_info.paragraph_format.space_after = Pt(12)
-    for r in p_prep_info.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+    for r in p_prep_info.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(9.5)
 
     p_conf_label = doc.add_paragraph("Confirmed by:")
     p_conf_label.paragraph_format.space_after = Pt(2)
-    p_conf_label.runs[0].font.name, p_conf_label.runs[0].font.bold, p_conf_label.runs[0].font.size = "Arial", True, Pt(9.5)
+    p_conf_label.runs[0].font.name, p_conf_label.runs[0].font.bold, p_conf_label.runs[0].font.size = docfonts.WORD_BODY, True, Pt(9.5)
     p_conf_line = doc.add_paragraph("_______________________________")
     p_conf_line.paragraph_format.space_after = Pt(2)
-    p_conf_line.runs[0].font.name = "Arial"
+    p_conf_line.runs[0].font.name = docfonts.WORD_BODY
     conf_name = meeting_details.get("conf_name", "").strip() or (ext_atts[0] if ext_atts else "____________________")
     conf_desig = meeting_details.get("conf_desig", "").strip() or (meeting_details.get("company_name", "").strip() or "Client")
     p_conf_info = doc.add_paragraph(f"{conf_name}\n{conf_desig}")
     p_conf_info.paragraph_format.space_after = Pt(6)
-    for r in p_conf_info.runs: r.font.name, r.font.size = "Arial", Pt(9.5)
+    for r in p_conf_info.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(9.5)
 
     bio = BytesIO()
     doc.save(bio)
@@ -815,14 +817,14 @@ def export_to_pdf_template_1(df, meeting_details, other_discussions):
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.6 * inch, rightMargin=0.6 * inch, topMargin=0.5 * inch, bottomMargin=0.5 * inch)
     story, styles = [], getSampleStyleSheet()
     
-    style_title = ParagraphStyle('DocTitle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=11.5, alignment=1, spaceAfter=2)
+    style_title = ParagraphStyle('DocTitle', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=11.5, alignment=1, spaceAfter=2)
     company_target = meeting_details.get("external_attendees", [])
     primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "CLIENT"
-    style_subtitle = ParagraphStyle('DocSubTitle', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10.5, alignment=1, spaceAfter=10)
-    style_body = ParagraphStyle('DocBody', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12, spaceAfter=3)
-    style_th = ParagraphStyle('TableHead', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8.5, leading=10, alignment=1)
-    style_td = ParagraphStyle('TableData', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10)
-    style_td_center = ParagraphStyle('TableDataCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=8, leading=10, alignment=1)
+    style_subtitle = ParagraphStyle('DocSubTitle', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=10.5, alignment=1, spaceAfter=10)
+    style_body = ParagraphStyle('DocBody', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=9, leading=12, spaceAfter=3)
+    style_th = ParagraphStyle('TableHead', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=8.5, leading=10, alignment=1)
+    style_td = ParagraphStyle('TableData', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=8, leading=10)
+    style_td_center = ParagraphStyle('TableDataCenter', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=8, leading=10, alignment=1)
 
     story.append(Paragraph("<u>MINUTES OF THE MEETING</u>", style_title))
     story.append(Paragraph(f"PRIME PHILIPPINES & {primary_client_rep.upper()}", style_subtitle))
@@ -858,16 +860,16 @@ def export_to_pdf_template_1(df, meeting_details, other_discussions):
     
     t = Table(table_data, colWidths=[2.4 * inch, 2.3 * inch, 1.1 * inch, 1.0 * inch], repeatRows=1)
     t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#FFFF00')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C9AB4C')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#69727d')),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4)
     ]))
     story.append(t)
     
-    note_style = ParagraphStyle('Note', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=7.5, leading=9, spaceBefore=4)
+    note_style = ParagraphStyle('Note', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=7.5, leading=9, spaceBefore=4)
     story.append(Paragraph("*Note: The indicative delivery date serves as reference point and still subject to changes. Furthermore, it depends on the progress of both parties.", note_style))
     
     if other_discussions.strip():
@@ -916,7 +918,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     p_title.paragraph_format.space_after = Pt(2)
     r_title = p_title.add_run("MINUTES OF THE MEETING")
     r_title.bold = True
-    r_title.font.name = "Arial"
+    r_title.font.name = docfonts.WORD_BODY
     r_title.font.size = Pt(16)
     
     company_target = meeting_details.get("external_attendees", [])
@@ -925,9 +927,9 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_sub.paragraph_format.space_after = Pt(16)
     r_sub = p_sub.add_run(f"Project / Client: {primary_client_rep}")
-    r_sub.font.name = "Arial"
+    r_sub.font.name = docfonts.WORD_BODY
     r_sub.font.size = Pt(11)
-    r_sub.font.color.rgb = RGBColor(100, 100, 100)
+    r_sub.font.color.rgb = RGBColor(105, 114, 125)
 
     doc.add_heading('Meeting Details', level=2)
     details_table = doc.add_table(rows=5, cols=2)
@@ -952,7 +954,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
         cells[1].text = val
         cells[0].paragraphs[0].runs[0].font.bold = True
         for cell in cells:
-            cell.paragraphs[0].runs[0].font.name = "Arial"
+            cell.paragraphs[0].runs[0].font.name = docfonts.WORD_BODY
             cell.paragraphs[0].runs[0].font.size = Pt(9.5)
 
     doc.add_paragraph()
@@ -963,7 +965,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
         if att.strip():
             p_att = doc.add_paragraph(style='List Bullet')
             r_att = p_att.add_run(att.strip())
-            r_att.font.name = "Arial"
+            r_att.font.name = docfonts.WORD_BODY
             r_att.font.size = Pt(10)
 
     doc.add_paragraph()
@@ -971,13 +973,13 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     doc.add_heading('Purpose & Summary', level=2)
     p_purp = doc.add_paragraph(other_discussions if other_discussions.strip() else "To discuss project updates, ongoing deliverables, and establish clear action plans.")
     p_purp.paragraph_format.space_after = Pt(12)
-    for r in p_purp.runs: r.font.name, r.font.size = "Arial", Pt(10)
+    for r in p_purp.runs: r.font.name, r.font.size = docfonts.WORD_BODY, Pt(10)
 
     doc.add_heading('Discussion Points', level=2)
     for i, row in df.iterrows():
         p_dp = doc.add_paragraph(style='List Number')
         r_dp = p_dp.add_run(str(row.get('Discussion Points', '')))
-        r_dp.font.name = "Arial"
+        r_dp.font.name = docfonts.WORD_BODY
         r_dp.font.size = Pt(10)
 
     doc.add_paragraph()
@@ -991,13 +993,13 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     for i, header in enumerate(act_headers):
         cell = act_table.rows[0].cells[i]
         cell.width, cell.text = col_widths[i], header
-        set_cell_shading(cell, "1A2B4C")
+        set_cell_shading(cell, "003366")
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         if p.runs: 
             p.runs[0].font.bold = True
             p.runs[0].font.color.rgb = RGBColor(255, 255, 255)
-            p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+            p.runs[0].font.size, p.runs[0].font.name = Pt(9), docfonts.WORD_BODY
 
     for i, row in df.iterrows():
         cells = act_table.rows[i+1].cells
@@ -1006,7 +1008,7 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
             cell.width = col_widths[c_idx]
             p = cell.paragraphs[0]
             if c_idx in [0, 2, 3]: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(9), "Arial"
+            if p.runs: p.runs[0].font.size, p.runs[0].font.name = Pt(9), docfonts.WORD_BODY
 
     doc.add_paragraph()
 
@@ -1015,8 +1017,8 @@ def export_to_word_template_2(df, meeting_details, other_discussions):
     p_footer.paragraph_format.space_before = Pt(24)
     r_footer = p_footer.add_run(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.")
     r_footer.italic = True
-    r_footer.font.color.rgb = RGBColor(100, 100, 100)
-    r_footer.font.name = "Arial"
+    r_footer.font.color.rgb = RGBColor(105, 114, 125)
+    r_footer.font.name = docfonts.WORD_BODY
     r_footer.font.size = Pt(8)
 
     bio = BytesIO()
@@ -1029,13 +1031,13 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.8 * inch, rightMargin=0.8 * inch, topMargin=0.6 * inch, bottomMargin=0.6 * inch)
     story, styles = [], getSampleStyleSheet()
     
-    style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
-    style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
-    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#003366"), spaceBefore=12, spaceAfter=6)
-    style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
-    style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
-    style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
-    style_td_center = ParagraphStyle('TDC2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12, alignment=1)
+    style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=15, alignment=1, spaceAfter=2)
+    style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=10.5, textColor=colors.HexColor('#69727d'), alignment=1, spaceAfter=20)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=12, textColor=colors.HexColor("#003366"), spaceBefore=12, spaceAfter=6)
+    style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=9.5, leading=14, spaceAfter=4)
+    style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName=docfonts.FONT_HEAD_BOLD, fontSize=9, textColor=colors.white, alignment=1)
+    style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=9, leading=12)
+    style_td_center = ParagraphStyle('TDC2', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=9, leading=12, alignment=1)
     
     company_target = meeting_details.get("external_attendees", [])
     primary_client_rep = company_target[0] if company_target else meeting_details.get("company_name", "").strip() or "General Meeting"
@@ -1058,7 +1060,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     ]
     t_details = Table(details_data, colWidths=[2 * inch, 4.5 * inch])
     t_details.setStyle(TableStyle([
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#69727d')),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6)
@@ -1098,14 +1100,14 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#003366')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#69727d')),
         ('TOPPADDING', (0, 0), (-1, -1), 5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 5)
     ]))
     story.append(t_act)
 
     story.append(Spacer(1, 24))
-    footer_style = ParagraphStyle('Footer2', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8, textColor=colors.grey, alignment=1)
+    footer_style = ParagraphStyle('Footer2', parent=styles['Normal'], fontName=docfonts.FONT_BODY, fontSize=8, textColor=colors.HexColor('#69727d'), alignment=1)
     story.append(Paragraph(f"Prepared for circulation to {primary_client_rep}. Please return corrections before this is treated as the agreed record.", footer_style))
 
     doc.build(story)
