@@ -108,7 +108,7 @@ def build_user_deliverables_context(username: str, archive_records: list) -> str
 
 # --- Pure SVG Icon Assets ---
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -116,14 +116,14 @@ SVG_ECHO_LOGO = """
 """
 
 SVG_USER_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
 </svg>
 """
 
 SVG_GLOBE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
     <circle cx="12" cy="12" r="10"></circle>
     <line x1="2" y1="12" x2="22" y2="12"></line>
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
@@ -131,7 +131,7 @@ SVG_GLOBE_ICON = """
 """
 
 SVG_BRAIN_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"></path>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"></path>
 </svg>
@@ -146,7 +146,7 @@ SVG_ALERT_ICON = """
 """
 
 SVG_FILE_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0D1B3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 3px;">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
     <polyline points="14 2 14 8 20 8"></polyline>
 </svg>
@@ -172,7 +172,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     -ms-overflow-style: none !important;
     padding-top: 0.3rem !important;
     padding-bottom: 0.3rem !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
 }
 
 html::-webkit-scrollbar, 
@@ -226,11 +226,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-title {
-    font-family: 'Playfair Display', Georgia, serif !important;
+    font-family: 'Cormorant Garamond', Georgia, serif !important;
     font-style: italic !important;
     font-size: 1.15rem !important;
     font-weight: 600 !important;
-    color: #1A2B4C !important;
+    color: #003366 !important;
     margin: 0 !important;
     line-height: 1 !important;
     letter-spacing: 0.01em !important;
@@ -238,10 +238,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button,
 .echo-top-controls div[data-testid="stButton"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     height: 28px !important;
     min-height: 28px !important;
     padding: 0 0.55rem !important;
@@ -254,8 +254,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-top-controls div[data-testid="stPopover"] > button:hover,
 .echo-top-controls div[data-testid="stButton"] > button:hover {
-    border-color: #8fa2d6 !important;
-    background-color: #8fa2d6 !important;
+    border-color: #d9bc5d !important;
+    background-color: #003366 !important;
     box-shadow: none !important;
 }
 
@@ -291,10 +291,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-user-bubble {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    background: #111A2B;
+    font-family: 'Montserrat', sans-serif !important;
+    background: #0c0c0e;
     color: #FFFFFF !important;
-    border: 1px solid #D4AF37;
+    border: 1px solid #c9ab4c;
     padding: 0.35rem 0.65rem;
     border-radius: 10px 2px 10px 10px;
     max-width: 75%;
@@ -311,8 +311,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #111A2B;
-    border: 1px solid #D4AF37;
+    background: #0c0c0e;
+    border: 1px solid #c9ab4c;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -338,8 +338,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #111A2B;
-    border: 1px solid #D4AF37;
+    background: #0c0c0e;
+    border: 1px solid #c9ab4c;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -347,14 +347,14 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-assistant-title {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     font-size: 0.72rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: #003366;
 }
 
 .echo-assistant-badge-gold {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     font-size: 0.52rem;
     padding: 1px 4px;
     border-radius: 2px;
@@ -365,7 +365,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-assistant-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     padding-left: 21px;
     color: #374151;
     font-size: 0.80rem;
@@ -383,21 +383,21 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     padding-left: 21px;
 }
 .echo-source-pill {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     display: inline-flex;
     align-items: center;
-    background: #111A2B;
-    border: 1px solid #D4AF37;
+    background: #0c0c0e;
+    border: 1px solid #c9ab4c;
     border-radius: 12px;
     padding: 1px 6px;
     font-size: 0.65rem;
-    color: #D4AF37 !important;
+    color: #c9ab4c !important;
     text-decoration: none !important;
     font-weight: 500;
     transition: all 0.2s ease;
 }
 .echo-source-pill:hover {
-    border-color: #F1C40F;
+    border-color: #d9bc5d;
     color: #FFFFFF !important;
     box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
 }
@@ -411,11 +411,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     border-radius: 4px;
     overflow: hidden;
     border: 1px solid #E2E8F0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
 }
 .echo-assistant-body th {
-    background: #111A2B;
-    color: #D4AF37;
+    background: #0c0c0e;
+    color: #c9ab4c;
     font-weight: 600;
     border: 1px solid #334155;
     padding: 3px 6px;
@@ -435,7 +435,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     margin-bottom: 0.4rem;
 }
 .echo-thinking-pill {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -450,7 +450,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-pulse-dot {
     width: 4px;
     height: 4px;
-    background-color: #D4AF37;
+    background-color: #c9ab4c;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
 }
@@ -461,7 +461,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-context-candidate-card {
     background: #FFFFFF;
-    border: 1px solid #D4AF37;
+    border: 1px solid #c9ab4c;
     border-radius: 6px;
     padding: 0.4rem 0.6rem;
     margin-top: 0.3rem;
@@ -489,21 +489,21 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] textarea {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     color: #0F172A !important;
     font-size: 0.85rem !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
     border-radius: 50% !important;
     transition: all 0.2s ease-in-out !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button:hover {
-    background-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    background-color: #003366 !important;
+    color: #ffffff !important;
     box-shadow: none !important;
 }
 
@@ -525,15 +525,15 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     align-items: center !important;
     justify-content: center !important;
     font-size: 1.1rem !important;
-    background: #111A2B !important;
-    border: 1px solid #D4AF37 !important;
-    color: #D4AF37 !important;
+    background: #0c0c0e !important;
+    border: 1px solid #c9ab4c !important;
+    color: #c9ab4c !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
     margin: 0 !important;
 }
 
 .echo-attach-col-target div[data-testid="stPopover"] > button:hover {
-    border-color: #F1C40F !important;
+    border-color: #d9bc5d !important;
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
 }
 
@@ -891,7 +891,7 @@ def render_context_popup_dialog():
 
     if st.session_state["extracted_context_df"] is not None and not st.session_state["extracted_context_df"].empty:
         st.markdown("---")
-        st.markdown("<p style='font-size:0.80rem; font-weight:600; color:#1A2B4C;'>Staged Knowledge Rows (JSON Structured Values)</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.80rem; font-weight:600; color:#003366;'>Staged Knowledge Rows (JSON Structured Values)</p>", unsafe_allow_html=True)
 
         column_config = {
             "category": st.column_config.SelectboxColumn("Category", options=["knowledge", "team", "jargon", "projects"], required=True),
@@ -1213,7 +1213,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                     f'</div>'
                     f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:6px;">'
                     f'Save <b>{prop.get("key")}</b> [<i>{prop.get("category")}</i>] to Knowledge Base?<br/>'
-                    f'<code style="font-size:0.72rem; color:#1A2B4C;">{val_display}</code>'
+                    f'<code style="font-size:0.72rem; color:#003366;">{val_display}</code>'
                     f'</div></div>',
                     unsafe_allow_html=True
                 )
@@ -1270,7 +1270,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
         with attach_col:
             st.markdown('<div class="echo-attach-col-target">', unsafe_allow_html=True)
             with st.popover("📎", help="Attach Documents / Scans"):
-                st.markdown("<span style='font-size:0.80rem; font-weight:600; color:#1A2B4C;'>Upload Attachments</span>", unsafe_allow_html=True)
+                st.markdown("<span style='font-size:0.80rem; font-weight:600; color:#003366;'>Upload Attachments</span>", unsafe_allow_html=True)
                 st.file_uploader(
                     "Upload files",
                     type=ALLOWED_ATTACHMENT_TYPES,

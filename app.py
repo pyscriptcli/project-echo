@@ -52,9 +52,9 @@ footer {
 }
 
 .stApp {
-    background-color: #d9d9d9 !important;
+    background-color: #f4f1ec !important;
     font-family: 'Montserrat', sans-serif !important;
-    color: #2A3441;
+    color: #1b1d1e;
 }
 
 .block-container {
@@ -89,11 +89,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
 
 .left-card {
     background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(13, 27, 62, 0.12);
+    border: 1px solid rgba(0, 51, 102, 0.12);
     border-radius: 0;
     padding: 1rem;
     box-shadow: none;
-    color: #2A3441;
+    color: #1b1d1e;
     flex-shrink: 0;
 }
 
@@ -108,13 +108,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 600;
-    color: #0D1B3E;
+    color: #003366;
     font-size: 1.6rem;
     margin: 0 0 0.2rem 0;
 }
 .section-caption {
     font-size: 0.8rem;
-    color: #5A607A;
+    color: #69727d;
     margin: 0 0 0.8rem 0;
 }
 
@@ -127,27 +127,27 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     background: rgba(255, 255, 255, 0.8);
     border-radius: 0;
     padding: 0.5rem 0.65rem;
-    border: 1px solid rgba(13, 27, 62, 0.12);
-    border-left: 3.5px solid #0D1B3E;
+    border: 1px solid rgba(0, 51, 102, 0.12);
+    border-left: 3.5px solid #003366;
 }
 .kpi-title {
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #5A607A;
+    color: #69727d;
 }
 .kpi-value {
     font-family: 'Bebas Neue', 'Cormorant Garamond', serif;
     font-style: normal;
     font-size: 1.6rem;
     font-weight: 400;
-    color: #0D1B3E;
+    color: #003366;
 }
 
 .meeting-card {
     background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(13, 27, 62, 0.12);
+    border: 1px solid rgba(0, 51, 102, 0.12);
     border-radius: 0;
     padding: 0.6rem 0.75rem;
     margin-bottom: 0.5rem;
@@ -157,37 +157,37 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[da
     font-style: italic;
     font-size: 1rem;
     font-weight: 600;
-    color: #0D1B3E;
+    color: #003366;
     margin: 0 0 0.1rem 0;
 }
 .meeting-sub {
     font-size: 0.65rem;
-    color: #5A607A;
+    color: #69727d;
     margin-bottom: 0.3rem;
 }
 .meeting-desc {
     font-size: 0.78rem;
-    color: #3A4454;
+    color: #1b1d1e;
     line-height: 1.35;
     margin: 0;
 }
 
 div[data-testid="stPopover"] { margin-bottom: 0 !important; }
 div[data-testid="stPopover"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     font-size: 0.75rem !important;
     min-height: 32px !important;
     height: 32px !important;
 }
 .stButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
     min-height: 28px !important;
@@ -195,16 +195,23 @@ div[data-testid="stPopover"] > button {
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
+.stButton > button:hover,
+[data-testid="stDownloadButton"] > button:hover,
+div[data-testid="stPopover"] > button:hover {
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
+}
 
 /* ===== tasks.py Calendar Styles ===== */
 :root {
-    --bg: #d9d9d9;
-    --surface: rgba(255, 255, 255, 0.8);
-    --ink: #0D1B3E;
-    --muted: #5A607A;
-    --gold: #a3acd5;
-    --danger: #E5484D;
-    --radius: 0px;
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --ink: #003366;
+    --muted: #69727d;
+    --gold: #c9ab4c;
+    --danger: #c53a3f;
+    --radius: 6px;
     --control-height: 28px;
 }
 
@@ -226,9 +233,9 @@ h3 {
     min-height: var(--control-height) !important;
     border-radius: var(--radius) !important;
     font-size: 0.78rem !important;
-    border-color: rgba(13, 27, 62, 0.2) !important;
+    border-color: rgba(0, 51, 102, 0.2) !important;
     background: rgba(255,255,255,0.8) !important;
-    color: #2A3441 !important;
+    color: #1b1d1e !important;
 }
 
 .assignee-avatar {
@@ -238,7 +245,7 @@ h3 {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #0D1B3E;
+    background: #003366;
     color: #fff;
     font-size: 0.52rem;
     font-weight: 700;
@@ -254,8 +261,8 @@ h3 {
     font-size: 0.62rem;
     font-weight: 600;
     background: #ffffff;
-    color: #3A4454;
-    border: 1px solid rgba(13, 27, 62, 0.12);
+    color: #1b1d1e;
+    border: 1px solid rgba(0, 51, 102, 0.12);
     white-space: nowrap;
 }
 .due-chip.overdue {
@@ -297,17 +304,17 @@ h3 {
 
 .cal-month-cell {
     background: var(--surface);
-    border: 1px solid rgba(13, 27, 62, 0.1);
+    border: 1px solid rgba(0, 51, 102, 0.1);
     border-radius: var(--radius);
     padding: 4px;
     min-height: 78px;
     height: auto !important;
     box-sizing: border-box;
 }
-.cal-month-cell:hover { border-color: rgba(13, 27, 62, 0.35); }
+.cal-month-cell:hover { border-color: rgba(0, 51, 102, 0.35); }
 .cal-month-cell.dim { background: rgba(255, 255, 255, 0.35); border: none; }
-.cal-month-cell.weekend { background: rgba(13, 27, 62, 0.06); border-color: rgba(13, 27, 62, 0.18); }
-.cal-month-cell.today { border: 2px solid #0D1B3E; }
+.cal-month-cell.weekend { background: rgba(0, 51, 102, 0.06); border-color: rgba(0, 51, 102, 0.18); }
+.cal-month-cell.today { border: 2px solid #003366; }
 
 .cal-month-day-num {
     display: flex;
@@ -319,7 +326,7 @@ h3 {
     color: var(--ink);
     padding: 1px 2px 3px 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #0D1B3E; }
+.cal-month-cell.weekend .cal-month-day-num { color: #003366; }
 
 .today-dot {
     width: 6px;
@@ -796,9 +803,9 @@ all_events = build_calendar_events()
 # ------------------------------------------------------------
 # TEAM + PERSONAL STATS (dashboard)
 # ------------------------------------------------------------
-style_ink = "#0D1B3E"
-style_gold = "#a3acd5"
-style_muted = "#5A607A"
+style_ink = "#003366"
+style_gold = "#c9ab4c"
+style_muted = "#69727d"
 
 # Task status buckets
 status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
@@ -998,7 +1005,7 @@ with col_right:
         # Title + Add Task button
         title_col, add_col = st.columns([3, 1], gap="medium")
         with title_col:
-            st.markdown('<h2 style="font-family:\'Cormorant Garamond\', serif; font-style:italic; color:#0D1B3E; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
+            st.markdown('<h2 style="font-family:\'Cormorant Garamond\', serif; font-style:italic; color:#003366; margin:0; font-size: 1.8rem;">Calendar</h2>', unsafe_allow_html=True)
         with add_col:
             if st.button("+ Add Task", key="cal_add_task_global", use_container_width=True):
                 st.session_state["cal_new_task_date"] = today
@@ -1159,7 +1166,7 @@ with col_right:
 
                 st.markdown(
                     f"<div style='font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.02em;"
-                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#0D1B3E;border-bottom:2px solid #a3acd5;' if is_today else 'color:#0D1B3E;border-bottom:1px solid rgba(13,27,62,0.3);')}'"
+                    f"padding-bottom:0.25rem;margin-bottom:0.35rem;{('color:#003366;border-bottom:2px solid #c9ab4c;' if is_today else 'color:#003366;border-bottom:1px solid rgba(0,51,102,0.3);')}'"
                     f">{day_names[i]} · {format_mm_dd_yyyy(day)}</div>",
                     unsafe_allow_html=True
                 )
@@ -1193,9 +1200,9 @@ with col_right:
                 with header_cols[i]:
                     is_weekend = (i == 0 or i == 6)
                     header_style = (
-                        "background:rgba(51,51,51,0.15); color:#0D1B3E;"
+                        "background:rgba(51,51,51,0.15); color:#003366;"
                         if is_weekend
-                        else "background:rgba(255,255,255,0.8); color:#0D1B3E; border:1px solid rgba(13,27,62,0.18); border-bottom:none;"
+                        else "background:rgba(255,255,255,0.8); color:#003366; border:1px solid rgba(0,51,102,0.18); border-bottom:none;"
                     )
                     st.markdown(
                         f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1216,7 +1223,7 @@ with col_right:
                                 dot = '<span class="today-dot"></span>' if is_today else ''
                                 st.markdown(
                                     f"<div style='display:flex;align-items:center;gap:4px;font-family:&quot;Bebas Neue&quot;,serif;"
-                                    f"font-size:1.25rem;font-weight:400;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                    f"font-size:1.25rem;font-weight:400;color:#003366;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                     unsafe_allow_html=True
                                 )
 
@@ -1236,7 +1243,7 @@ with col_right:
 
                                 if len(day_events) > 3:
                                     st.markdown(
-                                        f"<div style='font-size:0.58rem;color:#5A607A;padding-left:2px;'>+{len(day_events) - 3} more</div>",
+                                        f"<div style='font-size:0.58rem;color:#69727d;padding-left:2px;'>+{len(day_events) - 3} more</div>",
                                         unsafe_allow_html=True
                                     )
 

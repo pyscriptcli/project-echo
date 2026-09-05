@@ -98,9 +98,9 @@ section[data-testid="stSidebar"] {
 /* ---------------- Sidebar shell ---------------- */
 section[data-testid="stSidebar"] {
     /* Gray azure background, hairline navy border, subtle shadow */
-    background: #d9d9d9 !important;
-    border-right: 1px solid rgba(13, 27, 62, 0.15) !important;
-    box-shadow: 4px 0 14px rgba(13, 27, 62, 0.12), 2px 0 6px rgba(13, 27, 62, 0.05) !important;
+    background: #f4f1ec !important;
+    border-right: 1px solid rgba(0, 51, 102, 0.15) !important;
+    box-shadow: 4px 0 14px rgba(0, 51, 102, 0.12), 2px 0 6px rgba(0, 51, 102, 0.05) !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -120,27 +120,27 @@ section[data-testid="stSidebar"] [data-testid="stSidebarContent"] > [data-testid
 
 /* ---------------- Brand block ---------------- */
 .sb-brand {
-    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 600;
     font-size: 2rem;
     line-height: 1;
-    color: #0D1B3E;
+    color: #003366;
     letter-spacing: 0.01em;
 }
 .sb-brand-sub {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 0.62rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: #5A607A;
+    color: #69727d;
     margin-top: 3px;
 }
 .sb-brand-rule {
     height: 1px;
     margin: 0.85rem 0 0.9rem 0;
-    background: linear-gradient(to right, rgba(13, 27, 62, 0.4), rgba(13, 27, 62, 0.04));
+    background: linear-gradient(to right, rgba(0, 51, 102, 0.4), rgba(0, 51, 102, 0.04));
 }
 
 /* ---------------- Nav links (st.page_link) ---------------- */
@@ -151,8 +151,8 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
     border-radius: 6px !important;
     padding: 6px 10px !important;
     border-left: 3px solid transparent !important;
-    color: #1F2A44 !important;
-    font-family: 'Inter', sans-serif !important;
+    color: #003366 !important;
+    font-family: 'Montserrat', sans-serif !important;
     font-size: 0.83rem !important;
     font-weight: 500 !important;
     text-decoration: none !important;
@@ -164,14 +164,14 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a p {
     color: inherit !important;
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
-    background: rgba(13, 27, 62, 0.08) !important;
-    color: #0D1B3E !important;
+    background: rgba(0, 51, 102, 0.08) !important;
+    color: #003366 !important;
 }
 section[data-testid="stSidebar"] [data-testid="stPageLink"][aria-current="page"] a,
 section[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-    background: rgba(13, 27, 62, 0.12) !important;
-    border-left-color: #0D1B3E !important;
-    color: #0D1B3E !important;
+    background: rgba(0, 51, 102, 0.12) !important;
+    border-left-color: #003366 !important;
+    color: #003366 !important;
     font-weight: 700 !important;
 }
 
@@ -183,7 +183,7 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 .sb-footer-scope { display: none !important; }
 
 .sb-user-wrap {
-    border-top: 1px solid rgba(13, 27, 62, 0.15);
+    border-top: 1px solid rgba(0, 51, 102, 0.15);
     padding-top: 0.8rem;
     margin-top: 0.9rem;
     margin-bottom: 0.55rem;
@@ -199,51 +199,51 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #0D1B3E;
+    background: #003366;
     color: #FFFFFF;
     border: 1px solid rgba(255, 255, 255, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     flex-shrink: 0;
 }
 .sb-user-name {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #0D1B3E;
+    color: #003366;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ---------------- Sign Out — small dark-gray button ---------------- */
+/* ---------------- Sign Out — small dark button ---------------- */
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button {
-    background: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     height: 26px !important;                      /* original height, narrow */
     min-height: 26px !important;
     padding: 0 8px !important;                    /* compact horizontal padding */
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
     font-size: 0.68rem !important;                /* small text */
     font-weight: 600 !important;
     box-shadow: none !important;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
-    background: #8fa2d6 !important;
-    color: #0D1B3E !important;
-    border-color: #8fa2d6 !important;
+    background: #003366 !important;
+    color: #ffffff !important;
+    border-color: #d9bc5d !important;
 }
 
 /* ============================================================
-   GLOBAL BUTTONS — blue-gray bg (#a3acd5), navy text
+   GLOBAL BUTTONS — accent-ink bg (#0c0c0e), white text, gold border
    Scoped to the main content area so the sidebar nav/sign-out
    keeps its own styling. Applied on every page via the sidebar.
    ============================================================ */
@@ -251,10 +251,10 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button,
 .stFormSubmitButton > button,
 [data-testid="stDownloadButton"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
@@ -269,9 +269,9 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
 [data-testid="stPopover"] > button:hover,
 .stFormSubmitButton > button:hover,
 [data-testid="stDownloadButton"] > button:hover {
-    background-color: #8fa2d6 !important;
-    border-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
     box-shadow: none !important;
 }
 </style>

@@ -52,25 +52,25 @@ setup_page_layout()
 # 3. Custom CSS & Pure CSS SVG Icon Injection (Strictly No Emojis)
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&family=Bebas+Neue&display=swap');
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 .stApp {
-    background-color: #d9d9d9;
-    color: #2A3441;
+    background-color: #f4f1ec;
+    color: #1b1d1e;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; max-width: 100% !important; }
-h3 { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; font-weight: 600 !important; color: #0D1B3E !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.5rem !important; }
-.playfair-label { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; color: #0D1B3E !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
+h3 { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; font-weight: 600 !important; color: #003366 !important; letter-spacing: 0.02em; margin-bottom: 0.25rem; font-size: 1.5rem !important; }
+.playfair-label { font-family: 'Cormorant Garamond', serif !important; font-style: italic !important; color: #003366 !important; font-size: 1.05rem !important; margin-bottom: 0.25rem !important; display: block; }
 
 /* Containers & Inputs */
-div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #F9FAFB !important; border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(13,27,62,0.12) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
-.stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #FFFFFF !important; border: 1px solid rgba(13,27,62,0.2) !important; border-radius: 0 !important; box-shadow: none !important; color: #2A3441 !important; }
-.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #FFFFFF !important; border-color: #0D1B3E !important; }
+div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #ffffff !important; border-radius: 6px !important; box-shadow: none !important; border: 1px solid rgba(0,51,102,0.12) !important; padding: 1.5rem !important; margin-bottom: 1.25rem !important; }
+.stTextArea textarea, .stTextInput input, .stSelectbox select { background-color: #ffffff !important; border: 1px solid rgba(0,51,102,0.2) !important; border-radius: 6px !important; box-shadow: none !important; color: #1b1d1e !important; }
+.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox select:focus { background-color: #ffffff !important; border-color: #003366 !important; }
 
 /* Buttons General */
-.stButton > button { background-color: #a3acd5 !important; color: #0D1B3E !important; border: 1px solid #a3acd5 !important; border-radius: 0 !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 28px !important; min-height: 28px !important; padding: 0.1rem 0.5rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-.stButton > button:hover { background-color: #8fa2d6 !important; border-color: #8fa2d6 !important; color: #0D1B3E !important; box-shadow: none !important; }
+.stButton > button { background-color: #0c0c0e !important; color: #ffffff !important; border: 1px solid #c9ab4c !important; border-radius: 6px !important; font-family: 'Montserrat', sans-serif !important; font-weight: 600 !important; font-size: 0.68rem !important; height: 28px !important; min-height: 28px !important; padding: 0.1rem 0.5rem !important; width: auto !important; box-shadow: none !important; transition: all 0.2s ease !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+.stButton > button:hover { background-color: #003366 !important; border-color: #d9bc5d !important; color: #ffffff !important; box-shadow: none !important; }
 
 /* Settings Button SVG Icon */
 .stButton > button[key="card_settings_btn"] {
@@ -118,17 +118,17 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #F9FAFB !imp
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; max-height: 420px; overflow-y: auto; }
-.chat-ai { align-self: flex-start; background-color: #F9FAFB; border: 1px solid rgba(13,27,62,0.12); color: #2A3441; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
+.chat-ai { align-self: flex-start; background-color: #F9FAFB; border: 1px solid rgba(0,51,102,0.12); color: #1b1d1e; padding: 0.6rem 0.85rem; border-radius: 0; max-width: 92%; font-size: 0.88rem; line-height: 1.5; box-shadow: none; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
 .chat-user { background-color: #222222; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 0; max-width: 82%; font-size: 0.88rem; line-height: 1.45; box-shadow: none; }
 
 /* Evidence & Badges */
 .evidence-quote-box {
     background-color: #F9FAFB;
-    border-left: 3px solid #0D1B3E;
+    border-left: 3px solid #003366;
     padding: 0.5rem 0.75rem;
     font-size: 0.82rem;
-    color: #3A4454;
+    color: #1b1d1e;
     margin: 0.4rem 0;
     font-style: italic;
     border-radius: 0;
@@ -1031,7 +1031,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
     style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
-    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#0D1B3E"), spaceBefore=12, spaceAfter=6)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#003366"), spaceBefore=12, spaceAfter=6)
     style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
     style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
     style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
@@ -1095,7 +1095,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     t_act = Table(act_data, colWidths=[0.4 * inch, 3.5 * inch, 1.3 * inch, 1.3 * inch], repeatRows=1)
     t_act.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0D1B3E')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#003366')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
@@ -1351,7 +1351,7 @@ if st.session_state["transcript"]:
             with t_col1:
                 escaped_tx = json.dumps(st.session_state["transcript"])
                 copy_html = f"""
-                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#a3acd5;color:#0D1B3E;border:1px solid #a3acd5;border-radius:0;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#8fa2d6;color:#0D1B3E;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
+                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#0c0c0e;color:#ffffff;border:1px solid #c9ab4c;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#003366;border-color:#d9bc5d;color:#ffffff;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
                 """
                 components.html(copy_html, height=36)
             with t_col2:

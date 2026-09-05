@@ -12,12 +12,15 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 ## 1. Look & feel (the essentials)
 
-- Warm, editorial, stone-tone "executive brief" aesthetic: a light beige-grey canvas with
-  deeper stone tones for buttons/borders and deep navy text. Headings are elegant serif
-  italics; body/UI text is clean sans. Flat & edgy: 0 radius, no shadows, no gridlines.
+- PrimePhilippines **light-role** brand system: warm cream canvas (`#f4f1ec`) with deep
+  navy (`#003366`) text/accents, metallic gold (`#c9ab4c`/`#d9bc5d`) for emphasis, and
+  white surfaces. Headings are elegant Cormorant Garamond (italic serif); body/UI is
+  Montserrat sans. Radius and spacing come from the 4 px grid (base 6 px; pills 999 px);
+  no shadows or blur.
 - Pages hide Streamlit chrome (default header, footer, menu) and render custom cards.
 - Every custom control is styled via inline `<style>` inside `st.markdown(...)`, the
-  shared `components/theme.py`, or page CSS. Keep this approach; don't add UI frameworks.
+  shared `components/theme.py` (`inject_global_css`), or page CSS. Keep this approach;
+  don't add UI frameworks.
 
 ---
 
@@ -25,30 +28,32 @@ follows is verified from the actual code (`app.py`, `components/sidebar.py`, `pa
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| canvas | `#ECEBDE` | page background (lightest, dominant; also sidebar bg) |
-| borders | `#C1BAA1` | separators, card borders, hairline borders |
-| secondary | `#C1BAA1` | secondary borders, inputs, button hover |
-| buttons | `#D7D3BF` | all buttons (flat, NO border/shadow) |
-| accent | `#A59D84` | ACCENTS ONLY — active pills, small dividers, highlights |
-| ink / fonts | `#0D1B3E` | fonts, headings, key numbers, button text (deep navy) |
-| muted ink | `#6E6A6A` | secondary captions / helper text |
-| surface | `#FFFFFF` | cards / chips / panels |
-| danger | `#A94442` (bg `#FDF0EF`) | overdue / destructive states |
-| due-today | `#8C6D23` (bg `#FFF9E8`) | "due today" chips |
-| status dot | `#6366F1` | meeting / "dot-meeting" indicator |
+| canvas | `#f4f1ec` | page background (lightest, dominant; also sidebar bg) |
+| surface | `#ffffff` | cards / chips / panels |
+| surface-muted | `#e8e4de` | inputs, pale fills, hover surfaces, borders |
+| primary (navy) | `#003366` | headings, links, table headers, primary accents |
+| primary-deep | `#002244` | hover / active navy |
+| ink / accents | `#0c0c0e` | buttons, strong CTAs, dark text / focus rings |
+| gold | `#c9ab4c` | CTA borders, dividers, active-tab underline |
+| gold-bright | `#d9bc5d` | gold hover accents |
+| body text | `#1b1d1e` | paragraph/body ink |
+| muted text | `#69727d` | captions, placeholders, secondary info |
+| success | `#5cb85c` | confirmations / positive trends |
+| warning | `#b89a3e` | caution states / pending |
+| danger | `#c53a3f` | overdue / destructive states |
 
-Rules: never introduce a new color unless no token fits. Prefer the tokens above.
-Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for separation.
+Rules: never introduce a new color unless no token fits. Prefer these tokens above.
+Sidebar shares the canvas `#f4f1ec` background. Avoid backdrop blur; no zebra striping
+on tables/lists — use borders for separation.
 
 ---
 
 ## 3. Typography
 
-- **Titles / headers:** `'Playfair Display', serif` — italic, weight 500–600, color
-  `#1A2B4C`. Use the app's `section-title` pattern or `font-style: italic`.
-- **Body / UI / buttons:** `'Inter', sans-serif` — weights 400/500/600.
-- **Brand accent font (occasional):** `'Cormorant Garamond', 'Playfair Display', serif`
-  (used in sidebar brand). `Montserrat` appears on specific pages — prefer Inter for new UI.
+- **Titles / headers:** `'Cormorant Garamond', serif` — italic, weight 500–600, color
+  `#003366`. Use the app's `.section-title` / `.page-title` pattern.
+- **Body / UI:** `'Montserrat', sans-serif` — weights 400/500/600, color `#1b1d1e`.
+- **Numbers (stats):** `'Bebas Neue'` is kept for data numerals only.
 - **Hierarchy:** one dominant headline → supporting figures → tables. Don't build walls
   of equal-sized numbers; use size/weight to establish reading order.
 
@@ -57,8 +62,10 @@ Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for sep
 ## 4. Reusable components (copy these patterns, don't invent new ones)
 
 ### Cards & panels
-- Design direction: **flat & edgy** — `border-radius:0` everywhere, `box-shadow:none`, hairline `1px solid rgba(26,43,76,0.14)` borders, and **large gridlines** on the cream canvas (96px major + 24px fine, `rgba(26,43,76,0.10)`/`0.05`) via `components/theme.py`.
-- `.left-card` — white panel, hairline border, `0` radius, **no shadow**, `padding:1rem`. `.left-card-scroll` = scrollable variant.
+- Design direction: **white panel on cream** — cards use radius `6px` (from the design
+  radius scale), `box-shadow:none`, hairline `1px solid rgba(0,51,102,0.12)` borders,
+  background `#ffffff` on the `#f4f1ec` canvas (themed via `components/theme.py`).
+- `.left-card` — white panel, hairline border, `6px` radius, **no shadow**, `padding:1rem`. `.left-card-scroll` = scrollable variant.
 - `.meeting-card` with `.meeting-title` / `.meeting-sub` / `.meeting-desc`.
 - `.task-card` with `.task-card-header` / `.task-card-desc` / `.task-card-footer`,
   `.task-card-title`, status dot `.task-status-dot .dot-todo|.dot-in_progress|.dot-done|.dot-meeting`.
@@ -69,7 +76,7 @@ Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for sep
   Use e.g. `grid-template-columns:repeat(4,1fr)` for a compact row.
 
 ### Sections
-- `.section-title` (Playfair italic navy) + `.section-caption` (muted) — the standard
+- `.section-title` (Cormorant Garamond italic navy) + `.section-caption` (muted) — the standard
   page/panel heading pair. Prefer these over raw `<h2>`/`<h3>`.
 
 ### Status / people
@@ -78,7 +85,7 @@ Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for sep
 - `.status-chip` (suggested default for done/in-progress/overdue — see §6).
 
 ### Empty states
-- `.empty-state` — centered, italic, muted (`#a0aec0`), compact `padding:0.75rem 0`.
+- `.empty-state` — centered, italic, muted (`#69727d`), compact `padding:0.75rem 0`.
 
 ### Sidebar (unified via `components/sidebar.py`)
 - `.sb-brand`, `.sb-brand-sub`, `.sb-brand-rule`, `.sb-user`, `.sb-user-avatar`,
@@ -87,13 +94,14 @@ Sidebar shares the canvas `#ECEBDE` background and carries a drop shadow for sep
 
 ---
 
-## 5. Buttons (deep charcoal + gold, squared/flat, no shadow)
+## 5. Buttons (accent ink + navy, gold border)
 
 Global button style is applied via `components/theme.py` (`inject_global_css`) + the sidebar.
-- Base: `background:#111A2B`, `color:#FFF`, `border:1px solid #D4AF37`,
-  `border-radius:0` (flat/edgy), Inter 600, `letter-spacing:0.02em`, `text-transform:uppercase`, **no shadow**.
-- Hover: `background:#1A263D`, `border-color:#E6C44D`, still no shadow.
-- Secondary variant: same charcoal/gold but gold text (`#E6C44D`).
+- Base: `background:#0c0c0e`, `color:#ffffff`, `border:1px solid #c9ab4c`,
+  `border-radius:6px`, Montserrat 600, small `letter-spacing`, **no shadow**.
+- Hover: `background:#003366`, `border-color:#d9bc5d`, `color:#ffffff`, no shadow.
+- Secondary/ghost variant: transparent background, navy `#003366` text, navy border;
+  hover fills navy `#003366` with white text (gold `#c9ab4c` border).
 - Cover **all** button types with the same theme: `stButton`, `stPopover` toggle,
   `stFormSubmitButton`, `stDownloadButton`. Don't let any button look unstyled.
 
@@ -126,7 +134,7 @@ Keep margins/padding on a 0.25/0.5/0.75/1/1.5rem scale; avoid ad-hoc values. Car
   headers that break the editorial style.
 - **Do** keep visual hierarchy: a clear headline → supporting numbers/charts → detail table.
 - **Do** style every interactive element (buttons, popovers, download buttons) with the
-  charcoal/gold round theme. **Don't** leave default Streamlit widgets unstyled.
+  accent-ink/gold round theme. **Don't** leave default Streamlit widgets unstyled.
 - **Do** keep spacing consistent (spacing scale), equal panel heights, compact empty states.
 - **Do** route page chrome through `setup_page_layout()`.
 - **Do** make new features responsive to existing page patterns (tabs, columns, dialogs)

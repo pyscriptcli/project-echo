@@ -55,7 +55,7 @@ DOCUMENTS_PAGE_CSS = """
 /* Documents page — custom classes styled with Project Echo tokens */
 .editor-card {
     background-color: rgba(249, 250, 251, 0.95);
-    border: 2px solid #0D1B3E;
+    border: 2px solid #003366;
     border-radius: 0;
     padding: 1.25rem;
 }
@@ -64,30 +64,30 @@ DOCUMENTS_PAGE_CSS = """
     font-style: italic;
     font-weight: 600;
     font-size: 1.5rem;
-    color: #0D1B3E;
-    border-left: 4px solid #0D1B3E;
+    color: #003366;
+    border-left: 4px solid #003366;
     padding-left: 0.6rem;
     margin-bottom: 0.6rem;
 }
 .docs-title {
-    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 600;
     font-size: 2.4rem;
-    color: #0D1B3E;
+    color: #003366;
     line-height: 1.1;
     margin: 0 0 0.2rem 0;
 }
 .docs-caption {
     font-family: 'Montserrat', sans-serif;
     font-size: 0.85rem;
-    color: #5A607A;
+    color: #69727d;
     margin: 0 0 0.5rem 0;
 }
 .saved-indicator {
     background-color: #F9FAFB;
-    border-left: 3px solid #0D1B3E;
-    color: #0D1B3E;
+    border-left: 3px solid #003366;
+    color: #003366;
     font-family: 'Montserrat', sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
@@ -96,9 +96,9 @@ DOCUMENTS_PAGE_CSS = """
 }
 .local-only-note {
     background-color: rgba(249, 250, 251, 0.9);
-    border: 1px solid rgba(13,27,62,0.15);
-    border-left: 3px solid #0D1B3E;
-    color: #2A3441;
+    border: 1px solid rgba(0,51,102,0.15);
+    border-left: 3px solid #003366;
+    color: #1b1d1e;
     font-family: 'Montserrat', sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
@@ -110,13 +110,13 @@ DOCUMENTS_PAGE_CSS = """
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
     font-size: 0.8rem;
-    color: #0D1B3E;
+    color: #003366;
     margin-bottom: 0.25rem;
     padding-top: 0.35rem;
 }
 hr {
     margin: 0.75rem 0 !important;
-    border-color: rgba(13,27,62,0.15) !important;
+    border-color: rgba(0,51,102,0.15) !important;
 }
 </style>
 """
@@ -619,7 +619,7 @@ def render_isolated_map_editor():
             .manual-picker-label {
                 font-family: 'Montserrat', sans-serif !important;
                 font-size: 14px !important;
-                color: #0D1B3E !important;
+                color: #003366 !important;
                 margin-bottom: 8px !important;
                 line-height: 1.2;
             }

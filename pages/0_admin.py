@@ -34,40 +34,40 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 }
 
 [data-testid="stAppViewContainer"], .stApp {
-    background-color: #d9d9d9 !important;
-    color: #2A3441;
+    background-color: #f4f1ec !important;
+    color: #1b1d1e;
 }
 
 .section-title {
     font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
     font-weight: 600 !important;
-    color: #0D1B3E !important;
+    color: #003366 !important;
     font-size: 1.6rem !important;
     margin: 0 !important;
     line-height: 1.2 !important;
 }
 .section-caption {
     font-size: 0.8rem;
-    color: #5A607A;
+    color: #69727d;
     margin: 0 0 0.35rem 0 !important;
 }
 
 .admin-card {
-    background: rgba(249, 250, 251, 0.9);
-    border-radius: 0;
-    border: 1px solid rgba(13, 27, 62, 0.12);
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 51, 102, 0.12);
     padding: 1rem 1.25rem;
     margin-bottom: 1rem;
     box-shadow: none;
-    color: #2A3441;
+    color: #1b1d1e;
 }
 
 .stButton > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     font-size: 0.72rem !important;
     padding: 0.2rem 0.75rem !important;
     min-height: 26px !important;
@@ -76,9 +76,9 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    border-color: #8fa2d6 !important;
-    background-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    border-color: #d9bc5d !important;
+    background-color: #003366 !important;
+    color: #ffffff !important;
     box-shadow: none !important;
 }
 

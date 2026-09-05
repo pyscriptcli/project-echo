@@ -84,11 +84,11 @@ CUSTOM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
+html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 
 .stApp {
-    background-color: #d9d9d9;
-    color: #2A3441;
+    background-color: #f4f1ec;
+    color: #1b1d1e;
 }
 .stApp > header { display: none !important; }
 .block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
@@ -97,7 +97,7 @@ h3 {
     font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important; 
     font-weight: 600 !important; 
-    color: #0D1B3E !important; 
+    color: #003366 !important; 
     letter-spacing: 0.02em; 
     margin-bottom: 0.25rem; 
     font-size: 1.5rem !important;
@@ -106,7 +106,7 @@ h3 {
 .playfair-label {
     font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important;
-    color: #0D1B3E !important; 
+    color: #003366 !important; 
     font-size: 1.05rem !important; 
     margin-bottom: 0.25rem !important; 
     display: block;
@@ -117,7 +117,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #F9FAFB !important; 
     border-radius: 0px !important;
     box-shadow: none !important;
-    border: 1px solid rgba(13, 27, 62, 0.12) !important;
+    border: 1px solid rgba(0, 51, 102, 0.12) !important;
     padding: 1.5rem !important; 
     margin-bottom: 1.25rem !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
@@ -133,15 +133,15 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 .stTextArea textarea:focus, .stTextInput input:focus {
     background-color: #FFFFFF !important; 
-    border-color: #0D1B3E !important;
+    border-color: #003366 !important;
 }
 
 /* Base Buttons */
 .stButton > button {
-    background-color: #a3acd5 !important; 
-    color: #0D1B3E !important; 
-    border: 1px solid #a3acd5 !important; 
-    border-radius: 0 !important; 
+    background-color: #0c0c0e !important; 
+    color: #ffffff !important; 
+    border: 1px solid #c9ab4c !important; 
+    border-radius: 6px !important; 
     font-family: 'Montserrat', sans-serif !important; 
     font-weight: 600 !important; 
     font-size: 0.82rem !important; 
@@ -153,9 +153,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .stButton > button:hover { 
-    background-color: #8fa2d6 !important; 
-    color: #0D1B3E !important; 
-    border-color: #8fa2d6 !important;
+    background-color: #003366 !important; 
+    color: #ffffff !important; 
+    border-color: #d9bc5d !important;
     box-shadow: none !important;
     transform: none !important;
 }
@@ -171,10 +171,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Topbar Date Picker Trigger Styling */
 div[data-testid="stPopover"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     font-size: 0.84rem !important;
     font-weight: 600 !important;
     height: 36px !important;
@@ -186,9 +186,9 @@ div[data-testid="stPopover"] > button {
 }
 
 div[data-testid="stPopover"] > button:hover {
-    border-color: #8fa2d6 !important;
-    background-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    border-color: #d9bc5d !important;
+    background-color: #003366 !important;
+    color: #ffffff !important;
     transform: none !important;
 }
 
@@ -225,46 +225,46 @@ div[data-testid="stPopoverBody"] {
 }
 
 .stButton > button[key="btn_apply_modal_date"] {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     height: 36px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_apply_modal_date"]:hover {
-    background-color: #8fa2d6 !important;
-    border-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
     transform: none !important;
 }
 
 /* Back Button Pill */
 .stButton > button[key="btn_back_gallery"] {
     background-color: transparent !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
+    color: #003366 !important;
+    border: 1px solid #c9ab4c !important;
     width: auto !important;
     min-width: 170px !important;
 }
 .stButton > button[key="btn_back_gallery"]:hover {
-    background-color: #0D1B3E !important;
+    background-color: #003366 !important;
     color: #FFFFFF !important;
 }
 
 /* Details Action Buttons */
 .stButton > button[key="btn_toggle_edit_details"], .stButton > button[key="btn_cancel_edit_details"] {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
-    border-radius: 0 !important;
+    background-color: transparent !important;
+    color: #003366 !important;
+    border: 1px solid #c9ab4c !important;
+    border-radius: 6px !important;
     height: 34px !important;
     font-weight: 600 !important;
 }
 .stButton > button[key="btn_toggle_edit_details"]:hover, .stButton > button[key="btn_cancel_edit_details"]:hover {
-    background-color: #8fa2d6 !important;
-    border-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
 }
 
 /* Gallery Typography */
@@ -272,20 +272,20 @@ div[data-testid="stPopoverBody"] {
     font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
     font-size: 1.3rem !important;
-    color: #0D1B3E !important;
+    color: #003366 !important;
     margin: 0 0 0.25rem 0 !important;
     line-height: 1.3 !important;
 }
 
 .card-meta {
     font-size: 0.84rem !important;
-    color: #5A607A !important;
+    color: #69727d !important;
     margin-bottom: 0.55rem !important;
 }
 
 .card-desc {
     font-size: 0.88rem !important;
-    color: #3A4454 !important;
+    color: #1b1d1e !important;
     line-height: 1.5 !important;
     margin: 0 !important;
 }
@@ -296,7 +296,7 @@ button[data-baseweb="tab"] {
     border: none !important;
     font-size: 1.05rem !important;
     font-weight: 500 !important;
-    color: #0D1B3E !important;
+    color: #003366 !important;
     padding: 0.5rem 1rem !important;
 }
 
@@ -358,32 +358,32 @@ div[data-testid="stPopover"] > button:hover {
     box-shadow: none !important;
 }
 
-/* ===== PALETTE RECOLOR OVERRIDE: dark-gray bg, white text ===== */
+/* ===== PALETTE RECOLOR OVERRIDE: accent-ink bg, white text ===== */
 .stButton > button,
 div[data-testid="stPopover"] > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
     font-size: 0.68rem !important;
     height: 28px !important;
     min-height: 28px !important;
     padding: 0.1rem 0.5rem !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
     width: auto !important;
     box-shadow: none !important;
 }
 .stButton > button:hover,
 div[data-testid="stPopover"] > button:hover {
-    background-color: #8fa2d6 !important;
-    border-color: #8fa2d6 !important;
-    color: #0D1B3E !important;
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
 }
 [data-testid="stAppViewContainer"] .block-container {
-    background-color: #d9d9d9 !important;
+    background-color: #f4f1ec !important;
 }
 .meeting-page h1, .meeting-page h2, .meeting-page h3,
 [data-testid="stAppViewContainer"] h3 {
-    color: #0D1B3E !important;
+    color: #003366 !important;
 }
 </style>
 """
@@ -820,7 +820,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     style_title = ParagraphStyle('Title2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=2)
     style_subtitle = ParagraphStyle('SubTitle2', parent=styles['Normal'], fontName='Helvetica', fontSize=10.5, textColor=colors.HexColor("#64748B"), alignment=1, spaceAfter=20)
-    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#0D1B3E"), spaceBefore=12, spaceAfter=6)
+    style_h2 = ParagraphStyle('Heading2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#003366"), spaceBefore=12, spaceAfter=6)
     style_body = ParagraphStyle('Body2', parent=styles['Normal'], fontName='Helvetica', fontSize=9.5, leading=14, spaceAfter=4)
     style_th = ParagraphStyle('TH2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=colors.white, alignment=1)
     style_td = ParagraphStyle('TD2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=12)
@@ -884,7 +884,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     
     t_act = Table(act_data, colWidths=[0.4 * inch, 3.5 * inch, 1.3 * inch, 1.3 * inch], repeatRows=1)
     t_act.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0D1B3E')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#003366')),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),

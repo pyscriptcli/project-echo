@@ -40,12 +40,12 @@ header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
 }
 
 html, body, [class*="css"] {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
 }
 
 .stApp {
-    background-color: #d9d9d9 !important;
-    color: #2A3441;
+    background-color: #f4f1ec !important;
+    color: #1b1d1e;
 }
 
 .block-container {
@@ -55,18 +55,18 @@ html, body, [class*="css"] {
 }
 
 :root {
-    --bg: #d9d9d9;
+    --bg: #f4f1ec;
     --surface: #F9FAFB;
-    --ink: #0D1B3E;
-    --muted: #5A607A;
-    --gold: #a3acd5;
+    --ink: #003366;
+    --muted: #69727d;
+    --gold: #c9ab4c;
     --danger: #C0392B;
     --radius: 0px;
     --control-height: 28px;
 }
 
 h3 {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
     font-weight: 600 !important;
     color: var(--ink) !important;
@@ -179,7 +179,7 @@ h3 {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #0D1B3E;
+    background: #003366;
     border: 1px solid rgba(255,255,255,0.4);
     color: #FFFFFF;
     font-size: 0.52rem;
@@ -196,8 +196,8 @@ h3 {
     font-size: 0.62rem;
     font-weight: 600;
     background: #FFFFFF;
-    color: #3A4454;
-    border: 1px solid rgba(13,27,62,0.15);
+    color: #1b1d1e;
+    border: 1px solid rgba(0,51,102,0.15);
     white-space: nowrap;
 }
 .due-chip.overdue {
@@ -285,7 +285,7 @@ h3 {
     color: var(--ink);
     padding: 1px 2px 3px 2px;
 }
-.cal-month-cell.weekend .cal-month-day-num { color: #0D1B3E; }
+.cal-month-cell.weekend .cal-month-day-num { color: #003366; }
 
 .today-dot {
     width: 6px;
@@ -1220,9 +1220,9 @@ with tab_calendar:
             with header_cols[i]:
                 is_weekend = (i == 0 or i == 6)
                 header_style = (
-                    "background:rgba(51,51,51,0.15); color:#0D1B3E;"
+                    "background:rgba(51,51,51,0.15); color:#003366;"
                     if is_weekend
-                    else "background:rgba(255,255,255,0.8); color:#0D1B3E; border:1px solid rgba(13,27,62,0.18); border-bottom:none;"
+                    else "background:rgba(255,255,255,0.8); color:#003366; border:1px solid rgba(0,51,102,0.18); border-bottom:none;"
                 )
                 st.markdown(
                     f"<div style='text-align:center; padding:0.4rem; font-size:0.65rem; font-weight:700; "
@@ -1253,7 +1253,7 @@ with tab_calendar:
                             dot = '<span class="today-dot"></span>' if is_today else ''
                             st.markdown(
                                 f"<div style='display:flex;align-items:center;gap:4px;font-family:Bebas Neue,serif;"
-                                f"font-size:1.25rem;font-weight:400;color:#0D1B3E;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
+                                f"font-size:1.25rem;font-weight:400;color:#003366;padding:1px 2px 3px 2px;'>{day_val.day}{dot}</div>",
                                 unsafe_allow_html=True
                             )
 

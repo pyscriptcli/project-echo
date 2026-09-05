@@ -176,10 +176,10 @@ LOGIN_CSS = """
 <style>
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
-    border: 1px solid rgba(13,27,62,0.12) !important;
+    border: 1px solid rgba(0,51,102,0.12) !important;
     border-radius: 0 !important;
-    border-top: 3px solid #0D1B3E !important;
-    box-shadow: 0 10px 30px rgba(13,27,62,0.10) !important;
+    border-top: 3px solid #003366 !important;
+    box-shadow: 0 10px 30px rgba(0,51,102,0.10) !important;
     padding: 2rem !important;
     margin: 2rem auto !important;
     max-width: 450px !important;
@@ -191,34 +191,34 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     font-style: italic;
     font-size: 2rem;
     font-weight: 600;
-    color: #0D1B3E;
+    color: #003366;
     text-align: center;
 }
 .login-tagline {
     font-size: 0.9rem;
-    color: #5A607A;
+    color: #69727d;
     text-align: center;
     margin-bottom: 1.5rem;
 }
 
 .stTextInput input {
     background-color: #FFFFFF !important;
-    border: 1px solid rgba(13,27,62,0.15) !important;
+    border: 1px solid rgba(0,51,102,0.15) !important;
     border-radius: 0 !important;
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
-    color: #2A3441 !important;
+    color: #1b1d1e !important;
 }
 .stTextInput input:focus {
-    border-color: #0D1B3E !important;
+    border-color: #003366 !important;
     box-shadow: none !important;
     background: #FFFFFF !important;
 }
 
 .stFormSubmitButton > button {
-    background-color: #a3acd5 !important;
-    color: #0D1B3E !important;
-    border: 1px solid #a3acd5 !important;
+    background-color: #0c0c0e !important;
+    color: #ffffff !important;
+    border: 1px solid #c9ab4c !important;
     border-radius: 0 !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
@@ -228,8 +228,9 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stFormSubmitButton > button:hover {
-    background-color: #8fa2d6 !important;
-    border-color: #8fa2d6 !important;
+    background-color: #003366 !important;
+    border-color: #d9bc5d !important;
+    color: #ffffff !important;
 }
 
 .login-error {

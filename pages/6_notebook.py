@@ -39,9 +39,9 @@ NOTEBOOK_CSS = """
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
-        background-color: #d9d9d9;
+        background-color: #f4f1ec;
         font-family: 'Montserrat', sans-serif;
-        color: #2A3441;
+        color: #1b1d1e;
     }
     .block-container {
         padding-top: 2rem;
@@ -55,12 +55,12 @@ NOTEBOOK_CSS = """
         font-weight: 600;
         font-style: italic;
         font-size: 2.4rem;
-        color: #0D1B3E;
+        color: #003366;
         margin-bottom: 0.25rem;
     }
     .notebook-subtitle {
         font-size: 1rem;
-        color: #5A607A;
+        color: #69727d;
         margin-bottom: 2rem;
         padding-bottom: 1rem;
     }
@@ -68,30 +68,30 @@ NOTEBOOK_CSS = """
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 1.5rem;
-        border-bottom: 1px solid rgba(13,27,62,0.2);
+        border-bottom: 1px solid rgba(0,51,102,0.2);
     }
     .stTabs [data-baseweb="tab"] {
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         font-weight: 600;
         font-size: 1.1rem;
-        color: #5A607A;
+        color: #69727d;
         padding: 0.5rem 0.25rem;
         background: transparent;
     }
     .stTabs [aria-selected="true"] {
-        color: #0D1B3E !important;
-        border-bottom: 2px solid #a3acd5;
+        color: #003366 !important;
+        border-bottom: 2px solid #c9ab4c;
     }
 
     /* Containers */
     .stTextArea textarea, .stTextInput input, .stSelectbox > div > div {
         background-color: #FFFFFF !important;
-        border: 1px solid rgba(13,27,62,0.2) !important;
+        border: 1px solid rgba(0,51,102,0.2) !important;
         border-radius: 0 !important;
         font-family: 'Montserrat', sans-serif !important;
         font-size: 1rem !important;
-        color: #2A3441 !important;
+        color: #1b1d1e !important;
         box-shadow: none !important;
         line-height: 1.6 !important;
     }
@@ -129,9 +129,9 @@ NOTEBOOK_CSS = """
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         font-size: 1.5rem;
-        color: #0D1B3E;
+        color: #003366;
         margin-bottom: 1rem;
-        border-bottom: 1px solid rgba(13, 27, 62, 0.15);
+        border-bottom: 1px solid rgba(0, 51, 102, 0.15);
         padding-bottom: 0.5rem;
     }
     .kanban-header {
@@ -143,7 +143,7 @@ NOTEBOOK_CSS = """
     .kanban-header .label {
         font-weight: 600;
         font-size: 0.85rem;
-        color: #0D1B3E;
+        color: #003366;
     }
     .empty-state {
         text-align: center;
@@ -163,11 +163,11 @@ NOTEBOOK_CSS = """
     .stButton > button,
     div[data-testid="stPopover"] > button,
     div[data-testid="stDownloadButton"] > button {
-        border-radius: 0 !important;
+        border-radius: 6px !important;
         font-weight: 600 !important;
-        background-color: #a3acd5 !important;
-        color: #0D1B3E !important;
-        border: 1px solid #a3acd5 !important;
+        background-color: #0c0c0e !important;
+        color: #ffffff !important;
+        border: 1px solid #c9ab4c !important;
         box-shadow: none !important;
         transition: all 0.2s ease !important;
         min-height: 28px !important;
@@ -182,23 +182,23 @@ NOTEBOOK_CSS = """
     .stButton > button:hover,
     div[data-testid="stPopover"] > button:hover,
     div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #8fa2d6 !important;
-        border-color: #8fa2d6 !important;
-        color: #0D1B3E !important;
+        background-color: #003366 !important;
+        border-color: #d9bc5d !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
     
     /* Secondary Buttons override */
     button[kind="secondary"] {
-        background-color: #a3acd5 !important;
-        color: #0D1B3E !important;
-        border: 1px solid #a3acd5 !important;
+        background-color: transparent !important;
+        color: #003366 !important;
+        border: 1px solid #c9ab4c !important;
         box-shadow: none !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #8fa2d6 !important;
-        border-color: #8fa2d6 !important;
-        color: #0D1B3E !important;
+        background-color: #003366 !important;
+        border-color: #d9bc5d !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
     
@@ -429,9 +429,9 @@ def notes_gallery_modal():
                 preview = "Empty note"
             
             with st.container(border=True):
-                st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.2rem; font-weight: 600; color: #0D1B3E; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size: 0.75rem; color: #5A607A; margin-bottom: 0.8rem;'>{date_str}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size: 0.85rem; color: #3A4454; height: 3.5rem; overflow: hidden; margin-bottom: 1rem; line-height: 1.4;'>{preview}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.2rem; font-weight: 600; color: #003366; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{title}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.75rem; color: #69727d; margin-bottom: 0.8rem;'>{date_str}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 0.85rem; color: #1b1d1e; height: 3.5rem; overflow: hidden; margin-bottom: 1rem; line-height: 1.4;'>{preview}</div>", unsafe_allow_html=True)
                 
                 # Active styling logic
                 btn_type = "primary" if doc_id == st.session_state.nb_current_id else "secondary"
@@ -548,7 +548,7 @@ def render_week_view(selected_date):
             st.markdown(f"""
                 <div class="day-col-header">
                     <div style="font-size: 0.8rem; color: #718096;">{day.strftime('%a').upper()}</div>
-                    <div style="font-size: 1.25rem; font-family: 'Bebas Neue', sans-serif; color: #0D1B3E;">{day.strftime('%d')}</div>
+                    <div style="font-size: 1.25rem; font-family: 'Bebas Neue', sans-serif; color: #003366;">{day.strftime('%d')}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -593,7 +593,7 @@ def render_month_view(selected_date):
         return
 
     for d, logs in month_logs:
-        st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.3rem; color: #0D1B3E; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-family: \"Cormorant Garamond\", serif; font-size: 1.3rem; color: #003366; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;'>{d.strftime('%A, %b %d')}</div>", unsafe_allow_html=True)
         for col_def in COLUMNS:
             val = logs.get(col_def["key"], "").strip()
             if val:
