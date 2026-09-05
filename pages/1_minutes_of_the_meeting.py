@@ -269,8 +269,7 @@ if "last_processed_file" not in st.session_state: st.session_state["last_process
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
 if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
 if "user_notes" not in st.session_state: st.session_state["user_notes"] = ""
-# Ask Echo expand & scroll
-if "_ask_echo_open" not in st.session_state: st.session_state["_ask_echo_open"] = False
+# Ask Echo scroll flag
 if "_scroll_to_ask_echo" not in st.session_state: st.session_state["_scroll_to_ask_echo"] = False
 # Dialog recording
 if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
@@ -1826,17 +1825,13 @@ if st.session_state.pop("_scroll_to_review", False):
 
 # Floating Ask Echo FAB + scroll logic
 if st.session_state.get("_scroll_to_ask_echo", False):
-    st.session_state["_ask_echo_open"] = True
     st.session_state["_scroll_to_ask_echo"] = False
     scroll_ae = """
     <script>
     setTimeout(function() {
-        var els = document.querySelectorAll('span[data-testid="stExpanderHeader"]');
-        for (var i = 0; i < els.length; i++) {
-            if (els[i].textContent.trim().startsWith('Ask Echo')) {
-                els[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
-                break;
-            }
+        var el = document.getElementById('ask-echo-section');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }, 400);
     </script>
@@ -2138,40 +2133,44 @@ if st.session_state["transcript"]:
                     ok, msg = dispatch_action_items_webhook(target_webhook, st.session_state["df"], meeting_details)
                     if ok: st.success(msg)
                     else: st.error(msg)
-            
-            # Ask Echo inline chat
-            st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
-            with st.expander("Ask Echo (AI Assistant)", expanded=st.session_state.get("_ask_echo_open", True)):
-                st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
-                st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-                if not st.session_state["chat_history"]:
-                    st.markdown('<div class="chat-ai">Hello. I am Echo. Ask questions or tell me how to refine your Minutes of Meeting table.</div>', unsafe_allow_html=True)
+
+# =====================================================================
+# Ask Echo Floating Chat (bottom of page — FAB scrolls here)
+# =====================================================================
+if st.session_state.get("transcript"):
+    st.markdown("<hr style='margin:1rem 0;'>", unsafe_allow_html=True)
+    st.markdown('<h3 id="ask-echo-section">Ask Echo (AI Assistant)</h3>', unsafe_allow_html=True)
+    st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
+    with st.container(border=True):
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        if not st.session_state["chat_history"]:
+            st.markdown('<div class="chat-ai">Hello. I am Echo. Ask questions or tell me how to refine your Minutes of Meeting table.</div>', unsafe_allow_html=True)
+        else:
+            for msg in st.session_state["chat_history"]:
+                if msg["role"] == "assistant":
+                    st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
                 else:
-                    for msg in st.session_state["chat_history"]:
-                        if msg["role"] == "assistant":
-                            st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
-                        else:
-                            st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-                if prompt := st.chat_input("Ask Echo or command an edit..."):
-                    st.session_state["chat_history"].append({"role": "user", "content": prompt})
-                    with st.spinner("Echo is analyzing request and table state..."):
-                        answer, action = ask_deepseek_with_mutation(st.session_state["transcript"], prompt, st.session_state["chat_history"], st.session_state["df"])
-                        if action and isinstance(action, dict):
-                            tool_name = action.get("tool")
-                            r_idx = int(action.get("row_index", 0))
-                            fields = action.get("fields", {})
-                            if tool_name == "update_row" and 0 <= r_idx < len(st.session_state["df"]):
-                                for f_key, f_val in fields.items():
-                                    update_mom_field(r_idx, f_key, str(f_val))
-                            elif tool_name == "delete_row" and 0 <= r_idx < len(st.session_state["df"]):
-                                delete_mom_row(r_idx)
-                            elif tool_name == "add_row":
-                                add_mom_row(
-                                    fields.get("Discussion Points", ""),
-                                    fields.get("Action Plan", ""),
-                                    fields.get("Indicative Delivery Date", "TBD"),
-                                    fields.get("Person-in-charge", "Unassigned")
-                                )
-                    st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-                    st.rerun()
+                    st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        if prompt := st.chat_input("Ask Echo or command an edit..."):
+            st.session_state["chat_history"].append({"role": "user", "content": prompt})
+            with st.spinner("Echo is analyzing request and table state..."):
+                answer, action = ask_deepseek_with_mutation(st.session_state["transcript"], prompt, st.session_state["chat_history"], st.session_state["df"])
+                if action and isinstance(action, dict):
+                    tool_name = action.get("tool")
+                    r_idx = int(action.get("row_index", 0))
+                    fields = action.get("fields", {})
+                    if tool_name == "update_row" and 0 <= r_idx < len(st.session_state["df"]):
+                        for f_key, f_val in fields.items():
+                            update_mom_field(r_idx, f_key, str(f_val))
+                    elif tool_name == "delete_row" and 0 <= r_idx < len(st.session_state["df"]):
+                        delete_mom_row(r_idx)
+                    elif tool_name == "add_row":
+                        add_mom_row(
+                            fields.get("Discussion Points", ""),
+                            fields.get("Action Plan", ""),
+                            fields.get("Indicative Delivery Date", "TBD"),
+                            fields.get("Person-in-charge", "Unassigned")
+                        )
+            st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+            st.rerun()
