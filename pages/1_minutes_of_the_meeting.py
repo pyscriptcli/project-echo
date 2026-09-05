@@ -157,6 +157,38 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #ffffff !imp
     margin-top: 0.3rem;
     border-radius: 0 4px 4px 0;
 }
+
+/* Floating Ask Echo FAB */
+.floating-echo-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #0c0c0e;
+    border: 2px solid #c9ab4c;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: all 0.25s ease;
+    font-size: 0; /* hide any text fallback */
+}
+.floating-echo-fab:hover {
+    background-color: #003366;
+    border-color: #d9bc5d;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
+.floating-echo-fab svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
 </style>
 """
 
@@ -236,6 +268,9 @@ if "speaker_mappings" not in st.session_state: st.session_state["speaker_mapping
 if "last_processed_file" not in st.session_state: st.session_state["last_processed_file"] = None
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
 if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
+# Ask Echo expand & scroll
+if "_ask_echo_open" not in st.session_state: st.session_state["_ask_echo_open"] = False
+if "_scroll_to_ask_echo" not in st.session_state: st.session_state["_scroll_to_ask_echo"] = False
 # Dialog recording
 if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
 if "_dialog_record_notes" not in st.session_state: st.session_state["_dialog_record_notes"] = ""
@@ -1604,36 +1639,31 @@ with col_upload:
                 with t_col2:
                     st.download_button(label="Download Transcript", data=st.session_state["transcript"], file_name=f"Transcript_{st.session_state['meeting_date'].strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
 
-# User Notes section (between Upload and Meeting Details)
-if "user_notes" not in st.session_state:
-    st.session_state["user_notes"] = ""
-with st.container(border=True):
-    st.markdown('<h3>Meeting Notes (Optional)</h3>', unsafe_allow_html=True)
-    st.caption("Upload or paste pre-meeting notes, agenda, or observations to enrich the AI context.")
-    notes_file = st.file_uploader("Upload notes (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"], key="notes_file_uploader", label_visibility="collapsed")
-    notes_text = st.text_area("Or paste notes here", value=st.session_state["user_notes"], height=100, placeholder="Pre-meeting agenda, key objectives, client background...", label_visibility="collapsed")
-    
-    note_changed = False
-    if notes_file:
-        extracted = extract_text_from_file(notes_file)
-        if extracted:
-            st.session_state["user_notes"] = extracted
-            note_changed = True
-    if notes_text != st.session_state.get("user_notes", ""):
-        st.session_state["user_notes"] = notes_text
-        note_changed = True
-    
-    if st.session_state["user_notes"]:
-        preview = st.session_state["user_notes"][:300] + ("..." if len(st.session_state["user_notes"]) > 300 else "")
-        st.markdown(f'<div style="font-size:0.82rem; color:#333; background:#F9FAFB; padding:0.5rem; border-left:3px solid #003366; margin-top:0.3rem;"><i>{preview}</i></div>', unsafe_allow_html=True)
-        if len(st.session_state["user_notes"]) > 300:
-            with st.expander("Show full notes"):
-                st.text_area("Notes full", value=st.session_state["user_notes"], height=150, disabled=True, label_visibility="collapsed")
-        col_c1, _ = st.columns([1, 9])
-        with col_c1:
-            if st.button("Clear Notes", key="btn_clear_notes"):
-                st.session_state["user_notes"] = ""
-                st.rerun()
+        # Meeting Notes (Optional) — collapsed inside the Input card
+        with st.expander(f"Meeting Notes (Optional)", expanded=False):
+            st.caption("Upload or paste pre-meeting notes, agenda, or observations to enrich the AI context.")
+            notes_file = st.file_uploader("Upload notes (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"], key="notes_file_uploader", label_visibility="collapsed")
+            notes_text = st.text_area("Or paste notes here", value=st.session_state.get("user_notes", ""), height=100, placeholder="Pre-meeting agenda, key objectives, client background...", label_visibility="collapsed")
+            
+            note_changed = False
+            if notes_file:
+                extracted = extract_text_from_file(notes_file)
+                if extracted:
+                    st.session_state["user_notes"] = extracted
+                    note_changed = True
+            if notes_text != st.session_state.get("user_notes", ""):
+                st.session_state["user_notes"] = notes_text
+                note_changed = True
+            
+            if st.session_state.get("user_notes"):
+                preview = st.session_state["user_notes"][:300] + ("..." if len(st.session_state["user_notes"]) > 300 else "")
+                st.markdown(f'<div style="font-size:0.82rem; color:#333; background:#F9FAFB; padding:0.5rem; border-left:3px solid #003366; margin-top:0.3rem;"><i>{preview}</i></div>', unsafe_allow_html=True)
+                if len(st.session_state["user_notes"]) > 300:
+                    with st.expander("Show full notes"):
+                        st.text_area("Notes full", value=st.session_state["user_notes"], height=150, disabled=True, label_visibility="collapsed")
+                if st.button("Clear Notes", key="btn_clear_notes", use_container_width=True):
+                    st.session_state["user_notes"] = ""
+                    st.rerun()
 
 # RIGHT CONTAINER: Meeting Details Card
 with col_details:
@@ -1792,6 +1822,49 @@ if st.session_state.pop("_scroll_to_review", False):
     </script>
     """
     components.html(scroll_js, height=0)
+
+# Floating Ask Echo FAB + scroll logic
+if st.session_state.get("_scroll_to_ask_echo", False):
+    st.session_state["_ask_echo_open"] = True
+    st.session_state["_scroll_to_ask_echo"] = False
+    scroll_ae = """
+    <script>
+    setTimeout(function() {
+        var els = document.querySelectorAll('span[data-testid="stExpanderHeader"]');
+        for (var i = 0; i < els.length; i++) {
+            if (els[i].textContent.trim().startsWith('Ask Echo')) {
+                els[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                break;
+            }
+        }
+    }, 400);
+    </script>
+    """
+    components.html(scroll_ae, height=0)
+
+# Floating Ask Echo FAB (injected via JS into parent DOM)
+if st.session_state.get("transcript"):
+    if st.button("", key="fab_echo_btn", help="Ask Echo"):
+        st.session_state["_scroll_to_ask_echo"] = True
+        st.rerun()
+    st.markdown(
+        '<style>'
+        'button[key="fab_echo_btn"] {'
+        'position:fixed!important;bottom:24px!important;right:24px!important;'
+        'z-index:9999!important;width:56px!important;height:56px!important;'
+        'border-radius:50%!important;background-color:#0c0c0e!important;'
+        'border:2px solid #c9ab4c!important;box-shadow:0 4px 12px rgba(0,0,0,0.25)!important;'
+        'padding:0!important;min-height:56px!important;transition:all 0.25s ease!important;}'
+        'button[key="fab_echo_btn"]:hover {'
+        'background-color:#003366!important;border-color:#d9bc5d!important;}'
+        'button[key="fab_echo_btn"]::before {'
+        'content:"";display:block;width:24px;height:24px;margin:auto;'
+        'background-color:currentColor;'
+        '-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z%27/%3E%3Ccircle cx=%2712%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%277%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%2717%27 cy=%2711%27 r=%271.5%27/%3E%3C/svg%3E") no-repeat center center;'
+        'mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z%27/%3E%3Ccircle cx=%2712%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%277%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%2717%27 cy=%2711%27 r=%271.5%27/%3E%3C/svg%3E") no-repeat center center;}'
+        '</style>',
+        unsafe_allow_html=True
+    )
 
 if st.session_state["transcript"]:
     
@@ -2066,7 +2139,7 @@ if st.session_state["transcript"]:
             
             # Ask Echo inline chat
             st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
-            with st.expander("Ask Echo (AI Assistant)", expanded=False):
+            with st.expander("Ask Echo (AI Assistant)", expanded=st.session_state.get("_ask_echo_open", False)):
                 st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
                 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
                 if not st.session_state["chat_history"]:
