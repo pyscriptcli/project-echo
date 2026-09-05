@@ -213,6 +213,9 @@ if "speaker_mappings" not in st.session_state: st.session_state["speaker_mapping
 if "last_processed_file" not in st.session_state: st.session_state["last_processed_file"] = None
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
 if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
+# Dialog recording
+if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
+if "_dialog_record_notes" not in st.session_state: st.session_state["_dialog_record_notes"] = ""
 
 # -------------------------------------------------------------
 # Centralized State Reducer
@@ -621,6 +624,9 @@ USER DISCUSSION TOPICS:
 
 MEETING TRANSCRIPT:
 {transcript[:28000]}
+
+ADDITIONAL CONTEXT — User's Meeting Notes (pre-meeting agenda, notes, observations):
+{st.session_state.get("user_notes", "")[:5000]}
 
 Format output strictly as JSON matching this schema:
 {{
@@ -1159,6 +1165,79 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
     buffer.seek(0)
     return buffer
 
+# -------------------------------------------------------------
+# Recording Studio Dialog (frees audio_input from Streamlit reruns)
+# -------------------------------------------------------------
+@st.dialog("Recording Studio", width="large")
+def recording_studio_dialog():
+    """Modal dialog for recording audio + taking notes — survives reruns."""
+    col_left, col_right = st.columns([0.62, 0.38])
+    
+    # LEFT: Notepad
+    with col_left:
+        st.markdown("##### Meeting Notes")
+        notes = st.text_area(
+            "Jot down key points during the meeting...",
+            value=st.session_state.get("_dialog_record_notes", ""),
+            height=340,
+            placeholder="Key decisions, action items, questions to raise...",
+            label_visibility="collapsed"
+        )
+        st.session_state["_dialog_record_notes"] = notes
+    
+    # RIGHT: Recorder + Timer
+    with col_right:
+        st.markdown("##### Recorder")
+        recorded = st.audio_input("Record meeting audio", label_visibility="collapsed")
+        
+        # JS timer placeholder — shows elapsed time via browser
+        timer_placeholder = st.empty()
+        timer_placeholder.markdown(
+            '<p style="font-size:0.85rem; color:#69727d; margin-top:0.5rem;">'
+            '<span id="rec-timer">[ Ready ]</span></p>',
+            unsafe_allow_html=True
+        )
+        
+        if recorded:
+            # Store audio bytes
+            st.session_state["_dialog_recorded_bytes"] = recorded.read()
+            
+            # Show captured status with replay
+            st.audio(st.session_state["_dialog_recorded_bytes"], format="audio/wav")
+            duration_s = len(st.session_state["_dialog_recorded_bytes"]) / 32000  # rough estimate
+            timer_placeholder.markdown(
+                f'<p style="font-size:0.9rem; color:#03543F; font-weight:600; background:#DEF7EC; '
+                f'padding:0.4rem 0.6rem; border-radius:4px;">'
+                f'[ Captured (~{max(1, int(duration_s))} sec) ]</p>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                '<p style="font-size:0.82rem; color:#69727d; margin-top:0.3rem;">'
+                'Click the microphone above to start. '
+                'Your browser will ask for microphone permission.</p>',
+                unsafe_allow_html=True
+            )
+    
+    # Bottom action bar
+    st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
+    act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
+    with act_c1:
+        if st.button("Save & Close", use_container_width=True):
+            if st.session_state["_dialog_recorded_bytes"] is None:
+                st.warning("No recording captured yet.")
+            else:
+                st.rerun()
+    with act_c2:
+        if st.button("Discard & Close", use_container_width=True):
+            st.session_state["_dialog_recorded_bytes"] = None
+            st.session_state["_dialog_record_notes"] = ""
+            st.rerun()
+    with act_c3:
+        if st.button("Clear & Re-record", use_container_width=True):
+            st.session_state["_dialog_recorded_bytes"] = None
+            st.rerun()
+
 # 8. UI Layout
 col_upload, col_details = st.columns(2)
 
@@ -1207,30 +1286,71 @@ with col_upload:
                         st.session_state["_auto_processing"] = False
                         st.error("Transcription failed. Please try again or upload text directly.")
         with tab_record:
-            recorded_audio = st.audio_input("Record audio directly", label_visibility="collapsed")
-            if recorded_audio:
-                rec_bytes = recorded_audio.read()
-                r_btn1, r_btn2 = st.columns(2)
+            # Open Recording Studio button
+            if st.button("Open Recording Studio", key="btn_open_rec_studio", use_container_width=True):
+                recording_studio_dialog()
+            
+            st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+            
+            # Status bar if audio was captured via dialog
+            stored_bytes = st.session_state.get("_dialog_recorded_bytes")
+            if stored_bytes is not None:
+                st.audio(stored_bytes, format="audio/wav")
+                # Notes preview
+                stored_notes = st.session_state.get("_dialog_record_notes", "")
+                if stored_notes:
+                    preview = stored_notes[:200] + ("..." if len(stored_notes) > 200 else "")
+                    with st.expander(f"Meeting Notes ({len(stored_notes)} chars)", expanded=False):
+                        st.text_area("Notes", value=stored_notes, height=120, disabled=True, label_visibility="collapsed")
+                
+                st.markdown(
+                    f'<p style="font-size:0.85rem; color:#03543F; font-weight:600; '
+                    f'background:#DEF7EC; padding:0.4rem 0.6rem; border-radius:4px;">'
+                    f'[ Recording saved ({len(stored_bytes)//32000}s estimated) ]</p>',
+                    unsafe_allow_html=True
+                )
+                
+                r_btn1, r_btn2, r_btn3 = st.columns([1.5, 1, 1])
                 with r_btn1:
-                    st.download_button(label="Save Recording (.wav)", data=rec_bytes, file_name=f"Recording_{datetime.date.today().strftime('%Y%m%d')}.wav", mime="audio/wav", use_container_width=True)
-                with r_btn2:
-                    if st.button("Transcribe Audio", key="btn_tx_record"):
+                    if st.button("Transcribe Recording", key="btn_tx_dialog", use_container_width=True):
+                        st.session_state["_auto_processing"] = True
                         p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                         p_status = st.empty()
-                        raw_transcript = transcribe_audio_pipeline(rec_bytes, "recording.wav", p_bar, p_status)
+                        raw_transcript = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
                         p_bar.empty()
                         p_status.empty()
                         if raw_transcript:
                             clean_tx, logs = preprocess_transcript_entities(raw_transcript)
                             st.session_state["transcript"] = clean_tx
                             st.session_state["entity_corrections_log"] = logs
+                            # Carry dialog notes into user_notes for AI context
+                            if stored_notes:
+                                st.session_state["user_notes"] = stored_notes + "\n" + st.session_state.get("user_notes", "")
                             set_mom_dataframe(pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]))
                             st.session_state["other_discussions"] = ""
                             st.session_state["chat_history"] = []
                             st.session_state["matched_evidence_items"] = []
                             st.session_state["user_topics_text"] = ""
                             st.session_state["_topics_discovered"] = False
+                            st.session_state["_auto_processing"] = False
                             st.rerun()
+                        else:
+                            st.session_state["_auto_processing"] = False
+                            st.error("Transcription failed. Please try again or upload text directly.")
+                with r_btn2:
+                    if st.button("Clear Recording", key="btn_clear_dialog", use_container_width=True):
+                        st.session_state["_dialog_recorded_bytes"] = None
+                        st.session_state["_dialog_record_notes"] = ""
+                        st.rerun()
+                with r_btn3:
+                    st.download_button(label="Download (.wav)", data=stored_bytes, file_name=f"Recording_{datetime.date.today().strftime('%Y%m%d')}.wav", mime="audio/wav", use_container_width=True)
+            else:
+                st.markdown(
+                    '<p style="font-size:0.85rem; color:#69727d; margin-top:1rem; text-align:center;">'
+                    'Click "Open Recording Studio" to start. The modal protects the recorder from page refreshes, '
+                    'and includes a notepad for live meeting notes.</p>',
+                    unsafe_allow_html=True
+                )
         with tab_text:
             uploaded_text_file = st.file_uploader("Upload Document (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"])
             pasted_text = st.text_area("Or Paste Transcript Here", height=95, placeholder="Paste transcript text directly here...")
@@ -1276,6 +1396,37 @@ with col_upload:
                     components.html(copy_html, height=36)
                 with t_col2:
                     st.download_button(label="Download Transcript", data=st.session_state["transcript"], file_name=f"Transcript_{st.session_state['meeting_date'].strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
+
+# User Notes section (between Upload and Meeting Details)
+if "user_notes" not in st.session_state:
+    st.session_state["user_notes"] = ""
+with st.container(border=True):
+    st.markdown('<h3>Meeting Notes (Optional)</h3>', unsafe_allow_html=True)
+    st.caption("Upload or paste pre-meeting notes, agenda, or observations to enrich the AI context.")
+    notes_file = st.file_uploader("Upload notes (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"], key="notes_file_uploader", label_visibility="collapsed")
+    notes_text = st.text_area("Or paste notes here", value=st.session_state["user_notes"], height=100, placeholder="Pre-meeting agenda, key objectives, client background...", label_visibility="collapsed")
+    
+    note_changed = False
+    if notes_file:
+        extracted = extract_text_from_file(notes_file)
+        if extracted:
+            st.session_state["user_notes"] = extracted
+            note_changed = True
+    if notes_text != st.session_state.get("user_notes", ""):
+        st.session_state["user_notes"] = notes_text
+        note_changed = True
+    
+    if st.session_state["user_notes"]:
+        preview = st.session_state["user_notes"][:300] + ("..." if len(st.session_state["user_notes"]) > 300 else "")
+        st.markdown(f'<div style="font-size:0.82rem; color:#333; background:#F9FAFB; padding:0.5rem; border-left:3px solid #003366; margin-top:0.3rem;"><i>{preview}</i></div>', unsafe_allow_html=True)
+        if len(st.session_state["user_notes"]) > 300:
+            with st.expander("Show full notes"):
+                st.text_area("Notes full", value=st.session_state["user_notes"], height=150, disabled=True, label_visibility="collapsed")
+        col_c1, _ = st.columns([1, 9])
+        with col_c1:
+            if st.button("Clear Notes", key="btn_clear_notes"):
+                st.session_state["user_notes"] = ""
+                st.rerun()
 
 # RIGHT CONTAINER: Meeting Details Card
 with col_details:
