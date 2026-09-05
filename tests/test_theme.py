@@ -23,10 +23,10 @@ class ThemeTests(unittest.TestCase):
         self.assertIn("border-radius: var(--echo-radius)", html)
         # The rendered CSS must still contain literal CSS braces (proving no f-string mangling)
         self.assertIn(".stButton > button,", html)
-        self.assertIn("border-radius: 0 !important;\n", html)
+        self.assertIn("border-radius: var(--echo-radius) !important;", html)
 
     def test_theme_tokens(self):
-        """The shared theme exposes the #d9d9d9 / navy / #a3acd5 palette."""
+        """The shared theme exposes the #f4f1ec / navy / gold/ink primePhilippines palette."""
         import components.theme as theme
 
         captured = {}
@@ -34,17 +34,17 @@ class ThemeTests(unittest.TestCase):
             theme.inject_global_css()
 
         html = captured["html"]
-        # Canvas / navy ink / blue-gray buttons
-        self.assertIn("--echo-canvas: #d9d9d9;", html)
-        self.assertIn("--echo-ink: #0D1B3E;", html)
-        self.assertIn("--echo-button: #a3acd5;", html)
-        self.assertIn("--echo-gold: #a3acd5;", html)
+        # Cream canvas / navy ink / accent buttons
+        self.assertIn("--echo-canvas: #f4f1ec;", html)
+        self.assertIn("--echo-ink: #003366;", html)
+        self.assertIn("--echo-button: #0c0c0e;", html)
+        self.assertIn("--echo-gold: #c9ab4c;", html)
         # Bebas Neue loaded and used for numbers
         self.assertIn("Bebas+Neue", html)
         self.assertIn("--echo-number:", html)
-        # Buttons: blue-gray bg, navy text
+        # Buttons: accent-ink bg, white text, radius from the 4px grid
         self.assertIn("background-color: var(--echo-button) !important;", html)
-        self.assertIn("color: #FFFFFF !important;", html)
+        self.assertIn("color: var(--echo-button-text) !important;", html)
 
     def test_unified_page_header_hierarchy(self):
         """Page headers use a single Cormorant Garamond hierarchy (title/subtitle) and

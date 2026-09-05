@@ -36,8 +36,8 @@ class DocumentsIntegrationTests(unittest.TestCase):
         self.assertIn("require_login()", source)
         self.assertIn("setup_page_layout()", source)
         self.assertIn("Documents are generated and exported locally", source)
-        # Native gray-azure / navy / dark-gray palette tokens.
-        self.assertIn("#0D1B3E", source)
+        # primePhilippines navy / light-panel tokens.
+        self.assertIn("#003366", source)
         self.assertIn("rgba(249, 250, 251", source)
         self.assertNotIn("#D4AF37", source)
         # No DB write should exist anywhere in the page.
