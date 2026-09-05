@@ -1979,7 +1979,7 @@ if st.session_state["transcript"]:
             for idx, item in enumerate(st.session_state["matched_evidence_items"]):
                 with st.container(border=True):
                     # Header row
-                    h_col1, h_col2, h_col3 = st.columns([6, 2.5, 1.5])
+                    h_col1, h_col2, h_col3 = st.columns([6, 2.5, 2.5])
                     with h_col1:
                         topic_title = st.text_input(
                             "Topic",
@@ -1993,7 +1993,13 @@ if st.session_state["transcript"]:
                         conf_class = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
                         st.markdown(f'<span class="badge-confidence {conf_class}">{conf} Grounding</span>', unsafe_allow_html=True)
                     with h_col3:
-                        item["approved"] = st.checkbox("Approve", value=item.get("approved", True), key=f"rev_app_{idx}")
+                        rev_col_a, rev_col_d = st.columns(2)
+                        with rev_col_a:
+                            item["approved"] = st.checkbox("Approve", value=item.get("approved", True), key=f"rev_app_{idx}")
+                        with rev_col_d:
+                            if st.button("Delete", key=f"del_rev_{idx}"):
+                                st.session_state["matched_evidence_items"].pop(idx)
+                                st.rerun()
                     
                     # Evidence quote
                     eq = item.get("evidence_quote", "").strip()
@@ -2048,12 +2054,7 @@ if st.session_state["transcript"]:
                     for w in warnings:
                         st.markdown(f'<div class="guardrail-alert">{w}</div>', unsafe_allow_html=True)
                     
-                    # Delete button
-                    del_col1, _ = st.columns([1, 9])
-                    with del_col1:
-                        if st.button("Delete", key=f"del_rev_{idx}"):
-                            st.session_state["matched_evidence_items"].pop(idx)
-                            st.rerun()
+                    st.markdown("<hr style='margin:0.3rem 0; border:none; border-top:1px solid rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
         
         st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
         
@@ -2140,7 +2141,7 @@ if st.session_state["transcript"]:
             
             # Ask Echo inline chat
             st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
-            with st.expander("Ask Echo (AI Assistant)", expanded=st.session_state.get("_ask_echo_open", False)):
+            with st.expander("Ask Echo (AI Assistant)", expanded=st.session_state.get("_ask_echo_open", True)):
                 st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
                 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
                 if not st.session_state["chat_history"]:
