@@ -465,21 +465,27 @@ def extract_text_from_file(uploaded_file):
         st.error(f"Error reading file: {e}")
         return ""
 
-def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
+def _call_openai_transcribe(audio_bytes, filename="audio.mp3", model="gpt-4o-mini-transcribe"):
     """Transcribe with OpenAI returning (text|None, error_msg|None)."""
     if not OPENAI_API_KEY: return None, "OPENAI_API_KEY not configured in secrets."
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
     vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
     files = {
         "file": (filename, audio_bytes),
-        "model": (None, "gpt-4o-mini-transcribe"),
+        "model": (None, model),
         "response_format": (None, "verbose_json"),
         "prompt": (None, vocab_prompt)
     }
     try:
         resp = requests.post(OPENAI_AUDIO_URL, headers=headers, files=files, timeout=180)
         if resp.status_code != 200:
-            return None, f"OpenAI API returned HTTP {resp.status_code}"
+            reason = ""
+            try: reason = resp.json().get("error", {}).get("message", "")
+            except Exception: pass
+            err_msg = f"OpenAI API returned HTTP {resp.status_code}"
+            if reason:
+                err_msg += f": {reason}"
+            return None, err_msg
         data = resp.json()
         segments = data.get("segments")
         if segments and isinstance(segments, list):
@@ -513,7 +519,13 @@ def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
     try:
         resp = requests.post(GROQ_AUDIO_URL, headers=headers, files=files, timeout=120)
         if resp.status_code != 200:
-            return None, f"Groq API returned HTTP {resp.status_code}"
+            reason = ""
+            try: reason = resp.json().get("error", {}).get("message", "")
+            except Exception: pass
+            err_msg = f"Groq API returned HTTP {resp.status_code}"
+            if reason:
+                err_msg += f": {reason}"
+            return None, err_msg
         data = resp.json()
         segments = data.get("segments") or data.get("chunks")
         if segments and isinstance(segments, list):
@@ -548,36 +560,47 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
     
     # Detect the actual audio format so the API receives the correct extension
     audio_ext = detect_audio_format(audio_bytes)
-    api_filename = f"audio.{audio_ext}"
+    # Build a list of extensions to try: detected first, then common fallbacks
+    exts_to_try = [audio_ext]
+    for ext in ["mp3", "wav", "m4a"]:
+        if ext not in exts_to_try:
+            exts_to_try.append(ext)
 
     # ── Try Groq first (25MB limit) ──
     if raw_mb <= 25.0 and GROQ_API_KEY:
-        status_placeholder.info("Sending to Groq Whisper...")
-        progress_bar.progress(40, text=f"Sending {raw_mb:.1f}MB to Groq Whisper (40%)...")
-        t0 = time.time()
-        text, err = _call_groq_whisper(audio_bytes, api_filename)
-        elapsed = int((time.time() - t0) * 1000)
-        if text:
-            progress_bar.progress(100, text=f"Groq completed in {elapsed//1000:.1f}s (100%)!")
-            status_placeholder.empty()
-            audit_log("transcription", f"Groq OK ({raw_mb:.1f}MB) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
-            return text, None
-        audit_log("transcription", f"Groq FAIL: {err[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
-        progress_bar.progress(50, text=f"Groq failed ({err}) — trying OpenAI (50%)...")
+        for _ext in exts_to_try:
+            _fn = f"audio.{_ext}"
+            status_placeholder.info(f"Sending to Groq Whisper (as {_fn})...")
+            progress_bar.progress(40, text=f"Sending {raw_mb:.1f}MB to Groq Whisper ({_fn}) (40%)...")
+            t0 = time.time()
+            text, err = _call_groq_whisper(audio_bytes, _fn)
+            elapsed = int((time.time() - t0) * 1000)
+            if text:
+                progress_bar.progress(100, text=f"Groq completed in {elapsed//1000:.1f}s (100%)!")
+                status_placeholder.empty()
+                audit_log("transcription", f"Groq OK ({raw_mb:.1f}MB, {_fn}) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
+                return text, None
+            audit_log("transcription", f"Groq FAIL ({_fn}): {err[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
+        progress_bar.progress(50, text="Groq failed all formats — trying OpenAI (50%)...")
 
-    # ── Fallback to OpenAI ──
+    # ── Fallback to OpenAI (try gpt-4o-mini-transcribe first, then whisper-1) ──
     if OPENAI_API_KEY:
-        status_placeholder.info("Sending to OpenAI...")
-        progress_bar.progress(65, text=f"Sending {raw_mb:.1f}MB to OpenAI (65%)...")
-        t0 = time.time()
-        text, err2 = _call_openai_transcribe(audio_bytes, api_filename)
-        elapsed = int((time.time() - t0) * 1000)
-        if text:
-            progress_bar.progress(100, text=f"OpenAI completed in {elapsed//1000:.1f}s (100%)!")
-            status_placeholder.empty()
-            audit_log("transcription", f"OpenAI OK ({raw_mb:.1f}MB) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="openai")
-            return text, None
-        audit_log("transcription", f"OpenAI FAIL: {err2[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="openai")
+        for openai_model in ["gpt-4o-mini-transcribe", "whisper-1"]:
+            for _ext in exts_to_try:
+                _fn = f"audio.{_ext}"
+                status_placeholder.info(f"Sending to OpenAI ({openai_model} as {_fn})...")
+                progress_bar.progress(65, text=f"Sending {raw_mb:.1f}MB to {openai_model} ({_fn}) (65%)...")
+                t0 = time.time()
+                text, err2 = _call_openai_transcribe(audio_bytes, _fn, model=openai_model)
+                elapsed = int((time.time() - t0) * 1000)
+                if text:
+                    progress_bar.progress(100, text=f"OpenAI ({openai_model}, {_fn}) completed in {elapsed//1000:.1f}s (100%)!")
+                    status_placeholder.empty()
+                    audit_log("transcription", f"OpenAI {openai_model} OK ({raw_mb:.1f}MB, {_fn}) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint=f"openai-{openai_model}")
+                    return text, None
+                audit_log("transcription", f"OpenAI {openai_model} FAIL ({_fn}): {err2[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint=f"openai-{openai_model}")
+                progress_bar.progress(75, text=f"{openai_model} ({_fn}) failed ({err2}) — trying next (75%)...")
+        progress_bar.progress(90, text="All combinations failed — see error details (90%)...")
 
     # ── All attempts exhausted ──
     err_groq = err if 'err' in locals() else None
