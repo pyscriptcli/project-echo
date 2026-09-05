@@ -268,6 +268,7 @@ if "speaker_mappings" not in st.session_state: st.session_state["speaker_mapping
 if "last_processed_file" not in st.session_state: st.session_state["last_processed_file"] = None
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
 if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
+if "user_notes" not in st.session_state: st.session_state["user_notes"] = ""
 # Ask Echo expand & scroll
 if "_ask_echo_open" not in st.session_state: st.session_state["_ask_echo_open"] = False
 if "_scroll_to_ask_echo" not in st.session_state: st.session_state["_scroll_to_ask_echo"] = False
