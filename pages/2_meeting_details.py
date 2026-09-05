@@ -1258,151 +1258,149 @@ elif st.session_state["view_mode"] == "details":
                             except Exception as e:
                                 st.error(f"Metadata update failed: {e}")
 
-    # Tabs
-    tab_editor, tab_transcript = st.tabs(["Minutes of Meeting Editor", "Full Transcript"])
+    # Single view: editor with collapsed transcript
+    with st.container(border=True):
+        st.markdown("<h3>Minutes of Meeting Items</h3>", unsafe_allow_html=True)
+        st.caption("Inline editable cards. Changes are synchronized directly to Supabase.")
 
-    with tab_editor:
-        with st.container(border=True):
-            st.markdown("<h3>Minutes of Meeting Items</h3>", unsafe_allow_html=True)
-            st.caption("Inline editable cards. Changes are synchronized directly to Supabase.")
+        editor_key = f"mom_rows_{m_id}"
+        if editor_key not in st.session_state:
+            raw_items = active_meeting.get("table_items", [])
+            if isinstance(raw_items, list) and len(raw_items) > 0:
+                st.session_state[editor_key] = raw_items
+            else:
+                st.session_state[editor_key] = [{
+                    "Discussion Points": "", "Action Plan": "",
+                    "Indicative Delivery Date": "", "Person-in-charge": ""
+                }]
 
-            editor_key = f"mom_rows_{m_id}"
-            if editor_key not in st.session_state:
-                raw_items = active_meeting.get("table_items", [])
-                if isinstance(raw_items, list) and len(raw_items) > 0:
-                    st.session_state[editor_key] = raw_items
-                else:
-                    st.session_state[editor_key] = [{
-                        "Discussion Points": "", "Action Plan": "",
-                        "Indicative Delivery Date": "", "Person-in-charge": ""
-                    }]
+        rows = st.session_state[editor_key]
+        rows_to_keep = []
 
-            rows = st.session_state[editor_key]
-            rows_to_keep = []
+        for idx, row in enumerate(rows):
+            with st.container(border=True):
+                c_disc, c_act, c_date, c_pic, c_del = st.columns([3.2, 3.2, 1.8, 1.8, 0.6])
 
-            for idx, row in enumerate(rows):
-                with st.container(border=True):
-                    c_disc, c_act, c_date, c_pic, c_del = st.columns([3.2, 3.2, 1.8, 1.8, 0.6])
+                with c_disc:
+                    st.markdown('<span class="playfair-label">Discussion Points</span>', unsafe_allow_html=True)
+                    st.text_area("DP", value=str(row.get("Discussion Points", "")), key=f"dp_{m_id}_{idx}", height=75, label_visibility="collapsed")
+                with c_act:
+                    st.markdown('<span class="playfair-label">Action Plan</span>', unsafe_allow_html=True)
+                    st.text_area("AP", value=str(row.get("Action Plan", "")), key=f"ap_{m_id}_{idx}", height=75, label_visibility="collapsed")
+                with c_date:
+                    st.markdown('<span class="playfair-label">Delivery Date</span>', unsafe_allow_html=True)
+                    st.text_area("DD", value=str(row.get("Indicative Delivery Date", "")), key=f"date_{m_id}_{idx}", height=75, label_visibility="collapsed")
+                with c_pic:
+                    st.markdown('<span class="playfair-label">Person-in-charge</span>', unsafe_allow_html=True)
+                    st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"pic_{m_id}_{idx}", height=75, label_visibility="collapsed")
+                with c_del:
+                    st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
+                    if st.button("Delete", key=f"del_{m_id}_{idx}", help="Delete Row"):
+                        continue
 
-                    with c_disc:
-                        st.markdown('<span class="playfair-label">Discussion Points</span>', unsafe_allow_html=True)
-                        st.text_area("DP", value=str(row.get("Discussion Points", "")), key=f"dp_{m_id}_{idx}", height=75, label_visibility="collapsed")
-                    with c_act:
-                        st.markdown('<span class="playfair-label">Action Plan</span>', unsafe_allow_html=True)
-                        st.text_area("AP", value=str(row.get("Action Plan", "")), key=f"ap_{m_id}_{idx}", height=75, label_visibility="collapsed")
-                    with c_date:
-                        st.markdown('<span class="playfair-label">Delivery Date</span>', unsafe_allow_html=True)
-                        st.text_area("DD", value=str(row.get("Indicative Delivery Date", "")), key=f"date_{m_id}_{idx}", height=75, label_visibility="collapsed")
-                    with c_pic:
-                        st.markdown('<span class="playfair-label">Person-in-charge</span>', unsafe_allow_html=True)
-                        st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"pic_{m_id}_{idx}", height=75, label_visibility="collapsed")
-                    with c_del:
-                        st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                        if st.button("Delete", key=f"del_{m_id}_{idx}", help="Delete Row"):
-                            continue
+                rows_to_keep.append({
+                    "Discussion Points": st.session_state[f"dp_{m_id}_{idx}"],
+                    "Action Plan": st.session_state[f"ap_{m_id}_{idx}"],
+                    "Indicative Delivery Date": st.session_state[f"date_{m_id}_{idx}"],
+                    "Person-in-charge": st.session_state[f"pic_{m_id}_{idx}"]
+                })
 
-                    rows_to_keep.append({
-                        "Discussion Points": st.session_state[f"dp_{m_id}_{idx}"],
-                        "Action Plan": st.session_state[f"ap_{m_id}_{idx}"],
-                        "Indicative Delivery Date": st.session_state[f"date_{m_id}_{idx}"],
-                        "Person-in-charge": st.session_state[f"pic_{m_id}_{idx}"]
-                    })
+        if len(rows_to_keep) != len(rows):
+            st.session_state[editor_key] = rows_to_keep
+            st.rerun()
 
-            if len(rows_to_keep) != len(rows):
+        add_c1, _ = st.columns([2, 8])
+        with add_c1:
+            if st.button("+ Add Item", key=f"btn_add_{m_id}"):
+                rows_to_keep.append({
+                    "Discussion Points": "", "Action Plan": "",
+                    "Indicative Delivery Date": "", "Person-in-charge": ""
+                })
                 st.session_state[editor_key] = rows_to_keep
                 st.rerun()
 
-            add_c1, _ = st.columns([2, 8])
-            with add_c1:
-                if st.button("+ Add Item", key=f"btn_add_{m_id}"):
-                    rows_to_keep.append({
-                        "Discussion Points": "", "Action Plan": "",
-                        "Indicative Delivery Date": "", "Person-in-charge": ""
-                    })
-                    st.session_state[editor_key] = rows_to_keep
-                    st.rerun()
+        st.markdown('<span class="playfair-label" style="margin-top:0.75rem;">Summary & Other Discussions</span>', unsafe_allow_html=True)
+        current_summary = str(active_meeting.get("summary_md", "")).replace("### Summary", "").strip()
+        summary_val = st.text_area(
+            "Summary Content",
+            value=current_summary,
+            height=110,
+            label_visibility="collapsed",
+            key=f"summary_{m_id}"
+        )
 
-            st.markdown('<span class="playfair-label" style="margin-top:0.75rem;">Summary & Other Discussions</span>', unsafe_allow_html=True)
-            current_summary = str(active_meeting.get("summary_md", "")).replace("### Summary", "").strip()
-            summary_val = st.text_area(
-                "Summary Content",
-                value=current_summary,
-                height=110,
-                label_visibility="collapsed",
-                key=f"summary_{m_id}"
-            )
+        df_export = pd.DataFrame(rows_to_keep, columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
+        raw_payload = active_meeting.get("raw_payload", {})
+        md = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
+        comp_name = active_meeting.get("client_name", "")
+        
+        meeting_details = {
+            "date": active_meeting.get("meeting_date", ""),
+            "time_range": md.get("time_range", ""),
+            "location": active_meeting.get("location", ""),
+            "company_name": comp_name,
+            "prime_attendees": md.get("prime_attendees", []),
+            "external_attendees": md.get("external_attendees", []),
+            "prep_name": active_meeting.get("prepared_by", ""),
+            "prep_desig": md.get("prep_desig", "PRIME Philippines"),
+            "conf_name": active_meeting.get("confirmed_by", ""),
+            "conf_desig": md.get("conf_desig", "Client")
+        }
 
-            df_export = pd.DataFrame(rows_to_keep, columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
-            raw_payload = active_meeting.get("raw_payload", {})
-            md = raw_payload.get("meeting_details", {}) if isinstance(raw_payload, dict) else {}
-            comp_name = active_meeting.get("client_name", "")
-            
-            meeting_details = {
-                "date": active_meeting.get("meeting_date", ""),
-                "time_range": md.get("time_range", ""),
-                "location": active_meeting.get("location", ""),
-                "company_name": comp_name,
-                "prime_attendees": md.get("prime_attendees", []),
-                "external_attendees": md.get("external_attendees", []),
-                "prep_name": active_meeting.get("prepared_by", ""),
-                "prep_desig": md.get("prep_desig", "PRIME Philippines"),
-                "conf_name": active_meeting.get("confirmed_by", ""),
-                "conf_desig": md.get("conf_desig", "Client")
-            }
+        st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
+        template_selection = st.selectbox(
+            "Select MoM Template Format",
+            options=["Template 1 - Standard Corporate (Combined Table)", "Template 2 - Detailed General Meeting (Vertical Layout)"],
+            label_visibility="collapsed",
+            key=f"tpl_sel_{m_id}"
+        )
 
-            st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
-            template_selection = st.selectbox(
-                "Select MoM Template Format",
-                options=["Template 1 - Standard Corporate (Combined Table)", "Template 2 - Detailed General Meeting (Vertical Layout)"],
-                label_visibility="collapsed",
-                key=f"tpl_sel_{m_id}"
-            )
+        exp_col1, exp_col2 = st.columns(2)
+        if "Template 1" in template_selection:
+            with exp_col1:
+                doc_bio = export_to_word_template_1(df_export, meeting_details, summary_val)
+                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{comp_name.replace(' ', '_') if comp_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=f"btn_dl_docx_1_{m_id}")
+            with exp_col2:
+                pdf_bio = export_to_pdf_template_1(df_export, meeting_details, summary_val)
+                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{comp_name.replace(' ', '_') if comp_name else 'Report'}.pdf", mime="application/pdf", key=f"btn_dl_pdf_1_{m_id}")
+        else:
+            with exp_col1:
+                doc_bio = export_to_word_template_2(df_export, meeting_details, summary_val)
+                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_Detailed_{comp_name.replace(' ', '_') if comp_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=f"btn_dl_docx_2_{m_id}")
+            with exp_col2:
+                pdf_bio = export_to_pdf_template_2(df_export, meeting_details, summary_val)
+                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_Detailed_{comp_name.replace(' ', '_') if comp_name else 'Report'}.pdf", mime="application/pdf", key=f"btn_dl_pdf_2_{m_id}")
 
-            exp_col1, exp_col2 = st.columns(2)
-            if "Template 1" in template_selection:
-                with exp_col1:
-                    doc_bio = export_to_word_template_1(df_export, meeting_details, summary_val)
-                    st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{comp_name.replace(' ', '_') if comp_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=f"btn_dl_docx_1_{m_id}")
-                with exp_col2:
-                    pdf_bio = export_to_pdf_template_1(df_export, meeting_details, summary_val)
-                    st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{comp_name.replace(' ', '_') if comp_name else 'Report'}.pdf", mime="application/pdf", key=f"btn_dl_pdf_1_{m_id}")
-            else:
-                with exp_col1:
-                    doc_bio = export_to_word_template_2(df_export, meeting_details, summary_val)
-                    st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_Detailed_{comp_name.replace(' ', '_') if comp_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key=f"btn_dl_docx_2_{m_id}")
-                with exp_col2:
-                    pdf_bio = export_to_pdf_template_2(df_export, meeting_details, summary_val)
-                    st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_Detailed_{comp_name.replace(' ', '_') if comp_name else 'Report'}.pdf", mime="application/pdf", key=f"btn_dl_pdf_2_{m_id}")
+        st.write("")
+        sv_col1, sv_col2 = st.columns([7.5, 2.5])
+        with sv_col2:
+            if st.button("Save All Changes", key=f"btn_save_{m_id}"):
+                with st.spinner("Saving updates to Supabase..."):
+                    client = get_supabase_client()
+                    if not client:
+                        st.error("Supabase client uninitialized.")
+                    else:
+                        try:
+                            client.table("meeting_archives").update({
+                                "table_items": rows_to_keep,
+                                "summary_md": f"### Summary\n{summary_val}"
+                            }).eq("meeting_id", m_id).execute()
 
-            st.write("")
-            sv_col1, sv_col2 = st.columns([7.5, 2.5])
-            with sv_col2:
-                if st.button("Save All Changes", key=f"btn_save_{m_id}"):
-                    with st.spinner("Saving updates to Supabase..."):
-                        client = get_supabase_client()
-                        if not client:
-                            st.error("Supabase client uninitialized.")
-                        else:
-                            try:
-                                client.table("meeting_archives").update({
-                                    "table_items": rows_to_keep,
-                                    "summary_md": f"### Summary\n{summary_val}"
-                                }).eq("meeting_id", m_id).execute()
+                            st.success("Meeting record updated successfully!")
+                            if editor_key in st.session_state:
+                                del st.session_state[editor_key]
+                        except Exception as e:
+                            st.error(f"Update failed: {e}")
 
-                                st.success("Meeting record updated successfully!")
-                                if editor_key in st.session_state:
-                                    del st.session_state[editor_key]
-                            except Exception as e:
-                                st.error(f"Update failed: {e}")
-
-    with tab_transcript:
-        with st.container(border=True):
+        # Full Transcript collapsed inside editor
+        st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+        with st.expander("Show Full Transcript", expanded=False):
             raw_tx = active_meeting.get("transcript_md", "No transcript stored.")
             clean_tx = raw_tx.replace("### Transcript", "").strip()
             st.text_area(
                 "Transcript Stream",
                 value=clean_tx,
-                height=520,
+                height=320,
                 disabled=True,
                 label_visibility="collapsed"
             )

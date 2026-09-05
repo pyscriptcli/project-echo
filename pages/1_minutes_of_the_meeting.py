@@ -209,6 +209,10 @@ if "matched_evidence_items" not in st.session_state: st.session_state["matched_e
 if "recommended_missed_points" not in st.session_state: st.session_state["recommended_missed_points"] = []
 if "entity_corrections_log" not in st.session_state: st.session_state["entity_corrections_log"] = []
 if "speaker_mappings" not in st.session_state: st.session_state["speaker_mappings"] = {}
+# Auto-flow tracking
+if "last_processed_file" not in st.session_state: st.session_state["last_processed_file"] = None
+if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
+if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
 
 # -------------------------------------------------------------
 # Centralized State Reducer
@@ -1124,9 +1128,11 @@ with col_upload:
         tab_upload, tab_record, tab_text = st.tabs(["Upload Audio", "Record Audio", "Upload Text"])
         with tab_upload:
             uploaded_file = st.file_uploader("Upload audio file (200MB limit supported)", type=["wav", "mp3", "m4a", "ogg", "flac", "mp4", "webm"], help="Audio uploads up to 200MB are supported.")
-            if uploaded_file:
-                st.write("")
-                if st.button("Transcribe Audio", key="btn_tx_upload"):
+            if uploaded_file and not st.session_state["_auto_processing"]:
+                file_key = f"{uploaded_file.name}_{uploaded_file.size}"
+                if file_key != st.session_state.get("last_processed_file"):
+                    st.session_state["last_processed_file"] = file_key
+                    st.session_state["_auto_processing"] = True
                     p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                     p_status = st.empty()
                     raw_transcript = transcribe_audio_pipeline(uploaded_file.read(), uploaded_file.name, p_bar, p_status)
@@ -1141,6 +1147,7 @@ with col_upload:
                         st.session_state["chat_history"] = []
                         st.session_state["matched_evidence_items"] = []
                         st.session_state["user_topics_text"] = ""
+                        st.session_state["_topics_discovered"] = False
                         meta = extract_metadata_with_deepseek(clean_tx)
                         if meta:
                             if meta.get("meeting_type") and meta["meeting_type"] in MEETING_TYPE_OPTIONS: st.session_state["meeting_type"] = meta["meeting_type"]
@@ -1152,7 +1159,12 @@ with col_upload:
                             if meta.get("external_attendees"): st.session_state["meeting_ext_attendees"] = meta["external_attendees"]
                             if meta.get("prepared_by"): st.session_state["meeting_prep_name"] = meta["prepared_by"]
                             if meta.get("confirmed_by"): st.session_state["meeting_conf_name"] = meta["confirmed_by"]
+                        st.session_state["_auto_processing"] = False
                         st.rerun()
+                    else:
+                        st.session_state["last_processed_file"] = None
+                        st.session_state["_auto_processing"] = False
+                        st.error("Transcription failed. Please try again or upload text directly.")
         with tab_record:
             recorded_audio = st.audio_input("Record audio directly", label_visibility="collapsed")
             if recorded_audio:
@@ -1176,6 +1188,7 @@ with col_upload:
                             st.session_state["chat_history"] = []
                             st.session_state["matched_evidence_items"] = []
                             st.session_state["user_topics_text"] = ""
+                            st.session_state["_topics_discovered"] = False
                             st.rerun()
         with tab_text:
             uploaded_text_file = st.file_uploader("Upload Document (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"])
@@ -1199,9 +1212,29 @@ with col_upload:
                     st.session_state["chat_history"] = []
                     st.session_state["matched_evidence_items"] = []
                     st.session_state["user_topics_text"] = ""
+                    st.session_state["_topics_discovered"] = False
                     st.rerun()
                 else:
                     st.warning("Please upload a file or paste text to proceed.")
+
+        # Transcript expander (hidden by default, inside upload card)
+        if st.session_state["transcript"]:
+            st.markdown("---")
+            with st.expander("Show Full Transcript", expanded=False):
+                st.text_area("Transcript Content", st.session_state["transcript"], height=250, label_visibility="collapsed")
+                if st.session_state.get("entity_corrections_log"):
+                    with st.expander(f"Entity Standardizations ({len(st.session_state['entity_corrections_log'])})"):
+                        for item in st.session_state["entity_corrections_log"]:
+                            st.caption(f"• {item}")
+                t_col1, t_col2 = st.columns(2)
+                with t_col1:
+                    escaped_tx = json.dumps(st.session_state["transcript"])
+                    copy_html = f"""
+                    <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#0c0c0e;color:#ffffff;border:1px solid #c9ab4c;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#003366;border-color:#d9bc5d;color:#ffffff;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
+                    """
+                    components.html(copy_html, height=36)
+                with t_col2:
+                    st.download_button(label="Download Transcript", data=st.session_state["transcript"], file_name=f"Transcript_{st.session_state['meeting_date'].strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
 
 # RIGHT CONTAINER: Meeting Details Card
 with col_details:
@@ -1333,120 +1366,90 @@ if st.session_state["transcript"]:
                 remapped = apply_speaker_remapping(st.session_state["transcript"], st.session_state["speaker_mappings"])
                 st.session_state["transcript"] = remapped
                 st.success("Transcript updated with mapped speaker identities!")
+                st.session_state["_topics_discovered"] = False
                 st.rerun()
 
-# Step 2: Symmetrical Bottom Row (Full Transcript Left, Ask Echo Right)
+# =====================================================================
+# PHASE 2 & 3: Meeting Minutes Review + Export
+# =====================================================================
 if st.session_state["transcript"]:
-    row_left, row_right = st.columns(2)
-    with row_left:
-        with st.container(height=580, border=True):
-            st.markdown('<h3 style="margin-top:0.2rem;">Full Transcript</h3>', unsafe_allow_html=True)
-            st.text_area("Transcript Content", st.session_state["transcript"], height=380, label_visibility="collapsed")
-            
-            if st.session_state.get("entity_corrections_log"):
-                with st.expander(f"Entity Standardizations Applied ({len(st.session_state['entity_corrections_log'])})"):
-                    for item in st.session_state["entity_corrections_log"]:
-                        st.caption(f"• {item}")
-            
-            st.markdown("<hr style='margin: 0.8rem 0; border-top: 1px solid rgba(0,0,0,0.05);'>", unsafe_allow_html=True)
-            t_col1, t_col2 = st.columns(2)
-            with t_col1:
-                escaped_tx = json.dumps(st.session_state["transcript"])
-                copy_html = f"""
-                <!DOCTYPE html><html><head><style>body{{margin:0;padding:0;font-family:'Montserrat',sans-serif;}}button{{width:100%;height:36px;background-color:#0c0c0e;color:#ffffff;border:1px solid #c9ab4c;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;}}button:hover{{background-color:#003366;border-color:#d9bc5d;color:#ffffff;}}</style></head><body><button id="copy-btn">{COPY_ICON} Copy Text</button><script>document.getElementById("copy-btn").addEventListener("click",function(){{navigator.clipboard.writeText({escaped_tx}).then(function(){{document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copied';setTimeout(() => document.getElementById("copy-btn").innerHTML = '{COPY_ICON} Copy Text', 2000);}});}});</script></body></html>
-                """
-                components.html(copy_html, height=36)
-            with t_col2:
-                st.download_button(label="Download Transcript", data=st.session_state["transcript"], file_name=f"Transcript_{meeting_date.strftime('%Y%m%d')}.txt", mime="text/plain", use_container_width=True)
-    with row_right:
-        with st.container(height=580, border=True):
-            st.markdown('<h3 style="margin-top:0.2rem;">Ask Echo (Bidirectional Editor)</h3>', unsafe_allow_html=True)
-            st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
-            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-            if not st.session_state["chat_history"]:
-                st.markdown('<div class="chat-ai">Hello. I am Echo. Ask questions or tell me how to refine your Minutes of Meeting table.</div>', unsafe_allow_html=True)
-            else:
-                for msg in st.session_state["chat_history"]:
-                    if msg["role"] == "assistant":
-                        st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-            if prompt := st.chat_input("Ask Echo or command an edit..."):
-                st.session_state["chat_history"].append({"role": "user", "content": prompt})
-                with st.spinner("Echo is analyzing request and table state..."):
-                    answer, action = ask_deepseek_with_mutation(st.session_state["transcript"], prompt, st.session_state["chat_history"], st.session_state["df"])
-                    
-                    if action and isinstance(action, dict):
-                        tool_name = action.get("tool")
-                        r_idx = int(action.get("row_index", 0))
-                        fields = action.get("fields", {})
-                        if tool_name == "update_row" and 0 <= r_idx < len(st.session_state["df"]):
-                            for f_key, f_val in fields.items():
-                                update_mom_field(r_idx, f_key, str(f_val))
-                        elif tool_name == "delete_row" and 0 <= r_idx < len(st.session_state["df"]):
-                            delete_mom_row(r_idx)
-                        elif tool_name == "add_row":
-                            add_mom_row(
-                                fields.get("Discussion Points", ""),
-                                fields.get("Action Plan", ""),
-                                fields.get("Indicative Delivery Date", "TBD"),
-                                fields.get("Person-in-charge", "Unassigned")
-                            )
-
-                st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-                st.rerun()
-
-# -------------------------------------------------------------
-# Step 2.5: HITL Alignment & Evidence Matching Pipeline
-# -------------------------------------------------------------
-if st.session_state["transcript"]:
+    
+    # Auto-discover topics + match evidence on first load
+    if not st.session_state.get("_topics_discovered") and not st.session_state["matched_evidence_items"]:
+        with st.spinner("Discovering discussion topics and matching evidence..."):
+            st.session_state["_topics_discovered"] = True
+            topics_suggested = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
+            st.session_state["user_topics_text"] = topics_suggested
+            items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], topics_suggested)
+            if items:
+                for itm in items:
+                    itm["approved"] = True
+                st.session_state["matched_evidence_items"] = items
+                st.session_state["other_discussions"] = other_disc
+    
     with st.container(border=True):
-        st.markdown('<h3>Human-in-the-Loop Alignment & Evidence Matching</h3>', unsafe_allow_html=True)
-        st.caption("Curate discussion points -> AI matches verbatim evidence -> Human audits & applies to official table.")
+        st.markdown('<h3>Meeting Minutes Review</h3>', unsafe_allow_html=True)
+        st.caption("Review and edit discussion items below. Each card includes source evidence and inline fields. Approve items, then export.")
         
-        hitl_tab1, hitl_tab2 = st.tabs(["1. Curate Discussion Topics", "2. Review & Approve Matched Evidence"])
-        
-        with hitl_tab1:
-            c_top_act1, c_top_act2 = st.columns([3.5, 6.5])
-            with c_top_act1:
-                if st.button("Auto-Discover Topics from Audio", key="btn_suggest_topics"):
-                    with st.spinner("Scanning transcript for core discussion points..."):
-                        sugg = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
-                        st.session_state["user_topics_text"] = sugg
+        # Action bar
+        action_bar1, action_bar2, action_bar3 = st.columns([3, 3, 4])
+        with action_bar1:
+            if st.button("Re-discover Topics", key="btn_rediscover_topics"):
+                with st.spinner("Re-scanning transcript for topics..."):
+                    sugg = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
+                    st.session_state["user_topics_text"] = sugg
+                    st.session_state["matched_evidence_items"] = []
+                    st.session_state["_topics_discovered"] = False
+                    st.rerun()
+        with action_bar2:
+            if st.button("Re-match Evidence", key="btn_rematch_evidence"):
+                with st.spinner("Re-matching evidence with current topics..."):
+                    items, other_disc = match_evidence_and_synthesize(
+                        st.session_state["transcript"],
+                        st.session_state["user_topics_text"]
+                    )
+                    if items:
+                        for itm in items:
+                            itm["approved"] = True
+                        st.session_state["matched_evidence_items"] = items
+                        st.session_state["other_discussions"] = other_disc
+                        st.success(f"Matched {len(items)} items!")
                         st.rerun()
-            
-            st.session_state["user_topics_text"] = st.text_area(
-                "Discussion Points:", 
-                value=st.session_state["user_topics_text"], 
-                height=130, 
-                placeholder="1. Architecture updates\n2. Q3 Delivery Deadlines\n3. Client Integration Requirements"
-            )
-            
-            if st.button("Match Transcript", key="btn_match_evidence"):
-                if not st.session_state["user_topics_text"].strip():
-                    st.warning("Please enter or generate at least one discussion topic first.")
-                else:
-                    with st.spinner("Grounding topics with verbatim transcript evidence..."):
-                        items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], st.session_state["user_topics_text"])
-                        if items:
-                            for itm in items: itm["approved"] = True
-                            st.session_state["matched_evidence_items"] = items
-                            st.session_state["other_discussions"] = other_disc
-                            st.success(f"Successfully matched evidence for {len(items)} points! Switch to Tab 2 to verify.")
-                        else:
-                            st.error("Could not find matching transcript evidence. Please check transcript contents.")
+                    else:
+                        st.warning("Could not match evidence. Check transcript contents.")
+        with action_bar3:
+            if st.button("+ Add Item Manually", key="btn_add_review_item"):
+                st.session_state["matched_evidence_items"].append({
+                    "topic_title": "New Item",
+                    "discussion_point": "",
+                    "evidence_quote": "",
+                    "action_plan": "",
+                    "indicative_delivery_date": "TBD",
+                    "person_in_charge": "Unassigned",
+                    "confidence": "Medium",
+                    "approved": True
+                })
+                st.rerun()
         
-        with hitl_tab2:
-            # Teacher-in-the-loop: recommend topics the user may have missed
-            missed_recs = st.session_state.get("recommended_missed_points", []) or []
-            if missed_recs:
-                st.markdown("<p class='playfair-label'>Recommended points you may have missed</p>", unsafe_allow_html=True)
-                st.markdown(
-                    "<p style='font-size:0.8rem; color:#666;'><i>Echo found these distinct topics in the transcript. "
-                    "Select any to add to your discussion list, then re-run evidence matching.</i></p>",
-                    unsafe_allow_html=True,
-                )
+        st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+        
+        # Discussion topics editor
+        st.markdown('<span class="playfair-label">Discussion Topics</span>', unsafe_allow_html=True)
+        st.caption("These topics guide evidence matching. Edits take effect after re-matching.")
+        st.session_state["user_topics_text"] = st.text_area(
+            "Topics",
+            value=st.session_state["user_topics_text"],
+            height=80,
+            label_visibility="collapsed",
+            placeholder="1. Architecture updates\n2. Q3 Delivery Deadlines\n3. Client Integration Requirements"
+        )
+        
+        st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+        
+        # Recommended missed points
+        missed_recs = st.session_state.get("recommended_missed_points", []) or []
+        if missed_recs:
+            with st.expander(f"Echo found topics you may have missed ({len(missed_recs)})", expanded=False):
                 add_these = []
                 for ridx, rec in enumerate(missed_recs):
                     rec_title = str(rec.get("topic_title") or "").strip()
@@ -1462,160 +1465,217 @@ if st.session_state["transcript"]:
                             st.markdown(f'<div class="evidence-quote-box" style="font-size:0.78rem;"><b>Quote:</b> "{rec_quote}"</div>', unsafe_allow_html=True)
                     if pick:
                         add_these.append(rec_title)
-                if add_these:
-                    if st.button("Add selected to my topics & re-match", key="btn_add_missed"):
-                        current = (st.session_state.get("user_topics_text") or "").strip()
-                        new_lines = "\n".join(f"- {t}" for t in add_these)
-                        st.session_state["user_topics_text"] = (current + "\n" + new_lines).strip()
-                        st.session_state["recommended_missed_points"] = []
-                        st.success("Added recommended points to your discussion list. Re-run evidence matching in Tab 1.")
-                        st.rerun()
-                st.markdown("<hr style='margin:0.6rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
-
-            if not st.session_state["matched_evidence_items"]:
-                st.info("No evidence points matched yet. Complete Tab 1 to run evidence extraction.")
-            else:
-                st.markdown("<p style='font-size:0.85rem; color:#666;'><i>*Review the source quotes below each synthesized point. Check or uncheck items for inclusion in the final MoM.</i></p>", unsafe_allow_html=True)
-                
-                approved_rows = []
-                all_valid_attendees = selected_crd + [x.strip() for x in ext_attendees_raw.split(",") if x.strip()]
-                
-                for idx, item in enumerate(st.session_state["matched_evidence_items"]):
-                    with st.container(border=True):
-                        top_h_col, conf_h_col, chk_h_col = st.columns([6, 2.5, 1.5])
-                        with top_h_col:
-                            st.markdown(f"**Point {idx+1}: {item.get('topic_title', 'Discussion Item')}**")
-                        with conf_h_col:
-                            conf = item.get("confidence", "Medium")
-                            conf_class = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
-                            st.markdown(f'<span class="badge-confidence {conf_class}">{conf} Grounding</span>', unsafe_allow_html=True)
-                        with chk_h_col:
-                            item["approved"] = st.checkbox("Approve", value=item.get("approved", True), key=f"chk_app_{idx}")
-                        
-                        eq = item.get("evidence_quote", "").strip()
-                        if eq:
-                            st.markdown(f'<div class="evidence-quote-box"><b>Verbatim Source Quote:</b> "{eq}"</div>', unsafe_allow_html=True)
-                        
-                        c1, c2, c3, c4 = st.columns([3.2, 3.2, 1.8, 1.8])
-                        with c1: new_dp = st.text_area("Discussion Point", value=item.get("discussion_point", ""), key=f"ev_dp_{idx}", height=70)
-                        with c2: new_ap = st.text_area("Action Plan", value=item.get("action_plan", ""), key=f"ev_ap_{idx}", height=70)
-                        with c3: new_dd = st.text_area("Delivery Date", value=item.get("indicative_delivery_date", "TBD"), key=f"ev_dd_{idx}", height=70)
-                        with c4: new_pic = st.text_area("Person-in-charge", value=item.get("person_in_charge", "Unassigned"), key=f"ev_pic_{idx}", height=70)
-                        
-                        row_dict = {"Discussion Points": new_dp, "Action Plan": new_ap, "Indicative Delivery Date": new_dd, "Person-in-charge": new_pic}
-                        warnings = check_row_guardrails(row_dict, all_valid_attendees)
-                        for w in warnings:
-                            st.markdown(f'<div class="guardrail-alert">WARNING: {w}</div>', unsafe_allow_html=True)
-
-                        if item["approved"]:
-                            approved_rows.append(row_dict)
-                
-                st.write("")
-                if st.button("Apply Approved Points to Official MoM Table", key="btn_apply_approved"):
-                    if approved_rows:
-                        set_mom_dataframe(pd.DataFrame(approved_rows))
-                        st.success("MoM Table populated with verified evidence-backed items!")
-                        st.rerun()
-                    else:
-                        st.warning("Please select at least one approved item.")
-
-# Step 3: Minutes of Meeting Editor & Exporter
-if not st.session_state["df"].empty:
-    with st.container(border=True):
-        st.markdown('<h3>Minutes of Meeting Final Editor</h3>', unsafe_allow_html=True)
-        st.markdown("<p style='font-size:0.85rem; color:#666; margin-bottom: 0.75rem;'><i>*Note: Edit items inline directly or use 'Ask Echo' above for hands-free mutations.</i></p>", unsafe_allow_html=True)
+                if add_these and st.button("Add selected & re-match", key="btn_add_missed_recs"):
+                    current = (st.session_state.get("user_topics_text") or "").strip()
+                    new_lines = "\n".join(f"- {t}" for t in add_these)
+                    st.session_state["user_topics_text"] = (current + "\n" + new_lines).strip()
+                    st.session_state["recommended_missed_points"] = []
+                    st.session_state["matched_evidence_items"] = []
+                    st.session_state["_topics_discovered"] = False
+                    st.success("Added topics. Re-running evidence matching...")
+                    st.rerun()
         
+        # Matched evidence items as cards
         all_valid_attendees = selected_crd + [x.strip() for x in ext_attendees_raw.split(",") if x.strip()]
         
-        for idx, row in st.session_state["df"].iterrows():
-            with st.container(border=True):
-                c_disc, c_act, c_date, c_pic, c_del = st.columns([3.2, 3.2, 1.8, 1.8, 0.6])
-                with c_disc:
-                    st.markdown('<span class="playfair-label">Discussion Points</span>', unsafe_allow_html=True)
-                    cur_dp = st.text_area("DP", value=str(row.get("Discussion Points", "")), key=f"final_dp_{idx}", height=75, label_visibility="collapsed")
-                    if cur_dp != row.get("Discussion Points"): update_mom_field(idx, "Discussion Points", cur_dp)
-                with c_act:
-                    st.markdown('<span class="playfair-label">Action Plan</span>', unsafe_allow_html=True)
-                    cur_ap = st.text_area("AP", value=str(row.get("Action Plan", "")), key=f"final_ap_{idx}", height=75, label_visibility="collapsed")
-                    if cur_ap != row.get("Action Plan"): update_mom_field(idx, "Action Plan", cur_ap)
-                with c_date:
-                    st.markdown('<span class="playfair-label">Delivery Date</span>', unsafe_allow_html=True)
-                    cur_dd = st.text_area("DD", value=str(row.get("Indicative Delivery Date", "")), key=f"final_dd_{idx}", height=75, label_visibility="collapsed")
-                    if cur_dd != row.get("Indicative Delivery Date"): update_mom_field(idx, "Indicative Delivery Date", cur_dd)
-                with c_pic:
-                    st.markdown('<span class="playfair-label">Person-in-charge</span>', unsafe_allow_html=True)
-                    cur_pic = st.text_area("PIC", value=str(row.get("Person-in-charge", "")), key=f"final_pic_{idx}", height=75, label_visibility="collapsed")
-                    if cur_pic != row.get("Person-in-charge"): update_mom_field(idx, "Person-in-charge", cur_pic)
-                with c_del:
-                    st.write("<div style='height: 38px;'></div>", unsafe_allow_html=True)
-                    if st.button("Delete", key=f"del_final_{idx}"):
-                        delete_mom_row(idx)
-                        st.rerun()
-
-                warnings = check_row_guardrails(row.to_dict(), all_valid_attendees)
-                for w in warnings:
-                    st.markdown(f'<div class="guardrail-alert">WARNING: {w}</div>', unsafe_allow_html=True)
+        if not st.session_state["matched_evidence_items"]:
+            st.info("No discussion items yet. Click 'Re-discover Topics' to auto-generate, or add items manually.")
+        else:
+            for idx, item in enumerate(st.session_state["matched_evidence_items"]):
+                with st.container(border=True):
+                    # Header row
+                    h_col1, h_col2, h_col3 = st.columns([6, 2.5, 1.5])
+                    with h_col1:
+                        topic_title = st.text_input(
+                            "Topic",
+                            value=item.get("topic_title", f"Point {idx+1}"),
+                            key=f"rev_topic_{idx}",
+                            label_visibility="collapsed"
+                        )
+                        item["topic_title"] = topic_title
+                    with h_col2:
+                        conf = item.get("confidence", "Medium")
+                        conf_class = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
+                        st.markdown(f'<span class="badge-confidence {conf_class}">{conf} Grounding</span>', unsafe_allow_html=True)
+                    with h_col3:
+                        item["approved"] = st.checkbox("Approve", value=item.get("approved", True), key=f"rev_app_{idx}")
+                    
+                    # Evidence quote
+                    eq = item.get("evidence_quote", "").strip()
+                    if eq:
+                        st.markdown(f'<div class="evidence-quote-box"><b>Verbatim Source Quote:</b> "{eq}"</div>', unsafe_allow_html=True)
+                    
+                    # Inline editable fields
+                    f_col1, f_col2, f_col3 = st.columns([3.5, 3.5, 3.0])
+                    with f_col1:
+                        item["discussion_point"] = st.text_area(
+                            "Discussion Point",
+                            value=item.get("discussion_point", ""),
+                            key=f"rev_dp_{idx}",
+                            height=60,
+                            label_visibility="collapsed"
+                        )
+                    with f_col2:
+                        item["action_plan"] = st.text_area(
+                            "Action Plan",
+                            value=item.get("action_plan", ""),
+                            key=f"rev_ap_{idx}",
+                            height=60,
+                            label_visibility="collapsed"
+                        )
+                    with f_col3:
+                        sub_c1, sub_c2 = st.columns(2)
+                        with sub_c1:
+                            item["indicative_delivery_date"] = st.text_area(
+                                "Delivery Date",
+                                value=item.get("indicative_delivery_date", "TBD"),
+                                key=f"rev_dd_{idx}",
+                                height=60,
+                                label_visibility="collapsed"
+                            )
+                        with sub_c2:
+                            item["person_in_charge"] = st.text_area(
+                                "PIC",
+                                value=item.get("person_in_charge", "Unassigned"),
+                                key=f"rev_pic_{idx}",
+                                height=60,
+                                label_visibility="collapsed"
+                            )
+                    
+                    # Guardrail warnings
+                    row_dict = {
+                        "Discussion Points": item.get("discussion_point", ""),
+                        "Action Plan": item.get("action_plan", ""),
+                        "Indicative Delivery Date": item.get("indicative_delivery_date", ""),
+                        "Person-in-charge": item.get("person_in_charge", "")
+                    }
+                    warnings = check_row_guardrails(row_dict, all_valid_attendees)
+                    for w in warnings:
+                        st.markdown(f'<div class="guardrail-alert">{w}</div>', unsafe_allow_html=True)
+                    
+                    # Delete button
+                    del_col1, _ = st.columns([1, 9])
+                    with del_col1:
+                        if st.button("Delete", key=f"del_rev_{idx}"):
+                            st.session_state["matched_evidence_items"].pop(idx)
+                            st.rerun()
         
-        add_col, _ = st.columns([2, 8])
-        with add_col:
-            if st.button("+ Add Item", key="add_final_row"):
-                add_mom_row()
-                st.rerun()
+        st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
         
-        st.markdown('<span class="playfair-label" style="margin-top:0.75rem;">Other Discussions</span>', unsafe_allow_html=True)
-        st.session_state["other_discussions"] = st.text_area("Other Discussions Content", value=st.session_state["other_discussions"], height=100, label_visibility="collapsed")
-
-        time_range_str = f"{start_str} to {end_str}"
-        meeting_details = {
-            "date": meeting_date.strftime("%B %d, %Y"), "time_range": time_range_str,
-            "meeting_type": st.session_state.get("meeting_type", "Internal"),
-            "location": meeting_location if meeting_location.strip() else "____________",
-            "company_name": client_name.strip() if client_name.strip() else "",
-            "prime_attendees": selected_crd,
-            "external_attendees": [x.strip() for x in ext_attendees_raw.split(",") if x.strip()],
-            "prep_name": prep_name.strip(), "prep_desig": prep_desig.strip(),
-            "conf_name": conf_name.strip(), "conf_desig": conf_desig.strip()
-        }
-
-        # Template Selection & Export Section
-        st.markdown('<span class="playfair-label" style="margin-top:1.5rem;">Export Options</span>', unsafe_allow_html=True)
-        template_selection = st.selectbox(
-            "Select MoM Template Format",
-            options=["Template 1 - Standard Corporate (Combined Table)", "Template 2 - Detailed General Meeting (Vertical Layout)"],
+        # Other Discussions
+        st.markdown('<span class="playfair-label">Other Discussions / Summary</span>', unsafe_allow_html=True)
+        st.session_state["other_discussions"] = st.text_area(
+            "Other Discussions Content",
+            value=st.session_state["other_discussions"],
+            height=80,
             label_visibility="collapsed"
         )
-
-        exp_col1, exp_col2 = st.columns(2)
-        if "Template 1" in template_selection:
-            with exp_col1:
-                doc_bio = export_to_word_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_1")
-            with exp_col2:
-                pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_1")
+        
+        # Build DataFrame from approved items (updates df dynamically)
+        approved_rows = []
+        for item in st.session_state["matched_evidence_items"]:
+            if item.get("approved", True):
+                approved_rows.append({
+                    "Discussion Points": item.get("discussion_point", ""),
+                    "Action Plan": item.get("action_plan", ""),
+                    "Indicative Delivery Date": item.get("indicative_delivery_date", "TBD"),
+                    "Person-in-charge": item.get("person_in_charge", "Unassigned")
+                })
+        
+        if approved_rows:
+            set_mom_dataframe(pd.DataFrame(approved_rows))
+        
+        # =====================================================================
+        # EXPORT SECTION (inside Meeting Minutes Review)
+        # =====================================================================
+        st.markdown("<hr style='margin:0.8rem 0; border:none; border-top:2px solid rgba(0,51,102,0.15);'>", unsafe_allow_html=True)
+        st.markdown('<h3 style="margin-top:0.2rem;">Export</h3>', unsafe_allow_html=True)
+        
+        if st.session_state["df"].empty:
+            st.info("Approve at least one discussion item above to enable export.")
         else:
-            with exp_col1:
-                doc_bio = export_to_word_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download Word Document (.docx)", data=doc_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_2")
-            with exp_col2:
-                pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                st.download_button(label="Download PDF Document (.pdf)", data=pdf_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_2")
-
-        # Webhook Task Synchronization
-        st.markdown('<span class="playfair-label" style="margin-top:1.2rem;">Downstream Integrations & Archive</span>', unsafe_allow_html=True)
-        sync_col1, sync_col2 = st.columns([7, 3])
-        with sync_col1:
-            target_webhook = st.text_input("Webhook Endpoint (Slack / Jira / Linear / Zapier)", value=SLACK_WEBHOOK_URL, placeholder="https://hooks.slack.com/services/...")
-        with sync_col2:
-            st.write("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Sync Action Items", key="btn_sync_webhook"):
-                ok, msg = dispatch_action_items_webhook(target_webhook, st.session_state["df"], meeting_details)
-                if ok: st.success(msg)
-                else: st.error(msg)
-
-        save_col1, save_col2 = st.columns([8, 2])
-        with save_col2:
-            if st.button("Save Meeting", key="btn_save_supabase_bottom"):
-                success, msg = save_meeting_to_supabase(meeting_details, st.session_state["df"], st.session_state["other_discussions"], st.session_state["transcript"])
-                if success: st.success(msg)
-                else: st.error(f"Save failed: {msg}")
+            time_range_str = f"{start_str} to {end_str}"
+            meeting_details = {
+                "date": meeting_date.strftime("%B %d, %Y"), "time_range": time_range_str,
+                "meeting_type": st.session_state.get("meeting_type", "Internal"),
+                "location": meeting_location if meeting_location.strip() else "____________",
+                "company_name": client_name.strip() if client_name.strip() else "",
+                "prime_attendees": selected_crd,
+                "external_attendees": [x.strip() for x in ext_attendees_raw.split(",") if x.strip()],
+                "prep_name": prep_name.strip(), "prep_desig": prep_desig.strip(),
+                "conf_name": conf_name.strip(), "conf_desig": conf_desig.strip()
+            }
+            
+            # Template picker
+            template_selection = st.selectbox(
+                "Select MoM Template Format",
+                options=["Template 1 - Standard Corporate (Combined Table)", "Template 2 - Detailed General Meeting (Vertical Layout)"],
+                label_visibility="collapsed"
+            )
+            
+            # Export buttons
+            exp_row1, exp_row2, exp_row3, exp_row4 = st.columns([2.5, 2.5, 1.5, 3.5])
+            if "Template 1" in template_selection:
+                with exp_row1:
+                    doc_bio = export_to_word_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                    st.download_button(label="Download DOCX", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_1")
+                with exp_row2:
+                    pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                    st.download_button(label="Download PDF", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_1")
+            else:
+                with exp_row1:
+                    doc_bio = export_to_word_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                    st.download_button(label="Download DOCX", data=doc_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_2")
+                with exp_row2:
+                    pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
+                    st.download_button(label="Download PDF", data=pdf_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_2")
+            
+            with exp_row3:
+                if st.button("Save to Archive", key="btn_save_supabase_bottom"):
+                    success, msg = save_meeting_to_supabase(meeting_details, st.session_state["df"], st.session_state["other_discussions"], st.session_state["transcript"])
+                    if success: st.success(msg)
+                    else: st.error(f"Save failed: {msg}")
+            
+            with exp_row4:
+                target_webhook = st.text_input("Webhook URL", value=SLACK_WEBHOOK_URL, placeholder="https://hooks.slack.com/services/...", label_visibility="collapsed")
+                if st.button("Sync to Webhook", key="btn_sync_webhook"):
+                    ok, msg = dispatch_action_items_webhook(target_webhook, st.session_state["df"], meeting_details)
+                    if ok: st.success(msg)
+                    else: st.error(msg)
+            
+            # Ask Echo inline chat
+            st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)
+            with st.expander("Ask Echo (AI Assistant)", expanded=False):
+                st.caption("Ask questions or issue live commands: 'Change row 2 PIC to Kristina', 'Add task for Sondi', or 'Delete row 3'.")
+                st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+                if not st.session_state["chat_history"]:
+                    st.markdown('<div class="chat-ai">Hello. I am Echo. Ask questions or tell me how to refine your Minutes of Meeting table.</div>', unsafe_allow_html=True)
+                else:
+                    for msg in st.session_state["chat_history"]:
+                        if msg["role"] == "assistant":
+                            st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                if prompt := st.chat_input("Ask Echo or command an edit..."):
+                    st.session_state["chat_history"].append({"role": "user", "content": prompt})
+                    with st.spinner("Echo is analyzing request and table state..."):
+                        answer, action = ask_deepseek_with_mutation(st.session_state["transcript"], prompt, st.session_state["chat_history"], st.session_state["df"])
+                        if action and isinstance(action, dict):
+                            tool_name = action.get("tool")
+                            r_idx = int(action.get("row_index", 0))
+                            fields = action.get("fields", {})
+                            if tool_name == "update_row" and 0 <= r_idx < len(st.session_state["df"]):
+                                for f_key, f_val in fields.items():
+                                    update_mom_field(r_idx, f_key, str(f_val))
+                            elif tool_name == "delete_row" and 0 <= r_idx < len(st.session_state["df"]):
+                                delete_mom_row(r_idx)
+                            elif tool_name == "add_row":
+                                add_mom_row(
+                                    fields.get("Discussion Points", ""),
+                                    fields.get("Action Plan", ""),
+                                    fields.get("Indicative Delivery Date", "TBD"),
+                                    fields.get("Person-in-charge", "Unassigned")
+                                )
+                    st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+                    st.rerun()
