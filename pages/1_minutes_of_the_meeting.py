@@ -37,6 +37,7 @@ from components.sidebar import setup_page_layout
 from utils.auth import require_login, get_current_user
 from utils.skills import load_prompt
 from utils.minutes_memory import build_style_examples, store_approved_minutes
+from utils.audit import audit_log
 
 # 1. Page Configuration (MUST be the first Streamlit command)
 st.set_page_config(
@@ -386,6 +387,10 @@ def dispatch_action_items_webhook(webhook_url: str, df: pd.DataFrame, meeting_de
 def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
     client = get_supabase_client()
     if not client: return False, "Supabase client uninitialized."
+    _user = get_current_user()
+    _uid = _user.get("id") if _user else None
+    _uname = _user.get("username") if _user else None
+    t0 = time.time()
     try:
         table_items = [{"Discussion Points": str(row.get("Discussion Points", "")), "Action Plan": str(row.get("Action Plan", "")), "Indicative Delivery Date": str(row.get("Indicative Delivery Date", "")), "Person-in-charge": str(row.get("Person-in-charge", ""))} for _, row in df.iterrows()]
         meeting_id = f"MOM-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -407,7 +412,6 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
 
         # Minutes memory: learn this user's preferred style from the approved output
         try:
-            _user = get_current_user()
             if _user and _user.get("id"):
                 store_approved_minutes(
                     user_id=_user["id"],
@@ -419,8 +423,12 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
         except Exception as me:
             pass  # memory loss must never block the save
 
+        elapsed = int((time.time() - t0) * 1000)
+        audit_log("save_meeting", f"MOM saved: {client_name} / {meeting_id}", _uid, _uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="supabase")
         return True, "Successfully saved meeting to Supabase!"
     except Exception as e:
+        elapsed = int((time.time() - t0) * 1000)
+        audit_log("save_meeting", f"FAILED: {e}", _uid, _uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="supabase")
         return False, str(e)
 
 def extract_text_from_file(uploaded_file):
@@ -438,20 +446,20 @@ def extract_text_from_file(uploaded_file):
         return ""
 
 def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
-    """Transcribe with OpenAI returning timestamped [MM:SS] segments."""
-    if not OPENAI_API_KEY: return None
+    """Transcribe with OpenAI returning (text|None, error_msg|None)."""
+    if not OPENAI_API_KEY: return None, "OPENAI_API_KEY not configured in secrets."
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
     vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
     files = {
-        "file": (filename, audio_bytes), 
-        "model": (None, "gpt-4o-mini-transcribe"), 
+        "file": (filename, audio_bytes),
+        "model": (None, "gpt-4o-mini-transcribe"),
         "response_format": (None, "verbose_json"),
         "prompt": (None, vocab_prompt)
     }
     try:
         resp = requests.post(OPENAI_AUDIO_URL, headers=headers, files=files, timeout=180)
         if resp.status_code != 200:
-            return None
+            return None, f"OpenAI API returned HTTP {resp.status_code}"
         data = resp.json()
         segments = data.get("segments")
         if segments and isinstance(segments, list):
@@ -463,26 +471,30 @@ def _call_openai_transcribe(audio_bytes, filename="audio.mp3"):
                     mins, secs = int(start // 60), int(start % 60)
                     lines.append(f"[{mins:02d}:{secs:02d}] {text}")
             if lines:
-                return "\n".join(lines)
-        return data.get("text", "")
-    except Exception: return None
+                return "\n".join(lines), None
+        text = data.get("text", "")
+        return text if text else (None, "OpenAI returned empty response")
+    except requests.exceptions.Timeout:
+        return None, "OpenAI API timed out after 180s"
+    except Exception as e:
+        return None, f"OpenAI API error: {e}"
 
 def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
-    """Transcribe with Groq Whisper returning timestamped [MM:SS] segments."""
+    """Transcribe with Groq Whisper returning (text|None, error_msg|None)."""
+    if not GROQ_API_KEY: return None, "GROQ_API_KEY not configured in secrets."
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     vocab_prompt = f"PRIME Philippines corporate meeting with team: {', '.join(CRD_MEMBERS)}"
     files = {
-        "file": (filename, audio_bytes), 
-        "model": (None, "whisper-large-v3-turbo"), 
+        "file": (filename, audio_bytes),
+        "model": (None, "whisper-large-v3-turbo"),
         "response_format": (None, "verbose_json"),
         "prompt": (None, vocab_prompt)
     }
     try:
-        resp = requests.post(GROQ_AUDIO_URL, headers=headers, files=files, timeout=60)
+        resp = requests.post(GROQ_AUDIO_URL, headers=headers, files=files, timeout=120)
         if resp.status_code != 200:
-            return None
+            return None, f"Groq API returned HTTP {resp.status_code}"
         data = resp.json()
-        # Try verbose_json segments first, fall back to plain text
         segments = data.get("segments") or data.get("chunks")
         if segments and isinstance(segments, list):
             lines = []
@@ -493,85 +505,71 @@ def _call_groq_whisper(audio_bytes, filename="audio.mp3"):
                     mins, secs = int(start // 60), int(start % 60)
                     lines.append(f"[{mins:02d}:{secs:02d}] {text}")
             if lines:
-                return "\n".join(lines)
-        return data.get("text", "")
-    except Exception: return None
+                return "\n".join(lines), None
+        text = data.get("text", "")
+        return text if text else (None, "Groq returned empty response")
+    except requests.exceptions.Timeout:
+        return None, "Groq API timed out after 120s"
+    except Exception as e:
+        return None, f"Groq API error: {e}"
 
 def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, status_placeholder):
-    progress_bar.progress(10, text="Preprocessing audio container (10%)...")
-    ext = os.path.splitext(original_filename)[1] or ".m4a"
-    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as src:
-        src.write(audio_bytes)
-        src_path = src.name
-    compressed_mp3 = src_path + "_compressed.mp3"
-    progress_bar.progress(25, text="Compressing audio to 16kHz Mono 24k MP3 (25%)...")
-    try:
-        res = subprocess.run(["ffmpeg", "-y", "-threads", "1", "-i", src_path, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "libmp3lame", "-b:a", "24k", compressed_mp3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        ffmpeg_ok = (res.returncode == 0)
-    except Exception:
-        ffmpeg_ok = False
+    """Transcribe audio by sending raw bytes to Groq then OpenAI fallback.
+    
+    Returns (transcript|None, error_msg|None).
+    No ffmpeg, no temp files needed.
+    """
+    progress_bar.progress(10, text="Preparing audio for transcription (10%)...")
+    raw_mb = len(audio_bytes) / (1024 * 1024)
+    user = get_current_user()
+    uid = user.get("id") if user else None
+    uname = user.get("username") if user else None
+    t0_total = time.time()
 
-    result = None
-    if ffmpeg_ok:
-        progress_bar.progress(45, text="Evaluating audio duration & routing (45%)...")
-        comp_size_mb = os.path.getsize(compressed_mp3) / (1024 * 1024)
-        try:
-            if comp_size_mb <= 10.0 and GROQ_API_KEY:
-                status_placeholder.info("Processing via Groq Whisper Primary...")
-                progress_bar.progress(70, text="Transcribing via Groq Whisper (70%)...")
-                with open(compressed_mp3, "rb") as f:
-                    text = _call_groq_whisper(f.read(), "audio.mp3")
-                if text:
-                    result = text
-            if not result:
-                status_placeholder.info("Processing recording via OpenAI...")
-                progress_bar.progress(55, text="Preparing audio segments for OpenAI (55%)...")
-                segment_pattern = src_path + "_seg_%03d.mp3"
-                subprocess.run(["ffmpeg", "-y", "-i", compressed_mp3, "-f", "segment", "-segment_time", "600", "-c", "copy", segment_pattern], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-                seg_dir = os.path.dirname(src_path)
-                base_name = os.path.basename(src_path) + "_seg_"
-                segments = sorted([os.path.join(seg_dir, f) for f in os.listdir(seg_dir) if f.startswith(base_name)])
-                full_transcript = []
-                for idx, seg in enumerate(segments):
-                    pct = int(55 + ((idx + 1) / len(segments)) * 40)
-                    progress_bar.progress(pct, text=f"Transcribing segment {idx + 1} of {len(segments)} ({pct}%)...")
-                    with open(seg, "rb") as f:
-                        t = _call_openai_transcribe(f.read(), f"part_{idx}.mp3")
-                        if t: full_transcript.append(t)
-                    time.sleep(0.2)
-                    try: os.remove(seg)
-                    except Exception: pass
-                if full_transcript:
-                    result = " ".join(full_transcript)
-        except Exception:
-            pass
+    # ── Try Groq first (25MB limit) ──
+    if raw_mb <= 25.0 and GROQ_API_KEY:
+        status_placeholder.info("Sending to Groq Whisper...")
+        progress_bar.progress(40, text=f"Sending {raw_mb:.1f}MB to Groq Whisper (40%)...")
+        t0 = time.time()
+        text, err = _call_groq_whisper(audio_bytes, original_filename)
+        elapsed = int((time.time() - t0) * 1000)
+        if text:
+            progress_bar.progress(100, text=f"Groq completed in {elapsed//1000:.1f}s (100%)!")
+            status_placeholder.empty()
+            audit_log("transcription", f"Groq OK ({raw_mb:.1f}MB) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
+            return text, None
+        audit_log("transcription", f"Groq FAIL: {err[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="groq")
+        progress_bar.progress(50, text=f"Groq failed ({err}) — trying OpenAI (50%)...")
 
-    if not result:
-        # ── Fallback: ffmpeg unavailable or failed → send raw bytes directly ──
-        status_placeholder.info("ffmpeg not available — sending raw audio to API...")
-        progress_bar.progress(60, text="Sending raw audio to Groq Whisper (60%)...")
-        raw_mb = len(audio_bytes) / (1024 * 1024)
-        if raw_mb <= 25.0 and GROQ_API_KEY:
-            text = _call_groq_whisper(audio_bytes, original_filename)
-            if text:
-                result = text
-        if not result:
-            progress_bar.progress(80, text="Trying OpenAI with raw audio (80%)...")
-            if OPENAI_API_KEY:
-                text = _call_openai_transcribe(audio_bytes, original_filename)
-                if text:
-                    result = text
+    # ── Fallback to OpenAI ──
+    if OPENAI_API_KEY:
+        status_placeholder.info("Sending to OpenAI...")
+        progress_bar.progress(65, text=f"Sending {raw_mb:.1f}MB to OpenAI (65%)...")
+        t0 = time.time()
+        text, err2 = _call_openai_transcribe(audio_bytes, original_filename)
+        elapsed = int((time.time() - t0) * 1000)
+        if text:
+            progress_bar.progress(100, text=f"OpenAI completed in {elapsed//1000:.1f}s (100%)!")
+            status_placeholder.empty()
+            audit_log("transcription", f"OpenAI OK ({raw_mb:.1f}MB) -> {len(text)} chars", uid, uname, status="ok", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="openai")
+            return text, None
+        audit_log("transcription", f"OpenAI FAIL: {err2[:200]}", uid, uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="openai")
 
-    if result:
-        progress_bar.progress(100, text="Transcription completed (100%)!")
-        status_placeholder.empty()
-
-    # Cleanup temp files
-    for path in [src_path, compressed_mp3]:
-        if os.path.exists(path):
-            try: os.remove(path)
-            except Exception: pass
-    return result
+    # ── All attempts exhausted ──
+    err_groq = err if 'err' in locals() else None
+    err_openai = err2 if 'err2' in locals() else None
+    if err_groq and err_openai:
+        err_msg = f"Groq: {err_groq} | OpenAI: {err_openai}"
+    elif err_groq:
+        err_msg = err_groq
+    elif err_openai:
+        err_msg = err_openai
+    else:
+        err_msg = "No transcription API configured (set GROQ_API_KEY or OPENAI_API_KEY)"
+    total_ms = int((time.time() - t0_total) * 1000)
+    audit_log("transcription", f"ALL FAILED: {err_msg}", uid, uname, status="error", duration_ms=total_ms, page="1_minutes_of_the_meeting", endpoint="both")
+    status_placeholder.empty()
+    return None, err_msg
 
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
@@ -1295,7 +1293,7 @@ def recording_studio_dialog():
             st.markdown("##### Transcribing recording...")
             p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
             p_status = st.empty()
-            raw_transcript = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
+            raw_transcript, tx_err = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
             p_bar.empty()
             p_status.empty()
             if raw_transcript:
@@ -1317,7 +1315,7 @@ def recording_studio_dialog():
                 st.session_state["_scroll_to_review"] = True
                 st.rerun()
             else:
-                st.error("Transcription failed. Please try again or upload text directly.")
+                st.error(f"Transcription failed: {tx_err}")
                 st.session_state["_dialog_transcribing"] = False
         return
 
@@ -1416,7 +1414,7 @@ with col_upload:
                     st.session_state["_auto_processing"] = True
                     p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                     p_status = st.empty()
-                    raw_transcript = transcribe_audio_pipeline(uploaded_file.read(), uploaded_file.name, p_bar, p_status)
+                    raw_transcript, tx_err = transcribe_audio_pipeline(uploaded_file.read(), uploaded_file.name, p_bar, p_status)
                     p_bar.empty()
                     p_status.empty()
                     if raw_transcript:
@@ -1445,7 +1443,7 @@ with col_upload:
                     else:
                         st.session_state["last_processed_file"] = None
                         st.session_state["_auto_processing"] = False
-                        st.error("Transcription failed. Please try again or upload text directly.")
+                        st.error(f"Transcription failed: {tx_err}")
         with tab_record:
             # Open Recording Studio button
             if st.button("Open Recording Studio", key="btn_open_rec_studio", use_container_width=True):
@@ -1478,7 +1476,7 @@ with col_upload:
                         st.session_state["_auto_processing"] = True
                         p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                         p_status = st.empty()
-                        raw_transcript = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
+                        raw_transcript, tx_err = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
                         p_bar.empty()
                         p_status.empty()
                         if raw_transcript:
@@ -1498,7 +1496,7 @@ with col_upload:
                             st.rerun()
                         else:
                             st.session_state["_auto_processing"] = False
-                            st.error("Transcription failed. Please try again or upload text directly.")
+                            st.error(f"Transcription failed: {tx_err}")
                 with r_btn2:
                     if st.button("Clear Recording", key="btn_clear_dialog", use_container_width=True):
                         st.session_state["_dialog_recorded_bytes"] = None

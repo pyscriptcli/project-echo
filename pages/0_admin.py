@@ -7,6 +7,7 @@ from utils.auth import (
     set_agent_access, set_user_password,
 )
 from utils.limits import set_user_limits, get_user_limits, DEFAULT_DAILY_LIMIT, DEFAULT_WEEKLY_LIMIT
+from utils.audit import fetch_audit_logs, list_event_types
 
 # -------------------------------
 # Page configuration & styling
@@ -118,8 +119,8 @@ st.markdown('<p class="section-caption">Manage accounts, monitor telemetry, conf
 
 all_users = get_all_users()
 
-tab_accounts, tab_telemetry, tab_agent, tab_limits = st.tabs([
-    "Accounts", "Telemetry", "Agent Access", "Rate Limits",
+tab_accounts, tab_telemetry, tab_agent, tab_limits, tab_audit = st.tabs([
+    "Accounts", "Telemetry", "Agent Access", "Rate Limits", "Audit Log",
 ])
 
 # ============================================================
@@ -277,4 +278,94 @@ with tab_limits:
                     else:
                         st.error("Could not save limits.")
             st.markdown("---")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================
+# TAB: AUDIT LOG  (system event history)
+# ============================================================
+with tab_audit:
+    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
+    st.markdown("### Audit Log")
+    st.caption("Every transcription attempt, meeting save, and key system event is logged here with status and duration info.")
+    
+    # Filters
+    col_f1, col_f2, col_f3, col_f4, col_f5 = st.columns([2, 1.5, 1.5, 1, 1])
+    with col_f1:
+        event_types = list_event_types()
+        event_opts = [""] + event_types
+        filter_event = st.selectbox("Event Type", options=event_opts, index=0, key="audit_filter_event")
+    with col_f2:
+        users_list = all_users or []
+        user_opts = [""] + [u.get("username", "") for u in users_list]
+        filter_user = st.selectbox("User", options=user_opts, index=0, key="audit_filter_user")
+    with col_f3:
+        filter_status = st.selectbox("Status", options=["", "ok", "error"], index=0, key="audit_filter_status")
+    with col_f4:
+        filter_days = st.selectbox("Days Back", options=["", "1", "7", "14", "30"], index=0, key="audit_filter_days")
+    with col_f5:
+        if st.button("Refresh", key="audit_refresh", use_container_width=True):
+            st.rerun()
+    
+    # Build query params
+    f_event = filter_event if filter_event else None
+    f_user_id = None
+    if filter_user:
+        for u in (all_users or []):
+            if u.get("username") == filter_user:
+                f_user_id = u.get("id")
+                break
+    f_status = filter_status if filter_status else None
+    f_days = int(filter_days) if filter_days else None
+    
+    logs = fetch_audit_logs(limit=500, event_type=f_event, user_id=f_user_id, status=f_status, days=f_days)
+    
+    if not logs:
+        st.info("No audit log entries match your filters. Data appears once users start transcribing or saving meetings.")
+    else:
+        rows = []
+        for entry in logs:
+            ts = entry.get("timestamp", "")
+            if isinstance(ts, str):
+                try: ts = datetime.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
+                except: ts = ts[:16]
+            else:
+                ts = str(ts)[:16]
+            dur = entry.get("duration_ms")
+            dur_str = f"{dur}ms" if dur is not None else ""
+            status_raw = entry.get("status", "")
+            details = entry.get("details", "")[:200]
+            rows.append({
+                "Timestamp": ts,
+                "User": entry.get("username", ""),
+                "Event": entry.get("event_type", ""),
+                "Status": status_raw,
+                "Duration": dur_str,
+                "Details": details,
+            })
+        
+        df_log = pd.DataFrame(rows)
+        
+        def _status_badge(s):
+            if s == "ok":
+                return f'<span style="background:#DEF7EC;color:#03543F;padding:2px 8px;border-radius:4px;font-weight:600;font-size:0.75rem;">OK</span>'
+            elif s == "error":
+                return f'<span style="background:#FDE8E8;color:#9B1C1C;padding:2px 8px;border-radius:4px;font-weight:600;font-size:0.75rem;">ERROR</span>'
+            return s
+        
+        df_log["Status"] = df_log["Status"].apply(_status_badge)
+        
+        st.dataframe(
+            df_log,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Timestamp": st.column_config.TextColumn(width="small"),
+                "User": st.column_config.TextColumn(width="small"),
+                "Event": st.column_config.TextColumn(width="small"),
+                "Status": st.column_config.TextColumn(width="small"),
+                "Duration": st.column_config.TextColumn(width="small"),
+                "Details": st.column_config.TextColumn(width="large"),
+            },
+        )
+        st.caption(f"Showing {len(rows)} entries")
     st.markdown('</div>', unsafe_allow_html=True)
