@@ -158,7 +158,29 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #ffffff !imp
 }
 </style>
 """
+
+# Global dialog guard cleanup: removes beforeunload when dialog
+# is not active (handles X-close where _dialog_active never cleared).
+GUARD_CLEANUP_JS = """
+<script>
+(function() {
+    var w = window.top;
+    if (!w) return;
+    var key = '__rec_studio_guard';
+    if (w[key]) {
+        w.removeEventListener('beforeunload', w[key]);
+        delete w[key];
+    }
+})();
+</script>
+"""
+
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# Guard cleanup: runs on every page render to remove beforeunload
+# from any previous dialog session. The dialog body re-installs it
+# when open, so the guard is only present while dialog is visible.
+components.html(GUARD_CLEANUP_JS, height=0)
 
 # 4. SVG Templates
 COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
@@ -216,6 +238,10 @@ if "_auto_processing" not in st.session_state: st.session_state["_auto_processin
 # Dialog recording
 if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
 if "_dialog_record_notes" not in st.session_state: st.session_state["_dialog_record_notes"] = ""
+if "_dialog_active" not in st.session_state: st.session_state["_dialog_active"] = False
+if "_dialog_confirm_discard" not in st.session_state: st.session_state["_dialog_confirm_discard"] = False
+if "_dialog_transcribing" not in st.session_state: st.session_state["_dialog_transcribing"] = False
+if "_scroll_to_review" not in st.session_state: st.session_state["_scroll_to_review"] = False
 
 # -------------------------------------------------------------
 # Centralized State Reducer
@@ -1170,7 +1196,108 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
 # -------------------------------------------------------------
 @st.dialog("Recording Studio", width="large")
 def recording_studio_dialog():
-    """Modal dialog for recording audio + taking notes — survives reruns."""
+    """Modal dialog for recording audio + taking notes — survives reruns.
+    
+    Once audio is captured the recorder widget is hidden (locked state)
+    so no rerun can reset it. Browser refresh/close is guarded.
+    """
+    st.session_state["_dialog_active"] = True
+
+    # ── Refresh/beforeunload guard (injects into top window) ─────
+    if st.session_state.get("_dialog_active"):
+        guard_js = """
+        <script>
+        (function() {
+            var w = window.top;
+            if (!w) return;
+            var key = '__rec_studio_guard';
+            // Remove duplicate if it exists
+            if (w[key]) {
+                w.removeEventListener('beforeunload', w[key]);
+            }
+            w[key] = function(e) {
+                e.preventDefault();
+                e.returnValue = 'Recording in progress. Discard recording and leave this page?';
+                return e.returnValue;
+            };
+            w.addEventListener('beforeunload', w[key]);
+        })();
+        </script>
+        """
+        components.html(guard_js, height=0)
+    else:
+        cleanup_js = """
+        <script>
+        (function() {
+            var w = window.top;
+            if (!w) return;
+            var key = '__rec_studio_guard';
+            if (w[key]) {
+                w.removeEventListener('beforeunload', w[key]);
+                delete w[key];
+            }
+        })();
+        </script>
+        """
+        components.html(cleanup_js, height=0)
+
+    # ── Discard Confirmation State ────────────────────────────────
+    if st.session_state["_dialog_confirm_discard"]:
+        st.warning("**Are you sure?** All recording and notes will be lost.")
+        c_y, c_n = st.columns(2)
+        with c_y:
+            if st.button("Yes, Discard", key="discard_confirm_yes", use_container_width=True, type="primary"):
+                st.session_state["_dialog_recorded_bytes"] = None
+                st.session_state["_dialog_record_notes"] = ""
+                st.session_state["_dialog_confirm_discard"] = False
+                st.session_state["_dialog_active"] = False
+                st.rerun()
+        with c_n:
+            if st.button("Cancel", key="discard_confirm_no", use_container_width=True):
+                st.session_state["_dialog_confirm_discard"] = False
+                st.rerun()
+        return  # stop rendering normal layout while confirming
+
+    # ── Transcribing State ────────────────────────────────────────
+    if st.session_state["_dialog_transcribing"]:
+        stored_bytes = st.session_state.get("_dialog_recorded_bytes")
+        stored_notes = st.session_state.get("_dialog_record_notes", "")
+        if stored_bytes is None:
+            st.warning("No recording captured yet.")
+            st.session_state["_dialog_transcribing"] = False
+        else:
+            st.markdown("##### Transcribing recording...")
+            p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
+            p_status = st.empty()
+            raw_transcript = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
+            p_bar.empty()
+            p_status.empty()
+            if raw_transcript:
+                clean_tx, logs = preprocess_transcript_entities(raw_transcript)
+                st.session_state["transcript"] = clean_tx
+                st.session_state["entity_corrections_log"] = logs
+                if stored_notes:
+                    st.session_state["user_notes"] = stored_notes + "\n" + st.session_state.get("user_notes", "")
+                set_mom_dataframe(pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"]))
+                st.session_state["other_discussions"] = ""
+                st.session_state["chat_history"] = []
+                st.session_state["matched_evidence_items"] = []
+                st.session_state["user_topics_text"] = ""
+                st.session_state["_topics_discovered"] = False
+                st.session_state["_dialog_recorded_bytes"] = None
+                st.session_state["_dialog_record_notes"] = ""
+                st.session_state["_dialog_transcribing"] = False
+                st.session_state["_dialog_active"] = False
+                st.session_state["_scroll_to_review"] = True
+                st.rerun()
+            else:
+                st.error("Transcription failed. Please try again or upload text directly.")
+                st.session_state["_dialog_transcribing"] = False
+        return
+
+    # ── Normal / Locked Layout ────────────────────────────────────
+    has_captured = st.session_state.get("_dialog_recorded_bytes") is not None
+
     col_left, col_right = st.columns([0.62, 0.38])
     
     # LEFT: Notepad
@@ -1179,42 +1306,50 @@ def recording_studio_dialog():
         notes = st.text_area(
             "Jot down key points during the meeting...",
             value=st.session_state.get("_dialog_record_notes", ""),
-            height=340,
+            height=340 if not has_captured else 280,
             placeholder="Key decisions, action items, questions to raise...",
             label_visibility="collapsed"
         )
         st.session_state["_dialog_record_notes"] = notes
     
-    # RIGHT: Recorder + Timer
+    # RIGHT: Recorder — LOCKED after capture
     with col_right:
         st.markdown("##### Recorder")
-        recorded = st.audio_input("Record meeting audio", label_visibility="collapsed")
         
-        # JS timer placeholder — shows elapsed time via browser
-        timer_placeholder = st.empty()
-        timer_placeholder.markdown(
-            '<p style="font-size:0.85rem; color:#69727d; margin-top:0.5rem;">'
-            '<span id="rec-timer">[ Ready ]</span></p>',
-            unsafe_allow_html=True
-        )
-        
-        if recorded:
-            # Store audio bytes
-            st.session_state["_dialog_recorded_bytes"] = recorded.read()
-            
-            # Show captured status with replay
-            st.audio(st.session_state["_dialog_recorded_bytes"], format="audio/wav")
-            duration_s = len(st.session_state["_dialog_recorded_bytes"]) / 32000  # rough estimate
-            timer_placeholder.markdown(
+        if has_captured:
+            # ── LOCKED STATE: no recorder widget, only playback ──
+            stored = st.session_state["_dialog_recorded_bytes"]
+            st.audio(stored, format="audio/wav")
+            duration_s = len(stored) // 32000
+            st.markdown(
                 f'<p style="font-size:0.9rem; color:#03543F; font-weight:600; background:#DEF7EC; '
-                f'padding:0.4rem 0.6rem; border-radius:4px;">'
-                f'[ Captured (~{max(1, int(duration_s))} sec) ]</p>',
+                f'padding:0.4rem 0.6rem; border-radius:4px; margin-top:0.3rem;">'
+                f'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" '
+                f'style="vertical-align:middle;margin-right:4px;">'
+                f'<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>'
+                f'<path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>'
+                f'</svg>'
+                f' Recording locked ({duration_s}s) — '
+                f'<span style="color:#69727d;font-weight:400;">recorder hidden</span></p>',
                 unsafe_allow_html=True
             )
         else:
+            # ── RECORDING STATE: show the recorder (first capture) ──
+            recorded = st.audio_input("Record meeting audio", label_visibility="collapsed")
+            timer_placeholder = st.empty()
+            timer_placeholder.markdown(
+                '<p style="font-size:0.85rem; color:#69727d; margin-top:0.5rem;">'
+                '<span id="rec-timer">[ Ready ]</span></p>',
+                unsafe_allow_html=True
+            )
+            
+            if recorded:
+                st.session_state["_dialog_recorded_bytes"] = recorded.read()
+                st.rerun()  # immediately rerun to lock the recorder away
+            
             st.markdown(
                 '<p style="font-size:0.82rem; color:#69727d; margin-top:0.3rem;">'
-                'Click the microphone above to start. '
+                'Click the microphone button above to start. '
                 'Your browser will ask for microphone permission.</p>',
                 unsafe_allow_html=True
             )
@@ -1223,15 +1358,15 @@ def recording_studio_dialog():
     st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
     act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
     with act_c1:
-        if st.button("Save & Close", use_container_width=True):
+        if st.button("Save & Auto-Transcribe", use_container_width=True):
             if st.session_state["_dialog_recorded_bytes"] is None:
                 st.warning("No recording captured yet.")
             else:
+                st.session_state["_dialog_transcribing"] = True
                 st.rerun()
     with act_c2:
         if st.button("Discard & Close", use_container_width=True):
-            st.session_state["_dialog_recorded_bytes"] = None
-            st.session_state["_dialog_record_notes"] = ""
+            st.session_state["_dialog_confirm_discard"] = True
             st.rerun()
     with act_c3:
         if st.button("Clear & Re-record", use_container_width=True):
@@ -1288,6 +1423,7 @@ with col_upload:
         with tab_record:
             # Open Recording Studio button
             if st.button("Open Recording Studio", key="btn_open_rec_studio", use_container_width=True):
+                st.session_state["_dialog_active"] = True
                 recording_studio_dialog()
             
             st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
@@ -1564,6 +1700,28 @@ if st.session_state["transcript"]:
 # =====================================================================
 # PHASE 2 & 3: Meeting Minutes Review + Export
 # =====================================================================
+
+# Auto-scroll anchor: when returning from recording dialog with transcribed audio,
+# scroll the page down to the Meeting Minutes Review section.
+if st.session_state.pop("_scroll_to_review", False):
+    scroll_js = """
+    <script>
+    setTimeout(function() {
+        var el = document.querySelector('h3');
+        if (el) {
+            var els = document.querySelectorAll('h3');
+            for (var i = 0; i < els.length; i++) {
+                if (els[i].textContent.trim() === 'Meeting Minutes Review') {
+                    els[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    break;
+                }
+            }
+        }
+    }, 300);
+    </script>
+    """
+    components.html(scroll_js, height=0)
+
 if st.session_state["transcript"]:
     
     # Auto-discover topics + match evidence on first load
