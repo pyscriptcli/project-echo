@@ -431,6 +431,26 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
         audit_log("save_meeting", f"FAILED: {e}", _uid, _uname, status="error", duration_ms=elapsed, page="1_minutes_of_the_meeting", endpoint="supabase")
         return False, str(e)
 
+def detect_audio_format(audio_bytes: bytes) -> str:
+    """Detect audio container format from magic bytes and return the correct file extension."""
+    header = audio_bytes[:16]
+    if header[:4] == b'RIFF':
+        return "wav"
+    elif header[:4] == b'\x1a\x45\xdf\xa3':
+        return "webm"
+    elif header[:4] == b'ID3\x03' or header[:4] == b'ID3\x04' or header[:4] in (b'\xff\xfb', b'\xff\xf3', b'\xff\xf2'):
+        return "mp3"
+    elif header[:4] == b'OggS':
+        return "ogg"
+    elif header[:4] == b'fLaC':
+        return "flac"
+    elif header[:4] == b'\x00\x00\x00\x20' and header[8:12] == b'ftyp':
+        return "m4a"
+    elif header[:4] == b'\x00\x00\x00\x18' and header[8:12] == b'ftyp':
+        return "m4a"
+    return "mp3"  # best guess fallback
+
+
 def extract_text_from_file(uploaded_file):
     try:
         if uploaded_file.name.endswith('.txt'): return uploaded_file.getvalue().decode("utf-8")
@@ -525,13 +545,17 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
     uid = user.get("id") if user else None
     uname = user.get("username") if user else None
     t0_total = time.time()
+    
+    # Detect the actual audio format so the API receives the correct extension
+    audio_ext = detect_audio_format(audio_bytes)
+    api_filename = f"audio.{audio_ext}"
 
     # ── Try Groq first (25MB limit) ──
     if raw_mb <= 25.0 and GROQ_API_KEY:
         status_placeholder.info("Sending to Groq Whisper...")
         progress_bar.progress(40, text=f"Sending {raw_mb:.1f}MB to Groq Whisper (40%)...")
         t0 = time.time()
-        text, err = _call_groq_whisper(audio_bytes, original_filename)
+        text, err = _call_groq_whisper(audio_bytes, api_filename)
         elapsed = int((time.time() - t0) * 1000)
         if text:
             progress_bar.progress(100, text=f"Groq completed in {elapsed//1000:.1f}s (100%)!")
@@ -546,7 +570,7 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
         status_placeholder.info("Sending to OpenAI...")
         progress_bar.progress(65, text=f"Sending {raw_mb:.1f}MB to OpenAI (65%)...")
         t0 = time.time()
-        text, err2 = _call_openai_transcribe(audio_bytes, original_filename)
+        text, err2 = _call_openai_transcribe(audio_bytes, api_filename)
         elapsed = int((time.time() - t0) * 1000)
         if text:
             progress_bar.progress(100, text=f"OpenAI completed in {elapsed//1000:.1f}s (100%)!")
