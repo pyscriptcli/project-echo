@@ -157,38 +157,6 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #ffffff !imp
     margin-top: 0.3rem;
     border-radius: 0 4px 4px 0;
 }
-
-/* Floating Ask Echo FAB */
-.floating-echo-fab {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background-color: #0c0c0e;
-    border: 2px solid #c9ab4c;
-    color: #ffffff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    transition: all 0.25s ease;
-    font-size: 0; /* hide any text fallback */
-}
-.floating-echo-fab:hover {
-    background-color: #003366;
-    border-color: #d9bc5d;
-    transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-}
-.floating-echo-fab svg {
-    width: 24px;
-    height: 24px;
-    fill: currentColor;
-}
 </style>
 """
 
@@ -269,8 +237,6 @@ if "last_processed_file" not in st.session_state: st.session_state["last_process
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
 if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
 if "user_notes" not in st.session_state: st.session_state["user_notes"] = ""
-# Ask Echo scroll flag
-if "_scroll_to_ask_echo" not in st.session_state: st.session_state["_scroll_to_ask_echo"] = False
 # Dialog recording
 if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
 if "_dialog_record_notes" not in st.session_state: st.session_state["_dialog_record_notes"] = ""
@@ -1822,45 +1788,6 @@ if st.session_state.pop("_scroll_to_review", False):
     </script>
     """
     components.html(scroll_js, height=0)
-
-# Floating Ask Echo FAB + scroll logic
-if st.session_state.get("_scroll_to_ask_echo", False):
-    st.session_state["_scroll_to_ask_echo"] = False
-    scroll_ae = """
-    <script>
-    setTimeout(function() {
-        var el = document.getElementById('ask-echo-section');
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 400);
-    </script>
-    """
-    components.html(scroll_ae, height=0)
-
-# Floating Ask Echo FAB (injected via JS into parent DOM)
-if st.session_state.get("transcript"):
-    if st.button("", key="fab_echo_btn", help="Ask Echo"):
-        st.session_state["_scroll_to_ask_echo"] = True
-        st.rerun()
-    st.markdown(
-        '<style>'
-        'button[key="fab_echo_btn"] {'
-        'position:fixed!important;bottom:24px!important;right:24px!important;'
-        'z-index:9999!important;width:56px!important;height:56px!important;'
-        'border-radius:50%!important;background-color:#0c0c0e!important;'
-        'border:2px solid #c9ab4c!important;box-shadow:0 4px 12px rgba(0,0,0,0.25)!important;'
-        'padding:0!important;min-height:56px!important;transition:all 0.25s ease!important;}'
-        'button[key="fab_echo_btn"]:hover {'
-        'background-color:#003366!important;border-color:#d9bc5d!important;}'
-        'button[key="fab_echo_btn"]::before {'
-        'content:"";display:block;width:24px;height:24px;margin:auto;'
-        'background-color:currentColor;'
-        '-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z%27/%3E%3Ccircle cx=%2712%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%277%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%2717%27 cy=%2711%27 r=%271.5%27/%3E%3C/svg%3E") no-repeat center center;'
-        'mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z%27/%3E%3Ccircle cx=%2712%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%277%27 cy=%2711%27 r=%271.5%27/%3E%3Ccircle cx=%2717%27 cy=%2711%27 r=%271.5%27/%3E%3C/svg%3E") no-repeat center center;}'
-        '</style>',
-        unsafe_allow_html=True
-    )
 
 if st.session_state["transcript"]:
     
