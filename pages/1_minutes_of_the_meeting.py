@@ -507,45 +507,71 @@ def transcribe_audio_pipeline(audio_bytes, original_filename, progress_bar, stat
     progress_bar.progress(25, text="Compressing audio to 16kHz Mono 24k MP3 (25%)...")
     try:
         res = subprocess.run(["ffmpeg", "-y", "-threads", "1", "-i", src_path, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "libmp3lame", "-b:a", "24k", compressed_mp3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if res.returncode != 0: return None
-        comp_size_mb = os.path.getsize(compressed_mp3) / (1024 * 1024)
-        progress_bar.progress(45, text="Evaluating audio duration & routing (45%)...")
-        if comp_size_mb <= 10.0 and GROQ_API_KEY:
-            status_placeholder.info("Processing via Groq Whisper Primary...")
-            progress_bar.progress(70, text="Transcribing via Groq Whisper (70%)...")
-            with open(compressed_mp3, "rb") as f: text = _call_groq_whisper(f.read(), "audio.mp3")
-            if text:
-                progress_bar.progress(100, text="Transcription completed (100%)!")
-                status_placeholder.empty()
-                return text
-        status_placeholder.info("Processing recording via OpenAI...")
-        progress_bar.progress(55, text="Preparing audio segments for OpenAI (55%)...")
-        segment_pattern = src_path + "_seg_%03d.mp3"
-        subprocess.run(["ffmpeg", "-y", "-i", compressed_mp3, "-f", "segment", "-segment_time", "600", "-c", "copy", segment_pattern], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        seg_dir = os.path.dirname(src_path)
-        base_name = os.path.basename(src_path) + "_seg_"
-        segments = sorted([os.path.join(seg_dir, f) for f in os.listdir(seg_dir) if f.startswith(base_name)])
-        full_transcript = []
-        for idx, seg in enumerate(segments):
-            pct = int(55 + ((idx + 1) / len(segments)) * 40)
-            progress_bar.progress(pct, text=f"Transcribing segment {idx + 1} of {len(segments)} ({pct}%)...")
-            with open(seg, "rb") as f:
-                t = _call_openai_transcribe(f.read(), f"part_{idx}.mp3")
-                if t: full_transcript.append(t)
-            time.sleep(0.2)
-            try: os.remove(seg)
-            except Exception: pass
-        progress_bar.progress(100, text="Transcription completed successfully (100%)!")
-        time.sleep(0.3)
-        status_placeholder.empty()
-        return " ".join(full_transcript)
+        ffmpeg_ok = (res.returncode == 0)
     except Exception:
-        return None
-    finally:
-        for path in [src_path, compressed_mp3]:
-            if os.path.exists(path):
-                try: os.remove(path)
-                except Exception: pass
+        ffmpeg_ok = False
+
+    result = None
+    if ffmpeg_ok:
+        progress_bar.progress(45, text="Evaluating audio duration & routing (45%)...")
+        comp_size_mb = os.path.getsize(compressed_mp3) / (1024 * 1024)
+        try:
+            if comp_size_mb <= 10.0 and GROQ_API_KEY:
+                status_placeholder.info("Processing via Groq Whisper Primary...")
+                progress_bar.progress(70, text="Transcribing via Groq Whisper (70%)...")
+                with open(compressed_mp3, "rb") as f:
+                    text = _call_groq_whisper(f.read(), "audio.mp3")
+                if text:
+                    result = text
+            if not result:
+                status_placeholder.info("Processing recording via OpenAI...")
+                progress_bar.progress(55, text="Preparing audio segments for OpenAI (55%)...")
+                segment_pattern = src_path + "_seg_%03d.mp3"
+                subprocess.run(["ffmpeg", "-y", "-i", compressed_mp3, "-f", "segment", "-segment_time", "600", "-c", "copy", segment_pattern], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+                seg_dir = os.path.dirname(src_path)
+                base_name = os.path.basename(src_path) + "_seg_"
+                segments = sorted([os.path.join(seg_dir, f) for f in os.listdir(seg_dir) if f.startswith(base_name)])
+                full_transcript = []
+                for idx, seg in enumerate(segments):
+                    pct = int(55 + ((idx + 1) / len(segments)) * 40)
+                    progress_bar.progress(pct, text=f"Transcribing segment {idx + 1} of {len(segments)} ({pct}%)...")
+                    with open(seg, "rb") as f:
+                        t = _call_openai_transcribe(f.read(), f"part_{idx}.mp3")
+                        if t: full_transcript.append(t)
+                    time.sleep(0.2)
+                    try: os.remove(seg)
+                    except Exception: pass
+                if full_transcript:
+                    result = " ".join(full_transcript)
+        except Exception:
+            pass
+
+    if not result:
+        # ── Fallback: ffmpeg unavailable or failed → send raw bytes directly ──
+        status_placeholder.info("ffmpeg not available — sending raw audio to API...")
+        progress_bar.progress(60, text="Sending raw audio to Groq Whisper (60%)...")
+        raw_mb = len(audio_bytes) / (1024 * 1024)
+        if raw_mb <= 25.0 and GROQ_API_KEY:
+            text = _call_groq_whisper(audio_bytes, original_filename)
+            if text:
+                result = text
+        if not result:
+            progress_bar.progress(80, text="Trying OpenAI with raw audio (80%)...")
+            if OPENAI_API_KEY:
+                text = _call_openai_transcribe(audio_bytes, original_filename)
+                if text:
+                    result = text
+
+    if result:
+        progress_bar.progress(100, text="Transcription completed (100%)!")
+        status_placeholder.empty()
+
+    # Cleanup temp files
+    for path in [src_path, compressed_mp3]:
+        if os.path.exists(path):
+            try: os.remove(path)
+            except Exception: pass
+    return result
 
 def extract_metadata_with_deepseek(transcript):
     if not DEEPSEEK_API_KEY: return None
