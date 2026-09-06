@@ -916,16 +916,10 @@ with top_head_l:
 
 with top_head_r:
     generate_label = "Generate minutes" if not st.session_state.get("mom_items") else "Regenerate minutes"
-    if st.session_state["tokens_used"] > 0:
-        st.markdown(
-            f'<div style="text-align:right; font-size:0.75rem; color:#69727d; padding-top:0.4rem;">'
-            f'Tokens: <b>{st.session_state["tokens_used"]:,}</b> | Engine: <b>DeepSeek</b></div>',
-            unsafe_allow_html=True
-        )
     generate_clicked = st.button(
         generate_label,
         icon=":material/auto_awesome:",
-        use_container_width=True,
+        width="content",
         disabled=not st.session_state.get("transcript"),
     )
     if generate_clicked:
@@ -934,11 +928,11 @@ with top_head_r:
         st.rerun()
 
 # Stepper Navigation
-stages_list = ["1. Input & Setup", "2. Review & Refine", "3. Finalize & Export"]
-stage_key_map = {"1. Input & Setup": "input", "2. Review & Refine": "review", "3. Finalize & Export": "export"}
+stages_list = ["Input", "Review", "Export"]
+stage_key_map = {"Input": "input", "Review": "review", "Export": "export"}
 inv_stage_map = {v: k for k, v in stage_key_map.items()}
 
-current_label = inv_stage_map.get(st.session_state["mom_stage"], "1. Input & Setup")
+current_label = inv_stage_map.get(st.session_state["mom_stage"], "Input")
 chosen_stage = st.segmented_control(
     "Workflow Stage",
     options=stages_list,
@@ -1122,10 +1116,7 @@ if st.session_state["mom_stage"] == "input":
 # =============================================================
 elif st.session_state["mom_stage"] == "review":
     if not st.session_state["transcript"]:
-        st.warning("No transcript loaded. Please return to Step 1 to input meeting audio or text.")
-        if st.button("← Back to Input & Setup"):
-            st.session_state["mom_stage"] = "input"
-            st.rerun()
+        st.warning("No transcript loaded. Choose Input above to add meeting audio or text.")
     else:
         # Auto-synthesis on first arrival if empty
         if not st.session_state.get("_topics_discovered") and not st.session_state["mom_items"]:
@@ -1133,23 +1124,13 @@ elif st.session_state["mom_stage"] == "review":
                 generate_minutes_draft(move_to_review=False)
                 st.rerun()
 
-        # Review Header & Quick Controls
-        tb_col1, tb_col2 = st.columns([7, 3])
+        # Navigation lives only in the workflow tabs above.
+        tb_col1 = st.container()
         with tb_col1:
             item_count = len(st.session_state["mom_items"])
             approved_count = len([it for it in st.session_state["mom_items"] if it.get("approved", True)])
             st.markdown(f'<span class="section-title">Review Draft Minutes</span> &nbsp; <span style="font-size:0.85rem; color:#69727d;">({approved_count}/{item_count} Approved)</span>', unsafe_allow_html=True)
             st.caption("Each row combines the source quote, summary, action, owner, and due date in one place.")
-        with tb_col2:
-            r_c1, r_c2 = st.columns(2)
-            with r_c1:
-                if st.button("← Back", use_container_width=True):
-                    st.session_state["mom_stage"] = "input"
-                    st.rerun()
-            with r_c2:
-                if st.button("Export →", type="primary", use_container_width=True):
-                    st.session_state["mom_stage"] = "export"
-                    st.rerun()
 
         review_summary = build_review_summary()
         st.markdown(
@@ -1185,43 +1166,42 @@ elif st.session_state["mom_stage"] == "review":
                             st.rerun()
 
         all_attendees = st.session_state["meeting_selected_crd"] + [x.strip() for x in st.session_state["meeting_ext_attendees"].split(",") if x.strip()]
-        if not st.session_state["mom_items"]:
-            st.info("No items in review yet. Generate minutes from the top action to build the first draft.")
+        selected_items = [it for it in st.session_state["mom_items"] if it.get("approved", True)]
+        unselected_items = [it for it in st.session_state["mom_items"] if not it.get("approved", True)]
+        if not selected_items:
+            st.info("No selected topics yet. Generate minutes from the top action to build the first draft.")
         else:
             for idx, item in enumerate(st.session_state["mom_items"]):
+                if not item.get("approved", True):
+                    continue
                 with st.container(border=True):
-                    head_c1, head_c2, head_c3, head_c4 = st.columns([5, 1.2, 1.2, 1])
+                    # Row one keeps evidence and the only destructive action together.
+                    head_c1, head_c2 = st.columns([9.5, 0.5])
                     with head_c1:
-                        new_title = st.text_input(
-                            f"Topic title {idx+1}",
+                        st.caption("Source evidence")
+                        eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
+                        st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
+                    with head_c2:
+                        if st.button(" ", icon=":material/close:", key=f"unselect_{idx}", help="Move topic to Unselected Topics", width="content"):
+                            update_mom_item(idx, "approved", False)
+                            st.rerun()
+
+                    # Row two is a compact, aligned editing row.
+                    body_c1, body_c2, body_c3, body_c4, body_c5 = st.columns([1.6, 2.7, 2.7, 1.5, 1.5])
+                    with body_c1:
+                        new_title = st.text_area(
+                            "Topic",
                             value=item.get("topic_title", f"Point {idx+1}"),
+                            height=92,
                             key=f"title_{idx}",
                         )
                         if new_title != item.get("topic_title"):
                             update_mom_item(idx, "topic_title", new_title)
-                    with head_c2:
-                        conf = item.get("confidence", "Medium")
-                        conf_cls = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
-                        st.markdown(f'<span class="badge-confidence {conf_cls}">{conf}</span>', unsafe_allow_html=True)
-                    with head_c3:
-                        app_val = st.checkbox("Include", value=item.get("approved", True), key=f"app_{idx}")
-                        if app_val != item.get("approved"):
-                            update_mom_item(idx, "approved", app_val)
-                    with head_c4:
-                        if st.button("Delete", key=f"del_card_{idx}", use_container_width=True):
-                            delete_mom_item(idx)
-                            st.rerun()
-
-                    body_c1, body_c2, body_c3, body_c4 = st.columns([2.5, 3.4, 3.4, 1.7])
-                    with body_c1:
-                        st.caption("Source evidence")
-                        eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
-                        st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
                     with body_c2:
                         new_dp = st.text_area(
                             "Discussion point",
                             value=item.get("discussion_point", ""),
-                            height=170,
+                            height=92,
                             key=f"dp_{idx}",
                         )
                         if new_dp != item.get("discussion_point"):
@@ -1230,12 +1210,21 @@ elif st.session_state["mom_stage"] == "review":
                         new_ap = st.text_area(
                             "Action plan",
                             value=item.get("action_plan", ""),
-                            height=170,
+                            height=92,
                             key=f"ap_{idx}",
                         )
                         if new_ap != item.get("action_plan"):
                             update_mom_item(idx, "action_plan", new_ap)
                     with body_c4:
+                        new_due_value = st.text_input(
+                            "Delivery date",
+                            value=str(item.get("indicative_delivery_date", "")),
+                            key=f"dd_text_{idx}",
+                            placeholder="TBD or YYYY-MM-DD",
+                        )
+                        if new_due_value != item.get("indicative_delivery_date"):
+                            update_mom_item(idx, "indicative_delivery_date", new_due_value)
+                    with body_c5:
                         pic_opts = ["Unassigned", "PRIME Philippines", "Client"] + all_attendees
                         curr_pic = item.get("person_in_charge", "Unassigned")
                         if curr_pic not in pic_opts:
@@ -1249,29 +1238,28 @@ elif st.session_state["mom_stage"] == "review":
                         if new_pic != item.get("person_in_charge"):
                             update_mom_item(idx, "person_in_charge", new_pic)
 
-                        current_due_date, is_tbd = parse_due_date_value(item.get("indicative_delivery_date", "TBD"))
-                        tbd_key = f"dd_tbd_{idx}"
-                        if tbd_key not in st.session_state:
-                            st.session_state[tbd_key] = is_tbd
-                        tbd_checked = st.checkbox("TBD", value=st.session_state[tbd_key], key=tbd_key)
-                        picked_date = st.date_input(
-                            "Due date",
-                            value=current_due_date,
-                            key=f"dd_{idx}",
-                            disabled=tbd_checked,
-                        )
-                        new_due_value = "TBD" if tbd_checked else picked_date.strftime("%Y-%m-%d")
-                        if new_due_value != item.get("indicative_delivery_date"):
-                            update_mom_item(idx, "indicative_delivery_date", new_due_value)
-
                     row_warnings = check_row_guardrails(item, all_attendees)
                     for warning_text in row_warnings:
                         st.markdown(f'<div class="guardrail-alert">{warning_text}</div>', unsafe_allow_html=True)
 
-        # Action Toolbar
-        at1, at2 = st.columns([2, 8])
-        with at1:
-            if st.button("+ Add New Row", icon=":material/add:", use_container_width=True):
+        if unselected_items:
+            with st.expander("Unselected Topics", expanded=False):
+                st.caption("Topics moved here stay out of the exported minutes until restored.")
+                for idx, item in enumerate(st.session_state["mom_items"]):
+                    if item.get("approved", True):
+                        continue
+                    row_c1, row_c2 = st.columns([8, 2])
+                    with row_c1:
+                        st.markdown(f"**{item.get('topic_title', f'Point {idx+1}')}**")
+                        st.caption(item.get("discussion_point", "No discussion point yet."))
+                    with row_c2:
+                        if st.button("Restore", key=f"restore_{idx}", width="content"):
+                            update_mom_item(idx, "approved", True)
+                            st.rerun()
+
+        # Keep the primary review action compact and close to the cards.
+        with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+            if st.button("Add row", icon=":material/add:", width="content"):
                 add_mom_item()
                 st.rerun()
 
@@ -1343,15 +1331,8 @@ elif st.session_state["mom_stage"] == "review":
 # STAGE 3: FINALIZE & EXPORT
 # =============================================================
 elif st.session_state["mom_stage"] == "export":
-    # Header & Back button
-    ex_top1, ex_top2 = st.columns([8, 2])
-    with ex_top1:
-        st.markdown('<div class="section-title">Export minutes</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-caption">Choose a template and download the final minutes package.</div>', unsafe_allow_html=True)
-    with ex_top2:
-        if st.button("← Back to Review", use_container_width=True):
-            st.session_state["mom_stage"] = "review"
-            st.rerun()
+    st.markdown('<div class="section-title">Export minutes</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-caption">Choose a template and download the final minutes package.</div>', unsafe_allow_html=True)
 
     # Consolidate meeting details dictionary
     start_fmt = st.session_state["meeting_start_time"].strftime("%I:%M %p")
@@ -1374,7 +1355,7 @@ elif st.session_state["mom_stage"] == "export":
     }
 
     if st.session_state["df"].empty:
-        st.warning("No approved discussion items. Please go back and approve at least one item to enable export.")
+        st.warning("No approved discussion items. Select Review above to approve at least one item.")
     else:
         export_summary = build_review_summary()
         st.markdown(
