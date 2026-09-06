@@ -48,7 +48,7 @@ body::-webkit-scrollbar,
 }
 
 .main, .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;

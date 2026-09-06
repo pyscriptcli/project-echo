@@ -96,7 +96,7 @@ DOCUMENTS_PAGE_CSS = """
     margin-top: 0.4rem;
 }
 .local-only-note {
-    background-color: rgba(255,255,255,0.9);
+    background-color: rgba(249, 250, 251, 0.9);
     border: 1px solid rgba(0,51,102,0.15);
     border-left: 3px solid #003366;
     color: #1b1d1e;
@@ -628,11 +628,7 @@ def render_isolated_map_editor():
         </style>
     """, unsafe_allow_html=True)
 
-    render_page_header(
-        "Documents",
-        "Map editor",
-        "Set the map framing and marker, then return it to the selected document field.",
-    )
+    render_section_header("Map editor", "Set the map framing and marker, then return it to the selected document field.")
     col_back, col_title = st.columns([1, 4])
     with col_back:
         def return_to_main():
@@ -1098,17 +1094,6 @@ if "restore_form_data" not in st.session_state: st.session_state.restore_form_da
 if "show_type_mapping" not in st.session_state: st.session_state.show_type_mapping = False
 if "temp_form_data" not in st.session_state: st.session_state.temp_form_data = {}
 
-# --- PAGE HEADER (native) ---
-render_page_header(
-    "Documents",
-    "Document generator",
-    "Generate branded documents from approved templates and controlled placeholder values.",
-)
-st.markdown(
-    '<div class="local-only-note">Documents are generated and exported locally — nothing is saved to the database.</div>',
-    unsafe_allow_html=True,
-)
-
 # --- APP ROUTER ---
 if st.session_state.active_map_editor_token:
     render_isolated_map_editor()
@@ -1117,8 +1102,7 @@ else:
         restore_form_data_from_session()
         st.session_state.restore_form_data = False
 
-    st.markdown("<hr style='margin: 4px 0 12px 0;'>", unsafe_allow_html=True)
-    render_section_header("Templates", "Select an approved template or add a new local template.")
+    render_section_header("Templates", "Select an approved template or add a local template. Documents are generated and exported locally.")
 
     col_template1, col_template2 = st.columns(2)
     with col_template1:

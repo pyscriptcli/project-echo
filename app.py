@@ -39,10 +39,11 @@ header[data-testid="stHeader"],
 .stApp > header {
     background: transparent !important;
     background-color: transparent !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 32px !important;
-    padding: 0 0.75rem !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     border: none !important;
     box-shadow: none !important;
     overflow: visible !important;
@@ -97,7 +98,7 @@ footer {
 }
 
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0.5rem !important;
     padding-bottom: 1rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
@@ -1237,38 +1238,29 @@ def render_empty_state(message):
     st.markdown(f'<div class="empty-state">{html.escape(message)}</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# DASHBOARD CONTROLS (HEADER + DATE SELECTOR INLINE)
-# ------------------------------------------------------------
-hdr_col, filter_col = st.columns([3.5, 1.3], gap="medium", vertical_alignment="bottom")
-with hdr_col:
-    render_page_header(
-        "Project Echo",
-        "Dashboard",
-        "Executive operational launchpad for meeting management, daily tracking, and team deliverables.",
-    )
-with filter_col:
-    _dash_range = st.date_input(
-        "Dashboard period",
-        value=(st.session_state["start_date"], st.session_state["end_date"]),
-        key="dash_date_range",
-        label_visibility="collapsed",
-        help="Filter dashboard metrics and recent meetings by date range",
-    )
-    st.markdown('<div class="header-border-ext"></div>', unsafe_allow_html=True)
-
-if isinstance(_dash_range, (tuple, list)) and len(_dash_range) == 2:
-    if st.session_state["start_date"] != _dash_range[0] or st.session_state["end_date"] != _dash_range[1]:
-        st.session_state["start_date"] = _dash_range[0]
-        st.session_state["end_date"] = _dash_range[1]
-        st.rerun()
-
 # ------------------------------------------------------------
 # 1. MEETING OVERVIEW & RECENT MEETINGS (2 COLUMNS IN SAME ROW)
 # ------------------------------------------------------------
 col_overview, col_recent = st.columns([1, 1.25], gap="large")
 
 with col_overview:
-    render_section_header("Meeting overview", "Volume and classification across the reporting period.")
+    ov_title_col, ov_filter_col = st.columns([1.6, 1.4], gap="small", vertical_alignment="bottom")
+    with ov_title_col:
+        render_section_header("Meeting overview", "Volume & categorization.")
+    with ov_filter_col:
+        _dash_range = st.date_input(
+            "Dashboard period",
+            value=(st.session_state["start_date"], st.session_state["end_date"]),
+            key="dash_date_range",
+            label_visibility="collapsed",
+            help="Filter dashboard metrics and recent meetings by date range",
+        )
+
+    if isinstance(_dash_range, (tuple, list)) and len(_dash_range) == 2:
+        if st.session_state["start_date"] != _dash_range[0] or st.session_state["end_date"] != _dash_range[1]:
+            st.session_state["start_date"] = _dash_range[0]
+            st.session_state["end_date"] = _dash_range[1]
+            st.rerun()
 
     st.markdown(f"""
         <div class="kpi-grid-2x2">

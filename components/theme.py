@@ -95,10 +95,11 @@ header[data-testid="stHeader"],
 .stApp > header {
     background: transparent !important;
     background-color: transparent !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 32px !important;
-    padding: 0 0.75rem !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     border: none !important;
     box-shadow: none !important;
     display: flex !important;

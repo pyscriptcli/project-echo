@@ -730,12 +730,6 @@ def main():
     inject_global_css()
     init_session()
 
-    render_page_header(
-        "Personal workspace",
-        "Notebook",
-        "Capture notes, record daily activity, and review your work patterns.",
-    )
-
     tab_dailylog, tab_stats, tab_notepad = st.tabs(["Daily Logs", "Statistics", "Notepad"])
     
     with tab_dailylog:

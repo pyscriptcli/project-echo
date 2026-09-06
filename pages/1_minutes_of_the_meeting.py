@@ -1004,13 +1004,9 @@ def recording_studio_dialog():
 # =============================================================
 # TOP HEADER & GUIDED STEPPER
 # =============================================================
-top_head_l, top_head_r = st.columns([4, 1], gap="medium", vertical_alignment="bottom")
+top_head_l, top_head_r = st.columns([3.8, 1.2], gap="medium", vertical_alignment="bottom")
 with top_head_l:
-    render_page_header(
-        "Meetings",
-        "Minutes of the Meeting",
-        "Turn a recording or transcript into concise, evidence-grounded minutes.",
-    )
+    render_section_header("Minutes of the Meeting", "Turn a recording or transcript into structured minutes.")
 
 with top_head_r:
     generate_label = "Generate minutes" if not st.session_state.get("mom_items") else "Regenerate minutes"

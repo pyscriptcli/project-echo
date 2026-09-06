@@ -107,8 +107,23 @@ def build_user_deliverables_context(username: str, archive_records: list) -> str
 
 
 # --- Pure SVG Icon Assets ---
+SVG_ECHO_HERO_BADGE = """
+<svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 64 64" fill="none">
+    <rect width="64" height="64" rx="12" fill="#003366"/>
+    <rect x="2" y="2" width="60" height="60" rx="10" stroke="#c9ab4c" stroke-width="1.5" stroke-opacity="0.75"/>
+    <polygon points="32 14 16 23 32 32 48 23 32 14" stroke="#c9ab4c" stroke-width="2" fill="none" stroke-linejoin="round"/>
+    <polyline points="16 29 32 38 48 29" stroke="#ffffff" stroke-width="2" fill="none" stroke-linejoin="round"/>
+    <polyline points="16 35 32 44 48 35" stroke="#c9ab4c" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+    <polyline points="16 41 32 50 48 41" stroke="#d9bc5d" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+</svg>
+"""
+
+SVG_ARCHIVE_ICON = """<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>"""
+
+SVG_AGENT_ICON = """<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>"""
+
 SVG_ECHO_LOGO = """
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9ab4c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
     <polyline points="2 17 12 22 22 17"></polyline>
     <polyline points="2 12 12 17 22 12"></polyline>
@@ -187,20 +202,18 @@ div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
     background: transparent !important;
 }
 
+/* ---- Container Scope & Layout ---- */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background-color: transparent !important;
+    background-color: #ffffff !important;
     border: 1px solid rgba(0,51,102,0.12) !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0,51,102,0.04) !important;
     padding: 0 !important;
-    box-shadow: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-    max-width: 960px !important;
+    overflow: hidden !important;
+    max-width: 1160px !important;
     margin: 0 auto !important;
-    height: calc(100vh - 92px) !important;
-    max-height: calc(100vh - 92px) !important;
+    height: calc(100vh - 78px) !important;
+    max-height: calc(100vh - 78px) !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
@@ -208,134 +221,270 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
     height: 100% !important;
     max-height: 100% !important;
-    padding: 0.45rem 0.75rem !important;
+    padding: 0.55rem 0.9rem 0.4rem !important;
     gap: 0 !important;
     box-sizing: border-box !important;
 }
 
-.echo-header-bar {
+/* ---- Top Executive Command Bar ---- */
+.echo-top-panel {
     display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    min-height: 58px;
-    border-bottom: 1px solid rgba(0,51,102,0.15);
-    padding: 0.2rem 0 0.7rem;
-    margin-bottom: 0.55rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.15rem 0 0.5rem;
+    border-bottom: 1px solid rgba(0,51,102,0.10);
+    margin-bottom: 0.45rem;
     flex-shrink: 0 !important;
 }
-.echo-header-mark {
+
+.echo-brand-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.echo-brand-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin-top: 0.15rem;
-    border: 1px solid rgba(201,171,76,0.55);
+    width: 32px;
+    height: 32px;
+    background: #003366;
+    border: 1px solid #c9ab4c;
     border-radius: 6px;
-    background: #ffffff;
-}
-.echo-header-copy { min-width: 0; }
-.echo-eyebrow {
-    font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.62rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.14em !important;
-    text-transform: uppercase !important;
-    color: #003366 !important;
-    margin: 0 0 0.1rem !important;
+    flex-shrink: 0;
 }
 
-.echo-title {
+.echo-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.echo-brand-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.echo-pulse-live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+.echo-eyebrow-text {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.60rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: #003366 !important;
+}
+
+.echo-tag-ready {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.52rem !important;
+    font-weight: 600 !important;
+    color: #15803d;
+    background: #dcfce7;
+    border-radius: 4px;
+    padding: 0px 4px;
+}
+
+.echo-brand-title {
     font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
-    font-size: 1.7rem !important;
+    font-size: 1.55rem !important;
     font-weight: 600 !important;
     color: #003366 !important;
     margin: 0 !important;
-    line-height: 0.95 !important;
-    letter-spacing: 0.01em !important;
-}
-.echo-subtitle {
-    font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.72rem !important;
-    line-height: 1.45 !important;
-    color: #69727d !important;
-    margin: 0.24rem 0 0 !important;
+    line-height: 1.05 !important;
 }
 
-div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stPopover"] > button,
-div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stButton"] > button {
+.echo-status-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+}
+
+.echo-chip {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.echo-chip--active {
+    background: rgba(0, 51, 102, 0.08);
+    color: #003366;
+    border: 1px solid rgba(0, 51, 102, 0.2);
+}
+
+.echo-chip--gold {
+    background: rgba(201, 171, 76, 0.12);
+    color: #8c6d23;
+    border: 1px solid rgba(201, 171, 76, 0.4);
+}
+
+.echo-chip--agent {
+    background: #0c0c0e;
+    color: #c9ab4c;
+    border: 1px solid #c9ab4c;
+}
+
+.echo-chip--muted {
+    background: #f8f9fa;
+    color: #adb5bd;
+    border: 1px solid #e9ecef;
+}
+
+/* Control buttons in header bar */
+div[data-testid="stHorizontalBlock"]:has(.echo-top-panel) div[data-testid="stPopover"] > button,
+div[data-testid="stHorizontalBlock"]:has(.echo-top-panel) div[data-testid="stButton"] > button {
     background-color: #0c0c0e !important;
     color: #ffffff !important;
     border: 1px solid #c9ab4c !important;
     border-radius: 6px !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    width: 30px !important;
-    padding: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 8px !important;
     transition: all 0.2s ease !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 0.85rem !important;
+    font-size: 0.78rem !important;
 }
 
-div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stPopover"] > button:hover,
-div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stButton"] > button:hover {
+div[data-testid="stHorizontalBlock"]:has(.echo-top-panel) div[data-testid="stPopover"] > button:hover,
+div[data-testid="stHorizontalBlock"]:has(.echo-top-panel) div[data-testid="stButton"] > button:hover {
     border-color: #d9bc5d !important;
     background-color: #003366 !important;
     box-shadow: none !important;
 }
 
-.echo-chat-box-container {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
+/* ---- Scroll Area for Messages ---- */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(0,51,102,0.12) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 51, 102, 0.08) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    padding: 0.55rem 0.7rem !important;
+    padding: 0.75rem 0.9rem !important;
+    flex: 1 1 auto !important;
     height: 100% !important;
 }
 
+/* ---- Hero Welcome State ---- */
+.echo-hero-card {
+    text-align: center;
+    padding: 1.8rem 1.2rem 0.8rem;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.echo-hero-crest-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.6rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 51, 102, 0.15));
+}
+
+.echo-hero-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic !important;
+    font-size: 1.85rem !important;
+    font-weight: 600 !important;
+    color: #003366 !important;
+    line-height: 1.15 !important;
+    margin: 0 0 0.35rem !important;
+}
+
+.echo-hero-desc {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    color: #69727d !important;
+    margin: 0 0 1.1rem !important;
+}
+
+.echo-suggestions-header {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.64rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: #003366 !important;
+    margin: 0.5rem 0 0.4rem !important;
+    text-align: center;
+}
+
+/* ---- Suggestion prompt cards styling ---- */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) div[data-testid="stButton"] > button {
+    background-color: #ffffff !important;
+    color: #003366 !important;
+    border: 1px solid rgba(0, 51, 102, 0.15) !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 0.8rem !important;
+    text-align: left !important;
+    font-size: 0.79rem !important;
+    line-height: 1.35 !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    height: auto !important;
+    min-height: 42px !important;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) div[data-testid="stButton"] > button:hover {
+    border-color: #c9ab4c !important;
+    background-color: #fbf9f5 !important;
+    color: #003366 !important;
+    box-shadow: 0 3px 8px rgba(201, 171, 76, 0.15) !important;
+}
+
+/* ---- User Message ---- */
 .echo-msg-row-user {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
-    gap: 6px;
+    gap: 8px;
     width: 100%;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.75rem;
 }
 
 .echo-user-bubble {
     font-family: 'Montserrat', sans-serif !important;
     background: #0c0c0e;
-    color: #FFFFFF !important;
+    color: #ffffff !important;
     border: 1px solid #c9ab4c;
-    padding: 0.35rem 0.65rem;
-    border-radius: 6px;
-    max-width: 75%;
-    font-size: 0.80rem;
-    line-height: 1.4;
+    padding: 0.55rem 0.9rem;
+    border-radius: 8px;
+    max-width: 78%;
+    font-size: 0.84rem;
+    line-height: 1.45;
     word-break: break-word;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
 }
+
 .echo-user-bubble p {
-    color: #FFFFFF !important;
+    color: #ffffff !important;
     margin: 0;
 }
 
 .echo-avatar-user {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #0c0c0e;
     border: 1px solid #c9ab4c;
@@ -343,28 +492,36 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
+/* ---- Assistant Message ---- */
 .echo-msg-row-assistant {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: 0.65rem;
-    background: transparent;
+    margin-bottom: 0.85rem;
+    background: #ffffff;
+    border: 1px solid rgba(0, 51, 102, 0.10);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 3px rgba(0, 51, 102, 0.02);
 }
 
 .echo-assistant-header {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-bottom: 0.12rem;
+    gap: 8px;
+    margin-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(0, 51, 102, 0.06);
+    padding-bottom: 0.3rem;
 }
 
 .echo-avatar-assistant {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #0c0c0e;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: #003366;
     border: 1px solid #c9ab4c;
     display: flex;
     align-items: center;
@@ -374,126 +531,149 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) {
 
 .echo-assistant-title {
     font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
     font-weight: 600;
     color: #003366;
 }
 
-.echo-assistant-badge-gold {
+.echo-assistant-badge-model {
     font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.52rem;
-    padding: 1px 4px;
+    font-size: 0.58rem;
+    padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(184,154,62,0.10);
+    background: rgba(201, 171, 76, 0.12);
     color: #8c6d23;
     font-weight: 600;
-    border: 1px solid rgba(184,154,62,0.32);
+    border: 1px solid rgba(201, 171, 76, 0.35);
 }
 
 .echo-assistant-body {
     font-family: 'Montserrat', sans-serif !important;
-    padding-left: 21px;
-    color: #2A3441;
-    font-size: 0.80rem;
-    line-height: 1.45;
+    color: #1b1d1e;
+    font-size: 0.83rem;
+    line-height: 1.5;
 }
+
 .echo-assistant-body strong {
     color: #003366;
 }
 
-.echo-sources-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 0.3rem;
-    padding-left: 21px;
-}
-.echo-source-pill {
-    font-family: 'Montserrat', sans-serif !important;
-    display: inline-flex;
-    align-items: center;
-    background: #0c0c0e;
-    border: 1px solid #c9ab4c;
-    border-radius: 999px;
-    padding: 1px 6px;
-    font-size: 0.65rem;
-    color: #c9ab4c !important;
-    text-decoration: none !important;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-.echo-source-pill:hover {
-    border-color: #d9bc5d;
-    color: #FFFFFF !important;
-    box-shadow: none;
+.echo-assistant-body h1,
+.echo-assistant-body h2,
+.echo-assistant-body h3,
+.echo-assistant-body h4 {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic !important;
+    color: #003366 !important;
+    margin: 0.5rem 0 0.3rem !important;
 }
 
 .echo-assistant-body table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0.35rem 0;
-    font-size: 0.75rem;
-    background: #FFFFFF;
+    margin: 0.45rem 0;
+    font-size: 0.78rem;
+    background: #ffffff;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid rgba(0,51,102,0.15);
-    font-family: 'Montserrat', sans-serif !important;
-}
-.echo-assistant-body th {
-    background: #0c0c0e;
-    color: #c9ab4c;
-    font-weight: 600;
-    border: 1px solid rgba(201,171,76,0.42);
-    padding: 3px 6px;
-    text-align: left;
-}
-.echo-assistant-body td {
-    border: 1px solid rgba(0,51,102,0.15);
-    padding: 3px 6px;
-    color: #2A3441;
+    border: 1px solid rgba(0, 51, 102, 0.15);
 }
 
+.echo-assistant-body th {
+    background: #003366;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 4px 8px;
+    text-align: left;
+    border-bottom: 2px solid #c9ab4c;
+}
+
+.echo-assistant-body td {
+    border-bottom: 1px solid rgba(0, 51, 102, 0.08);
+    padding: 4px 8px;
+    color: #1b1d1e;
+}
+
+.echo-assistant-body tr:nth-child(even) {
+    background-color: rgba(244, 241, 236, 0.4);
+}
+
+/* Citations */
+.echo-sources-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 0.5rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid rgba(0, 51, 102, 0.06);
+}
+
+.echo-source-pill {
+    font-family: 'Montserrat', sans-serif !important;
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid rgba(0, 51, 102, 0.18);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    color: #003366 !important;
+    text-decoration: none !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.echo-source-pill:hover {
+    border-color: #c9ab4c;
+    background: #fbf9f5;
+    color: #8c6d23 !important;
+}
+
+/* Thinking Pulse */
 .echo-thinking-wrapper {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding-left: 0.2rem;
-    margin-bottom: 0.4rem;
+    gap: 6px;
+    padding: 0.4rem 0.2rem;
 }
+
 .echo-thinking-pill {
     font-family: 'Montserrat', sans-serif !important;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
+    gap: 6px;
+    padding: 3px 9px;
     border-radius: 999px;
-    background: #FFFFFF;
-    border: 1px solid rgba(212, 175, 55, 0.35);
-    font-size: 0.68rem;
+    background: #ffffff;
+    border: 1px solid rgba(201, 171, 76, 0.45);
+    font-size: 0.72rem;
     color: #8c6d23;
     font-weight: 500;
 }
+
 .echo-pulse-dot {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
     background-color: #c9ab4c;
     border-radius: 50%;
     animation: echo-pulse 1.4s infinite ease-in-out both;
 }
+
 @keyframes echo-pulse {
-    0%, 80%, 100% { transform: scale(0); opacity: 0.2; }
-    40% { transform: scale(1); opacity: 1; }
+    0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+    40% { transform: scale(1.1); opacity: 1; }
 }
 
 .echo-context-candidate-card {
-    background: #FFFFFF;
+    background: #ffffff;
     border: 1px solid #c9ab4c;
     border-radius: 6px;
-    padding: 0.4rem 0.6rem;
-    margin-top: 0.3rem;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.4rem;
     box-shadow: none;
 }
 
+/* Docked Bottom Chat Input */
 div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     align-items: center !important;
     margin-top: 0.35rem !important;
@@ -506,31 +686,36 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] > div {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(212, 175, 55, 0.55) !important;
-    border-radius: 6px !important;
-    box-shadow: none !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 51, 102, 0.2) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 4px rgba(0, 51, 102, 0.04) !important;
     padding: 2px 8px !important;
     min-height: 40px !important;
+    transition: border-color 0.2s ease !important;
+}
+
+.echo-input-col-target div[data-testid="stChatInput"] > div:focus-within {
+    border-color: #003366 !important;
+    box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.12) !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] textarea {
     font-family: 'Montserrat', sans-serif !important;
-    color: #2A3441 !important;
+    color: #1b1d1e !important;
     font-size: 0.85rem !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button {
     background-color: #0c0c0e !important;
     color: #ffffff !important;
-    border-radius: 50% !important;
+    border-radius: 6px !important;
     transition: all 0.2s ease-in-out !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] button:hover {
     background-color: #003366 !important;
     color: #ffffff !important;
-    box-shadow: none !important;
 }
 
 .echo-attach-col-target div[data-testid="stPopover"] {
@@ -545,7 +730,7 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     height: 40px !important;
     min-height: 40px !important;
     max-height: 40px !important;
-    border-radius: 50% !important;
+    border-radius: 8px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
@@ -560,7 +745,7 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 
 .echo-attach-col-target div[data-testid="stPopover"] > button:hover {
     border-color: #d9bc5d !important;
-    box-shadow: none !important;
+    background-color: #003366 !important;
 }
 
 .echo-attached-tags {
@@ -580,6 +765,14 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     padding: 1px 7px;
     display: inline-flex;
     align-items: center;
+}
+
+.echo-sub-disclaimer {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.64rem;
+    color: #8c939d;
+    text-align: center;
+    margin-top: 3px;
 }
 </style>
 """
@@ -1059,7 +1252,8 @@ def _fuzzy_align_query(question: str, threshold: int = 82) -> tuple[str, list[st
 
 def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None, subtitle=None):
     """
-    Renders the unified Echo executive chat workspace with full multi-format file attachment support.
+    Renders the commercial-grade Echo executive chat workspace with rich multi-format file attachment support,
+    operational status indicators, quick prompt triggers, and grounding in Prime Philippines archives and knowledge base.
     """
     target = container if container else st
     st.markdown(CHAT_COMPACT_ALIGNED_CSS, unsafe_allow_html=True)
@@ -1081,20 +1275,37 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     if "echo_agent_mode" not in st.session_state:
         st.session_state["echo_agent_mode"] = False
 
-    safe_scroll_height = max(360, int(height) - 190) if height else 460
+    safe_scroll_height = max(380, int(height) - 170) if height else 480
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
 
-        h_left, h_right = st.columns([0.86, 0.14])
+        # 1. Executive Top Command Bar
+        h_left, h_right = st.columns([0.60, 0.40], gap="small", vertical_alignment="center")
         with h_left:
+            arch_status = "echo-chip--active" if st.session_state["echo_source_archives"] else "echo-chip--muted"
+            kb_status = "echo-chip--gold" if st.session_state["echo_source_knowledge"] else "echo-chip--muted"
+            web_status = "echo-chip--active" if st.session_state["echo_source_web"] else "echo-chip--muted"
+            agent_pill = f'<span class="echo-chip echo-chip--agent">{SVG_AGENT_ICON} Agent</span>' if st.session_state.get("echo_agent_mode") else ""
+
             st.markdown(
-                f'<div class="echo-header-bar">'
-                f'<span class="echo-header-mark">{SVG_ECHO_LOGO}</span>'
-                f'<div class="echo-header-copy">'
-                f'<p class="echo-eyebrow">AI workspace</p>'
-                f'<h1 class="echo-title">{title}</h1>'
-                f'<p class="echo-subtitle">{subtitle or "Ask questions, review meeting knowledge, and move work forward."}</p>'
+                f'<div class="echo-top-panel">'
+                f'<div class="echo-brand-block">'
+                f'<div class="echo-brand-icon">{SVG_ECHO_LOGO}</div>'
+                f'<div class="echo-brand-text">'
+                f'<div class="echo-brand-eyebrow">'
+                f'<span class="echo-pulse-live"></span>'
+                f'<span class="echo-eyebrow-text">OPERATIONAL INTELLIGENCE</span>'
+                f'<span class="echo-tag-ready">ONLINE</span>'
+                f'</div>'
+                f'<h1 class="echo-brand-title">{title}</h1>'
+                f'<div class="echo-status-chips">'
+                f'<span class="echo-chip {arch_status}">{SVG_ARCHIVE_ICON} Archives</span>'
+                f'<span class="echo-chip {kb_status}">{SVG_BRAIN_ICON} Knowledge</span>'
+                f'<span class="echo-chip {web_status}">{SVG_GLOBE_ICON} Web</span>'
+                f'{agent_pill}'
+                f'</div>'
+                f'</div>'
                 f'</div>'
                 f'</div>',
                 unsafe_allow_html=True
@@ -1103,28 +1314,26 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 st.caption(caption)
 
         with h_right:
-            c_settings, c_clr = st.columns(2)
+            c_model, c_kb, c_settings, c_clr = st.columns([2.0, 0.8, 0.8, 0.8], gap="small", vertical_alignment="center")
+            with c_model:
+                model_options = ["Fast", "Reasoning", "Vision"]
+                current_model = st.session_state.get("echo_selected_model_label", "Fast")
+                if current_model not in model_options:
+                    current_model = "Fast"
+                st.session_state["echo_selected_model_label"] = st.selectbox(
+                    "Model",
+                    options=model_options,
+                    index=model_options.index(current_model),
+                    label_visibility="collapsed",
+                    help="Active AI engine (Fast: DeepSeek V4 | Reasoning | Vision: Qwen 2.5-VL)",
+                )
+
+            with c_kb:
+                if st.button("", icon=":material/dataset:", key="btn_quick_kb", help="Open Knowledge Base Manager"):
+                    render_context_popup_dialog()
+
             with c_settings:
-                with st.popover("", icon=":material/tune:", help="Settings"):
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>AI MODEL</span>", unsafe_allow_html=True)
-                    
-                    model_options = [
-                        "Fast",
-                        "Reasoning",
-                        "Vision",
-                    ]
-                    current_model = st.session_state.get("echo_selected_model_label", "Fast")
-                    if current_model not in model_options:
-                        current_model = "Fast"
-                        
-                    st.session_state["echo_selected_model_label"] = st.selectbox(
-                        "Model",
-                        options=model_options,
-                        index=model_options.index(current_model),
-                        label_visibility="collapsed"
-                    )
-                    
-                    st.markdown("---")
+                with st.popover("", icon=":material/tune:", help="Settings & Telemetry"):
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
@@ -1162,17 +1371,282 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         unsafe_allow_html=True,
                     )
 
-                    st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
-                    if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
-                        render_context_popup_dialog()
-
             with c_clr:
-                if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
+                if st.button("", icon=":material/refresh:", key="btn_clear_global_chat", help="New session / Clear chat"):
                     st.session_state["global_chat_history"] = []
                     st.session_state["knowledge_proposal"] = None
                     st.session_state["echo_ui_uploaded_files"] = []
                     st.rerun()
+
+        # 2. Main Scrollable Chat Area
+        chat_box = st.container(height=safe_scroll_height)
+
+        with chat_box:
+            st.markdown('<div class="echo-chat-scroll-scope"></div>', unsafe_allow_html=True)
+
+            if not st.session_state["global_chat_history"]:
+                # Commercial-grade Empty State Hero
+                st.markdown(
+                    f'<div class="echo-hero-card">'
+                    f'<div class="echo-hero-crest-box">{SVG_ECHO_HERO_BADGE}</div>'
+                    f'<h2 class="echo-hero-title">Prime Philippines Operational Assistant</h2>'
+                    f'<p class="echo-hero-desc">'
+                    f'Specialized executive AI grounded in corporate meeting records, team deliverables, and verified knowledge base assets.'
+                    f'</p>'
+                    f'<div class="echo-suggestions-header">RECOMMENDED OPERATIONAL INQUIRIES</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+                # 4 Clickable Quick Prompt Cards in 2x2 Grid
+                s_c1, s_c2 = st.columns(2, gap="small")
+                with s_c1:
+                    if st.button(
+                        ":material/fact_check:  Recent Key Decisions",
+                        key="btn_sugg_decisions",
+                        help="Summarize major decisions and policy updates from recent meetings",
+                        use_container_width=True,
+                    ):
+                        st.session_state["echo_injected_prompt"] = "Summarize the key operational decisions and policy changes from our latest meeting records."
+                        st.rerun()
+
+                    if st.button(
+                        ":material/assignment_turned_in:  Pending Deliverables & PICs",
+                        key="btn_sugg_deliverables",
+                        help="Review all active deliverables, deadlines, and assigned persons in charge",
+                        use_container_width=True,
+                    ):
+                        st.session_state["echo_injected_prompt"] = "Extract all pending deliverables, action items, and assigned PICs across recent meetings."
+                        st.rerun()
+
+                with s_c2:
+                    if st.button(
+                        ":material/auto_stories:  Query Company Knowledge",
+                        key="btn_sugg_kb",
+                        help="Search organizational terms, project jargon, and contact directories",
+                        use_container_width=True,
+                    ):
+                        st.session_state["echo_injected_prompt"] = "What are the key organizational guidelines, corporate abbreviations, and contact roles in the Echo Knowledge Base?"
+                        st.rerun()
+
+                    if st.button(
+                        ":material/insights:  Draft Operational Briefing",
+                        key="btn_sugg_briefing",
+                        help="Synthesize weekly progress and upcoming milestones into a structured briefing",
+                        use_container_width=True,
+                    ):
+                        st.session_state["echo_injected_prompt"] = "Draft a concise executive operational briefing summarizing active project deliverables and upcoming milestones."
+                        st.rerun()
+
+            else:
+                for msg in st.session_state["global_chat_history"]:
+                    if msg["role"] == "user":
+                        st.markdown(
+                            f'<div class="echo-msg-row-user">'
+                            f'<div class="echo-user-bubble">{msg["content"]}</div>'
+                            f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                            f'<div class="echo-msg-row-assistant">'
+                            f'<div class="echo-assistant-header">'
+                            f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                            f'<span class="echo-assistant-title">Echo Intelligence</span>'
+                            f'<span class="echo-assistant-badge-model">{st.session_state.get("echo_selected_model_label", "Fast")}</span>'
+                            f'</div>'
+                            f'<div class="echo-assistant-body">',
+                            unsafe_allow_html=True
+                        )
+                        st.markdown(msg["content"])
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                        if msg.get("sources"):
+                            sources_html = '<div class="echo-sources-container">'
+                            for src in msg["sources"]:
+                                sources_html += f'<a href="{src["url"]}" target="_blank" class="echo-source-pill">{SVG_GLOBE_ICON}{src["title"]}</a>'
+                            sources_html += '</div>'
+                            st.markdown(sources_html, unsafe_allow_html=True)
+
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Knowledge Proposal candidate card
+        if st.session_state["knowledge_proposal"]:
+            prop = st.session_state["knowledge_proposal"]
+            val_display = str(prop.get("value", ""))
+            if len(val_display) > 180:
+                val_display = val_display[:180] + "..."
+
+            with st.container():
+                st.markdown(
+                    f'<div class="echo-context-candidate-card">'
+                    f'<div style="font-size:0.75rem; font-weight:600; color:#8c6d23; margin-bottom:2px;">'
+                    f'{SVG_BRAIN_ICON} Knowledge Base Candidate Identified'
+                    f'</div>'
+                    f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:6px;">'
+                    f'Save <b>{prop.get("key")}</b> [<i>{prop.get("category")}</i>] to Knowledge Base?<br/>'
+                    f'<code style="font-size:0.72rem; color:#003366;">{val_display}</code>'
+                    f'</div></div>',
+                    unsafe_allow_html=True
+                )
+                kp_col1, kp_col2 = st.columns([0.5, 0.5])
+                with kp_col1:
+                    if st.button("Save to Knowledge Base", key="btn_confirm_auto_prop", use_container_width=True):
+                        existing_map = _get_existing_knowledge_map()
+                        cat_clean = str(prop["category"]).strip().lower()
+                        key_clean = str(prop["key"]).strip()
+
+                        if (cat_clean, key_clean.lower()) in existing_map:
+                            st.warning(f"Key `{key_clean}` already exists in `{cat_clean}`. Open Context Manager to review overwrites.")
+                        else:
+                            success, err = _safe_upsert_and_verify(
+                                category=prop["category"],
+                                key=key_clean,
+                                value=prop["value"],
+                                priority=prop.get("priority", 2)
+                            )
+                            if success:
+                                st.session_state["global_chat_history"].append({
+                                    "role": "assistant",
+                                    "content": f"Confirmed: `{key_clean}` verified and saved to Echo Knowledge Base."
+                                })
+                            else:
+                                st.session_state["global_chat_history"].append({
+                                    "role": "assistant",
+                                    "content": f"Error: Failed to register `{key_clean}`. Detail: {err}"
+                                })
+
+                            st.session_state["knowledge_proposal"] = None
+                            st.rerun()
+                with kp_col2:
+                    if st.button("Dismiss", key="btn_dismiss_auto_prop", use_container_width=True):
+                        st.session_state["knowledge_proposal"] = None
+                        st.rerun()
+
+        # Display staged attachments tags above input bar
+        if st.session_state["echo_ui_uploaded_files"]:
+            tags_html = '<div class="echo-attached-tags">'
+            for f in st.session_state["echo_ui_uploaded_files"]:
+                tags_html += f'<span class="echo-attached-tag">{SVG_FILE_ICON} {f.name}</span>'
+            tags_html += '</div>'
+            st.markdown(tags_html, unsafe_allow_html=True)
+
+        # Single Row: Chat Input & Circular Attachment Trigger
+        input_col, attach_col = st.columns([0.94, 0.06], gap="small", vertical_alignment="center")
+
+        with input_col:
+            st.markdown('<div class="echo-input-col-target">', unsafe_allow_html=True)
+            active_prompt = st.chat_input("Message Echo or ask anything about Prime meetings, tasks, and operations...")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with attach_col:
+            st.markdown('<div class="echo-attach-col-target">', unsafe_allow_html=True)
+            with st.popover("", icon=":material/attach_file:", help="Attach documents or scans (PDF, DOCX, TXT, CSV, Images)"):
+                st.markdown("<span style='font-size:0.80rem; font-weight:600; color:#003366;'>Upload Attachments</span>", unsafe_allow_html=True)
+                st.file_uploader(
+                    "Upload files",
+                    type=ALLOWED_ATTACHMENT_TYPES,
+                    accept_multiple_files=True,
+                    key="echo_chat_dock_uploader",
+                    label_visibility="collapsed",
+                    on_change=_handle_inline_file_upload
+                )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            '<div class="echo-sub-disclaimer">Echo Intelligence · Operational records grounded in PRIME Philippines Supabase archives.</div>',
+            unsafe_allow_html=True
+        )
+
+        # Check for injected prompt from suggestion chips
+        injected_prompt = st.session_state.pop("echo_injected_prompt", None)
+        active_prompt = active_prompt or injected_prompt
+
+        if active_prompt:
+            # Enforce per-user rate limit before spending tokens
+            _uid = _cur_user_id()
+            _rl = check_rate_limit(_uid)
+            if not _rl["allowed"]:
+                with chat_box:
+                    st.markdown(
+                        f'<div class="echo-msg-row-assistant"><div class="echo-assistant-header">'
+                        f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                        f'<span class="echo-assistant-title">Echo</span></div>'
+                        f'<div class="echo-assistant-body">{_rl["why"]}</div></div>',
+                        unsafe_allow_html=True,
+                    )
+                st.rerun()
+
+            attached_files_list = st.session_state["echo_ui_uploaded_files"] if st.session_state["echo_ui_uploaded_files"] else []
+            prompt_content_display = active_prompt
+            if attached_files_list:
+                file_names = ", ".join([f.name for f in attached_files_list])
+                prompt_content_display = f"{SVG_FILE_ICON} [{file_names}]<br/>{active_prompt}"
+
+            st.session_state["global_chat_history"].append({"role": "user", "content": prompt_content_display})
+
+            with chat_box:
+                st.markdown(
+                    f'<div class="echo-msg-row-user">'
+                    f'<div class="echo-user-bubble">{prompt_content_display}</div>'
+                    f'<div class="echo-avatar-user">{SVG_USER_ICON}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+                thinking_placeholder = st.empty()
+                status_text = "Searching web sources..." if st.session_state["echo_source_web"] else "Echo is synthesizing meeting archives..."
+                thinking_placeholder.markdown(
+                    f'<div class="echo-thinking-wrapper">'
+                    f'<div class="echo-avatar-assistant">{SVG_ECHO_LOGO}</div>'
+                    f'<div class="echo-thinking-pill">'
+                    f'<div class="echo-pulse-dot"></div> {status_text}'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+            archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
+            web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
+
+            selected_label = st.session_state.get("echo_selected_model_label", "Fast")
+            default_model = MODEL_REGISTRY.get(selected_label, "deepseek-v4-flash")
+
+            # Vision (qwen) is only required when an actual image is attached.
+            # PDF/DOCX/txt attachments are extracted to text and stay on DeepSeek.
+            _has_image = any(str(getattr(f, "type", "")).startswith("image/") for f in (attached_files_list or []))
+            if _has_image:
+                target_model = "qwen/qwen2.5-vl-72b-instruct"
+            else:
+                target_model = default_model
+
+            answer, proposed_fact = _query_echo_backend(
+                question=active_prompt,
+                archive_records=archives,
+                chat_history=st.session_state["global_chat_history"],
+                web_context=web_context,
+                model_name=target_model,
+                include_knowledge=st.session_state["echo_source_knowledge"],
+                uploaded_files=attached_files_list,
+                user_context=build_user_deliverables_context(_cur_username(), archives),
+            )
+
+            st.session_state["echo_ui_uploaded_files"] = []
+
+            thinking_placeholder.empty()
+            # Record usage for telemetry + token balance (estimate tokens)
+            _est_tokens = (len(active_prompt or "") + len(answer or "")) // 4
+            record_usage(_uid, _est_tokens, action="chat")
+
+            st.session_state["global_chat_history"].append({
+                "role": "assistant",
+                "content": answer,
+                "sources": web_sources
+            })
+            if proposed_fact:
+                st.session_state["knowledge_proposal"] = proposed_fact
+
+            st.rerun()
         chat_box = st.container(height=safe_scroll_height)
 
         with chat_box:

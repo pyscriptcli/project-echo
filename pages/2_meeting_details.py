@@ -97,8 +97,9 @@ html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
     color: #1b1d1e;
 }
 .stApp > header { display: none !important; }
-.block-container { padding-top: 1.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
+.block-container { padding-top: 0.5rem !important; padding-right: 2.2rem !important; padding-left: 2.2rem !important; padding-bottom: 1.5rem !important; max-width: 100% !important; }
 
+.section-title,
 h3 {
     font-family: 'Cormorant Garamond', serif !important; 
     font-style: italic !important; 
@@ -945,11 +946,6 @@ def categorize_meeting(meeting_item):
 # MODE 1: FULL-SCREEN MEETING GALLERY
 # ==============================================================================
 if st.session_state["view_mode"] == "gallery":
-    render_page_header(
-        "Meetings",
-        "Meeting records",
-        "Search, review, and maintain the organization’s meeting archive.",
-    )
     with st.container(border=True):
         render_section_header("Meeting archive", "Search by topic, category, date range, or meeting details.")
         
@@ -1124,19 +1120,15 @@ elif st.session_state["view_mode"] == "details":
 
     m_id = active_meeting.get("meeting_id")
 
-    render_page_header(
-        "Meetings",
-        active_meeting.get("client_name", "Meeting record"),
-        f"Meeting record {m_id or 'without an ID'}",
-    )
-
     # Header Navigation
-    top_nav1, top_nav2 = st.columns([2.5, 7.5])
+    top_nav1, top_nav2 = st.columns([2.2, 7.8], gap="medium", vertical_alignment="center")
     with top_nav1:
-        if st.button("← Back to Gallery", key="btn_back_gallery"):
+        if st.button(":material/arrow_back: Back to archive", key="btn_back_gallery", use_container_width=True):
             st.session_state["view_mode"] = "gallery"
             st.session_state["edit_meeting_details"] = False
             st.rerun()
+    with top_nav2:
+        render_section_header(active_meeting.get("client_name", "Meeting record"), f"Meeting record {m_id or 'without an ID'}")
 
     # Editable Meeting Metadata Card
     with st.container(border=True):
