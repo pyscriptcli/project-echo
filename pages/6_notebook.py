@@ -27,6 +27,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+require_login(page_key="notebook")
+setup_page_layout()
 
 # ------------------------------
 # CSS (UI Matched to Reference)
@@ -36,7 +38,11 @@ NOTEBOOK_CSS = """
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&display=swap');
 
     /* Hide Streamlit default elements */
-    #MainMenu, footer, header {visibility: hidden;}
+    #MainMenu, footer {visibility: hidden;}
+    .stApp > header, header[data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     
     /* Background and typography (Matched to Grid Image) */
     .stApp {
@@ -45,9 +51,11 @@ NOTEBOOK_CSS = """
         color: #1b1d1e;
     }
     .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 100%;
+        padding-top: 1.2rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        max-width: 100% !important;
     }
 
     /* Titles and subtitles */
@@ -602,7 +610,7 @@ def render_month_view(selected_date):
                 """, unsafe_allow_html=True)
 
 def render_dailylog():
-    render_section_header("Daily log", "Organize and track day-to-day operational work.")
+    render_section_header("Daily logs", "Organize and track day-to-day operational work.")
 
     col_date, col_view, _ = st.columns([2, 2, 6])
     with col_date:
@@ -718,8 +726,6 @@ def render_statistics():
 # ------------------------------
 
 def main():
-    require_login(page_key="notebook")
-    setup_page_layout()
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     inject_global_css()
     init_session()
@@ -730,14 +736,16 @@ def main():
         "Capture notes, record daily activity, and review your work patterns.",
     )
 
-    tab_notepad, tab_dailylog, tab_stats = st.tabs(["Notepad", "Daily Log", "Statistics"])
+    tab_dailylog, tab_stats, tab_notepad = st.tabs(["Daily Logs", "Statistics", "Notepad"])
     
-    with tab_notepad:
-        render_notepad()
     with tab_dailylog:
         render_dailylog()
     with tab_stats:
         render_statistics()
+    with tab_notepad:
+        render_notepad()
 
 if __name__ == "__main__":
+    main()
+else:
     main()

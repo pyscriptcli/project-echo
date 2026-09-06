@@ -83,7 +83,7 @@ class ThemeTests(unittest.TestCase):
             "pages/8_documents.py",
         ]
         header_classes = ("page-eyebrow", "section-title", "docs-title", "notebook-title", "page-title")
-        header_mechanisms = header_classes + ("<h1", "<h2", "<h3", "st.title", "render_echo_chat(")
+        header_mechanisms = header_classes + ("<h1", "<h2", "<h3", "st.title", "render_echo_chat(", "render_page_header(")
         for rel in pages:
             with open(os.path.join(proj, rel), encoding="utf-8") as f:
                 src = f.read()

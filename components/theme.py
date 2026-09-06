@@ -296,7 +296,10 @@ div[data-baseweb="select"] > div,
 }
 
 /* ---- Shared page hierarchy: one editorial header per screen ---- */
+header.echo-page-header,
 .echo-page-header {
+    visibility: visible !important;
+    display: block !important;
     position: relative;
     margin: 0 0 1rem 0;
     padding: 0.1rem 0 0.9rem 0;
