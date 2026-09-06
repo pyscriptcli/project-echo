@@ -34,7 +34,7 @@ def fetch_docs(user_id: str) -> list:
         return resp.data if resp and resp.data else []
     except Exception as e:
         logger.exception("fetch_docs failed: %s", e)
-        st.warning(f"Could not load your notes: {e}")
+        st.warning("Your notes could not be loaded. Please try again shortly.")
         return []
 
 
@@ -42,7 +42,7 @@ def upsert_doc(user_id: str, doc_id: str, title: str, content: str):
     """Insert or update a notepad_docs row for the user. Returns bool."""
     client = get_supabase_client()
     if not client:
-        st.error("Supabase client not initialized.")
+        st.error("Notebook storage is temporarily unavailable. Please try again shortly.")
         return False
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     try:
@@ -67,7 +67,7 @@ def upsert_doc(user_id: str, doc_id: str, title: str, content: str):
         return False
     except Exception as e:
         logger.exception("upsert_doc failed: %s", e)
-        st.error(f"Could not save note: {e}")
+        st.error("The note could not be saved. Please try again shortly.")
         return False
 
 
@@ -75,7 +75,7 @@ def delete_doc(user_id: str, doc_id: str) -> bool:
     """Delete a notepad_docs row (scoped by user_id)."""
     client = get_supabase_client()
     if not client:
-        st.error("Supabase client not initialized.")
+        st.error("Notebook storage is temporarily unavailable. Please try again shortly.")
         return False
     try:
         resp = (
@@ -91,7 +91,7 @@ def delete_doc(user_id: str, doc_id: str) -> bool:
         return False
     except Exception as e:
         logger.exception("delete_doc failed: %s", e)
-        st.error(f"Could not delete note: {e}")
+        st.error("The note could not be deleted. Please try again shortly.")
         return False
 
 
@@ -128,7 +128,7 @@ def fetch_logs_in_range(user_id: str, start, end) -> list:
         return resp.data if resp and resp.data else []
     except Exception as e:
         logger.exception("fetch_logs_in_range failed: %s", e)
-        st.warning(f"Could not load your daily log: {e}")
+        st.warning("Your daily log could not be loaded. Please try again shortly.")
         return []
 
 
@@ -151,7 +151,7 @@ def fetch_all_daily_logs(start, end) -> list:
         return resp.data if resp and resp.data else []
     except Exception as e:
         logger.exception("fetch_all_daily_logs failed: %s", e)
-        st.warning(f"Could not load daily logs: {e}")
+        st.warning("Daily logs could not be loaded. Please try again shortly.")
         return []
 
 
@@ -159,7 +159,7 @@ def upsert_log(user_id: str, log_date, fields: dict) -> bool:
     """Insert or update the (user_id, log_date) daily_logs row. Auto-saves on edit."""
     client = get_supabase_client()
     if not client:
-        st.error("Supabase client not initialized.")
+        st.error("Daily log storage is temporarily unavailable. Please try again shortly.")
         return False
     try:
         payload = _log_payload(log_date, fields)
@@ -179,7 +179,7 @@ def upsert_log(user_id: str, log_date, fields: dict) -> bool:
         logger.exception("upsert_log failed: %s", e)
         err = str(e)
         if "unique or exclusion constraint" in err or "42P10" in err:
-            st.error("Daily-log saving needs a unique (user, date) constraint. Run `supabase/full_schema_ddl.sql`.")
+            st.error("Your daily log could not be saved because the workspace is not fully configured. Please contact an administrator.")
         else:
-            st.error(f"Could not save your daily log: {e}")
+            st.error("Your daily log could not be saved. Please try again shortly.")
         return False

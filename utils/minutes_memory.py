@@ -32,7 +32,7 @@ def fetch_recent_minutes(user_id: str, limit: int = 5) -> list:
         return resp.data if resp and resp.data else []
     except Exception as e:
         logger.exception("fetch_recent_minutes failed: %s", e)
-        st.warning(f"Could not load minutes memory: {e}")
+        st.warning("Approved minutes could not be loaded. Please try again shortly.")
         return []
 
 
@@ -69,9 +69,9 @@ def store_approved_minutes(
         logger.exception("store_approved_minutes failed: %s", e)
         err = str(e)
         if "PGRST205" in err or "Could not find the table" in err:
-            st.error("The minutes memory table is missing. Run `supabase/full_schema_ddl.sql`.")
+            st.error("Minutes storage is not fully configured. Please contact an administrator.")
         else:
-            st.error(f"Could not save minutes memory: {e}")
+            st.error("Minutes could not be saved. Please try again shortly.")
         return False
 
 

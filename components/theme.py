@@ -19,6 +19,8 @@ Typography (only these two families + Bebas for numerals):
   Body / UI         : Montserrat
   Numbers (stats)   : Bebas Neue (kept for data numerals, design-approved)
 """
+from html import escape
+
 import streamlit as st
 
 # --- Design tokens (CSS custom properties + Python constants, mirrored) ---
@@ -292,7 +294,140 @@ div[data-baseweb="select"] > div,
 [data-testid="stCaptionContainer"] {
     color: var(--echo-muted) !important;
 }
+
+/* ---- Shared page hierarchy: one editorial header per screen ---- */
+.echo-page-header {
+    position: relative;
+    margin: 0 0 1rem 0;
+    padding: 0.1rem 0 0.9rem 0;
+    border-bottom: 1px solid rgba(0,51,102,0.15);
+}
+.echo-page-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 48px;
+    height: 2px;
+    background: var(--echo-gold);
+}
+.echo-page-header__eyebrow {
+    font-family: var(--echo-eyebrow) !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.16em !important;
+    text-transform: uppercase !important;
+    color: var(--echo-ink) !important;
+    margin: 0 0 0.28rem 0 !important;
+}
+.echo-page-header__title {
+    font-family: var(--echo-title) !important;
+    font-size: 2.45rem !important;
+    line-height: 1 !important;
+    font-style: italic !important;
+    font-weight: 600 !important;
+    color: var(--echo-ink) !important;
+    margin: 0 !important;
+}
+.echo-page-header__subtitle {
+    max-width: 46rem;
+    font-family: var(--echo-body) !important;
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    color: var(--echo-muted) !important;
+    margin: 0.42rem 0 0 !important;
+}
+.echo-section-header {
+    margin: 0 0 0.75rem 0;
+}
+.echo-section-header__title {
+    font-family: var(--echo-title) !important;
+    font-size: 1.5rem !important;
+    line-height: 1.1 !important;
+    font-style: italic !important;
+    font-weight: 600 !important;
+    color: var(--echo-ink) !important;
+    margin: 0 !important;
+}
+.echo-section-header__caption {
+    font-family: var(--echo-body) !important;
+    font-size: 0.75rem !important;
+    line-height: 1.45 !important;
+    color: var(--echo-muted) !important;
+    margin: 0.22rem 0 0 !important;
+}
+
+/* ---- Native surfaces and navigation share the same compact rhythm ---- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    padding: 0.85rem !important;
+    margin-bottom: 0.75rem !important;
+}
+[data-testid="stExpander"] {
+    background: var(--echo-panel) !important;
+    border: 1px solid rgba(0,51,102,0.12) !important;
+    border-radius: var(--echo-radius) !important;
+    box-shadow: none !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0.15rem !important;
+    border-bottom: 1px solid rgba(0,51,102,0.15) !important;
+    margin-bottom: 0.75rem !important;
+}
+.stTabs [data-baseweb="tab"] {
+    min-height: 34px !important;
+    padding: 0.35rem 0.72rem !important;
+    font-family: var(--echo-body) !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+}
+[data-testid="stAlert"] {
+    border-radius: var(--echo-radius) !important;
+    border: 1px solid rgba(0,51,102,0.12) !important;
+    box-shadow: none !important;
+}
 </style>
 """
     )
     st.markdown(css, unsafe_allow_html=True)
+
+
+def render_page_header(eyebrow: str, title: str, subtitle: str = "") -> None:
+    """Render the shared editorial page header as a standalone Streamlit element."""
+    eyebrow_html = (
+        f'<p class="echo-page-header__eyebrow">{escape(eyebrow)}</p>'
+        if eyebrow
+        else ""
+    )
+    subtitle_html = (
+        f'<p class="echo-page-header__subtitle">{escape(subtitle)}</p>'
+        if subtitle
+        else ""
+    )
+    st.markdown(
+        (
+            '<header class="echo-page-header">'
+            f"{eyebrow_html}"
+            f'<h1 class="echo-page-header__title">{escape(title)}</h1>'
+            f"{subtitle_html}"
+            "</header>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_section_header(title: str, subtitle: str = "") -> None:
+    """Render a consistent section title without wrapping later Streamlit widgets."""
+    subtitle_html = (
+        f'<p class="echo-section-header__caption">{escape(subtitle)}</p>'
+        if subtitle
+        else ""
+    )
+    st.markdown(
+        (
+            '<div class="echo-section-header">'
+            f'<h2 class="echo-section-header__title">{escape(title)}</h2>'
+            f"{subtitle_html}"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )

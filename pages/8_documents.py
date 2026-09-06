@@ -37,7 +37,7 @@ import requests
 
 from utils.auth import require_login
 from components.sidebar import setup_page_layout
-from components.theme import inject_global_css
+from components.theme import inject_global_css, render_page_header, render_section_header
 
 # ---------------------------------------------------------------------------
 # Page shell (native Echo conventions)
@@ -628,7 +628,11 @@ def render_isolated_map_editor():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="editor-card">', unsafe_allow_html=True)
+    render_page_header(
+        "Documents",
+        "Map editor",
+        "Set the map framing and marker, then return it to the selected document field.",
+    )
     col_back, col_title = st.columns([1, 4])
     with col_back:
         def return_to_main():
@@ -654,8 +658,7 @@ def render_isolated_map_editor():
             pass
 
     with col_title:
-        st.markdown(f"### Map Editor: {token_key}")
-    st.markdown("</div><br>", unsafe_allow_html=True)
+        render_section_header("Map field", str(token_key))
 
     style_key = f"map_style_{token_key}"
     coord_key = f"map_coord_{token_key}"
@@ -1096,11 +1099,10 @@ if "show_type_mapping" not in st.session_state: st.session_state.show_type_mappi
 if "temp_form_data" not in st.session_state: st.session_state.temp_form_data = {}
 
 # --- PAGE HEADER (native) ---
-st.markdown('<p class="page-eyebrow">Documents</p>', unsafe_allow_html=True)
-st.markdown('<p class="docs-title">Generator</p>', unsafe_allow_html=True)
-st.markdown(
-    '<p class="docs-caption">Generate branded documents from PPTX/DOCX templates with text, image, and map placeholders.</p>',
-    unsafe_allow_html=True,
+render_page_header(
+    "Documents",
+    "Document generator",
+    "Generate branded documents from approved templates and controlled placeholder values.",
 )
 st.markdown(
     '<div class="local-only-note">Documents are generated and exported locally — nothing is saved to the database.</div>',
@@ -1116,7 +1118,7 @@ else:
         st.session_state.restore_form_data = False
 
     st.markdown("<hr style='margin: 4px 0 12px 0;'>", unsafe_allow_html=True)
-    st.markdown('<div class="section-header">Templates</div>', unsafe_allow_html=True)
+    render_section_header("Templates", "Select an approved template or add a new local template.")
 
     col_template1, col_template2 = st.columns(2)
     with col_template1:
@@ -1277,7 +1279,7 @@ else:
                             auto_save_config()
                             st.rerun()
 
-        st.markdown('<div class="section-header">Placeholder Values</div>', unsafe_allow_html=True)
+        render_section_header("Placeholder values", "Complete the fields required by the active document template.")
 
         # --- RENDER FIELDS IN ORIGINAL ORDER ---
         for idx, token in enumerate(tokens):
@@ -1373,7 +1375,7 @@ else:
 
     # --- DOWNLOAD & CLEANUP SECTION ---
     if st.session_state.template_bytes is not None:
-        st.markdown('<div class="section-header">Download Document</div>', unsafe_allow_html=True)
+        render_section_header("Download document", "Generate the completed file in the format supported by this template.")
 
         base_template_name = re.sub(r'\.(pptx|docx)$', '', st.session_state.saved_template_name or "Generated_Document")
         col1, col2 = st.columns(2)

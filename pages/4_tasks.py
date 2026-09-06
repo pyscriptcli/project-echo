@@ -2,16 +2,19 @@
 import sys
 import os
 import hashlib
+import logging
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
 from datetime import date, timedelta, datetime
 import calendar
 
+logger = logging.getLogger(__name__)
+
 from utils.auth import require_login
 from utils.db import get_supabase_client, fetch_meeting_archives
 from components.sidebar import setup_page_layout
-from components.theme import inject_global_css
+from components.theme import inject_global_css, render_page_header, render_section_header
 
 # 1. Page config (must be first)
 st.set_page_config(
@@ -94,6 +97,12 @@ h3 {
     padding: 0.25rem 0.15rem 0.5rem 0.15rem;
     margin-bottom: 0.4rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+div[data-testid="stHorizontalBlock"]:has(.board-column-header) > div[data-testid="column"] {
+    background: #ffffff;
+    border: 1px solid rgba(0,51,102,0.12);
+    border-radius: 6px;
+    padding: 0.7rem;
 }
 .board-col-title {
     font-size: 0.72rem;
@@ -327,13 +336,14 @@ supabase = get_supabase_client()
 
 def fetch_tasks():
     if not supabase:
-        st.error("Supabase client not initialized.")
+        st.error("Task data is temporarily unavailable. Please try again shortly.")
         return []
     try:
         res = supabase.table("tasks").select("*").order("due_date", desc=False).execute()
         return res.data if res.data else []
     except Exception as e:
-        st.error(f"Failed to fetch tasks: {e}")
+        logger.exception("Could not load tasks: %s", e)
+        st.error("Tasks could not be loaded. Please try again shortly.")
         return []
 
 
@@ -384,7 +394,7 @@ def generate_stable_id(meeting_id, discussion_text, action_text):
 
 def add_task(title, description, assignee, due_date, meeting_id=None, discussion_point_id=None):
     if not supabase:
-        st.error("Supabase client not initialized.")
+        st.error("Task data is temporarily unavailable. Please try again shortly.")
         return False
     payload = {
         "title": title.strip(),
@@ -399,7 +409,8 @@ def add_task(title, description, assignee, due_date, meeting_id=None, discussion
         supabase.table("tasks").insert(payload).execute()
         return True
     except Exception as e:
-        st.error(f"Failed to add task: {e}")
+        logger.exception("Could not add task: %s", e)
+        st.error("The task could not be created. Please try again shortly.")
         return False
 
 
@@ -419,7 +430,8 @@ def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
             update_payload["due_date"] = new_due_date.isoformat()
         supabase.table("tasks").update(update_payload).eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to update task: {e}")
+        logger.exception("Could not update task: %s", e)
+        st.error("The task could not be updated. Please try again shortly.")
 
 
 def handle_status_change(task_id):
@@ -433,7 +445,8 @@ def delete_task(task_id):
     try:
         supabase.table("tasks").delete().eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to delete task: {e}")
+        logger.exception("Could not delete task: %s", e)
+        st.error("The task could not be deleted. Please try again shortly.")
 
 
 def get_assignee_ui_state(assignee_str):
@@ -593,8 +606,7 @@ def open_task_details():
 
         existing_due_date = parse_calendar_date(task.get('due_date'))
 
-        st.markdown(f"### {task['title']}")
-        st.caption(f"ID: {task['id']}")
+        render_section_header(task["title"], f"Task ID: {task['id']}")
 
         st.markdown("**Description**")
         st.write(task.get('description', 'No description provided.'))
@@ -653,7 +665,7 @@ def open_task_details():
         st.caption(f"Status Updated At: {task.get('status_updated_at') or '—'}")
 
     with right_col:
-        st.markdown("### Meeting Origin")
+        render_section_header("Meeting origin", "Source meeting for this task.")
         if meeting_details:
             st.markdown(f"**{meeting_details.get('client_name', 'Meeting Record')}**")
             st.caption(f"Date: {format_mm_dd_yyyy(parse_calendar_date(meeting_details.get('meeting_date')))}")
@@ -674,7 +686,7 @@ def new_task_dialog():
     prefill_date = st.session_state.get("cal_new_task_date")
 
     with st.form("cal_new_task_form", clear_on_submit=True):
-        st.markdown("### New Task")
+        render_section_header("New task", "Create a task with clear ownership and timing.")
         left, right = st.columns(2)
 
         with left:
@@ -723,8 +735,11 @@ def new_task_dialog():
 
 
 # 7. Page layout
-st.markdown("<h3>Task Board</h3>", unsafe_allow_html=True)
-st.caption("Manage tasks derived from meeting action items or create new ones.")
+render_page_header(
+    "Work management",
+    "Tasks",
+    "Track task ownership, delivery dates, and action items from meetings.",
+)
 
 # 8. Tabs
 tab_board, tab_import, tab_new, tab_calendar = st.tabs(["Board", "Import from Meeting", "New Task", "Calendar"])
@@ -845,7 +860,7 @@ with tab_board:
 
 # ---------------- IMPORT TAB ----------------
 with tab_import:
-    st.markdown("#### Import Action Items from Meetings")
+    render_section_header("Import from meeting", "Bring selected action items into the task board.")
 
     if "import_flash" in st.session_state:
         st.success(st.session_state.pop("import_flash"))
@@ -922,7 +937,7 @@ with tab_import:
                         if not already_imported:
                             st.checkbox("Select for import", key=f"import_{selected_meeting_id}_{idx}")
                         else:
-                            st.markdown('<span class="import-badge">✓ Already Imported</span>', unsafe_allow_html=True)
+                            st.markdown('<span class="import-badge">Imported</span>', unsafe_allow_html=True)
                     with a2:
                         if not already_imported:
                             if st.button("Add Task", key=f"add_{selected_meeting_id}_{idx}", use_container_width=True):
@@ -974,7 +989,7 @@ with tab_new:
     if "task_flash" in st.session_state:
         st.success(st.session_state.pop("task_flash"))
 
-    st.markdown("#### Create New Task")
+    render_section_header("Create task", "Add a standalone task or connect it to a meeting record.")
     with st.form("new_task_form", clear_on_submit=True):
         left, right = st.columns(2)
 
@@ -1023,6 +1038,10 @@ with tab_new:
 
 # ---------------- CALENDAR TAB ----------------
 with tab_calendar:
+    render_section_header(
+        "Calendar",
+        "Review task timing here; use the calendar page for detailed planning.",
+    )
     if "tasks_cal_focus_date" not in st.session_state:
         st.session_state["tasks_cal_focus_date"] = date.today()
 
@@ -1166,7 +1185,7 @@ with tab_calendar:
         else:
             st.caption("No events scheduled on this day.")
 
-        if st.button("+ Add Task", key=f"cal_add_day_{day_str}", use_container_width=True):
+        if st.button("Add task", icon=":material/add:", key=f"cal_add_day_{day_str}", use_container_width=True):
             st.session_state["cal_new_task_date"] = focus
             st.session_state["cal_open_new_dialog"] = True
 

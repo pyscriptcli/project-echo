@@ -4,14 +4,18 @@ import calendar
 import datetime
 import hashlib
 import html
+import logging
 import streamlit as st
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 import pandas as pd
 
+logger = logging.getLogger(__name__)
+
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
+from components.theme import render_page_header, render_section_header
 from utils.auth import init_supabase, require_login, get_all_users
 from utils.notebook_db import fetch_all_daily_logs
 
@@ -489,7 +493,8 @@ def fetch_tasks():
         res = supabase.table("tasks").select("*").order("due_date", desc=False).execute()
         return res.data if res.data else []
     except Exception as e:
-        st.error(f"Could not load tasks: {e}")
+        logger.exception("Could not load dashboard tasks: %s", e)
+        st.error("Tasks could not be loaded. Please try again shortly.")
         return []
 
 tasks = fetch_tasks()
@@ -560,7 +565,8 @@ def add_task(title, description, assignee, due_date, meeting_id=None, discussion
         supabase.table("tasks").insert(payload).execute()
         return True
     except Exception as e:
-        st.error(f"Failed to add task: {e}")
+        logger.exception("Could not add dashboard task: %s", e)
+        st.error("The task could not be created. Please try again shortly.")
         return False
 
 def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
@@ -579,7 +585,8 @@ def update_task(task_id, new_status, new_assignee=None, new_due_date=None):
             update_payload["due_date"] = new_due_date.isoformat()
         supabase.table("tasks").update(update_payload).eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to update task: {e}")
+        logger.exception("Could not update dashboard task: %s", e)
+        st.error("The task could not be updated. Please try again shortly.")
 
 def delete_task(task_id):
     if not supabase:
@@ -587,7 +594,8 @@ def delete_task(task_id):
     try:
         supabase.table("tasks").delete().eq("id", task_id).execute()
     except Exception as e:
-        st.error(f"Failed to delete task: {e}")
+        logger.exception("Could not delete dashboard task: %s", e)
+        st.error("The task could not be deleted. Please try again shortly.")
 
 def get_assignee_ui_state(assignee_str):
     if assignee_str in GROUP_OPTIONS:
@@ -734,8 +742,7 @@ def open_task_details():
 
         existing_due_date = parse_calendar_date(task.get('due_date'))
 
-        st.markdown(f"### {task['title']}")
-        st.caption(f"ID: {task['id']}")
+        render_section_header(task["title"], f"Task ID: {task['id']}")
 
         st.markdown("**Description**")
         st.write(task.get('description', 'No description provided.'))
@@ -794,7 +801,7 @@ def open_task_details():
         st.caption(f"Status Updated At: {task.get('status_updated_at') or '—'}")
 
     with right_col:
-        st.markdown("### Meeting Origin")
+        render_section_header("Meeting origin", "Source meeting for this task.")
         if meeting_details:
             st.markdown(f"**{meeting_details.get('client_name', 'Meeting Record')}**")
             st.caption(f"Date: {format_mm_dd_yyyy(parse_calendar_date(meeting_details.get('meeting_date')))}")
@@ -814,7 +821,7 @@ def new_task_dialog():
     prefill_date = st.session_state.get("cal_new_task_date")
 
     with st.form("cal_new_task_form", clear_on_submit=True):
-        st.markdown("### New Task")
+        render_section_header("New task", "Create a task with clear ownership and timing.")
         left, right = st.columns(2)
 
         with left:
@@ -1060,16 +1067,23 @@ due_soon_count = len(due_soon_tasks)
 # ------------------------------------------------------------
 # DASHBOARD CONTROLS
 # ------------------------------------------------------------
-st.markdown('<p class="page-eyebrow">Project Echo</p>', unsafe_allow_html=True)
+render_page_header(
+    "Project Echo",
+    "Dashboard",
+    "A concise operational view of meetings, priorities, and work due in the selected period.",
+)
 
-top_cols = st.columns([3, 2], gap="medium", vertical_alignment="bottom")
-with top_cols[0]:
-    st.markdown('<p class="page-title">Dashboard</p>', unsafe_allow_html=True)
-    st.caption(
-        f"{st.session_state['start_date'].strftime('%b %d, %Y')} - "
-        f"{st.session_state['end_date'].strftime('%b %d, %Y')}"
+period_copy, period_filter = st.columns([3, 2], gap="medium", vertical_alignment="bottom")
+with period_copy:
+    st.markdown(
+        (
+            '<p class="dashboard-period-copy"><strong>Reporting period</strong><br>'
+            f"{st.session_state['start_date'].strftime('%b %d, %Y')} - "
+            f"{st.session_state['end_date'].strftime('%b %d, %Y')}</p>"
+        ),
+        unsafe_allow_html=True,
     )
-with top_cols[1]:
+with period_filter:
     _dash_range = st.date_input(
         "Dashboard period",
         value=(st.session_state["start_date"], st.session_state["end_date"]),
@@ -1111,6 +1125,8 @@ st.markdown(
     .dash-card-title { font-size: 0.76rem !important; line-height: 1.25 !important; margin: 0.18rem 0 !important; }
     .dash-card-meta { font-size: 0.66rem !important; margin: 0 !important; }
     .dash-card-body { font-size: 0.68rem !important; line-height: 1.25 !important; margin: 0.18rem 0 0 !important; }
+    .dashboard-period-copy { color: #69727d; font-size: 0.76rem; line-height: 1.45; margin: 0.25rem 0 0.65rem; }
+    .dashboard-period-copy strong { color: #003366; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
     .dashboard-activity { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
     .dashboard-activity-item { flex: 1 1 8rem; border: 1px solid rgba(0,51,102,0.12); border-radius: 6px; background: #fff; padding: 0.5rem 0.65rem; }
     .dashboard-activity-label { display: block; color: #69727d; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -1123,107 +1139,107 @@ st.markdown(
 left_col, right_col = st.columns([1.35, 1], gap="medium")
 
 with left_col:
-    st.markdown('<p class="section-title">Needs attention</p>', unsafe_allow_html=True)
-    st.caption("Items requiring follow-through.")
+    with st.container(border=True):
+        render_section_header("Needs attention", "Items requiring follow-through.")
 
-    attention_count = 0
-    for task in overdue_tasks[:2]:
-        due_date = parse_calendar_date(task.get("due_date"))
-        render_dashboard_card(
-            "Overdue",
-            task.get("title", "Untitled task"),
-            f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
-            task.get("description", ""),
-            "danger",
-        )
-        attention_count += 1
+        attention_count = 0
+        for task in overdue_tasks[:2]:
+            due_date = parse_calendar_date(task.get("due_date"))
+            render_dashboard_card(
+                "Overdue",
+                task.get("title", "Untitled task"),
+                f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
+                task.get("description", ""),
+                "danger",
+            )
+            attention_count += 1
 
-    for task in due_soon_tasks[:2]:
-        due_date = parse_calendar_date(task.get("due_date"))
-        render_dashboard_card(
-            "Due soon",
-            task.get("title", "Untitled task"),
-            f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
-            task.get("description", ""),
-            "warning",
-        )
-        attention_count += 1
+        for task in due_soon_tasks[:2]:
+            due_date = parse_calendar_date(task.get("due_date"))
+            render_dashboard_card(
+                "Due soon",
+                task.get("title", "Untitled task"),
+                f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
+                task.get("description", ""),
+                "warning",
+            )
+            attention_count += 1
 
-    for task in unassigned_tasks[:1]:
-        render_dashboard_card(
-            "Unassigned",
-            task.get("title", "Untitled task"),
-            f"Status: {status_labels.get(task.get('status', 'todo'), 'To Do')}",
-            task.get("description", ""),
-            "",
-        )
-        attention_count += 1
+        for task in unassigned_tasks[:1]:
+            render_dashboard_card(
+                "Unassigned",
+                task.get("title", "Untitled task"),
+                f"Status: {status_labels.get(task.get('status', 'todo'), 'To Do')}",
+                task.get("description", ""),
+                "",
+            )
+            attention_count += 1
 
-    for action in missing_due_actions[:1]:
-        render_dashboard_card(
-            "Missing date",
-            action["action"][:120],
-            action["meeting_label"],
-            "",
-            "warning",
-        )
-        attention_count += 1
+        for action in missing_due_actions[:1]:
+            render_dashboard_card(
+                "Missing date",
+                action["action"][:120],
+                action["meeting_label"],
+                "",
+                "warning",
+            )
+            attention_count += 1
 
-    if attention_count == 0:
-        render_empty_state("Nothing needs attention in this period.")
+        if attention_count == 0:
+            render_empty_state("Nothing needs attention in this period.")
 
 with right_col:
-    st.markdown('<p class="section-title">Today and upcoming</p>', unsafe_allow_html=True)
-    st.caption("Next seven days.")
+    with st.container(border=True):
+        render_section_header("Today and upcoming", "Next seven days.")
 
-    if agenda_events:
-        last_day = None
-        for idx, evt in enumerate(agenda_events[:4]):
-            if evt["date"] != last_day:
-                st.markdown(
-                    f'<div class="agenda-day">{evt["date"].strftime("%a, %b %d")}</div>',
-                    unsafe_allow_html=True,
+        if agenda_events:
+            last_day = None
+            for evt in agenda_events[:4]:
+                if evt["date"] != last_day:
+                    st.markdown(
+                        f'<div class="agenda-day">{evt["date"].strftime("%a, %b %d")}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    last_day = evt["date"]
+                render_dashboard_card(
+                    "Meeting action" if evt["source"] == "meeting_action" else status_labels.get(evt.get("status", "todo"), "Task"),
+                    evt["title"],
+                    evt.get("meeting_label") or evt.get("assignee") or "Unassigned",
+                    "",
+                    "danger" if evt.get("overdue") else "",
                 )
-                last_day = evt["date"]
-            render_dashboard_card(
-                "Meeting action" if evt["source"] == "meeting_action" else status_labels.get(evt.get("status", "todo"), "Task"),
-                evt["title"],
-                evt.get("meeting_label") or evt.get("assignee") or "Unassigned",
-                "",
-                "danger" if evt.get("overdue") else "",
-            )
-    else:
-        render_empty_state("No scheduled work in the next seven days.")
+        else:
+            render_empty_state("No scheduled work in the next seven days.")
 
-    st.markdown('<p class="section-title" style="margin-top:1rem;">Recent meetings</p>', unsafe_allow_html=True)
-    st.caption("Latest records in selected period.")
-    if filtered_records:
-        for meeting in filtered_records[:3]:
-            summary = str(meeting.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
-            render_dashboard_card(
-                "Meeting",
-                meeting.get("client_name") or "Meeting record",
-                f"{str(meeting.get('meeting_date', 'No date'))[:10]} · {meeting.get('prepared_by') or 'Prepared by team'}",
-                summary[:120],
-                "",
-            )
-    else:
-        render_empty_state("No meetings found in this period.")
+    with st.container(border=True):
+        render_section_header("Recent meetings", "Latest records in the selected period.")
+        if filtered_records:
+            for meeting in filtered_records[:3]:
+                summary = str(meeting.get("summary_md", "No summary recorded.")).replace("### Summary", "").strip()
+                render_dashboard_card(
+                    "Meeting",
+                    meeting.get("client_name") or "Meeting record",
+                    f"{str(meeting.get('meeting_date', 'No date'))[:10]} · {meeting.get('prepared_by') or 'Prepared by team'}",
+                    summary[:120],
+                    "",
+                )
+        else:
+            render_empty_state("No meetings found in this period.")
 
 status_total = max(task_total, 1)
 meeting_total = max(total_range_meetings, 1)
 filled_log_days = sum(1 for row in dlog_rows if any(str(row.get(key) or "").strip() for key in cat_keys))
-st.markdown('<p class="section-title" style="margin-top:0.75rem;">Activity summary</p>', unsafe_allow_html=True)
-st.caption("Reported for the selected period.")
-st.markdown(
-    f'''
-    <div class="dashboard-activity">
-      <div class="dashboard-activity-item"><span class="dashboard-activity-label">Tasks done</span><span class="dashboard-activity-value">{task_status["done"]}</span><span class="dashboard-activity-note">of {status_total} tracked</span></div>
-      <div class="dashboard-activity-item"><span class="dashboard-activity-label">In progress</span><span class="dashboard-activity-value">{task_status["in_progress"]}</span><span class="dashboard-activity-note">active tasks</span></div>
-      <div class="dashboard-activity-item"><span class="dashboard-activity-label">Internal meetings</span><span class="dashboard-activity-value">{total_internal_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
-      <div class="dashboard-activity-item"><span class="dashboard-activity-label">External meetings</span><span class="dashboard-activity-value">{total_external_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
-      <div class="dashboard-activity-item"><span class="dashboard-activity-label">Log days</span><span class="dashboard-activity-value">{filled_log_days}</span><span class="dashboard-activity-note">with activity recorded</span></div>
-    </div>
-    ''',
-    unsafe_allow_html=True,
-)
+with st.container(border=True):
+    render_section_header("Activity summary", "Reported for the selected period.")
+    st.markdown(
+        f'''
+        <div class="dashboard-activity">
+          <div class="dashboard-activity-item"><span class="dashboard-activity-label">Tasks done</span><span class="dashboard-activity-value">{task_status["done"]}</span><span class="dashboard-activity-note">of {status_total} tracked</span></div>
+          <div class="dashboard-activity-item"><span class="dashboard-activity-label">In progress</span><span class="dashboard-activity-value">{task_status["in_progress"]}</span><span class="dashboard-activity-note">active tasks</span></div>
+          <div class="dashboard-activity-item"><span class="dashboard-activity-label">Internal meetings</span><span class="dashboard-activity-value">{total_internal_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
+          <div class="dashboard-activity-item"><span class="dashboard-activity-label">External meetings</span><span class="dashboard-activity-value">{total_external_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
+          <div class="dashboard-activity-item"><span class="dashboard-activity-label">Log days</span><span class="dashboard-activity-value">{filled_log_days}</span><span class="dashboard-activity-note">with activity recorded</span></div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )

@@ -58,4 +58,7 @@ body::-webkit-scrollbar,
 inject_global_css()
 
 # 3. Render Ask Echo Viewport
-render_echo_chat(title="Ask Echo")
+render_echo_chat(
+    title="Ask Echo",
+    subtitle="Ask questions, review meeting knowledge, and move work forward.",
+)

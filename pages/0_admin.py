@@ -12,6 +12,7 @@ from utils.page_access import (
 from utils.limits import set_user_limits, get_user_limits, DEFAULT_DAILY_LIMIT, DEFAULT_WEEKLY_LIMIT
 from utils.audit import fetch_audit_logs, list_event_types
 from components.sidebar import setup_page_layout
+from components.theme import render_page_header, render_section_header
 
 # -------------------------------
 # Page configuration & styling
@@ -108,9 +109,11 @@ require_login(require_admin=True, page_key="admin")
 
 setup_page_layout()
 
-st.markdown('<p class="page-eyebrow">Project Echo</p>', unsafe_allow_html=True)
-st.markdown('<p class="section-title">Admin Console</p>', unsafe_allow_html=True)
-st.markdown('<p class="section-caption">Manage accounts, monitor telemetry, configure agent access & rate limits.</p>', unsafe_allow_html=True)
+render_page_header(
+    "Administration",
+    "Admin Console",
+    "Manage accounts, access policies, operational usage, and workspace safeguards.",
+)
 
 all_users = get_all_users()
 
@@ -122,8 +125,7 @@ tab_accounts, tab_access, tab_telemetry, tab_agent, tab_limits, tab_audit = st.t
 # TAB: ACCOUNTS  (create user + manage passwords)
 # ============================================================
 with tab_accounts:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Create New Account")
+    render_section_header("Create account", "Set up a member or administrator account.")
     with st.form("create_user_form", clear_on_submit=True):
         col1, col2 = st.columns([1, 1])
         with col1:
@@ -145,11 +147,8 @@ with tab_accounts:
                     st.success(f"User '{new_username}' created successfully.")
                 else:
                     st.error("User creation failed. Check the username is unique and the password meets the policy.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Manage Passwords")
-    st.markdown("Enter a new password below. It is stored as a secure hash; plaintext is never saved.")
+    render_section_header("Manage passwords", "Passwords are stored securely; plaintext is never retained.")
     pwd_all_users = all_users or get_all_users()
     if not pwd_all_users:
         st.info("No users found.")
@@ -172,15 +171,12 @@ with tab_accounts:
                     st.success(f"Password updated for '{pwd_user.get('username')}'.")
                 else:
                     st.error("Password update failed. Check the policy (min 8 chars, lower+upper+number).")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # TAB: PAGE ACCESS  (per-user page allowlists)
 # ============================================================
 with tab_access:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Page access")
-    st.caption("Choose which areas each member can open. Administrators always retain full access.")
+    render_section_header("Page access", "Choose which areas each member can open. Administrators always retain full access.")
     access_map, access_storage_ready = get_all_page_access()
     if not access_storage_ready:
         st.warning("Page access storage is not configured. Apply the included page access migration before saving policies.")
@@ -215,15 +211,14 @@ with tab_access:
                         if set_user_page_access(user_id, selected_keys, updated_by=current_admin_id):
                             st.success(f"Page access updated for {username}.")
                             st.rerun()
-                        st.error("Page access could not be saved. Confirm the page access migration is applied.")
-    st.markdown('</div>', unsafe_allow_html=True)
+                        else:
+                            st.error("Page access could not be saved. Confirm the workspace access setup is complete.")
 
 # ============================================================
 # TAB: TELEMETRY  (usage dashboard)
 # ============================================================
 with tab_telemetry:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### User Usage Telemetry")
+    render_section_header("Usage telemetry", "Review recent workspace activity and service usage.")
     if st.button("Refresh Data", key="refresh_usage"):
         st.rerun()
 
@@ -247,21 +242,18 @@ with tab_telemetry:
         kpi_cols[2].metric("Total Events", total_events)
         kpi_cols[3].metric("Active (7d)", active_7d)
 
-        st.markdown("#### Tokens per User")
+        render_section_header("Tokens per user", "Usage volume by account.")
         chart_data = df[["username", "total_tokens"]].set_index("username")
         st.bar_chart(chart_data)
 
-        st.markdown("#### Detailed Usage")
+        render_section_header("Detailed usage", "Audit the recorded usage for each account.")
         st.dataframe(df, width="stretch", hide_index=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # TAB: AGENT ACCESS  (RBAC grant/revoke)
 # ============================================================
 with tab_agent:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Agentic AI Access")
-    st.markdown("Control which users can enable **Agent mode** in Ask Echo. Users without access see a \"contact the developer\" notice in chat settings.")
+    render_section_header("Ask Echo agent access", "Control which users can enable Agent mode in Ask Echo.")
     agent_users = all_users or get_all_users()
     if not agent_users:
         st.info("No users found.")
@@ -281,15 +273,12 @@ with tab_agent:
                     st.rerun()
                 else:
                     st.warning(f"Could not update access for {uname}. Check that agent_rbac_ddl.sql has been run.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # TAB: RATE LIMITS  (per-user daily/weekly token budgets)
 # ============================================================
 with tab_limits:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Per-User Token Rate Limits")
-    st.markdown("Set daily/weekly token budgets for Ask Echo. The app enforces these per user. Default is 50k daily / 250k weekly.")
+    render_section_header("Usage limits", "Set daily and weekly budgets for Ask Echo. Default: 50k daily and 250k weekly.")
     st.caption("Requires rate-limit storage. Apply the included rate-limit migration if needed.")
     limits_users = all_users or get_all_users()
     if not limits_users:
@@ -317,15 +306,12 @@ with tab_limits:
                     else:
                         st.error("Could not save limits.")
             st.markdown("---")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # TAB: AUDIT LOG  (system event history)
 # ============================================================
 with tab_audit:
-    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-    st.markdown("### Audit Log")
-    st.caption("Every transcription attempt, meeting save, and key system event is logged here with status and duration info.")
+    render_section_header("Audit log", "Review key system events, outcomes, and duration details.")
     
     # Filters
     col_f1, col_f2, col_f3, col_f4, col_f5 = st.columns([2, 1.5, 1.5, 1, 1])
@@ -407,4 +393,3 @@ with tab_audit:
             },
         )
         st.caption(f"Showing {len(rows)} entries")
-    st.markdown('</div>', unsafe_allow_html=True)

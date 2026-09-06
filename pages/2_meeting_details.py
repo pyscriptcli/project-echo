@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 
 # Ensure root directory is resolvable
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -25,8 +26,10 @@ docfonts.ensure_pdf_fonts()
 
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
-from components.theme import inject_global_css
+from components.theme import inject_global_css, render_page_header, render_section_header
 from utils.auth import require_login
+
+logger = logging.getLogger(__name__)
 
 # CRD team members for the attendee picker when editing meeting details.
 CRD_MEMBERS = [
@@ -942,9 +945,13 @@ def categorize_meeting(meeting_item):
 # MODE 1: FULL-SCREEN MEETING GALLERY
 # ==============================================================================
 if st.session_state["view_mode"] == "gallery":
+    render_page_header(
+        "Meetings",
+        "Meeting records",
+        "Search, review, and maintain the organization’s meeting archive.",
+    )
     with st.container(border=True):
-        st.markdown("<h3>Meeting Gallery</h3>", unsafe_allow_html=True)
-        st.caption("Search across meeting topics, filter by category or date range, and review meetings.")
+        render_section_header("Meeting archive", "Search by topic, category, date range, or meeting details.")
         
         # Filter Bar Layout
         f_c1, f_c2, f_c3, f_c4 = st.columns([4.2, 2.3, 2.5, 1.0])
@@ -1097,13 +1104,12 @@ if st.session_state["view_mode"] == "gallery":
                         st.markdown(f"<p class='card-meta'>Date: {d_val} &bull; {loc_val} &bull; Prepared by: {prep_val}</p>", unsafe_allow_html=True)
                         st.markdown(f"<p class='card-desc'>{preview_text}</p>", unsafe_allow_html=True)
                     with c_act:
-                        st.markdown('<div class="view-btn-wrapper" style="flex-direction:column; gap:6px; justify-content:center;">', unsafe_allow_html=True)
-                        if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}", use_container_width=True):
-                            st.session_state["selected_meeting_id"] = m_id_val
-                            st.session_state["view_mode"] = "details"
-                            st.session_state["edit_meeting_details"] = False
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        with st.container(horizontal_alignment="right"):
+                            if st.button("View Meeting", key=f"view_btn_{m_id_val}_{idx}", width="content"):
+                                st.session_state["selected_meeting_id"] = m_id_val
+                                st.session_state["view_mode"] = "details"
+                                st.session_state["edit_meeting_details"] = False
+                                st.rerun()
 
 # ==============================================================================
 # MODE 2: FULL-SCREEN MEETING VIEWER & INSPECTOR
@@ -1118,6 +1124,12 @@ elif st.session_state["view_mode"] == "details":
 
     m_id = active_meeting.get("meeting_id")
 
+    render_page_header(
+        "Meetings",
+        active_meeting.get("client_name", "Meeting record"),
+        f"Meeting record {m_id or 'without an ID'}",
+    )
+
     # Header Navigation
     top_nav1, top_nav2 = st.columns([2.5, 7.5])
     with top_nav1:
@@ -1130,8 +1142,7 @@ elif st.session_state["view_mode"] == "details":
     with st.container(border=True):
         m_head1, m_head2 = st.columns([7.5, 2.5])
         with m_head1:
-            st.markdown(f"<h3>{active_meeting.get('client_name', 'Client Meeting')}</h3>", unsafe_allow_html=True)
-            st.caption(f"Meeting ID: `{m_id}`")
+            render_section_header("Meeting details", f"Meeting ID: {m_id}")
         with m_head2:
             st.write("<div style='height: 4px;'></div>", unsafe_allow_html=True)
             if not st.session_state["edit_meeting_details"]:
@@ -1165,7 +1176,7 @@ elif st.session_state["view_mode"] == "details":
             # Start / End times from time_range ("1:00 AM to 2:00 PM")
             start_t, end_t = _parse_time_range(str(md_ed.get("time_range", "") or ""))
 
-            st.markdown("##### Meeting Details")
+            render_section_header("Meeting details", "Core record information.")
             e_r1_c1, e_r1_c2 = st.columns(2)
             with e_r1_c1:
                 edit_client = st.text_input("Client / Company / Department", value=str(active_meeting.get("client_name", "")), key=f"e_client_{m_id}")
@@ -1181,14 +1192,14 @@ elif st.session_state["view_mode"] == "details":
                 edit_conf = st.text_input("Confirmed By", value=str(active_meeting.get("confirmed_by", "") or md_ed.get("conf_name", "")), key=f"e_conf_{m_id}")
                 edit_conf_desig = st.text_input("Conf Designation", value=str(md_ed.get("conf_desig", "")), key=f"e_conf_desig_{m_id}")
 
-            st.markdown("##### Schedule")
+            render_section_header("Schedule", "Meeting date and time.")
             s_c1, s_c2 = st.columns(2)
             with s_c1:
                 edit_start = st.time_input("Start Time", value=start_t or time(9, 0), key=f"e_start_{m_id}")
             with s_c2:
                 edit_end = st.time_input("End Time", value=end_t or time(10, 0), key=f"e_end_{m_id}")
 
-            st.markdown("##### Attendees")
+            render_section_header("Attendees", "People who participated in this meeting.")
             a_c1, a_c2 = st.columns(2)
             with a_c1:
                 edit_crd = st.multiselect(
@@ -1257,12 +1268,12 @@ elif st.session_state["view_mode"] == "details":
                                 st.success("Meeting details updated successfully!")
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"Metadata update failed: {e}")
+                                logger.exception("Could not update meeting metadata: %s", e)
+                                st.error("Meeting details could not be updated. Please try again shortly.")
 
     # Single view: editor with collapsed transcript
     with st.container(border=True):
-        st.markdown("<h3>Minutes of Meeting Items</h3>", unsafe_allow_html=True)
-        st.caption("Inline editable cards. Changes save automatically.")
+        render_section_header("Minutes items", "Edit discussion points, actions, owners, and delivery dates in place.")
 
         editor_key = f"mom_rows_{m_id}"
         if editor_key not in st.session_state:
@@ -1312,7 +1323,7 @@ elif st.session_state["view_mode"] == "details":
 
         add_c1, _ = st.columns([2, 8])
         with add_c1:
-            if st.button("+ Add Item", key=f"btn_add_{m_id}"):
+            if st.button("Add item", icon=":material/add:", key=f"btn_add_{m_id}"):
                 rows_to_keep.append({
                     "Discussion Points": "", "Action Plan": "",
                     "Indicative Delivery Date": "", "Person-in-charge": ""
@@ -1391,7 +1402,8 @@ elif st.session_state["view_mode"] == "details":
                             if editor_key in st.session_state:
                                 del st.session_state[editor_key]
                         except Exception as e:
-                            st.error(f"Update failed: {e}")
+                            logger.exception("Could not update meeting record: %s", e)
+                            st.error("The meeting record could not be updated. Please try again shortly.")
 
         # Full Transcript collapsed inside editor
         st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid rgba(0,0,0,0.07);'>", unsafe_allow_html=True)

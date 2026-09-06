@@ -21,7 +21,7 @@ def get_supabase_client() -> Client | None:
         return create_client(url, key)
     except Exception as e:
         logger.exception("Supabase client initialization failed: %s", e)
-        st.error(f"Supabase connection failed: {e}")
+        st.error("The data service is temporarily unavailable. Please try again shortly.")
         return None
 
 
@@ -100,7 +100,7 @@ def fetch_echo_context() -> dict:
         return context
     except Exception as e:
         logger.exception("Could not load Echo Context: %s", e)
-        st.warning(f"Could not load Echo Context: {e}")
+        st.warning("Shared Echo context could not be loaded. Please try again shortly.")
         return default_context
 
 
@@ -148,5 +148,5 @@ def upsert_echo_context(
             return False
     except Exception as e:
         logger.exception("Failed to upsert knowledge context entry for key '%s': %s", k_clean, e)
-        st.error(f"Database write error on '{k_clean}': {e}")
+        st.error("The knowledge update could not be saved. Please try again shortly.")
         return False

@@ -9,7 +9,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from components.sidebar import setup_page_layout
-from components.theme import inject_global_css
+from components.theme import inject_global_css, render_page_header, render_section_header
 from utils.auth import get_current_user, require_login
 from utils.notebook_db import (
     fetch_docs,
@@ -141,6 +141,12 @@ NOTEBOOK_CSS = """
         gap: 0.5rem;
         margin-bottom: 0.35rem;
     }
+    div[data-testid="stHorizontalBlock"]:has(.kanban-header) > div[data-testid="column"] {
+        background: #ffffff;
+        border: 1px solid rgba(0,51,102,0.12);
+        border-radius: 6px;
+        padding: 0.65rem;
+    }
     .kanban-header .label {
         font-weight: 600;
         font-size: 0.85rem;
@@ -177,7 +183,6 @@ NOTEBOOK_CSS = """
         align-items: center !important;
         justify-content: center !important;
         padding: 0.1rem 0.5rem !important;
-        width: auto !important;
         font-size: 0.68rem !important;
     }
     .stButton > button:hover,
@@ -441,25 +446,16 @@ def notes_gallery_modal():
                     st.rerun()
 
 def render_notepad():
-    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-title">Notepad</div>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-subtitle">A distraction-free environment for your thoughts.</div>', unsafe_allow_html=True)
+    render_section_header("Notepad", "Capture and refine notes without leaving the workspace.")
 
     # Top Toolbar
-    col1, col2, col3, col4, col5 = st.columns([1.5, 1.5, 4, 1.5, 1.5])
-    
-    with col1:
-        if st.button("Notes Gallery", use_container_width=True):
-            notes_gallery_modal()
-    with col2:
-        st.button("+ New Note", on_click=create_new_doc, use_container_width=True, type="secondary")
-    
     has_docs = bool(st.session_state.nb_docs)
-    
-    with col4:
-        st.button("Delete Note", on_click=delete_current_doc, use_container_width=True, type="secondary", disabled=not has_docs)
-    with col5:
-        st.button("Save Changes", on_click=save_current_doc, use_container_width=True, disabled=not has_docs)
+    with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+        if st.button("Notes Gallery", icon=":material/folder_open:", width="content"):
+            notes_gallery_modal()
+        st.button("New Note", icon=":material/note_add:", on_click=create_new_doc, width="content", type="secondary")
+        st.button("Delete", icon=":material/delete_outline:", on_click=delete_current_doc, width="content", type="secondary", disabled=not has_docs)
+        st.button("Save", icon=":material/save:", on_click=save_current_doc, width="content", disabled=not has_docs)
 
     # Main Editor Area
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
@@ -489,7 +485,7 @@ def render_notepad():
         word_count = len(st.session_state.np_content.split())
         auto_saved_at = st.session_state.get("nb_saved_at")
         auto_saved_html = (
-            f'<span style="color:#2a6e3f;font-weight:600;">Auto-saved · {auto_saved_at}</span>'
+            f'<span style="color:#5cb85c;font-weight:600;">Auto-saved · {auto_saved_at}</span>'
             if auto_saved_at else "<span>Auto-save on</span>"
         )
         st.markdown(f"""
@@ -541,7 +537,7 @@ def render_week_view(selected_date):
     start, end = _date_range("Week", selected_date)
     days = [start + datetime.timedelta(days=i) for i in range(7)]
     
-    st.markdown('<div class="view-header">Weekly Planner</div>', unsafe_allow_html=True)
+    render_section_header("Weekly planner", "A compact view of activity across the current week.")
     cols = st.columns(7, gap="small")
     
     for i, day in enumerate(days):
@@ -572,7 +568,7 @@ def render_week_view(selected_date):
 
 def render_month_view(selected_date):
     start, end = _date_range("Month", selected_date)
-    st.markdown('<div class="view-header">Monthly Overview</div>', unsafe_allow_html=True)
+    render_section_header("Monthly overview", "Review recorded activity across the selected month.")
     
     month_logs = []
     user_id = _current_user_id()
@@ -606,9 +602,7 @@ def render_month_view(selected_date):
                 """, unsafe_allow_html=True)
 
 def render_dailylog():
-    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-title">Daily Log</div>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-subtitle">Organize and track your daily operations.</div>', unsafe_allow_html=True)
+    render_section_header("Daily log", "Organize and track day-to-day operational work.")
 
     col_date, col_view, _ = st.columns([2, 2, 6])
     with col_date:
@@ -639,9 +633,7 @@ def render_dailylog():
 # ------------------------------
 
 def render_statistics():
-    st.markdown('<p class="page-eyebrow">Notebook</p>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-title">Daily Log Statistics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="notebook-subtitle">Monitor your logging consistency and productivity.</div>', unsafe_allow_html=True)
+    render_section_header("Daily log statistics", "Monitor logging consistency and recent work patterns.")
 
     # Load the user's persisted daily logs (from last year -> today) per-user.
     user_id = _current_user_id()
@@ -694,7 +686,7 @@ def render_statistics():
     c1, c2 = st.columns([1, 1], gap="large")
     
     with c1:
-        st.markdown('<div class="view-header">Summary Table</div>', unsafe_allow_html=True)
+        render_section_header("Summary table")
         
         # Build Dataframe for recent logs
         table_data = []
@@ -708,7 +700,7 @@ def render_statistics():
         st.dataframe(df, use_container_width=True, hide_index=True)
 
     with c2:
-        st.markdown('<div class="view-header">Missed Dates</div>', unsafe_allow_html=True)
+        render_section_header("Missed dates")
         if not missed_dates:
             st.success("You have a perfect streak! No missed dates.")
         else:
@@ -731,6 +723,12 @@ def main():
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     inject_global_css()
     init_session()
+
+    render_page_header(
+        "Personal workspace",
+        "Notebook",
+        "Capture notes, record daily activity, and review your work patterns.",
+    )
 
     tab_notepad, tab_dailylog, tab_stats = st.tabs(["Notepad", "Daily Log", "Statistics"])
     

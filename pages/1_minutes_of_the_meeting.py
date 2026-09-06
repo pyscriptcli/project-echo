@@ -18,7 +18,7 @@ import streamlit.components.v1 as components
 # Centralized DB & Components
 from utils.db import get_supabase_client, fetch_echo_context
 from components.sidebar import setup_page_layout
-from components.theme import inject_global_css
+from components.theme import inject_global_css, render_page_header, render_section_header
 from utils.auth import require_login, get_current_user
 from utils.skills import load_prompt
 from utils.minutes_memory import build_style_examples, store_approved_minutes
@@ -952,7 +952,7 @@ def recording_studio_dialog():
 
     col_l, col_r = st.columns([0.6, 0.4])
     with col_l:
-        st.markdown("##### Meeting Notes")
+        render_section_header("Meeting notes", "Capture context while the recording is in progress.")
         st.session_state["_dialog_record_notes"] = st.text_area(
             "Jot down live meeting notes...",
             value=st.session_state.get("_dialog_record_notes", ""),
@@ -960,7 +960,7 @@ def recording_studio_dialog():
             placeholder="Key decisions, announcements, or discussion items..."
         )
     with col_r:
-        st.markdown("##### Microphone Input")
+        render_section_header("Microphone input", "Recording controls remain protected until audio is captured.")
         stored = st.session_state.get("_dialog_recorded_bytes")
         if stored is not None:
             st.session_state["_recording_status"] = "RECORDED"
@@ -1004,10 +1004,13 @@ def recording_studio_dialog():
 # =============================================================
 # TOP HEADER & GUIDED STEPPER
 # =============================================================
-top_head_l, top_head_r = st.columns([8, 2])
+top_head_l, top_head_r = st.columns([4, 1], gap="medium", vertical_alignment="bottom")
 with top_head_l:
-    st.markdown('<div class="section-title">Minutes of the Meeting</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-caption">Convert meeting transcripts and audio into verified, evidence-grounded corporate deliverables.</div>', unsafe_allow_html=True)
+    render_page_header(
+        "Meetings",
+        "Minutes of the Meeting",
+        "Turn a recording or transcript into concise, evidence-grounded minutes.",
+    )
 
 with top_head_r:
     generate_label = "Generate minutes" if not st.session_state.get("mom_items") else "Regenerate minutes"
@@ -1223,8 +1226,10 @@ elif st.session_state["mom_stage"] == "review":
         # Navigation lives only in the workflow tabs above.
         tb_col1 = st.container()
         with tb_col1:
-            st.markdown('<span class="section-title">Review Draft Minutes</span>', unsafe_allow_html=True)
-            st.caption("Each row combines the source quote, summary, action, person in charge, and due date in one place.")
+            render_section_header(
+                "Review draft minutes",
+                "Each row keeps the source, summary, action, person in charge, and due date together.",
+            )
 
         review_summary = build_review_summary()
         if review_summary["missing_owner"] or review_summary["missing_due"]:
@@ -1426,8 +1431,10 @@ elif st.session_state["mom_stage"] == "review":
 # STAGE 3: FINALIZE & EXPORT
 # =============================================================
 elif st.session_state["mom_stage"] == "export":
-    st.markdown('<div class="section-title">Export minutes</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-caption">Choose a template and download the final minutes package.</div>', unsafe_allow_html=True)
+    render_section_header(
+        "Export minutes",
+        "Choose a template and download the completed minutes package.",
+    )
 
     # Consolidate meeting details dictionary
     start_fmt = st.session_state["meeting_start_time"].strftime("%I:%M %p")

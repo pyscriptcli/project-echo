@@ -153,10 +153,9 @@ SVG_FILE_ICON = """
 """
 
 MODEL_REGISTRY = {
-    "⚡ DeepSeek V4 Flash": "deepseek-v4-flash",
-    "⚡ Fast - deepseek chat": "deepseek-v4-flash",
-    "🧠 Thinking - deepseek reasoning": "deepseek-v4-flash",
-    "👁 Vision - qwen vl": "qwen/qwen2.5-vl-72b-instruct"
+    "Fast": "deepseek-v4-flash",
+    "Reasoning": "deepseek-v4-flash",
+    "Vision": "qwen/qwen2.5-vl-72b-instruct",
 }
 
 ALLOWED_ATTACHMENT_TYPES = ["png", "jpg", "jpeg", "webp", "pdf", "docx", "doc", "txt", "csv"]
@@ -200,8 +199,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     -ms-overflow-style: none !important;
     max-width: 960px !important;
     margin: 0 auto !important;
-    height: calc(100vh - 120px) !important;
-    max-height: calc(100vh - 120px) !important;
+    height: calc(100vh - 92px) !important;
+    max-height: calc(100vh - 92px) !important;
 }
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
@@ -216,35 +215,64 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 
 .echo-header-bar {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    padding-bottom: 4px;
-    margin-bottom: 4px;
+    align-items: flex-start;
+    gap: 0.55rem;
+    min-height: 58px;
+    border-bottom: 1px solid rgba(0,51,102,0.15);
+    padding: 0.2rem 0 0.7rem;
+    margin-bottom: 0.55rem;
     flex-shrink: 0 !important;
+}
+.echo-header-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 0.15rem;
+    border: 1px solid rgba(201,171,76,0.55);
+    border-radius: 6px;
+    background: #ffffff;
+}
+.echo-header-copy { min-width: 0; }
+.echo-eyebrow {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: #003366 !important;
+    margin: 0 0 0.1rem !important;
 }
 
 .echo-title {
     font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
-    font-size: 1.15rem !important;
+    font-size: 1.7rem !important;
     font-weight: 600 !important;
     color: #003366 !important;
     margin: 0 !important;
-    line-height: 1 !important;
+    line-height: 0.95 !important;
     letter-spacing: 0.01em !important;
 }
+.echo-subtitle {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.72rem !important;
+    line-height: 1.45 !important;
+    color: #69727d !important;
+    margin: 0.24rem 0 0 !important;
+}
 
-.echo-top-controls div[data-testid="stPopover"] > button,
-.echo-top-controls div[data-testid="stButton"] > button {
+div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stPopover"] > button,
+div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stButton"] > button {
     background-color: #0c0c0e !important;
     color: #ffffff !important;
     border: 1px solid #c9ab4c !important;
     border-radius: 6px !important;
     height: 28px !important;
     min-height: 28px !important;
-    padding: 0 0.55rem !important;
+    width: 30px !important;
+    padding: 0 !important;
     transition: all 0.2s ease !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -252,8 +280,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-size: 0.85rem !important;
 }
 
-.echo-top-controls div[data-testid="stPopover"] > button:hover,
-.echo-top-controls div[data-testid="stButton"] > button:hover {
+div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stPopover"] > button:hover,
+div[data-testid="stHorizontalBlock"]:has(.echo-header-bar) div[data-testid="stButton"] > button:hover {
     border-color: #d9bc5d !important;
     background-color: #003366 !important;
     box-shadow: none !important;
@@ -267,7 +295,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column !important;
 }
 
-.echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) {
     background: #FFFFFF !important;
     border: 1px solid rgba(0,51,102,0.12) !important;
     border-radius: 6px !important;
@@ -275,7 +303,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    padding: 0.5rem 0.75rem !important;
+    padding: 0.55rem 0.7rem !important;
     height: 100% !important;
 }
 
@@ -1039,7 +1067,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     if "global_chat_history" not in st.session_state:
         st.session_state["global_chat_history"] = []
     if "echo_selected_model_label" not in st.session_state:
-        st.session_state["echo_selected_model_label"] = "⚡ DeepSeek V4 Flash"
+        st.session_state["echo_selected_model_label"] = "Fast"
     if "echo_source_archives" not in st.session_state:
         st.session_state["echo_source_archives"] = True
     if "echo_source_knowledge" not in st.session_state:
@@ -1053,7 +1081,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     if "echo_agent_mode" not in st.session_state:
         st.session_state["echo_agent_mode"] = False
 
-    safe_scroll_height = max(400, int(height) - 130) if height else 520
+    safe_scroll_height = max(360, int(height) - 190) if height else 460
 
     with target.container(border=True):
         st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
@@ -1062,30 +1090,32 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
         with h_left:
             st.markdown(
                 f'<div class="echo-header-bar">'
-                f'{SVG_ECHO_LOGO}<span class="echo-title">{title}</span>'
+                f'<span class="echo-header-mark">{SVG_ECHO_LOGO}</span>'
+                f'<div class="echo-header-copy">'
+                f'<p class="echo-eyebrow">AI workspace</p>'
+                f'<h1 class="echo-title">{title}</h1>'
+                f'<p class="echo-subtitle">{subtitle or "Ask questions, review meeting knowledge, and move work forward."}</p>'
+                f'</div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
-            if subtitle:
-                st.caption(subtitle)
             if caption:
                 st.caption(caption)
 
         with h_right:
-            st.markdown('<div class="echo-top-controls">', unsafe_allow_html=True)
             c_settings, c_clr = st.columns(2)
             with c_settings:
-                with st.popover("⚙", help="Settings"):
+                with st.popover("", icon=":material/tune:", help="Settings"):
                     st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>AI MODEL</span>", unsafe_allow_html=True)
                     
                     model_options = [
-                        "⚡ DeepSeek V4 Flash",
-                        "🧠 Thinking - deepseek reasoning",
-                        "👁 Vision - qwen vl"
+                        "Fast",
+                        "Reasoning",
+                        "Vision",
                     ]
-                    current_model = st.session_state.get("echo_selected_model_label", "⚡ DeepSeek V4 Flash")
+                    current_model = st.session_state.get("echo_selected_model_label", "Fast")
                     if current_model not in model_options:
-                        current_model = "⚡ DeepSeek V4 Flash"
+                        current_model = "Fast"
                         
                     st.session_state["echo_selected_model_label"] = st.selectbox(
                         "Model",
@@ -1138,18 +1168,15 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         render_context_popup_dialog()
 
             with c_clr:
-                if st.button("🗑", key="btn_clear_global_chat", help="Reset conversation"):
+                if st.button("", icon=":material/delete_sweep:", key="btn_clear_global_chat", help="Reset conversation"):
                     st.session_state["global_chat_history"] = []
                     st.session_state["knowledge_proposal"] = None
                     st.session_state["echo_ui_uploaded_files"] = []
                     st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown('<div class="echo-chat-box-container">', unsafe_allow_html=True)
         chat_box = st.container(height=safe_scroll_height)
-        st.markdown('</div>', unsafe_allow_html=True)
 
         with chat_box:
+            st.markdown('<div class="echo-chat-scroll-scope"></div>', unsafe_allow_html=True)
             if not st.session_state["global_chat_history"]:
                 st.markdown(
                     '<div class="echo-msg-row-assistant">'
@@ -1267,7 +1294,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
 
         with attach_col:
             st.markdown('<div class="echo-attach-col-target">', unsafe_allow_html=True)
-            with st.popover("📎", help="Attach Documents / Scans"):
+            with st.popover("", icon=":material/attach_file:", help="Attach documents or scans"):
                 st.markdown("<span style='font-size:0.80rem; font-weight:600; color:#003366;'>Upload Attachments</span>", unsafe_allow_html=True)
                 st.file_uploader(
                     "Upload files",
@@ -1325,7 +1352,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             archives = fetch_meeting_archives(limit=100) if st.session_state["echo_source_archives"] else []
             web_context, web_sources = _perform_web_search(active_prompt) if st.session_state["echo_source_web"] else ("", [])
 
-            selected_label = st.session_state.get("echo_selected_model_label", "⚡ DeepSeek V4 Flash")
+            selected_label = st.session_state.get("echo_selected_model_label", "Fast")
             default_model = MODEL_REGISTRY.get(selected_label, "deepseek-v4-flash")
 
             # Vision (qwen) is only required when an actual image is attached.

@@ -63,9 +63,9 @@ def set_user_limits(user_id: str, daily_limit: int, weekly_limit: int) -> bool:
         logger.exception("set_user_limits failed: %s", e)
         err = str(e)
         if any(m in err for m in ("PGRST205", "Could not find the table", "relation .* does not exist")):
-            st.error("The limits table is missing. Run `supabase/full_schema_ddl.sql` (creates `usage_limits`).")
+            st.error("Usage-limit storage is not fully configured. Please contact an administrator.")
         else:
-            st.error(f"Could not save limits: {e}")
+            st.error("Usage limits could not be saved. Please try again shortly.")
         return False
 
 

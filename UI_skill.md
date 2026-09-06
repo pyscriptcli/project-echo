@@ -78,6 +78,9 @@ on tables/lists — use borders for separation.
 ### Sections
 - `.section-title` (Cormorant Garamond italic navy) + `.section-caption` (muted) — the standard
   page/panel heading pair. Prefer these over raw `<h2>`/`<h3>`.
+- Prefer `render_page_header()` and `render_section_header()` from `components.theme` for
+  new page and section hierarchy. Both emit standalone markup only; never use a raw HTML
+  wrapper to contain Streamlit widgets, because widgets render outside that wrapper.
 
 ### Status / people
 - `.assignee-avatar` — circular initials chip.
