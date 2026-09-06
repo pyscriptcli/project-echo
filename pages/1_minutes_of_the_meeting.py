@@ -8,6 +8,7 @@ import datetime
 import json
 import re
 import time
+import uuid
 from io import BytesIO
 from typing import Optional
 import pandas as pd
@@ -42,6 +43,61 @@ st.set_page_config(
     page_title="Project Echo - MoM Generator",
     layout="wide",
     initial_sidebar_state="expanded"
+)
+
+_REVIEW_CARD_SORTER = st.components.v2.component(
+    "mom_review_card_sorter",
+    html='<div class="reorder-root" role="list" aria-label="Reorder discussion topics"></div>',
+    css="""
+    :host { display: block; }
+    .reorder-root { display: flex; flex-wrap: wrap; gap: 0.45rem; min-height: 2.3rem; }
+    .reorder-item {
+        align-items: center; background: var(--st-secondary-background-color);
+        border: 1px solid var(--st-border-color); border-radius: var(--st-button-radius);
+        color: var(--st-text-color); cursor: grab; display: inline-flex; gap: 0.45rem;
+        max-width: 18rem; padding: 0.42rem 0.58rem; user-select: none;
+    }
+    .reorder-item:active { cursor: grabbing; }
+    .reorder-item.dragging { opacity: 0.42; }
+    .reorder-grip { color: var(--st-primary-color); display: inline-flex; flex: 0 0 auto; }
+    .reorder-label { font-family: var(--st-font); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    """,
+    js="""
+    export default function(component) {
+        const { data, parentElement, setTriggerValue } = component;
+        const root = parentElement.querySelector('.reorder-root');
+        if (!root) return;
+        const items = Array.isArray(data?.items) ? data.items : [];
+        const signature = items.map(item => `${item.id}:${item.label}`).join('|');
+        if (root.dataset.signature === signature) return;
+        root.dataset.signature = signature;
+        root.replaceChildren();
+        const grip = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="4" cy="3" r="1.2"/><circle cx="10" cy="3" r="1.2"/><circle cx="4" cy="7" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="4" cy="11" r="1.2"/><circle cx="10" cy="11" r="1.2"/></svg>';
+        let dragged = null;
+        for (const item of items) {
+            const node = document.createElement('div');
+            node.className = 'reorder-item';
+            node.draggable = true;
+            node.dataset.id = item.id;
+            node.innerHTML = `<span class="reorder-grip">${grip}</span><span class="reorder-label"></span>`;
+            node.querySelector('.reorder-label').textContent = item.label;
+            node.addEventListener('dragstart', () => { dragged = node; node.classList.add('dragging'); });
+            node.addEventListener('dragend', () => { dragged = null; node.classList.remove('dragging'); });
+            node.addEventListener('dragover', event => {
+                event.preventDefault();
+                if (!dragged || dragged === node) return;
+                const before = event.clientX < node.getBoundingClientRect().left + node.offsetWidth / 2;
+                root.insertBefore(dragged, before ? node : node.nextSibling);
+            });
+            node.addEventListener('drop', event => {
+                event.preventDefault();
+                const order = Array.from(root.children).map(child => child.dataset.id);
+                setTriggerValue('order', order);
+            });
+            root.appendChild(node);
+        }
+    }
+    """,
 )
 
 # 2. Enforce login before rendering anything
@@ -331,6 +387,32 @@ def sync_mom_df_from_items():
     else:
         st.session_state["df"] = pd.DataFrame(columns=["Discussion Points", "Action Plan", "Indicative Delivery Date", "Person-in-charge"])
 
+def ensure_review_item_ids() -> None:
+    """Give each review card a stable identity for drag-to-reorder interactions."""
+    for item in st.session_state["mom_items"]:
+        if not item.get("_review_id"):
+            item["_review_id"] = uuid.uuid4().hex
+
+def apply_review_card_order() -> None:
+    """Persist the order emitted by the sortable review-topic strip."""
+    component_state = st.session_state.get("review_card_sorter", {})
+    ordered_ids = component_state.get("order") if isinstance(component_state, dict) else getattr(component_state, "order", None)
+    if not isinstance(ordered_ids, list) or not ordered_ids:
+        return
+
+    ensure_review_item_ids()
+    selected = [item for item in st.session_state["mom_items"] if item.get("approved", True)]
+    selected_by_id = {item["_review_id"]: item for item in selected}
+    if set(ordered_ids) != set(selected_by_id):
+        return
+
+    st.session_state["mom_items"] = [selected_by_id[item_id] for item_id in ordered_ids] + [
+        item for item in st.session_state["mom_items"] if not item.get("approved", True)
+    ]
+    st.session_state["has_manual_edits"] = True
+    sync_mom_df_from_items()
+    mark_draft_updated("Topic order updated")
+
 def mark_draft_updated(reason: str) -> None:
     """Track the latest in-session draft checkpoint for the guided workflow."""
     now = datetime.datetime.now()
@@ -402,6 +484,7 @@ def load_transcript_into_workflow(
 
 def set_all_mom_items(items: list, mark_manual_edit: bool = False):
     st.session_state["mom_items"] = items
+    ensure_review_item_ids()
     if mark_manual_edit:
         st.session_state["has_manual_edits"] = True
     sync_mom_df_from_items()
@@ -430,7 +513,8 @@ def add_mom_item(topic: str = "New Item", dp: str = "", ap: str = "", dd: str = 
         "person_in_charge": pic,
         "evidence_quote": quote,
         "confidence": conf,
-        "approved": True
+        "approved": True,
+        "_review_id": uuid.uuid4().hex,
     }
     st.session_state["mom_items"].append(new_item)
     st.session_state["has_manual_edits"] = True
@@ -859,8 +943,14 @@ def recording_studio_dialog():
                     e.preventDefault();
                     e.stopPropagation();
                 };
+                w.__rec_studio_escape_guard = function(e) {
+                    if (e.key !== 'Escape') return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                };
                 w.addEventListener('beforeunload', w[key]);
                 w.document.addEventListener('click', w.__rec_studio_navigation_guard, true);
+                w.document.addEventListener('keydown', w.__rec_studio_escape_guard, true);
             })();
             </script>
             """,
@@ -876,8 +966,10 @@ def recording_studio_dialog():
                 if (!w || !w.__rec_studio_guard) return;
                 w.removeEventListener('beforeunload', w.__rec_studio_guard);
                 w.document.removeEventListener('click', w.__rec_studio_navigation_guard, true);
+                w.document.removeEventListener('keydown', w.__rec_studio_escape_guard, true);
                 delete w.__rec_studio_guard;
                 delete w.__rec_studio_navigation_guard;
+                delete w.__rec_studio_escape_guard;
             })();
             </script>
             """,
@@ -1200,66 +1292,78 @@ elif st.session_state["mom_stage"] == "review":
         else:
             st.success("The draft looks export-ready. You can still refine wording, but the key action-tracking fields are complete.")
 
-        with st.expander("Ask Echo", expanded=bool(st.session_state["chat_history"])):
-            st.caption("Ask for a revision, missing action items, or a structured update to the current minutes draft.")
-            quick_prompt = None
-            with st.container(horizontal=True, gap="small", vertical_alignment="center"):
-                if st.button("Find missing actions", icon=":material/fact_check:", key="echo_missing_actions", width="content"):
-                    quick_prompt = "Review the current minutes for missing action items and propose concise updates."
-                if st.button("Tighten wording", icon=":material/edit_note:", key="echo_tighten_wording", width="content"):
-                    quick_prompt = "Improve the wording of the current minutes while preserving their meaning."
-                if st.button("Check ownership", icon=":material/person_search:", key="echo_check_owners", width="content"):
-                    quick_prompt = "Review the current minutes for unclear or missing people in charge."
-
-            for message in st.session_state["chat_history"]:
-                with st.chat_message(message["role"], avatar=":material/smart_toy:" if message["role"] == "assistant" else None):
-                    st.write(message["content"])
-
-            typed_prompt = st.chat_input(
-                "Ask Echo to revise these minutes",
-                key="review_echo_input",
-                submit_mode="disable",
-            )
-            prompt = quick_prompt or typed_prompt
-            if prompt:
-                st.session_state["chat_history"].append({"role": "user", "content": prompt})
-                with st.chat_message("user"):
-                    st.write(prompt)
-                with st.chat_message("assistant", avatar=":material/smart_toy:"):
-                    with st.status(":shimmer[Reviewing the minutes]", type="compact") as status:
-                        answer, action = ask_deepseek_with_mutation(
-                            st.session_state["transcript"],
-                            prompt,
-                            st.session_state["chat_history"],
-                            st.session_state["df"],
-                        )
-                        status.update(label="Review complete", state="complete")
-                    st.write(answer)
-                apply_echo_mutation(action)
-                st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-                st.rerun()
-
         missed = st.session_state.get("recommended_missed_points", []) or []
-        if missed:
-            with st.expander(f"Suggested additional discussion points ({len(missed)})", expanded=False):
-                st.caption("Echo found a few topics that might be worth adding to the draft.")
-                chip_cols = st.columns(min(len(missed), 3))
-                for c_idx, rec in enumerate(missed):
-                    col_target = chip_cols[c_idx % len(chip_cols)]
-                    rec_title = rec.get("topic_title", "Unassigned Topic")
-                    rec_quote = rec.get("evidence_quote", "")
-                    with col_target:
+        missed_col, echo_col = st.columns(2, gap="medium")
+        with missed_col:
+            with st.container(border=True):
+                st.markdown("# Missed topics")
+                if not missed:
+                    st.caption("Echo has no additional topics to suggest.")
+                else:
+                    st.caption("Potential discussion points that are not yet in the minutes.")
+                    for c_idx, rec in enumerate(missed):
+                        rec_title = rec.get("topic_title", "Unassigned Topic")
+                        rec_quote = rec.get("evidence_quote", "")
                         st.markdown(f"**{rec_title}**")
                         if rec_quote:
                             st.caption(rec_quote[:180] + ("..." if len(rec_quote) > 180 else ""))
-                        if st.button(f"Add topic", key=f"chip_add_{c_idx}", use_container_width=True):
+                        if st.button("Add topic", icon=":material/add:", key=f"chip_add_{c_idx}", width="content"):
                             add_mom_item(topic=rec_title, dp=f"Discussion regarding {rec_title}.", ap="TBD", dd="TBD", pic="Unassigned", quote=rec_quote)
                             st.session_state["recommended_missed_points"].pop(c_idx)
                             st.rerun()
 
+        with echo_col:
+            with st.container(border=True):
+                st.markdown("# Ask Echo")
+                st.caption("Revise the draft, identify missing actions, or update a specific topic.")
+                quick_prompt = None
+                with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+                    if st.button("Find missing actions", icon=":material/fact_check:", key="echo_missing_actions", width="content"):
+                        quick_prompt = "Review the current minutes for missing action items and propose concise updates."
+                    if st.button("Tighten wording", icon=":material/edit_note:", key="echo_tighten_wording", width="content"):
+                        quick_prompt = "Improve the wording of the current minutes while preserving their meaning."
+                    if st.button("Check responsibility", icon=":material/person_search:", key="echo_check_owners", width="content"):
+                        quick_prompt = "Review the current minutes for unclear or missing people in charge."
+
+                for message in st.session_state["chat_history"]:
+                    with st.chat_message(message["role"], avatar=":material/smart_toy:" if message["role"] == "assistant" else None):
+                        st.write(message["content"])
+
+                typed_prompt = st.chat_input(
+                    "Ask Echo to revise these minutes",
+                    key="review_echo_input",
+                    submit_mode="disable",
+                )
+                prompt = quick_prompt or typed_prompt
+                if prompt:
+                    st.session_state["chat_history"].append({"role": "user", "content": prompt})
+                    with st.chat_message("user"):
+                        st.write(prompt)
+                    with st.chat_message("assistant", avatar=":material/smart_toy:"):
+                        with st.status(":shimmer[Reviewing the minutes]", type="compact") as status:
+                            answer, action = ask_deepseek_with_mutation(
+                                st.session_state["transcript"],
+                                prompt,
+                                st.session_state["chat_history"],
+                                st.session_state["df"],
+                            )
+                            status.update(label="Review complete", state="complete")
+                        st.write(answer)
+                    apply_echo_mutation(action)
+                    st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+                    st.rerun()
+
         all_attendees = st.session_state["meeting_selected_crd"] + [x.strip() for x in st.session_state["meeting_ext_attendees"].split(",") if x.strip()]
+        ensure_review_item_ids()
         selected_items = [it for it in st.session_state["mom_items"] if it.get("approved", True)]
         unselected_items = [it for it in st.session_state["mom_items"] if not it.get("approved", True)]
+        if len(selected_items) > 1:
+            st.caption("Drag a topic to rearrange the review cards.")
+            _REVIEW_CARD_SORTER(
+                key="review_card_sorter",
+                data={"items": [{"id": item["_review_id"], "label": item.get("topic_title", "Untitled topic")} for item in selected_items]},
+                on_order_change=apply_review_card_order,
+            )
         if not selected_items:
             st.info("No selected topics yet. Generate minutes from the top action to build the first draft.")
         else:
@@ -1268,15 +1372,16 @@ elif st.session_state["mom_stage"] == "review":
                     continue
                 with st.container(border=True):
                     # Row one keeps evidence and the only destructive action together.
-                    head_c1, head_c2 = st.columns([9.5, 0.5])
+                    head_c1, head_c2 = st.columns([9, 1])
                     with head_c1:
                         st.markdown(f'<span class="playfair-label">{item.get("topic_title", f"Point {idx+1}")}</span>', unsafe_allow_html=True)
                         eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
                         st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
                     with head_c2:
-                        if st.button("Unselect", icon=":material/remove_circle_outline:", key=f"unselect_{idx}", help="Move this topic to Unselected Topics", width="content"):
-                            update_mom_item(idx, "approved", False)
-                            st.rerun()
+                        with st.container(horizontal_alignment="center"):
+                            if st.button(" ", icon=":material/close:", key=f"unselect_{idx}", help="Move this topic to Unselected Topics", width="content"):
+                                update_mom_item(idx, "approved", False)
+                                st.rerun()
 
                     # Row two is a compact, aligned editing row.
                     body_c1, body_c2, body_c3, body_c4, body_c5 = st.columns([1.6, 2.7, 2.7, 1.5, 1.5])
