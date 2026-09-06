@@ -1809,9 +1809,9 @@ if st.session_state["transcript"]:
         st.caption("Review and edit discussion items below. Each card includes source evidence and inline fields. Approve items, then export.")
         
         # Action bar
-        action_bar1, action_bar2, action_bar3 = st.columns([3, 3, 4])
+        action_bar1, action_bar2, action_bar3 = st.columns(3)
         with action_bar1:
-            if st.button("Re-discover Topics", key="btn_rediscover_topics"):
+            if st.button("Discover Topics", key="btn_rediscover_topics", use_container_width=True):
                 with st.spinner("Re-scanning transcript for topics..."):
                     sugg = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
                     st.session_state["user_topics_text"] = sugg
@@ -1819,7 +1819,7 @@ if st.session_state["transcript"]:
                     st.session_state["_topics_discovered"] = False
                     st.rerun()
         with action_bar2:
-            if st.button("Re-match Evidence", key="btn_rematch_evidence"):
+            if st.button("Match Evidence", key="btn_rematch_evidence", use_container_width=True):
                 with st.spinner("Re-matching evidence with current topics..."):
                     items, other_disc = match_evidence_and_synthesize(
                         st.session_state["transcript"],
@@ -1835,7 +1835,7 @@ if st.session_state["transcript"]:
                     else:
                         st.warning("Could not match evidence. Check transcript contents.")
         with action_bar3:
-            if st.button("+ Add Item Manually", key="btn_add_review_item"):
+            if st.button("+ Add Item", key="btn_add_review_item", use_container_width=True):
                 st.session_state["matched_evidence_items"].append({
                     "topic_title": "New Item",
                     "discussion_point": "",
@@ -1901,7 +1901,7 @@ if st.session_state["transcript"]:
             for idx, item in enumerate(st.session_state["matched_evidence_items"]):
                 with st.container(border=True):
                     # Header row
-                    h_col1, h_col2, h_col3 = st.columns([6, 2.5, 2.5])
+                    h_col1, h_col2, h_col3 = st.columns([4, 1.5, 1])
                     with h_col1:
                         topic_title = st.text_input(
                             "Topic",
@@ -2032,34 +2032,40 @@ if st.session_state["transcript"]:
             )
             
             # Export buttons
-            exp_row1, exp_row2, exp_row3, exp_row4 = st.columns([2.5, 2.5, 1.5, 3.5])
+            exp_row1, exp_row2, exp_row3, exp_row4 = st.columns(4)
             if "Template 1" in template_selection:
                 with exp_row1:
                     doc_bio = export_to_word_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                    st.download_button(label="Download DOCX", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_1")
+                    st.download_button(label="DOCX", data=doc_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_1", use_container_width=True)
                 with exp_row2:
                     pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                    st.download_button(label="Download PDF", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_1")
+                    st.download_button(label="PDF", data=pdf_bio, file_name=f"MOM_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_1", use_container_width=True)
             else:
                 with exp_row1:
                     doc_bio = export_to_word_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                    st.download_button(label="Download DOCX", data=doc_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_2")
+                    st.download_button(label="DOCX", data=doc_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", key="btn_download_docx_2", use_container_width=True)
                 with exp_row2:
                     pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details, st.session_state["other_discussions"])
-                    st.download_button(label="Download PDF", data=pdf_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_2")
+                    st.download_button(label="PDF", data=pdf_bio, file_name=f"MOM_Detailed_{client_name.replace(' ', '_') if client_name else 'Report'}.pdf", mime="application/pdf", key="btn_download_pdf_2", use_container_width=True)
             
             with exp_row3:
-                if st.button("Save to Archive", key="btn_save_supabase_bottom"):
+                if st.button("Save", key="btn_save_supabase_bottom", use_container_width=True):
                     success, msg = save_meeting_to_supabase(meeting_details, st.session_state["df"], st.session_state["other_discussions"], st.session_state["transcript"])
                     if success: st.success(msg)
                     else: st.error(f"Save failed: {msg}")
             
             with exp_row4:
-                target_webhook = st.text_input("Webhook URL", value=SLACK_WEBHOOK_URL, placeholder="https://hooks.slack.com/services/...", label_visibility="collapsed")
-                if st.button("Sync to Webhook", key="btn_sync_webhook"):
-                    ok, msg = dispatch_action_items_webhook(target_webhook, st.session_state["df"], meeting_details)
-                    if ok: st.success(msg)
-                    else: st.error(msg)
+                if "_webhook_expanded" not in st.session_state:
+                    st.session_state["_webhook_expanded"] = False
+                if st.button("Sync", key="btn_toggle_webhook", use_container_width=True):
+                    st.session_state["_webhook_expanded"] = not st.session_state["_webhook_expanded"]
+                    st.rerun()
+                if st.session_state["_webhook_expanded"]:
+                    target_webhook = st.text_input("Webhook URL", value=SLACK_WEBHOOK_URL, placeholder="https://hooks.slack.com/services/...", label_visibility="collapsed")
+                    if st.button("Send", key="btn_sync_webhook", use_container_width=True):
+                        ok, msg = dispatch_action_items_webhook(target_webhook, st.session_state["df"], meeting_details)
+                        if ok: st.success(msg)
+                        else: st.error(msg)
 
 # =====================================================================
 # Ask Echo Floating Chat (bottom of page — FAB scrolls here)
