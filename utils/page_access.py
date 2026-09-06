@@ -122,9 +122,15 @@ def set_user_page_access(user_id: Any, page_keys: Iterable[str], updated_by: Any
     if updated_by:
         payload["updated_by"] = str(updated_by)
     try:
-        response = get_supabase().table(PAGE_ACCESS_TABLE).upsert(payload, on_conflict="user_id").execute()
+        table = get_supabase().table(PAGE_ACCESS_TABLE)
+        try:
+            table.upsert(payload, on_conflict="user_id").execute()
+        except Exception:
+            # Older policy tables may not include the optional audit column.
+            payload.pop("updated_by", None)
+            table.upsert(payload, on_conflict="user_id").execute()
         if str(user_id) == str((get_current_user() or {}).get("id") or ""):
             clear_current_page_access()
-        return bool(response.data is not None)
+        return True
     except Exception:
         return False
