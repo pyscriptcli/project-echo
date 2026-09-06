@@ -1231,9 +1231,9 @@ elif st.session_state["mom_stage"] == "review":
             st.success("The draft looks export-ready. You can still refine wording, but the key action-tracking fields are complete.")
 
         missed = st.session_state.get("recommended_missed_points", []) or []
-        missed_col, echo_col = st.columns(2, gap="medium")
-        with missed_col:
-            with st.container(border=True):
+        with st.expander("Review assistance", expanded=False):
+            missed_col, echo_col = st.columns(2, gap="medium")
+            with missed_col:
                 st.markdown('<span class="playfair-label">Missed topics</span>', unsafe_allow_html=True)
                 if not missed:
                     st.caption("Echo has no additional topics to suggest.")
@@ -1250,8 +1250,7 @@ elif st.session_state["mom_stage"] == "review":
                             st.session_state["recommended_missed_points"].pop(c_idx)
                             st.rerun()
 
-        with echo_col:
-            with st.container(border=True):
+            with echo_col:
                 st.markdown('<span class="playfair-label">Ask Echo</span>', unsafe_allow_html=True)
                 st.caption("Revise the draft, identify missing actions, or update a specific topic.")
                 quick_prompt = None
@@ -1313,7 +1312,7 @@ elif st.session_state["mom_stage"] == "review":
                         eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
                         st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
                     with head_c2:
-                        with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+                        with st.container(horizontal=True, horizontal_alignment="center", gap="small"):
                             if st.button(" ", icon=":material/keyboard_arrow_up:", key=f"move_up_{idx}", help="Move topic up", width="content", disabled=selected_position == 0):
                                 move_review_item(idx, -1)
                                 st.rerun()
