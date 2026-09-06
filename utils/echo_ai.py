@@ -202,28 +202,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
     background: transparent !important;
 }
 
-/* ---- Container Scope & Layout ---- */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
-    background-color: #ffffff !important;
-    border: 1px solid rgba(0,51,102,0.12) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0,51,102,0.04) !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    max-width: 1160px !important;
-    margin: 0 auto !important;
-    height: calc(100vh - 78px) !important;
-    max-height: calc(100vh - 78px) !important;
-}
-
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    padding: 0.55rem 0.9rem 0.4rem !important;
-    gap: 0 !important;
-    box-sizing: border-box !important;
+/* ---- Full-Page Chat Layout (No outer card restriction) ---- */
+.echo-fullpage-scope {
+    width: 100% !important;
 }
 
 /* ---- Top Executive Command Bar ---- */
@@ -260,47 +241,36 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     flex-direction: column;
 }
 
-.echo-brand-eyebrow {
+.echo-brand-header-line {
     display: flex;
     align-items: center;
-    gap: 6px;
-}
-
-.echo-pulse-live {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #22c55e;
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
-}
-
-.echo-eyebrow-text {
-    font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.60rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.12em !important;
-    text-transform: uppercase !important;
-    color: #003366 !important;
-}
-
-.echo-tag-ready {
-    font-family: 'Montserrat', sans-serif !important;
-    font-size: 0.52rem !important;
-    font-weight: 600 !important;
-    color: #15803d;
-    background: #dcfce7;
-    border-radius: 4px;
-    padding: 0px 4px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .echo-brand-title {
     font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
-    font-size: 1.55rem !important;
+    font-size: 1.7rem !important;
     font-weight: 600 !important;
     color: #003366 !important;
     margin: 0 !important;
-    line-height: 1.05 !important;
+    line-height: 1.1 !important;
+}
+
+.echo-tag-intelligence {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: #003366 !important;
+    background: rgba(0, 51, 102, 0.08) !important;
+    border: 1px solid rgba(0, 51, 102, 0.18) !important;
+    border-radius: 4px !important;
+    padding: 2px 7px !important;
+    line-height: 1 !important;
+    display: inline-block !important;
 }
 
 .echo-status-chips {
@@ -373,15 +343,17 @@ div[data-testid="stHorizontalBlock"]:has(.echo-top-panel) div[data-testid="stBut
 /* ---- Scroll Area for Messages ---- */
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-chat-scroll-scope) {
     background: #ffffff !important;
-    border: 1px solid rgba(0, 51, 102, 0.08) !important;
+    border: 1px solid rgba(0, 51, 102, 0.12) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
-    padding: 0.75rem 0.9rem !important;
-    flex: 1 1 auto !important;
-    height: 100% !important;
+    padding: 0.85rem 1.1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100vh - 175px) !important;
+    max-height: calc(100vh - 175px) !important;
 }
 
 /* ---- Hero Welcome State ---- */
@@ -1275,10 +1247,10 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
     if "echo_agent_mode" not in st.session_state:
         st.session_state["echo_agent_mode"] = False
 
-    safe_scroll_height = max(380, int(height) - 170) if height else 480
+    safe_scroll_height = max(450, int(height) - 130) if height else 580
 
-    with target.container(border=True):
-        st.markdown('<div class="echo-main-card-scope"></div>', unsafe_allow_html=True)
+    with target.container():
+        st.markdown('<div class="echo-fullpage-scope"></div>', unsafe_allow_html=True)
 
         # 1. Executive Top Command Bar
         h_left, h_right = st.columns([0.60, 0.40], gap="small", vertical_alignment="center")
@@ -1293,12 +1265,10 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 f'<div class="echo-brand-block">'
                 f'<div class="echo-brand-icon">{SVG_ECHO_LOGO}</div>'
                 f'<div class="echo-brand-text">'
-                f'<div class="echo-brand-eyebrow">'
-                f'<span class="echo-pulse-live"></span>'
-                f'<span class="echo-eyebrow-text">OPERATIONAL INTELLIGENCE</span>'
-                f'<span class="echo-tag-ready">ONLINE</span>'
-                f'</div>'
+                f'<div class="echo-brand-header-line">'
                 f'<h1 class="echo-brand-title">{title}</h1>'
+                f'<span class="echo-tag-intelligence">OPERATIONAL INTELLIGENCE</span>'
+                f'</div>'
                 f'<div class="echo-status-chips">'
                 f'<span class="echo-chip {arch_status}">{SVG_ARCHIVE_ICON} Archives</span>'
                 f'<span class="echo-chip {kb_status}">{SVG_BRAIN_ICON} Knowledge</span>'
@@ -1389,7 +1359,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 st.markdown(
                     f'<div class="echo-hero-card">'
                     f'<div class="echo-hero-crest-box">{SVG_ECHO_HERO_BADGE}</div>'
-                    f'<h2 class="echo-hero-title">Prime Philippines Operational Assistant</h2>'
+                    f'<h2 class="echo-hero-title">Echo AI Assistant</h2>'
                     f'<p class="echo-hero-desc">'
                     f'Specialized executive AI grounded in corporate meeting records, team deliverables, and verified knowledge base assets.'
                     f'</p>'
@@ -1537,7 +1507,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
 
         with input_col:
             st.markdown('<div class="echo-input-col-target">', unsafe_allow_html=True)
-            active_prompt = st.chat_input("Message Echo or ask anything about Prime meetings, tasks, and operations...")
+            active_prompt = st.chat_input("Ask Echo...")
             st.markdown('</div>', unsafe_allow_html=True)
 
         with attach_col:
@@ -1554,10 +1524,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                 )
             st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown(
-            '<div class="echo-sub-disclaimer">Echo Intelligence · Operational records grounded in PRIME Philippines Supabase archives.</div>',
-            unsafe_allow_html=True
-        )
+
 
         # Check for injected prompt from suggestion chips
         injected_prompt = st.session_state.pop("echo_injected_prompt", None)
