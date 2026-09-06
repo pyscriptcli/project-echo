@@ -1225,60 +1225,7 @@ if isinstance(_dash_range, (tuple, list)) and len(_dash_range) == 2:
         st.rerun()
 
 # ------------------------------------------------------------
-# 1. QUICK ACTIONS
-# ------------------------------------------------------------
-render_section_header("Quick actions", "Direct access to primary operational workflows.")
-
-qa_c1, qa_c2, qa_c3, qa_c4 = st.columns(4, gap="medium")
-
-with qa_c1:
-    with st.container(border=True):
-        st.markdown("""
-            <div class="qa-badge-row">
-                <span class="qa-card-badge">MOM Studio</span>
-            </div>
-            <div class="qa-card-title">Generate Meeting Minutes</div>
-            <p class="qa-card-desc">Transcribe live audio or paste notes to automatically extract topics and generate structured minutes.</p>
-        """, unsafe_allow_html=True)
-        st.page_link("pages/1_minutes_of_the_meeting.py", label="Generate Minutes", icon=":material/mic:", use_container_width=True)
-
-with qa_c2:
-    with st.container(border=True):
-        st.markdown("""
-            <div class="qa-badge-row">
-                <span class="qa-card-badge">Daily Routine</span>
-            </div>
-            <div class="qa-card-title">Add Daily Log</div>
-            <p class="qa-card-desc">Record your daily client engagements, administrative tasks, adhoc work, and meeting recaps.</p>
-        """, unsafe_allow_html=True)
-        st.page_link("pages/6_notebook.py", label="Add Daily Log", icon=":material/edit_note:", use_container_width=True)
-
-with qa_c3:
-    with st.container(border=True):
-        st.markdown("""
-            <div class="qa-badge-row">
-                <span class="qa-card-badge">AI Assistant</span>
-            </div>
-            <div class="qa-card-title">Ask Echo</div>
-            <p class="qa-card-desc">Search across approved meeting transcripts, corporate knowledge base, and client intelligence.</p>
-        """, unsafe_allow_html=True)
-        st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
-
-with qa_c4:
-    with st.container(border=True):
-        st.markdown("""
-            <div class="qa-badge-row">
-                <span class="qa-card-badge">Templates & Maps</span>
-            </div>
-            <div class="qa-card-title">Draft a Document</div>
-            <p class="qa-card-desc">Generate branded client presentations, pitch decks, and static property maps from approved templates.</p>
-        """, unsafe_allow_html=True)
-        st.page_link("pages/8_documents.py", label="Draft Document", icon=":material/description:", use_container_width=True)
-
-st.markdown("<div style='margin-bottom: 0.75rem;'></div>", unsafe_allow_html=True)
-
-# ------------------------------------------------------------
-# 2. MEETING OVERVIEW & RECENT MEETINGS (2 COLUMNS IN SAME ROW)
+# 1. MEETING OVERVIEW & RECENT MEETINGS (2 COLUMNS IN SAME ROW)
 # ------------------------------------------------------------
 col_overview, col_recent = st.columns([1, 1.25], gap="large")
 
@@ -1333,14 +1280,14 @@ with col_overview:
     """, unsafe_allow_html=True)
 
 with col_recent:
-    render_section_header("Recent meetings", "Top 3 latest meeting records with executive summaries.")
+    render_section_header("Recent meetings", "Top 2 latest meeting records with executive summaries.")
 
-    top_3_meetings = (filtered_records if filtered_records else supabase_records)[:3]
+    top_2_meetings = (filtered_records if filtered_records else supabase_records)[:2]
 
-    if not top_3_meetings:
+    if not top_2_meetings:
         render_empty_state("No meeting records found for this period.")
     else:
-        for meeting in top_3_meetings:
+        for meeting in top_2_meetings:
             with st.container(border=True):
                 client_name = meeting.get("client_name") or meeting.get("location") or meeting.get("meeting_id") or "Meeting Record"
                 meeting_id = meeting.get("meeting_id", "")
@@ -1376,3 +1323,56 @@ with col_recent:
                     <div class="tm-summary" style="min-height: auto; margin-bottom: 0.5rem;">{html.escape(summary_snippet)}</div>
                 """, unsafe_allow_html=True)
                 st.page_link("pages/2_meeting_details.py", label="Open Meeting Record", icon=":material/visibility:", use_container_width=True)
+
+st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
+
+# ------------------------------------------------------------
+# 2. QUICK ACTIONS
+# ------------------------------------------------------------
+render_section_header("Quick actions", "Direct access to primary operational workflows.")
+
+qa_c1, qa_c2, qa_c3, qa_c4 = st.columns(4, gap="medium")
+
+with qa_c1:
+    with st.container(border=True):
+        st.markdown("""
+            <div class="qa-badge-row">
+                <span class="qa-card-badge">MOM Studio</span>
+            </div>
+            <div class="qa-card-title">Generate Meeting Minutes</div>
+            <p class="qa-card-desc">Transcribe live audio or paste notes to automatically extract topics and generate structured minutes.</p>
+        """, unsafe_allow_html=True)
+        st.page_link("pages/1_minutes_of_the_meeting.py", label="Generate Minutes", icon=":material/mic:", use_container_width=True)
+
+with qa_c2:
+    with st.container(border=True):
+        st.markdown("""
+            <div class="qa-badge-row">
+                <span class="qa-card-badge">Daily Routine</span>
+            </div>
+            <div class="qa-card-title">Add Daily Log</div>
+            <p class="qa-card-desc">Record your daily client engagements, administrative tasks, adhoc work, and meeting recaps.</p>
+        """, unsafe_allow_html=True)
+        st.page_link("pages/6_notebook.py", label="Add Daily Log", icon=":material/edit_note:", use_container_width=True)
+
+with qa_c3:
+    with st.container(border=True):
+        st.markdown("""
+            <div class="qa-badge-row">
+                <span class="qa-card-badge">AI Assistant</span>
+            </div>
+            <div class="qa-card-title">Ask Echo</div>
+            <p class="qa-card-desc">Search across approved meeting transcripts, corporate knowledge base, and client intelligence.</p>
+        """, unsafe_allow_html=True)
+        st.page_link("pages/3_echo_ai.py", label="Ask Echo", icon=":material/smart_toy:", use_container_width=True)
+
+with qa_c4:
+    with st.container(border=True):
+        st.markdown("""
+            <div class="qa-badge-row">
+                <span class="qa-card-badge">Templates & Maps</span>
+            </div>
+            <div class="qa-card-title">Draft a Document</div>
+            <p class="qa-card-desc">Generate branded client presentations, pitch decks, and static property maps from approved templates.</p>
+        """, unsafe_allow_html=True)
+        st.page_link("pages/8_documents.py", label="Draft Document", icon=":material/description:", use_container_width=True)
