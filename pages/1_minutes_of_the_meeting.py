@@ -157,6 +157,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] { background-color: #ffffff !imp
     margin-top: 0.3rem;
     border-radius: 0 4px 4px 0;
 }
+
+/* Tighter column gap for button rows and inline controls */
+div[data-testid="stHorizontalBlock"] {
+    gap: 0.5rem !important;
+}
 </style>
 """
 
