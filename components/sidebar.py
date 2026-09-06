@@ -27,18 +27,51 @@ SIDEBAR_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Montserrat:wght@400;500;600;700&display=swap');
 
-/* ---------------- Hide app chrome (header kept alive, zero-height) ---------------- */
+/* ---------------- Small & minimal global app header ---------------- */
+header.stAppHeader,
 header[data-testid="stHeader"],
+.stAppHeader,
+.st-emotion-cache-3xaguc,
+.e1yxiy6j1,
 .stApp > header {
     background: transparent !important;
-    height: 0 !important;
-    padding: 0 !important;
+    background-color: transparent !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 32px !important;
+    padding: 0 0.75rem !important;
     border: none !important;
     box-shadow: none !important;
     overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    z-index: 99 !important;
 }
+
+header.stAppHeader *,
+.stAppHeader *,
+.st-emotion-cache-3xaguc *,
+.e1yxiy6j1 * {
+    background-color: transparent !important;
+}
+
+header.stAppHeader button,
+.stAppHeader button,
+.st-emotion-cache-3xaguc button,
+.e1yxiy6j1 button {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    padding: 0 4px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #003366 !important;
+    box-shadow: none !important;
+}
+
 [data-testid="stDecoration"],
-[data-testid="stStatusWidget"],
+.stDecoration,
 [data-testid="stMainMenu"],
 [data-testid="stToolbar"],
 #MainMenu,
@@ -46,6 +79,12 @@ footer {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
+}
+
+[data-testid="stStatusWidget"],
+.stStatusWidget {
+    transform: scale(0.75) !important;
+    transform-origin: right center !important;
 }
 
 /* Hide Streamlit's auto-generated page list */

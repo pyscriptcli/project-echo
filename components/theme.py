@@ -86,6 +86,66 @@ def inject_global_css() -> None:
         '@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&family=Bebas+Neue&display=swap");\n'
         + tokens_css()
         + """
+/* ---- Small & Minimal Streamlit Global App Header ---- */
+header.stAppHeader,
+header[data-testid="stHeader"],
+.stAppHeader,
+.st-emotion-cache-3xaguc,
+.e1yxiy6j1,
+.stApp > header {
+    background: transparent !important;
+    background-color: transparent !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 32px !important;
+    padding: 0 0.75rem !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+    z-index: 99 !important;
+}
+
+header.stAppHeader *,
+.stAppHeader *,
+.st-emotion-cache-3xaguc *,
+.e1yxiy6j1 * {
+    background-color: transparent !important;
+}
+
+header.stAppHeader button,
+.stAppHeader button,
+.st-emotion-cache-3xaguc button,
+.e1yxiy6j1 button {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    padding: 0 4px !important;
+    border: none !important;
+    background: transparent !important;
+    color: var(--echo-ink) !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stDecoration"],
+.stDecoration,
+[data-testid="stMainMenu"],
+[data-testid="stToolbar"],
+#MainMenu,
+footer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+}
+
+[data-testid="stStatusWidget"],
+.stStatusWidget {
+    transform: scale(0.75) !important;
+    transform-origin: right center !important;
+}
+
 /* ---- Canvas: primephilippines cream ---- */
 html, body, [data-testid="stAppViewContainer"], .stApp {
     background-color: var(--echo-canvas) !important;
