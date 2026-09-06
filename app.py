@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
 from components.theme import render_page_header, render_section_header
-from utils.auth import init_supabase, require_login, get_all_users
-from utils.notebook_db import fetch_all_daily_logs
+from utils.auth import init_supabase, require_login
 
 st.set_page_config(
     page_title="Project Echo - Dashboard",
@@ -68,7 +67,6 @@ footer {
 }
 
 [data-testid="stHorizontalBlock"] {
-    align-items: flex-start !important; 
     gap: 1rem !important;
 }
 
@@ -108,6 +106,75 @@ footer {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.65rem;
 }
+.kpi-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+.overview-ratio-card {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(0, 51, 102, 0.12);
+    margin-top: 0.75rem;
+}
+.overview-ratio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.45rem;
+}
+.overview-ratio-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #69727d;
+}
+.overview-ratio-pct {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #003366;
+}
+.overview-bar-track {
+    display: flex;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(0, 51, 102, 0.08);
+    overflow: hidden;
+    margin-bottom: 0.55rem;
+}
+.overview-bar-fill {
+    height: 100%;
+}
+.overview-bar-fill.internal {
+    background: #003366;
+}
+.overview-bar-fill.external {
+    background: #c9ab4c;
+}
+.overview-ratio-legend {
+    display: flex;
+    gap: 1rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.68rem;
+    color: #69727d;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.legend-dot.navy { background: #003366; }
+.legend-dot.gold { background: #c9ab4c; }
 .kpi-card {
     background: #ffffff;
     border-radius: 6px;
@@ -269,9 +336,15 @@ footer {
     border-color: #d9bc5d !important;
     color: #ffffff !important;
 }
+[data-testid="stMain"] [data-testid="stPageLink"] a *,
+.main [data-testid="stPageLink"] a *,
 [data-testid="stMain"] [data-testid="stPageLink"] a p,
-.main [data-testid="stPageLink"] a p {
-    color: inherit !important;
+.main [data-testid="stPageLink"] a p,
+[data-testid="stMain"] [data-testid="stPageLink"] a span,
+.main [data-testid="stPageLink"] a span {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     font-weight: 600 !important;
     font-size: 0.72rem !important;
     margin: 0 !important;
@@ -425,7 +498,11 @@ div[data-testid="stPopover"] > button {
     height: 32px !important;
 }
 .stButton > button,
-[data-testid="stDownloadButton"] > button {
+[data-testid="stButton"] > button,
+[data-testid="stDownloadButton"] > button,
+.stDownloadButton > button,
+.stFormSubmitButton > button,
+[data-testid="stFormSubmitButton"] > button {
     background-color: #0c0c0e !important;
     color: #ffffff !important;
     border: 1px solid #c9ab4c !important;
@@ -437,12 +514,69 @@ div[data-testid="stPopover"] > button {
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
+
+/* Ensure deep charcoal buttons have pure white text and icons across all states and nested tags */
+.stButton > button,
+.stButton > button *,
+[data-testid="stButton"] > button,
+[data-testid="stButton"] > button *,
+.stDownloadButton > button,
+.stDownloadButton > button *,
+[data-testid="stDownloadButton"] > button,
+[data-testid="stDownloadButton"] > button *,
+.stFormSubmitButton > button,
+.stFormSubmitButton > button *,
+[data-testid="stFormSubmitButton"] > button,
+[data-testid="stFormSubmitButton"] > button *,
+div[data-testid="stPopover"] > button,
+div[data-testid="stPopover"] > button * {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
 .stButton > button:hover,
+.stButton > button:hover *,
+[data-testid="stButton"] > button:hover,
+[data-testid="stButton"] > button:hover *,
+.stDownloadButton > button:hover,
+.stDownloadButton > button:hover *,
 [data-testid="stDownloadButton"] > button:hover,
-div[data-testid="stPopover"] > button:hover {
+[data-testid="stDownloadButton"] > button:hover *,
+div[data-testid="stPopover"] > button:hover,
+div[data-testid="stPopover"] > button:hover * {
     background-color: #003366 !important;
     border-color: #d9bc5d !important;
     color: #ffffff !important;
+    fill: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Header date picker inline alignment */
+[data-testid="stDateInput"] {
+    margin-bottom: 0.85rem !important;
+}
+[data-testid="stDateInput"] > div > div {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 51, 102, 0.2) !important;
+    border-radius: 6px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    color: #003366 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    min-height: 38px !important;
+    height: 38px !important;
+}
+[data-testid="stDateInput"] input {
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #003366 !important;
+}
+.header-border-ext {
+    border-bottom: 1px solid rgba(0, 51, 102, 0.15);
+    margin-bottom: 1rem;
 }
 
 /* ===== tasks.py Calendar Styles ===== */
@@ -1049,81 +1183,9 @@ for m in supabase_records:
         pass
 
 # ------------------------------------------------------------
-# BUILD CALENDAR EVENTS
+# BUILD CALENDAR EVENTS & HELPERS
 # ------------------------------------------------------------
 all_events = build_calendar_events()
-
-# ------------------------------------------------------------
-# TEAM + PERSONAL STATS (dashboard)
-# ------------------------------------------------------------
-style_ink = "#003366"
-style_gold = "#c9ab4c"
-style_muted = "#69727d"
-
-# Task status buckets
-status_labels = {"todo": "To Do", "in_progress": "In Progress", "done": "Done"}
-task_status = {"todo": 0, "in_progress": 0, "done": 0}
-task_overdue = 0
-for t in tasks:
-    s = t.get("status", "todo")
-    task_status[s] = task_status.get(s, 0) + 1
-    d = parse_calendar_date(t.get("due_date"))
-    if d and d < today and s != "done":
-        task_overdue += 1
-task_open = task_status["todo"] + task_status["in_progress"]
-task_total = len(tasks)
-
-# Meetings-over-time: count per month (team scope = range)
-meet_by_month = {}
-for m in filtered_records:
-    md = str(m.get("meeting_date", ""))[:10]
-    try:
-        pm = datetime.datetime.strptime(md, "%Y-%m-%d").date()
-    except ValueError:
-        continue
-    key = pm.strftime("%Y-%m")
-    meet_by_month[key] = meet_by_month.get(key, 0) + 1
-
-# Daily-log activity (team, date-scoped)
-dlog_rows = fetch_all_daily_logs(st.session_state["start_date"], st.session_state["end_date"])
-cat_keys = ["client", "admin", "adhoc", "meeting"]
-team_days_logged = len(dlog_rows)
-
-# Per-user stats: union of task assignees (display names) + admin usernames
-_user_rows = get_all_users()
-user_id_to_name = {str(u.get("id")): str(u.get("username") or "").strip() for u in _user_rows}
-display_set = set([name.strip() for name in SPECIFIC_PEOPLE if name.strip()])
-username_set = set(v for k, v in user_id_to_name.items() if v)
-all_members = sorted(display_set | username_set, key=lambda n: n.lower())
-
-def _member_name_in_assignee(member, assignee_str):
-    if not assignee_str:
-        return False
-    return member.lower() in str(assignee_str).lower()
-
-person_stats = {}
-for member in all_members:
-    person_stats[member] = {
-        "tasks_open": 0, "tasks_done": 0, "tasks_overdue": 0,
-        "days_logged": 0, "cat_chars": {k: 0 for k in cat_keys},
-    }
-    for t in tasks:
-        if _member_name_in_assignee(member, t.get("assignee")):
-            s = t.get("status", "todo")
-            if s == "done":
-                person_stats[member]["tasks_done"] += 1
-            else:
-                person_stats[member]["tasks_open"] += 1
-                dd = parse_calendar_date(t.get("due_date"))
-                if dd and dd < today:
-                    person_stats[member]["tasks_overdue"] += 1
-    # daily logs for this member: match uuid -> username -> member
-    member_ids = [uid for uid, nm in user_id_to_name.items() if nm == member]
-    for r in dlog_rows:
-        if str(r.get("user_id")) in member_ids:
-            person_stats[member]["days_logged"] += 1
-            for k in cat_keys:
-                person_stats[member]["cat_chars"][k] += len(str(r.get(k) or ""))
 
 def get_meeting_items(meeting):
     table_items = meeting.get("table_items") or []
@@ -1133,115 +1195,28 @@ def get_meeting_items(meeting):
     details = raw.get("meeting_details", {}) if isinstance(raw, dict) else {}
     return details.get("action_items") or []
 
-def get_item_action(item):
-    return (
-        item.get("Action Plan")
-        or item.get("Discussion Points")
-        or item.get("task")
-        or item.get("topic")
-        or item.get("action")
-        or ""
-    )
-
-def get_item_due_date(item):
-    return parse_calendar_date(
-        item.get("Indicative Delivery Date") or item.get("delivery_date") or item.get("due_date")
-    )
-
-def render_dashboard_card(tag, title, meta, body="", tag_class=""):
-    safe_body = html.escape(str(body or ""))
-    st.markdown(
-        f"""
-        <div class="dash-card">
-            <span class="attention-tag {tag_class}">{html.escape(str(tag))}</span>
-            <p class="dash-card-title">{html.escape(str(title or "Untitled"))}</p>
-            <p class="dash-card-meta">{html.escape(str(meta or ""))}</p>
-            {f'<p class="dash-card-body">{safe_body}</p>' if safe_body else ''}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
 def render_empty_state(message):
     st.markdown(f'<div class="empty-state">{html.escape(message)}</div>', unsafe_allow_html=True)
 
-def render_activity_row(label, count, total, kind=""):
-    pct = 0 if total <= 0 else min(100, int((count / total) * 100))
-    st.markdown(
-        f"""
-        <div class="activity-row">
-            <span>{html.escape(str(label))}</span>
-            <span class="activity-track"><span class="activity-fill {kind}" style="width:{pct}%;"></span></span>
-            <strong>{count}</strong>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-due_soon_cutoff = today + datetime.timedelta(days=7)
-overdue_tasks = []
-due_soon_tasks = []
-unassigned_tasks = []
-for t in tasks:
-    status = t.get("status", "todo")
-    if status == "done":
-        continue
-    due_date = parse_calendar_date(t.get("due_date"))
-    if due_date and due_date < today:
-        overdue_tasks.append(t)
-    elif due_date and today <= due_date <= due_soon_cutoff:
-        due_soon_tasks.append(t)
-    if not str(t.get("assignee") or "").strip():
-        unassigned_tasks.append(t)
-
-missing_due_actions = []
-for m in filtered_records:
-    meeting_id = m.get("meeting_id")
-    meeting_label = m.get("client_name") or "Meeting record"
-    for idx, item in enumerate(get_meeting_items(m)):
-        action = str(get_item_action(item)).strip()
-        if action and not get_item_due_date(item):
-            missing_due_actions.append({
-                "meeting_id": meeting_id,
-                "meeting_label": meeting_label,
-                "action": action,
-                "idx": idx,
-            })
-
-agenda_events = sorted(
-    [
-        e for e in all_events
-        if e["date"] >= today and e["date"] <= due_soon_cutoff and e.get("status") != "done"
-    ],
-    key=lambda e: (e["date"], e["title"].lower()),
-)
-due_soon_count = len(due_soon_tasks)
-
 # ------------------------------------------------------------
-# DASHBOARD CONTROLS
+# DASHBOARD CONTROLS (HEADER + DATE SELECTOR INLINE)
 # ------------------------------------------------------------
-render_page_header(
-    "Project Echo",
-    "Dashboard",
-    "A concise operational view of meetings, priorities, and work due in the selected period.",
-)
-
-period_copy, period_filter = st.columns([3, 2], gap="medium", vertical_alignment="bottom")
-with period_copy:
-    st.markdown(
-        (
-            '<p class="dashboard-period-copy"><strong>Reporting period</strong><br>'
-            f"{st.session_state['start_date'].strftime('%b %d, %Y')} - "
-            f"{st.session_state['end_date'].strftime('%b %d, %Y')}</p>"
-        ),
-        unsafe_allow_html=True,
+hdr_col, filter_col = st.columns([3.5, 1.3], gap="medium", vertical_alignment="bottom")
+with hdr_col:
+    render_page_header(
+        "Project Echo",
+        "Dashboard",
+        "Executive operational launchpad for meeting management, daily tracking, and team deliverables.",
     )
-with period_filter:
+with filter_col:
     _dash_range = st.date_input(
         "Dashboard period",
         value=(st.session_state["start_date"], st.session_state["end_date"]),
         key="dash_date_range",
+        label_visibility="collapsed",
+        help="Filter dashboard metrics and recent meetings by date range",
     )
+    st.markdown('<div class="header-border-ext"></div>', unsafe_allow_html=True)
 
 if isinstance(_dash_range, (tuple, list)) and len(_dash_range) == 2:
     if st.session_state["start_date"] != _dash_range[0] or st.session_state["end_date"] != _dash_range[1]:
@@ -1300,65 +1275,72 @@ with qa_c4:
         """, unsafe_allow_html=True)
         st.page_link("pages/8_documents.py", label="Draft Document", icon=":material/description:", use_container_width=True)
 
-st.markdown("<div style='margin-bottom: 0.5rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom: 0.75rem;'></div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------
-# 2. MEETING METRICS (TOTAL, INTERNAL, EXTERNAL, TEAM)
+# 2. MEETING OVERVIEW & RECENT MEETINGS (2 COLUMNS IN SAME ROW)
 # ------------------------------------------------------------
-render_section_header("Meeting overview", "Meeting activity across the reporting period and team archive.")
+col_overview, col_recent = st.columns([1, 1.25], gap="large")
 
-m_kpi_1, m_kpi_2, m_kpi_3, m_kpi_4 = st.columns(4, gap="medium")
-with m_kpi_1:
+with col_overview:
+    render_section_header("Meeting overview", "Volume and classification across the reporting period.")
+
     st.markdown(f"""
-        <div class="kpi-card">
-            <span class="kpi-title">Total Meetings</span>
-            <span class="kpi-value">{total_range_meetings}</span>
-            <span class="kpi-sub">In selected period</span>
+        <div class="kpi-grid-2x2">
+            <div class="kpi-card">
+                <span class="kpi-title">Total Meetings</span>
+                <span class="kpi-value">{total_range_meetings}</span>
+                <span class="kpi-sub">In selected period</span>
+            </div>
+            <div class="kpi-card gold-accent">
+                <span class="kpi-title">Team Meetings</span>
+                <span class="kpi-value">{total_team_meetings}</span>
+                <span class="kpi-sub">All-time recorded archive</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">Internal Meetings</span>
+                <span class="kpi-value">{total_internal_meetings}</span>
+                <span class="kpi-sub">Team & operational</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">External Meetings</span>
+                <span class="kpi-value">{total_external_meetings}</span>
+                <span class="kpi-sub">Client & external partners</span>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
-with m_kpi_2:
+    # Executive distribution bar for period meetings
+    total_meetings_period = max(total_range_meetings, 1)
+    internal_pct = int(round((total_internal_meetings / total_meetings_period) * 100)) if total_range_meetings > 0 else 0
+    external_pct = int(round((total_external_meetings / total_meetings_period) * 100)) if total_range_meetings > 0 else 0
+
     st.markdown(f"""
-        <div class="kpi-card">
-            <span class="kpi-title">Internal Meetings</span>
-            <span class="kpi-value">{total_internal_meetings}</span>
-            <span class="kpi-sub">Team & operational</span>
+        <div class="overview-ratio-card">
+            <div class="overview-ratio-header">
+                <span class="overview-ratio-label">Period Distribution</span>
+                <span class="overview-ratio-pct">{internal_pct}% Internal · {external_pct}% External</span>
+            </div>
+            <div class="overview-bar-track">
+                <div class="overview-bar-fill internal" style="width: {internal_pct}%;"></div>
+                <div class="overview-bar-fill external" style="width: {external_pct}%;"></div>
+            </div>
+            <div class="overview-ratio-legend">
+                <span class="legend-item"><span class="legend-dot navy"></span>Internal ({total_internal_meetings})</span>
+                <span class="legend-item"><span class="legend-dot gold"></span>External ({total_external_meetings})</span>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
-with m_kpi_3:
-    st.markdown(f"""
-        <div class="kpi-card">
-            <span class="kpi-title">External Meetings</span>
-            <span class="kpi-value">{total_external_meetings}</span>
-            <span class="kpi-sub">Client & external partners</span>
-        </div>
-    """, unsafe_allow_html=True)
+with col_recent:
+    render_section_header("Recent meetings", "Top 3 latest meeting records with executive summaries.")
 
-with m_kpi_4:
-    st.markdown(f"""
-        <div class="kpi-card gold-accent">
-            <span class="kpi-title">Team Meetings</span>
-            <span class="kpi-value">{total_team_meetings}</span>
-            <span class="kpi-sub">All-time recorded archive</span>
-        </div>
-    """, unsafe_allow_html=True)
+    top_3_meetings = (filtered_records if filtered_records else supabase_records)[:3]
 
-st.markdown("<div style='margin-bottom: 0.5rem;'></div>", unsafe_allow_html=True)
-
-# ------------------------------------------------------------
-# 3. TOP 3 RECENT MEETINGS
-# ------------------------------------------------------------
-render_section_header("Recent meetings", "Top 3 latest meeting records with executive summaries.")
-
-top_3_meetings = (filtered_records if filtered_records else supabase_records)[:3]
-
-if not top_3_meetings:
-    render_empty_state("No meeting records found.")
-else:
-    meet_cols = st.columns(3, gap="medium")
-    for idx, meeting in enumerate(top_3_meetings):
-        with meet_cols[idx]:
+    if not top_3_meetings:
+        render_empty_state("No meeting records found for this period.")
+    else:
+        for meeting in top_3_meetings:
             with st.container(border=True):
                 client_name = meeting.get("client_name") or meeting.get("location") or meeting.get("meeting_id") or "Meeting Record"
                 meeting_id = meeting.get("meeting_id", "")
@@ -1382,7 +1364,7 @@ else:
                 item_count = len(table_items)
 
                 raw_summary = str(meeting.get("summary_md") or "No summary recorded.").replace("### Summary", "").strip()
-                summary_snippet = raw_summary[:130] + ("..." if len(raw_summary) > 130 else "")
+                summary_snippet = raw_summary[:135] + ("..." if len(raw_summary) > 135 else "")
 
                 st.markdown(f"""
                     <div class="tm-header-row">
@@ -1391,94 +1373,6 @@ else:
                     </div>
                     <div class="tm-title" title="{html.escape(str(client_name))}">{html.escape(str(client_name))}</div>
                     <div class="tm-meta">By {html.escape(str(prepared_by))} · {item_count} action item{'s' if item_count != 1 else ''}</div>
-                    <div class="tm-summary">{html.escape(summary_snippet)}</div>
+                    <div class="tm-summary" style="min-height: auto; margin-bottom: 0.5rem;">{html.escape(summary_snippet)}</div>
                 """, unsafe_allow_html=True)
                 st.page_link("pages/2_meeting_details.py", label="Open Meeting Record", icon=":material/visibility:", use_container_width=True)
-
-st.markdown("<div style='margin-bottom: 0.5rem;'></div>", unsafe_allow_html=True)
-
-# ------------------------------------------------------------
-# 4. OPERATIONAL TRIAGE & UPCOMING SCHEDULE
-# ------------------------------------------------------------
-left_col, right_col = st.columns([1.25, 1], gap="medium")
-
-with left_col:
-    with st.container(border=True):
-        render_section_header("Needs attention", "Urgent tasks and items requiring follow-through.")
-
-        attention_count = 0
-        for task in overdue_tasks[:3]:
-            due_date = parse_calendar_date(task.get("due_date"))
-            render_dashboard_card(
-                "Overdue",
-                task.get("title", "Untitled task"),
-                f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
-                task.get("description", ""),
-                "danger",
-            )
-            attention_count += 1
-
-        for task in due_soon_tasks[:2]:
-            due_date = parse_calendar_date(task.get("due_date"))
-            render_dashboard_card(
-                "Due soon",
-                task.get("title", "Untitled task"),
-                f"{format_mm_dd_yyyy(due_date)} · {task.get('assignee') or 'Unassigned'}",
-                task.get("description", ""),
-                "warning",
-            )
-            attention_count += 1
-
-        for task in unassigned_tasks[:2]:
-            render_dashboard_card(
-                "Unassigned",
-                task.get("title", "Untitled task"),
-                f"Status: {status_labels.get(task.get('status', 'todo'), 'To Do')}",
-                task.get("description", ""),
-                "",
-            )
-            attention_count += 1
-
-        if attention_count == 0:
-            render_empty_state("Nothing needs attention in this period.")
-
-with right_col:
-    with st.container(border=True):
-        render_section_header("Today and upcoming", "Deliverables and schedule for the next seven days.")
-
-        if agenda_events:
-            last_day = None
-            for evt in agenda_events[:5]:
-                if evt["date"] != last_day:
-                    st.markdown(
-                        f'<div class="agenda-day">{evt["date"].strftime("%a, %b %d")}</div>',
-                        unsafe_allow_html=True,
-                    )
-                    last_day = evt["date"]
-                render_dashboard_card(
-                    "Meeting action" if evt["source"] == "meeting_action" else status_labels.get(evt.get("status", "todo"), "Task"),
-                    evt["title"],
-                    evt.get("meeting_label") or evt.get("assignee") or "Unassigned",
-                    "",
-                    "danger" if evt.get("overdue") else "",
-                )
-        else:
-            render_empty_state("No scheduled work in the next seven days.")
-
-    with st.container(border=True):
-        status_total = max(task_total, 1)
-        meeting_total = max(total_range_meetings, 1)
-        filled_log_days = sum(1 for row in dlog_rows if any(str(row.get(key) or "").strip() for key in cat_keys))
-        render_section_header("Activity summary", "Reported for the selected period.")
-        st.markdown(
-            f'''
-            <div class="dashboard-activity">
-              <div class="dashboard-activity-item"><span class="dashboard-activity-label">Tasks done</span><span class="dashboard-activity-value">{task_status["done"]}</span><span class="dashboard-activity-note">of {status_total} tracked</span></div>
-              <div class="dashboard-activity-item"><span class="dashboard-activity-label">In progress</span><span class="dashboard-activity-value">{task_status["in_progress"]}</span><span class="dashboard-activity-note">active tasks</span></div>
-              <div class="dashboard-activity-item"><span class="dashboard-activity-label">Internal meetings</span><span class="dashboard-activity-value">{total_internal_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
-              <div class="dashboard-activity-item"><span class="dashboard-activity-label">External meetings</span><span class="dashboard-activity-value">{total_external_meetings}</span><span class="dashboard-activity-note">of {meeting_total} meetings</span></div>
-              <div class="dashboard-activity-item"><span class="dashboard-activity-label">Log days</span><span class="dashboard-activity-value">{filled_log_days}</span><span class="dashboard-activity-note">with activity recorded</span></div>
-            </div>
-            ''',
-            unsafe_allow_html=True,
-        )
