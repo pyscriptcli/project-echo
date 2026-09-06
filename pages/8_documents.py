@@ -46,7 +46,7 @@ TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "documents_template")
 STORAGE_DIR = os.path.join(PROJECT_ROOT, "stored_templates")
 
 st.set_page_config(page_title="Documents", layout="wide", initial_sidebar_state="expanded")
-require_login()
+require_login(page_key="documents")
 setup_page_layout()
 
 # --- NATIVE ECHO PAGE CSS (stone/navy tokens, flat & edgy) ---

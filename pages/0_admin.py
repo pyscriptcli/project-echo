@@ -3,8 +3,11 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 from utils.auth import (
-    require_login, add_admin_user, get_all_users, get_user_usage, logout,
+    require_login, add_admin_user, get_all_users, get_user_usage, get_current_user, logout,
     set_agent_access, set_user_password,
+)
+from utils.page_access import (
+    MEMBER_PAGE_KEYS, get_all_page_access, get_page_catalog, set_user_page_access,
 )
 from utils.limits import set_user_limits, get_user_limits, DEFAULT_DAILY_LIMIT, DEFAULT_WEEKLY_LIMIT
 from utils.audit import fetch_audit_logs, list_event_types
@@ -100,7 +103,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 # -------------------------------
 # Authentication check
 # -------------------------------
-require_login(require_admin=True)
+require_login(require_admin=True, page_key="admin")
 
 # Apply the shared flat & edgy theme (large gridlines, 0 radius) to the admin page
 from components.theme import inject_global_css
@@ -119,8 +122,8 @@ st.markdown('<p class="section-caption">Manage accounts, monitor telemetry, conf
 
 all_users = get_all_users()
 
-tab_accounts, tab_telemetry, tab_agent, tab_limits, tab_audit = st.tabs([
-    "Accounts", "Telemetry", "Agent Access", "Rate Limits", "Audit Log",
+tab_accounts, tab_access, tab_telemetry, tab_agent, tab_limits, tab_audit = st.tabs([
+    "Accounts", "Page Access", "Telemetry", "Agent Access", "Rate Limits", "Audit Log",
 ])
 
 # ============================================================
@@ -154,7 +157,7 @@ with tab_accounts:
 
     st.markdown('<div class="admin-card">', unsafe_allow_html=True)
     st.markdown("### Manage Passwords")
-    st.markdown("Enter a new password in plaintext below. It is stored as a bcrypt hash in Supabase — plaintext is never saved.")
+    st.markdown("Enter a new password below. It is stored as a secure hash; plaintext is never saved.")
     pwd_all_users = all_users or get_all_users()
     if not pwd_all_users:
         st.info("No users found.")
@@ -177,6 +180,50 @@ with tab_accounts:
                     st.success(f"Password updated for '{pwd_user.get('username')}'.")
                 else:
                     st.error("Password update failed. Check the policy (min 8 chars, lower+upper+number).")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================
+# TAB: PAGE ACCESS  (per-user page allowlists)
+# ============================================================
+with tab_access:
+    st.markdown('<div class="admin-card">', unsafe_allow_html=True)
+    st.markdown("### Page access")
+    st.caption("Choose which areas each member can open. Administrators always retain full access.")
+    access_map, access_storage_ready = get_all_page_access()
+    if not access_storage_ready:
+        st.warning("Page access storage is not configured. Apply the included page access migration before saving policies.")
+    page_catalog = get_page_catalog()
+    page_labels = {key: meta["label"] for key, meta in page_catalog.items()}
+    access_users = all_users or get_all_users()
+    if not access_users:
+        st.info("No users found.")
+    else:
+        current_admin_id = str((get_current_user() or {}).get("id") or "")
+        for user in access_users:
+            user_id = str(user.get("id") or "")
+            username = str(user.get("username") or "unknown")
+            role = str(user.get("role") or "member").strip().lower()
+            if role == "admin":
+                with st.container(border=True):
+                    st.markdown(f"**{username}**")
+                    st.caption("Administrator access includes every page.")
+                continue
+            saved_keys = access_map.get(user_id, set(MEMBER_PAGE_KEYS))
+            with st.container(border=True):
+                with st.form(f"page_access_form_{user_id}"):
+                    selected_labels = st.multiselect(
+                        f"Pages for {username}",
+                        options=list(page_labels.values()),
+                        default=[page_labels[key] for key in MEMBER_PAGE_KEYS if key in saved_keys],
+                        key=f"page_access_select_{user_id}",
+                    )
+                    save_access = st.form_submit_button("Save access", type="primary")
+                    if save_access:
+                        selected_keys = [key for key, label in page_labels.items() if label in selected_labels]
+                        if set_user_page_access(user_id, selected_keys, updated_by=current_admin_id):
+                            st.success(f"Page access updated for {username}.")
+                            st.rerun()
+                        st.error("Page access could not be saved. Confirm the page access migration is applied.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
@@ -213,7 +260,7 @@ with tab_telemetry:
         st.bar_chart(chart_data)
 
         st.markdown("#### Detailed Usage")
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
@@ -251,7 +298,7 @@ with tab_limits:
     st.markdown('<div class="admin-card">', unsafe_allow_html=True)
     st.markdown("### Per-User Token Rate Limits")
     st.markdown("Set daily/weekly token budgets for Ask Echo. The app enforces these per user. Default is 50k daily / 250k weekly.")
-    st.caption("Requires the `usage_limits` table — run `supabase/usage_limits_ddl.sql` if you haven't.")
+    st.caption("Requires rate-limit storage. Apply the included rate-limit migration if needed.")
     limits_users = all_users or get_all_users()
     if not limits_users:
         st.info("No users found.")
@@ -303,7 +350,7 @@ with tab_audit:
     with col_f4:
         filter_days = st.selectbox("Days Back", options=["", "1", "7", "14", "30"], index=0, key="audit_filter_days")
     with col_f5:
-        if st.button("Refresh", key="audit_refresh", use_container_width=True):
+        if st.button("Refresh", key="audit_refresh", width="stretch"):
             st.rerun()
     
     # Build query params
@@ -356,7 +403,7 @@ with tab_audit:
         
         st.dataframe(
             df_log,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             column_config={
                 "Timestamp": st.column_config.TextColumn(width="small"),

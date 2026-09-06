@@ -725,7 +725,7 @@ def render_statistics():
 # ------------------------------
 
 def main():
-    require_login()
+    require_login(page_key="notebook")
     setup_page_layout()
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
     init_session()

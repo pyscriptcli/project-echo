@@ -465,7 +465,7 @@ h3 {
 # ------------------------------------------------------------
 # AUTH GATE — enforced on every page (login required)
 # ------------------------------------------------------------
-require_login()
+require_login(page_key="dashboard")
 
 supabase = init_supabase()
 

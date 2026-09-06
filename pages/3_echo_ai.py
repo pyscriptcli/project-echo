@@ -15,7 +15,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-require_login()
+require_login(page_key="ask_echo")
 setup_page_layout()
 
 # 2. Large Architectural Grid Canvas (Matching Meeting Gallery)

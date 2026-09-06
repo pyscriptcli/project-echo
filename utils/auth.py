@@ -321,7 +321,7 @@ def render_login():
 # -------------------------------------------------------------------
 # Page gate — call at the top of every page
 # -------------------------------------------------------------------
-def require_login(require_admin: bool = False):
+def require_login(require_admin: bool = False, page_key: str = ""):
     """
     Enforce authentication (and optionally the admin role) on the current page.
 
@@ -339,6 +339,13 @@ def require_login(require_admin: bool = False):
     if require_admin and not is_admin():
         st.error("You do not have permission to access this page.")
         st.stop()
+
+    if page_key:
+        from utils.page_access import can_access_page
+
+        if not can_access_page(page_key):
+            st.error("You do not have access to this page. Ask an administrator to enable it.")
+            st.stop()
 
 
 # -------------------------------------------------------------------
@@ -410,9 +417,22 @@ def add_admin_user(username: str, password: str, role: str = "member") -> bool:
 
 
 def get_all_users() -> List[Dict[str, Any]]:
-    """Return all admin users (id, username, created_at, can_use_agent)."""
+    """Return all users with optional RBAC columns for the admin console."""
     supabase = get_supabase()
-    response = supabase.table("admin_users").select("id, username, created_at, can_use_agent").order("created_at").execute()
+    try:
+        response = (
+            supabase.table("admin_users")
+            .select("id, username, created_at, role, can_use_agent")
+            .order("created_at")
+            .execute()
+        )
+    except Exception:
+        response = (
+            supabase.table("admin_users")
+            .select("id, username, created_at")
+            .order("created_at")
+            .execute()
+        )
     return response.data if response.data else []
 
 

@@ -48,3 +48,13 @@ create index if not exists ndx_minutes_memory_user on public.minutes_memory (use
 
 -- 6) echo_context unique (category, key) — for upsert_echo_context (usually already there)
 create unique index if not exists echo_context_category_key_unique on public.echo_context (category, key);
+
+-- 7) user_page_access — per-user page allowlists (admin console)
+create table if not exists public.user_page_access (
+  user_id       uuid primary key references public.admin_users(id) on delete cascade,
+  allowed_pages text[] not null default '{}',
+  updated_by    uuid references public.admin_users(id),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists user_page_access_updated_at_idx
+  on public.user_page_access (updated_at desc);

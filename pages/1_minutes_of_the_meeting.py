@@ -45,7 +45,7 @@ st.set_page_config(
 )
 
 # 2. Enforce login before rendering anything
-require_login()
+require_login(page_key="minutes")
 
 # 3. Render Global Navigation
 setup_page_layout()

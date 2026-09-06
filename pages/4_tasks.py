@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # 2. Authentication check (must run before rendering the sidebar)
-require_login()
+require_login(page_key="tasks")
 
 # 3. Render the custom navigation bar
 setup_page_layout()

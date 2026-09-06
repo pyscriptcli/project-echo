@@ -15,20 +15,13 @@ Native Streamlit sidebar + custom branding & compact navigation.
 import re
 import streamlit as st
 
-from utils.auth import get_current_user, logout
+from utils.auth import get_current_user, is_admin, logout
+from utils.page_access import can_access_page, get_page_catalog
 
 # ---------------------------------------------------------------------------
 # Navigation model
 # ---------------------------------------------------------------------------
-NAV_ITEMS = [
-    ("app.py", "Dashboard", ":material/dashboard:"),
-    ("pages/3_echo_ai.py", "Ask Echo.ai", ":material/smart_toy:"),
-    ("pages/4_tasks.py", "Tasks & Calendar", ":material/calendar_month:"),
-    ("pages/2_meeting_details.py", "Meetings", ":material/menu_book:"),
-    ("pages/1_minutes_of_the_meeting.py", "Minutes of the Meeting", ":material/edit_note:"),
-    ("pages/6_notebook.py", "Notebook", ":material/edit_note:"),
-    ("pages/8_documents.py", "Documents", ":material/description:"),
-]
+NAV_ITEMS = [(key, meta["path"], meta["label"], meta["icon"]) for key, meta in get_page_catalog().items()]
 
 SIDEBAR_CSS = """
 <style>
@@ -298,8 +291,13 @@ def setup_page_layout():
             unsafe_allow_html=True,
         )
 
-        for path, label, icon in NAV_ITEMS:
-            st.page_link(path, label=label, icon=icon, use_container_width=True)
+        for page_key, path, label, icon in NAV_ITEMS:
+            if can_access_page(page_key):
+                st.page_link(path, label=label, icon=icon, width="stretch")
+
+        if is_admin():
+            admin = get_page_catalog(include_admin=True)["admin"]
+            st.page_link(admin["path"], label=admin["label"], icon=admin["icon"], width="stretch")
 
         # Footer in its own container, pinned to bottom via CSS
         user = get_current_user()
@@ -317,7 +315,7 @@ def setup_page_layout():
                     f'</div></div>',
                     unsafe_allow_html=True,
                 )
-                if st.button("Sign Out", key="sb_logout", use_container_width=True):
+                if st.button("Sign Out", key="sb_logout", width="stretch"):
                     logout()
                     st.rerun()
             else:

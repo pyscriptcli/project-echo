@@ -60,7 +60,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-require_login()
+require_login(page_key="meetings")
 setup_page_layout()
 
 # Default date filter to "This Month"
@@ -907,7 +907,7 @@ def export_to_pdf_template_2(df, meeting_details, other_discussions):
 meetings = fetch_meeting_archives(limit=500)
 
 if not meetings:
-    st.info("No meeting records found in Supabase.")
+    st.info("No meeting records found.")
     st.stop()
 
 def parse_meeting_date(raw_date_str):
@@ -1086,7 +1086,7 @@ if st.session_state["view_mode"] == "gallery":
                 
                 summary_raw = str(m.get("summary_md", "")).replace("### Summary", "").strip()
                 if not summary_raw:
-                    summary_raw = "No summary recorded. Minutes generated and stored in Supabase archive."
+                    summary_raw = "No summary recorded. Generate minutes to create an archive record."
                 preview_text = summary_raw[:220] + ("..." if len(summary_raw) > 220 else "")
 
                 with st.container(border=True):
@@ -1208,10 +1208,10 @@ elif st.session_state["view_mode"] == "details":
             sm_c1, sm_c2 = st.columns([7.8, 2.2])
             with sm_c2:
                 if st.button("Save Meeting Details", key="btn_save_meta"):
-                    with st.spinner("Saving metadata to Supabase..."):
+                    with st.spinner("Saving metadata..."):
                         client = get_supabase_client()
                         if not client:
-                            st.error("Supabase client uninitialized.")
+                            st.error("Data service is unavailable.")
                         else:
                             try:
                                 ext_list = [x.strip() for x in edit_ext.split(",") if x.strip()]
@@ -1261,7 +1261,7 @@ elif st.session_state["view_mode"] == "details":
     # Single view: editor with collapsed transcript
     with st.container(border=True):
         st.markdown("<h3>Minutes of Meeting Items</h3>", unsafe_allow_html=True)
-        st.caption("Inline editable cards. Changes are synchronized directly to Supabase.")
+        st.caption("Inline editable cards. Changes save automatically.")
 
         editor_key = f"mom_rows_{m_id}"
         if editor_key not in st.session_state:
@@ -1375,10 +1375,10 @@ elif st.session_state["view_mode"] == "details":
         sv_col1, sv_col2 = st.columns([7.5, 2.5])
         with sv_col2:
             if st.button("Save All Changes", key=f"btn_save_{m_id}"):
-                with st.spinner("Saving updates to Supabase..."):
+                with st.spinner("Saving updates..."):
                     client = get_supabase_client()
                     if not client:
-                        st.error("Supabase client uninitialized.")
+                        st.error("Data service is unavailable.")
                     else:
                         try:
                             client.table("meeting_archives").update({
