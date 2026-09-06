@@ -1,6 +1,6 @@
 """Central page catalog and per-user page access policy."""
 
-from typing import Any, Dict, Iterable, List, Set, Tuple
+from typing import Any, Dict, Iterable, Set, Tuple
 
 import streamlit as st
 
@@ -25,7 +25,14 @@ _CURRENT_ACCESS_KEY = "_current_page_access"
 
 def _normalise_page_keys(page_keys: Iterable[str]) -> Set[str]:
     """Keep only known member pages and return a stable set."""
-    return {str(key) for key in page_keys if str(key) in MEMBER_PAGE_KEYS}
+    if not page_keys:
+        return set()
+    if isinstance(page_keys, str):
+        page_keys = [page_keys]
+    try:
+        return {str(key) for key in page_keys if str(key) in MEMBER_PAGE_KEYS}
+    except TypeError:
+        return set()
 
 
 def get_page_catalog(include_admin: bool = False) -> Dict[str, Dict[str, str]]:
@@ -40,7 +47,10 @@ def get_all_page_access() -> Tuple[Dict[str, Set[str]], bool]:
     try:
         response = get_supabase().table(PAGE_ACCESS_TABLE).select("user_id, allowed_pages").execute()
         policies = {}
-        for row in response.data or []:
+        rows = response.data or []
+        if isinstance(rows, dict):
+            rows = [rows]
+        for row in rows:
             user_id = row.get("user_id")
             if user_id:
                 policies[str(user_id)] = _normalise_page_keys(row.get("allowed_pages") or [])
@@ -50,7 +60,7 @@ def get_all_page_access() -> Tuple[Dict[str, Set[str]], bool]:
 
 
 def get_user_page_access(user_id: Any) -> Set[str]:
-    """Return a user's allowlist, defaulting existing users to all member pages."""
+    """Return a user's allowlist; new users default to all member pages."""
     if not user_id:
         return set()
     try:
@@ -62,10 +72,13 @@ def get_user_page_access(user_id: Any) -> Set[str]:
             .limit(1)
             .execute()
         )
-        if response.data:
-            return _normalise_page_keys(response.data[0].get("allowed_pages") or [])
+        rows = response.data or []
+        if isinstance(rows, dict):
+            rows = [rows]
+        if rows:
+            return _normalise_page_keys(rows[0].get("allowed_pages") or [])
     except Exception:
-        pass
+        return set()
     return set(MEMBER_PAGE_KEYS)
 
 
@@ -76,9 +89,12 @@ def get_current_page_access() -> Set[str]:
     if is_admin():
         return set(MEMBER_PAGE_KEYS)
     cached = st.session_state.get(_CURRENT_ACCESS_KEY)
-    if cached and cached.get("user_id") == user_id:
-        return set(cached.get("pages") or [])
-    pages = get_user_page_access(user_id)
+    if isinstance(cached, dict) and cached.get("user_id") == user_id:
+        return _normalise_page_keys(cached.get("pages") or [])
+    try:
+        pages = get_user_page_access(user_id)
+    except Exception:
+        pages = set()
     st.session_state[_CURRENT_ACCESS_KEY] = {"user_id": user_id, "pages": sorted(pages)}
     return pages
 

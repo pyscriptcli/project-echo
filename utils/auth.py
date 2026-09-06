@@ -427,12 +427,15 @@ def get_all_users() -> List[Dict[str, Any]]:
             .execute()
         )
     except Exception:
-        response = (
-            supabase.table("admin_users")
-            .select("id, username, created_at")
-            .order("created_at")
-            .execute()
-        )
+        try:
+            response = (
+                supabase.table("admin_users")
+                .select("id, username, created_at")
+                .order("created_at")
+                .execute()
+            )
+        except Exception:
+            return []
     return response.data if response.data else []
 
 
