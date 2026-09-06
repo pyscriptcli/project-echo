@@ -1280,43 +1280,30 @@ def recording_studio_dialog():
     """
     st.session_state["_dialog_active"] = True
 
-    # ── Refresh/beforeunload guard (injects into top window) ─────
-    if st.session_state.get("_dialog_active"):
-        guard_js = """
-        <script>
-        (function() {
-            var w = window.top;
-            if (!w) return;
-            var key = '__rec_studio_guard';
-            // Remove duplicate if it exists
-            if (w[key]) {
-                w.removeEventListener('beforeunload', w[key]);
-            }
-            w[key] = function(e) {
-                e.preventDefault();
-                e.returnValue = 'Recording in progress. Discard recording and leave this page?';
-                return e.returnValue;
-            };
-            w.addEventListener('beforeunload', w[key]);
-        })();
-        </script>
-        """
-        components.html(guard_js, height=0)
-    else:
-        cleanup_js = """
-        <script>
-        (function() {
-            var w = window.top;
-            if (!w) return;
-            var key = '__rec_studio_guard';
-            if (w[key]) {
-                w.removeEventListener('beforeunload', w[key]);
-                delete w[key];
-            }
-        })();
-        </script>
-        """
-        components.html(cleanup_js, height=0)
+    # ── Cleanup: if dialog reopened but no data, reset status ──
+    if st.session_state.get("_dialog_recorded_bytes") is None and st.session_state["_recording_status"] == "RECORDING":
+        st.session_state["_recording_status"] = "IDLE"
+
+    # ── Refresh/beforeunload guard (injects into top window) ──────
+    guard_js = """
+    <script>
+    (function() {
+        var w = window.top;
+        if (!w) return;
+        var key = '__rec_studio_guard';
+        if (w[key]) {
+            w.removeEventListener('beforeunload', w[key]);
+        }
+        w[key] = function(e) {
+            e.preventDefault();
+            e.returnValue = 'Recording in progress. Discard recording and leave this page?';
+            return e.returnValue;
+        };
+        w.addEventListener('beforeunload', w[key]);
+    })();
+    </script>
+    """
+    components.html(guard_js, height=0)
 
     # ── Discard Confirmation State ────────────────────────────────
     if st.session_state["_dialog_confirm_discard"]:
@@ -1328,6 +1315,7 @@ def recording_studio_dialog():
                 st.session_state["_dialog_record_notes"] = ""
                 st.session_state["_dialog_confirm_discard"] = False
                 st.session_state["_dialog_active"] = False
+                st.session_state["_recording_status"] = "IDLE"
                 st.rerun()
         with c_n:
             if st.button("Cancel", key="discard_confirm_no", use_container_width=True):
@@ -1373,6 +1361,38 @@ def recording_studio_dialog():
         return
 
     # ── Normal / Locked Layout ────────────────────────────────────
+    # Close button at top so user can always dismiss dialog
+    top_c1, top_c2 = st.columns([9, 1])
+    with top_c2:
+        if st.button("", key="close_dialog_top", help="Close and discard recording"):
+            st.session_state["_dialog_recorded_bytes"] = None
+            st.session_state["_dialog_record_notes"] = ""
+            st.session_state["_dialog_confirm_discard"] = False
+            st.session_state["_dialog_active"] = False
+            st.session_state["_recording_status"] = "IDLE"
+            st.rerun()
+    # Close icon via CSS ::before (SVG close icon)
+    st.markdown(
+        '<style>'
+        'button[key="close_dialog_top"] {'
+        '  width:32px!important;height:32px!important;min-width:32px!important;'
+        '  padding:0!important;border-radius:50%!important;'
+        '  background:transparent!important;border:1px solid rgba(0,0,0,0.15)!important;'
+        '  color:#69727d!important;'
+        '}'
+        'button[key="close_dialog_top"]:hover {'
+        '  background:#f0f0f0!important;color:#1b1d1e!important;'
+        '}'
+        'button[key="close_dialog_top"]::before {'
+        '  content:"";display:inline-block;width:16px;height:16px;'
+        '  background-color:currentColor;'
+        '  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z\'/%3E%3C/svg%3E") no-repeat center;'
+        '  mask:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z\'/%3E%3C/svg%3E") no-repeat center;'
+        '}'
+        '</style>',
+        unsafe_allow_html=True
+    )
+    
     has_captured = st.session_state.get("_dialog_recorded_bytes") is not None
 
     col_left, col_right = st.columns([0.62, 0.38])
