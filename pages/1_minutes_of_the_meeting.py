@@ -310,6 +310,7 @@ if "_dialog_record_notes" not in st.session_state: st.session_state["_dialog_rec
 if "_dialog_active" not in st.session_state: st.session_state["_dialog_active"] = False
 if "_dialog_confirm_discard" not in st.session_state: st.session_state["_dialog_confirm_discard"] = False
 if "_dialog_transcribing" not in st.session_state: st.session_state["_dialog_transcribing"] = False
+if "_dialog_capture_started_at" not in st.session_state: st.session_state["_dialog_capture_started_at"] = None
 
 # -------------------------------------------------------------
 # Single Source of Truth State Synchronization Helpers
@@ -488,6 +489,35 @@ def generate_minutes_draft(move_to_review: bool = True) -> None:
     st.session_state["_topics_discovered"] = True
     if move_to_review:
         st.session_state["mom_stage"] = "review"
+
+def apply_echo_mutation(action: Optional[dict]) -> None:
+    """Apply a validated Echo edit against the canonical review-item state."""
+    if not isinstance(action, dict):
+        return
+
+    tool_name = action.get("tool")
+    row_index = int(action.get("row_index", 0))
+    fields = action.get("fields", {})
+    if tool_name == "update_row" and 0 <= row_index < len(st.session_state["mom_items"]):
+        field_map = {
+            "Discussion Points": "discussion_point",
+            "Action Plan": "action_plan",
+            "Indicative Delivery Date": "indicative_delivery_date",
+            "Person-in-charge": "person_in_charge",
+        }
+        for source_field, target_field in field_map.items():
+            if source_field in fields:
+                update_mom_item(row_index, target_field, str(fields[source_field]))
+    elif tool_name == "delete_row" and 0 <= row_index < len(st.session_state["mom_items"]):
+        delete_mom_item(row_index)
+    elif tool_name == "add_row":
+        add_mom_item(
+            topic="New Item",
+            dp=fields.get("Discussion Points", ""),
+            ap=fields.get("Action Plan", ""),
+            dd=fields.get("Indicative Delivery Date", "TBD"),
+            pic=fields.get("Person-in-charge", "Unassigned"),
+        )
 
 # -------------------------------------------------------------
 # Entity & Guardrail Verification
@@ -797,6 +827,7 @@ def recording_studio_dialog():
     st.session_state["_dialog_active"] = True
     if st.session_state.get("_dialog_recorded_bytes") is None and st.session_state["_recording_status"] == "IDLE":
         st.session_state["_recording_status"] = "RECORDING"
+        st.session_state["_dialog_capture_started_at"] = datetime.datetime.now()
 
     is_capturing = st.session_state.get("_dialog_recorded_bytes") is None
     if is_capturing and not st.session_state.get("_dialog_transcribing"):
@@ -823,7 +854,30 @@ def recording_studio_dialog():
                     e.returnValue = 'Recording in progress. Finish the recording before leaving.';
                     return e.returnValue;
                 };
+                w.__rec_studio_navigation_guard = function(e) {
+                    if (!e.target || !e.target.closest || !e.target.closest('a')) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                };
                 w.addEventListener('beforeunload', w[key]);
+                w.document.addEventListener('click', w.__rec_studio_navigation_guard, true);
+            })();
+            </script>
+            """,
+            height=0,
+        )
+    elif not st.session_state.get("_dialog_transcribing"):
+        # Remove the navigation guard as soon as audio is safely in session state.
+        components.html(
+            """
+            <script>
+            (function() {
+                var w = window.top;
+                if (!w || !w.__rec_studio_guard) return;
+                w.removeEventListener('beforeunload', w.__rec_studio_guard);
+                w.document.removeEventListener('click', w.__rec_studio_navigation_guard, true);
+                delete w.__rec_studio_guard;
+                delete w.__rec_studio_navigation_guard;
             })();
             </script>
             """,
@@ -856,6 +910,7 @@ def recording_studio_dialog():
                 st.session_state["_dialog_transcribing"] = False
                 st.session_state["_dialog_active"] = False
                 st.session_state["_recording_status"] = "IDLE"
+                st.session_state["_dialog_capture_started_at"] = None
                 st.rerun()
             else:
                 st.error(f"Transcription failed: {tx_err}")
@@ -878,9 +933,17 @@ def recording_studio_dialog():
         if stored is not None:
             st.session_state["_recording_status"] = "RECORDED"
             st.audio(stored, format="audio/wav")
-            st.success(f"Audio recorded ({len(stored)//32000}s estimated).")
+            st.success(f"Capture secured ({len(stored)//32000}s estimated). You can replay it before transcription.")
+            st.download_button(
+                "Download backup",
+                data=stored,
+                file_name=f"meeting_recording_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.wav",
+                mime="audio/wav",
+                icon=":material/download:",
+                width="content",
+            )
         else:
-            st.info("Keep this dialog open while recording. Navigation and close actions stay locked until audio is captured.")
+            st.info("Protected capture is active. Closing the studio and leaving this page are blocked until you stop and secure the audio.")
             rec = st.audio_input("Record audio", label_visibility="collapsed")
             if rec:
                 st.session_state["_dialog_recorded_bytes"] = rec.read()
@@ -888,40 +951,41 @@ def recording_studio_dialog():
                 st.rerun()
 
     if st.session_state.get("_dialog_recorded_bytes") is not None:
-        b1, b2, b3 = st.columns(3)
-        with b1:
-            if st.button("Transcribe recording", type="primary", use_container_width=True):
+        with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+            if st.button("Transcribe recording", type="primary", icon=":material/description:", width="content"):
                 st.session_state["_dialog_transcribing"] = True
                 st.rerun()
-        with b2:
-            if st.button("Record again", use_container_width=True):
-                st.session_state["_dialog_recorded_bytes"] = None
-                st.session_state["_recording_status"] = "RECORDING"
-                st.rerun()
-        with b3:
-            if st.button("Close studio", use_container_width=True):
+            with st.popover("Replace recording", icon=":material/restart_alt:"):
+                st.caption("This permanently replaces the secured audio in this browser session.")
+                if st.button("Discard and record again", icon=":material/delete_sweep:", width="content"):
+                    st.session_state["_dialog_recorded_bytes"] = None
+                    st.session_state["_recording_status"] = "RECORDING"
+                    st.session_state["_dialog_capture_started_at"] = datetime.datetime.now()
+                    st.rerun()
+            if st.button("Close studio", icon=":material/close:", width="content"):
                 st.session_state["_dialog_active"] = False
                 st.session_state["_recording_status"] = "IDLE"
                 st.rerun()
     else:
-        st.caption("Finish the recording with the microphone control above. Review actions will unlock once audio is captured.")
+        st.caption("Finish with the microphone control above. Once capture is secured, you can replay, transcribe, or deliberately replace it.")
 
 # =============================================================
 # TOP HEADER & GUIDED STEPPER
 # =============================================================
-top_head_l, top_head_r = st.columns([7, 3])
+top_head_l, top_head_r = st.columns([8, 2])
 with top_head_l:
     st.markdown('<div class="section-title">Minutes of the Meeting</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-caption">Convert meeting transcripts and audio into verified, evidence-grounded corporate deliverables.</div>', unsafe_allow_html=True)
 
 with top_head_r:
     generate_label = "Generate minutes" if not st.session_state.get("mom_items") else "Regenerate minutes"
-    generate_clicked = st.button(
-        generate_label,
-        icon=":material/auto_awesome:",
-        width="content",
-        disabled=not st.session_state.get("transcript"),
-    )
+    with st.container(horizontal_alignment="right"):
+        generate_clicked = st.button(
+            generate_label,
+            icon=":material/auto_awesome:",
+            width="content",
+            disabled=not st.session_state.get("transcript"),
+        )
     if generate_clicked:
         with st.spinner("Generating draft minutes..."):
             generate_minutes_draft(move_to_review=True)
@@ -1002,7 +1066,7 @@ if st.session_state["mom_stage"] == "input":
             # Transcript Viewer & Notes
             if st.session_state["transcript"]:
                 st.markdown("<hr style='margin:0.75rem 0 0.5rem 0;'>", unsafe_allow_html=True)
-                with st.expander(f"Transcript Content ({len(st.session_state['transcript'].split())} words)", expanded=False):
+                with st.expander("Transcript", expanded=False):
                     st.text_area("Full Transcript", value=st.session_state["transcript"], height=200, label_visibility="collapsed")
                     t_col1, t_col2 = st.columns(2)
                     with t_col1:
@@ -1036,7 +1100,7 @@ if st.session_state["mom_stage"] == "input":
                             st.rerun()
 
             # Optional Pre-meeting Notes
-            with st.expander("Optional Meeting Notes & Objectives", expanded=False):
+            with st.expander("Meeting Notes (Optional)", expanded=False):
                 st.caption("Provide additional agenda, background, or objectives to inform the AI synthesis.")
                 st.session_state["user_notes"] = st.text_area("Notes", value=st.session_state.get("user_notes", ""), height=90, placeholder="Pre-meeting agenda or key priorities...", label_visibility="collapsed")
 
@@ -1127,25 +1191,53 @@ elif st.session_state["mom_stage"] == "review":
         # Navigation lives only in the workflow tabs above.
         tb_col1 = st.container()
         with tb_col1:
-            item_count = len(st.session_state["mom_items"])
-            approved_count = len([it for it in st.session_state["mom_items"] if it.get("approved", True)])
-            st.markdown(f'<span class="section-title">Review Draft Minutes</span> &nbsp; <span style="font-size:0.85rem; color:#69727d;">({approved_count}/{item_count} Approved)</span>', unsafe_allow_html=True)
-            st.caption("Each row combines the source quote, summary, action, owner, and due date in one place.")
+            st.markdown('<span class="section-title">Review Draft Minutes</span>', unsafe_allow_html=True)
+            st.caption("Each row combines the source quote, summary, action, person in charge, and due date in one place.")
 
         review_summary = build_review_summary()
-        st.markdown(
-            f'<div class="workflow-status"><strong>Review status:</strong> '
-            f'{review_summary["approved_count"]} approved item(s), '
-            f'{review_summary["actionable_count"]} action item(s), '
-            f'{review_summary["missing_owner"]} missing owner(s), '
-            f'{review_summary["missing_due"]} missing due date(s).</div>',
-            unsafe_allow_html=True,
-        )
-
         if review_summary["missing_owner"] or review_summary["missing_due"]:
             st.warning("A few action items still need cleanup before final export. Review the missing owners and due dates shown above.")
         else:
             st.success("The draft looks export-ready. You can still refine wording, but the key action-tracking fields are complete.")
+
+        with st.expander("Ask Echo", expanded=bool(st.session_state["chat_history"])):
+            st.caption("Ask for a revision, missing action items, or a structured update to the current minutes draft.")
+            quick_prompt = None
+            with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+                if st.button("Find missing actions", icon=":material/fact_check:", key="echo_missing_actions", width="content"):
+                    quick_prompt = "Review the current minutes for missing action items and propose concise updates."
+                if st.button("Tighten wording", icon=":material/edit_note:", key="echo_tighten_wording", width="content"):
+                    quick_prompt = "Improve the wording of the current minutes while preserving their meaning."
+                if st.button("Check ownership", icon=":material/person_search:", key="echo_check_owners", width="content"):
+                    quick_prompt = "Review the current minutes for unclear or missing people in charge."
+
+            for message in st.session_state["chat_history"]:
+                with st.chat_message(message["role"], avatar=":material/smart_toy:" if message["role"] == "assistant" else None):
+                    st.write(message["content"])
+
+            typed_prompt = st.chat_input(
+                "Ask Echo to revise these minutes",
+                key="review_echo_input",
+                submit_mode="disable",
+            )
+            prompt = quick_prompt or typed_prompt
+            if prompt:
+                st.session_state["chat_history"].append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.write(prompt)
+                with st.chat_message("assistant", avatar=":material/smart_toy:"):
+                    with st.status(":shimmer[Reviewing the minutes]", type="compact") as status:
+                        answer, action = ask_deepseek_with_mutation(
+                            st.session_state["transcript"],
+                            prompt,
+                            st.session_state["chat_history"],
+                            st.session_state["df"],
+                        )
+                        status.update(label="Review complete", state="complete")
+                    st.write(answer)
+                apply_echo_mutation(action)
+                st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+                st.rerun()
 
         missed = st.session_state.get("recommended_missed_points", []) or []
         if missed:
@@ -1178,11 +1270,11 @@ elif st.session_state["mom_stage"] == "review":
                     # Row one keeps evidence and the only destructive action together.
                     head_c1, head_c2 = st.columns([9.5, 0.5])
                     with head_c1:
-                        st.caption("Source evidence")
+                        st.markdown(f'<span class="playfair-label">{item.get("topic_title", f"Point {idx+1}")}</span>', unsafe_allow_html=True)
                         eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
                         st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
                     with head_c2:
-                        if st.button(" ", icon=":material/close:", key=f"unselect_{idx}", help="Move topic to Unselected Topics", width="content"):
+                        if st.button("Unselect", icon=":material/remove_circle_outline:", key=f"unselect_{idx}", help="Move this topic to Unselected Topics", width="content"):
                             update_mom_item(idx, "approved", False)
                             st.rerun()
 
@@ -1225,14 +1317,10 @@ elif st.session_state["mom_stage"] == "review":
                         if new_due_value != item.get("indicative_delivery_date"):
                             update_mom_item(idx, "indicative_delivery_date", new_due_value)
                     with body_c5:
-                        pic_opts = ["Unassigned", "PRIME Philippines", "Client"] + all_attendees
-                        curr_pic = item.get("person_in_charge", "Unassigned")
-                        if curr_pic not in pic_opts:
-                            pic_opts.append(curr_pic)
-                        new_pic = st.selectbox(
-                            "Owner",
-                            options=pic_opts,
-                            index=pic_opts.index(curr_pic) if curr_pic in pic_opts else 0,
+                        new_pic = st.text_area(
+                            "Person in charge",
+                            value=str(item.get("person_in_charge", "Unassigned")),
+                            height=92,
                             key=f"pic_{idx}",
                         )
                         if new_pic != item.get("person_in_charge"):
@@ -1278,54 +1366,14 @@ elif st.session_state["mom_stage"] == "review":
             mark_draft_updated("Summary notes updated")
 
         with st.expander("Advanced Review Tools", expanded=False):
-            st.caption("Use these only when you want Echo to re-run the draft or make AI-assisted row edits.")
-            if st.button("Re-run AI Matching", icon=":material/refresh:", use_container_width=True):
+            st.caption("Re-run matching only when you want to replace the current AI draft.")
+            if st.button("Re-run AI matching", icon=":material/refresh:", width="content"):
                 if st.session_state["has_manual_edits"]:
                     st.warning("You have manual edits. Re-running will overwrite the current draft.")
                 with st.spinner("Re-matching evidence with current transcript..."):
                     generate_minutes_draft(move_to_review=False)
                     st.success("Re-matched successfully!")
                     st.rerun()
-
-            st.markdown("<hr style='margin:0.8rem 0;'>", unsafe_allow_html=True)
-            st.caption("Ask questions or issue natural commands like: 'Assign row 2 to Cedtrix', 'Set row 1 date to Friday', or 'Delete row 3'.")
-            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-            if not st.session_state["chat_history"]:
-                st.markdown('<div class="chat-ai">Hello. I am Echo. You can instruct me to modify discussion points, assignees, or deadlines directly.</div>', unsafe_allow_html=True)
-            else:
-                for msg in st.session_state["chat_history"]:
-                    if msg["role"] == "assistant":
-                        st.markdown(f'<div class="chat-ai">{msg["content"].replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown(f'<div class="chat-user-wrap"><div class="chat-user">{msg["content"]}</div></div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            if prompt := st.chat_input("Instruct Echo to adjust items..."):
-                st.session_state["chat_history"].append({"role": "user", "content": prompt})
-                with st.spinner("Echo is updating items..."):
-                    ans, act = ask_deepseek_with_mutation(st.session_state["transcript"], prompt, st.session_state["chat_history"], st.session_state["df"])
-                    if act and isinstance(act, dict):
-                        t_name = act.get("tool")
-                        r_idx = int(act.get("row_index", 0))
-                        flds = act.get("fields", {})
-                        if t_name == "update_row" and 0 <= r_idx < len(st.session_state["mom_items"]):
-                            for fk, fv in flds.items():
-                                if fk == "Discussion Points": update_mom_item(r_idx, "discussion_point", str(fv))
-                                elif fk == "Action Plan": update_mom_item(r_idx, "action_plan", str(fv))
-                                elif fk == "Indicative Delivery Date": update_mom_item(r_idx, "indicative_delivery_date", str(fv))
-                                elif fk == "Person-in-charge": update_mom_item(r_idx, "person_in_charge", str(fv))
-                        elif t_name == "delete_row" and 0 <= r_idx < len(st.session_state["mom_items"]):
-                            delete_mom_item(r_idx)
-                        elif t_name == "add_row":
-                            add_mom_item(
-                                topic="New Item",
-                                dp=flds.get("Discussion Points", ""),
-                                ap=flds.get("Action Plan", ""),
-                                dd=flds.get("Indicative Delivery Date", "TBD"),
-                                pic=flds.get("Person-in-charge", "Unassigned")
-                            )
-                st.session_state["chat_history"].append({"role": "assistant", "content": ans})
-                st.rerun()
 
 # =============================================================
 # STAGE 3: FINALIZE & EXPORT
