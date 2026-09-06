@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 from utils.auth import (
-    require_login, add_admin_user, get_all_users, get_user_usage, get_current_user, logout,
+    require_login, add_admin_user, get_all_users, get_user_usage, get_current_user,
     set_agent_access, set_user_password,
 )
 from utils.page_access import (
@@ -11,6 +11,7 @@ from utils.page_access import (
 )
 from utils.limits import set_user_limits, get_user_limits, DEFAULT_DAILY_LIMIT, DEFAULT_WEEKLY_LIMIT
 from utils.audit import fetch_audit_logs, list_event_types
+from components.sidebar import setup_page_layout
 
 # -------------------------------
 # Page configuration & styling
@@ -23,7 +24,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Montserrat:wght@400;500;600;700&display=swap');
 
 .stApp > header { display: none !important; visibility: hidden !important; }
 #MainMenu { visibility: hidden !important; }
@@ -34,7 +35,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     padding-bottom: 1.5rem !important;
     padding-right: 2.2rem !important;
     padding-left: 2.2rem !important;
-    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: 'Montserrat', sans-serif !important;
 }
 
 [data-testid="stAppViewContainer"], .stApp {
@@ -88,8 +89,8 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
-    border: 1px solid #D1D5DB !important;
-    border-radius: 0.375rem !important;
+    border: 1px solid rgba(0,51,102,0.25) !important;
+    border-radius: 6px !important;
 }
 
 [data-testid="stDataFrame"] {
@@ -105,16 +106,7 @@ html, body, [data-testid="stAppViewContainer"], .main, .block-container {
 # -------------------------------
 require_login(require_admin=True, page_key="admin")
 
-# Apply the shared flat & edgy theme (large gridlines, 0 radius) to the admin page
-from components.theme import inject_global_css
-inject_global_css()
-
-# Sidebar: logout
-with st.sidebar:
-    st.markdown("---")
-    if st.button("Logout", key="admin_logout"):
-        logout()
-        st.rerun()
+setup_page_layout()
 
 st.markdown('<p class="page-eyebrow">Project Echo</p>', unsafe_allow_html=True)
 st.markdown('<p class="section-title">Admin Console</p>', unsafe_allow_html=True)
@@ -394,9 +386,9 @@ with tab_audit:
         
         def _status_badge(s):
             if s == "ok":
-                return f'<span style="background:#DEF7EC;color:#03543F;padding:2px 8px;border-radius:4px;font-weight:600;font-size:0.75rem;">OK</span>'
+                return f'<span style="background:rgba(92,184,92,0.12);color:#3f7d3f;padding:2px 8px;border-radius:999px;font-weight:600;font-size:0.75rem;">OK</span>'
             elif s == "error":
-                return f'<span style="background:#FDE8E8;color:#9B1C1C;padding:2px 8px;border-radius:4px;font-weight:600;font-size:0.75rem;">ERROR</span>'
+                return f'<span style="background:rgba(197,58,63,0.08);color:#c53a3f;padding:2px 8px;border-radius:999px;font-weight:600;font-size:0.75rem;">ERROR</span>'
             return s
         
         df_log["Status"] = df_log["Status"].apply(_status_badge)

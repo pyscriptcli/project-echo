@@ -11,6 +11,7 @@ import calendar
 from utils.auth import require_login
 from utils.db import get_supabase_client, fetch_meeting_archives
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 
 # 1. Page config (must be first)
 st.set_page_config(
@@ -28,7 +29,7 @@ setup_page_layout()
 # 4. Custom CSS
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600;700&display=swap');
 
 /* Hide Streamlit chrome */
 header[data-testid="stHeader"], .stApp > header, [data-testid="stDecoration"],
@@ -56,12 +57,12 @@ html, body, [class*="css"] {
 
 :root {
     --bg: #f4f1ec;
-    --surface: #F9FAFB;
+    --surface: #ffffff;
     --ink: #003366;
     --muted: #69727d;
     --gold: #c9ab4c;
-    --danger: #C0392B;
-    --radius: 0px;
+    --danger: #c53a3f;
+    --radius: 6px;
     --control-height: 28px;
 }
 
@@ -108,7 +109,7 @@ h3 {
     font-size: 0.68rem;
     color: var(--muted);
     background: rgba(0, 0, 0, 0.04);
-    border-radius: 10px;
+    border-radius: 999px;
     padding: 1px 8px;
 }
 .board-col-overdue {
@@ -119,7 +120,7 @@ h3 {
 
 .task-card {
     background: var(--surface);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0,51,102,0.12);
     border-radius: var(--radius);
     padding: 0.5rem 0.55rem;
     margin-bottom: 0.35rem;
@@ -127,7 +128,7 @@ h3 {
 }
 .task-card:hover {
     border-color: rgba(212, 175, 55, 0.5);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: none;
 }
 .task-card-header {
     display: flex;
@@ -141,10 +142,10 @@ h3 {
     border-radius: 50%;
     flex-shrink: 0;
 }
-.dot-todo { background: #E67E22; }
-.dot-in_progress { background: #2980B9; }
-.dot-done { background: #27AE60; }
-.dot-meeting { background: #6366F1; }
+.dot-todo { background: #b89a3e; }
+.dot-in_progress { background: #003366; }
+.dot-done { background: #5cb85c; }
+.dot-meeting { background: #0c1b38; }
 
 .task-card-title {
     font-size: 0.78rem;
@@ -157,7 +158,7 @@ h3 {
 }
 .task-card-desc {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--muted);
     line-height: 1.3;
     margin-bottom: 0.3rem;
     overflow: hidden;
@@ -192,7 +193,7 @@ h3 {
     display: inline-flex;
     align-items: center;
     padding: 1px 7px;
-    border-radius: 10px;
+    border-radius: 999px;
     font-size: 0.62rem;
     font-weight: 600;
     background: #FFFFFF;
@@ -201,13 +202,13 @@ h3 {
     white-space: nowrap;
 }
 .due-chip.overdue {
-    background: #FDF0EF;
+    background: rgba(197,58,63,0.08);
     color: var(--danger);
-    border-color: rgba(231, 76, 60, 0.2);
+    border-color: rgba(197,58,63,0.25);
 }
 .due-chip.due-today {
-    background: #FFF9E8;
-    color: #8C6D23;
+    background: rgba(184,154,62,0.10);
+    color: #8c6d23;
     border-color: rgba(212, 175, 55, 0.25);
 }
 
@@ -217,10 +218,10 @@ h3 {
     gap: 4px;
     font-size: 0.65rem;
     font-weight: 600;
-    color: #03543F;
-    background: #DEF7EC;
-    border: 1px solid rgba(39, 174, 96, 0.25);
-    border-radius: 10px;
+    color: #3f7d3f;
+    background: rgba(92,184,92,0.12);
+    border: 1px solid rgba(92,184,92,0.28);
+    border-radius: 999px;
     padding: 2px 8px;
     white-space: nowrap;
 }
@@ -312,6 +313,7 @@ h3 {
 }
 </style>
 """, unsafe_allow_html=True)
+inject_global_css()
 
 # 5. Helper functions & Constants
 SPECIFIC_PEOPLE = [
@@ -1284,7 +1286,7 @@ with tab_calendar:
                                     st.session_state["cal_open_new_dialog"] = True
                         else:
                             st.markdown(
-                                f"<div style='font-family:Playfair Display,serif;font-size:0.9rem;font-weight:600;"
+                                f"<div style='font-family:Cormorant Garamond,serif;font-size:0.9rem;font-weight:600;"
                                 f"color:rgba(0,0,0,0.3);padding:1px 2px 3px 2px;'>{day_val.day}</div>",
                                 unsafe_allow_html=True
                             )

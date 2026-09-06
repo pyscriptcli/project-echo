@@ -6,6 +6,7 @@ import streamlit as st
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 from utils.echo_ai import render_echo_chat
 from utils.auth import require_login
 
@@ -54,6 +55,7 @@ body::-webkit-scrollbar,
 }
 </style>
 """, unsafe_allow_html=True)
+inject_global_css()
 
 # 3. Render Ask Echo Viewport
 render_echo_chat(title="Ask Echo")

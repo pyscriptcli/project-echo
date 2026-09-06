@@ -9,6 +9,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 from utils.auth import get_current_user, require_login
 from utils.notebook_db import (
     fetch_docs,
@@ -32,7 +33,7 @@ st.set_page_config(
 # ------------------------------
 NOTEBOOK_CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&display=swap');
 
     /* Hide Streamlit default elements */
     #MainMenu, footer, header {visibility: hidden;}
@@ -88,7 +89,7 @@ NOTEBOOK_CSS = """
     .stTextArea textarea, .stTextInput input, .stSelectbox > div > div {
         background-color: #FFFFFF !important;
         border: 1px solid rgba(0,51,102,0.2) !important;
-        border-radius: 0 !important;
+        border-radius: 6px !important;
         font-family: 'Montserrat', sans-serif !important;
         font-size: 1rem !important;
         color: #1b1d1e !important;
@@ -110,10 +111,10 @@ NOTEBOOK_CSS = """
 
     .kanban-card, div[data-testid="stMetric"], .dialog-card {
         background-color: #ffffff;
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 0.5rem 0.65rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,51,102,0.12);
+        box-shadow: none;
     }
     
     .status-footer {
@@ -714,7 +715,7 @@ def render_statistics():
             missed_dates.sort(reverse=True)
             for md in missed_dates:
                 st.markdown(f"""
-                    <div class="kanban-card" style="padding: 0.75rem 1rem; color: #e53e3e; font-size: 0.95rem;">
+                    <div class="kanban-card" style="padding: 0.75rem 1rem; color: #c53a3f; font-size: 0.95rem;">
                         <strong>{md.strftime('%A, %b %d, %Y')}</strong>
                     </div>
                 """, unsafe_allow_html=True)
@@ -728,6 +729,7 @@ def main():
     require_login(page_key="notebook")
     setup_page_layout()
     st.markdown(NOTEBOOK_CSS, unsafe_allow_html=True)
+    inject_global_css()
     init_session()
 
     tab_notepad, tab_dailylog, tab_stats = st.tabs(["Notepad", "Daily Log", "Statistics"])

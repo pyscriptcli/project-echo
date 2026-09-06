@@ -25,6 +25,7 @@ docfonts.ensure_pdf_fonts()
 
 from utils.db import fetch_meeting_archives, get_supabase_client
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 from utils.auth import require_login
 
 # CRD team members for the attendee picker when editing meeting details.
@@ -84,7 +85,7 @@ if "edit_meeting_details" not in st.session_state:
 # 3. Custom CSS & Pure SVG Icon Button Injection
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,400;1,500;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&display=swap');
 
 html, body, [class*="css"] { font-family: 'Montserrat', sans-serif !important; }
 
@@ -114,10 +115,10 @@ h3 {
     display: block;
 }
 
-/* 3D Drop Shadow Containers */
+/* Meeting panels follow the shared light Prime surface treatment. */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #F9FAFB !important; 
-    border-radius: 0px !important;
+    background-color: #FFFFFF !important;
+    border-radius: 6px !important;
     box-shadow: none !important;
     border: 1px solid rgba(0, 51, 102, 0.12) !important;
     padding: 1.5rem !important; 
@@ -127,10 +128,10 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Form Inputs */
 .stTextArea textarea, .stTextInput input, [data-baseweb="input"], [data-baseweb="select"] {
-    background-color: #FAFAFA !important; 
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    border-radius: 8px !important; 
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(0,51,102,0.25) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
 }
 
 .stTextArea textarea:focus, .stTextInput input:focus {
@@ -200,14 +201,14 @@ div[data-testid="stPopoverBody"] {
     max-width: 600px !important;
     padding: 1.25rem !important;
     background-color: #FFFFFF !important;
-    border-radius: 10px !important;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.18) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
 }
 
 /* Preset Buttons Inside Date Popover */
 .stButton > button[key^="preset_"] {
     background-color: transparent !important;
-    color: #4A5568 !important;
+    color: #69727d !important;
     border: 1px solid transparent !important;
     border-radius: 4px !important;
     font-size: 0.85rem !important;
@@ -221,8 +222,8 @@ div[data-testid="stPopoverBody"] {
 }
 
 .stButton > button[key^="preset_"]:hover {
-    background-color: #EDF2F7 !important;
-    color: #1A202C !important;
+    background-color: rgba(0,51,102,0.08) !important;
+    color: #003366 !important;
     transform: none !important;
 }
 
@@ -303,22 +304,22 @@ button[data-baseweb="tab"] {
 }
 
 button[data-baseweb="tab"][aria-selected="true"] {
-    color: #FF4B4B !important;
-    border-bottom: 2px solid #FF4B4B !important;
+    color: #003366 !important;
+    border-bottom: 2px solid #c9ab4c !important;
 }
 
 div[data-baseweb="tab-highlight"] {
-    background-color: #FF4B4B !important;
+    background-color: #c9ab4c !important;
 }
 
 /* Delete Row SVG Button */
 .stButton > button[key^="del_"] { 
-    background-color: #FDF9F9 !important; 
-    color: #B23A3A !important; 
-    border: 1px solid rgba(178, 58, 58, 0.25) !important; 
+    background-color: rgba(197,58,63,0.08) !important;
+    color: #c53a3f !important;
+    border: 1px solid rgba(197,58,63,0.25) !important;
 }
 .stButton > button[key^="del_"]:hover { 
-    background-color: #B23A3A !important; 
+    background-color: #c53a3f !important;
     color: #FFFFFF !important; 
 }
 .stButton > button[key^="del_"]::before {
@@ -345,14 +346,14 @@ div[data-baseweb="tab-highlight"] {
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z'/%3E%3C/svg%3E") no-repeat center;
 }
 
-/* ===== UI FLAT & EDGY OVERRIDE (Phase 4): squared corners, no shadows ===== */
+/* Keep native controls on the shared 6px radius and flat elevation. */
 .stButton > button,
 div[data-testid="stPopover"] > button,
 div[data-testid="stVerticalBlockBorderWrapper"],
 div[data-testid="stExpander"],
 .stDataFrame,
 [data-testid="stDataFrame"] {
-    border-radius: 0 !important;
+    border-radius: 6px !important;
     box-shadow: none !important;
 }
 .stButton > button:hover,
@@ -371,7 +372,6 @@ div[data-testid="stPopover"] > button {
     min-height: 28px !important;
     padding: 0.1rem 0.5rem !important;
     border-radius: 6px !important;
-    width: auto !important;
     box-shadow: none !important;
 }
 .stButton > button:hover,
@@ -390,6 +390,7 @@ div[data-testid="stPopover"] > button:hover {
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+inject_global_css()
 
 # -------------------------------------------------------------------------
 # Document Generation Functions

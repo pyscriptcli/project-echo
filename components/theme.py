@@ -125,7 +125,6 @@ div[data-testid="stVerticalBlockBorderWrapper"],
     padding: 0.15rem 0.5rem !important;
     min-height: 28px !important;
     height: 28px !important;
-    width: auto !important;
     box-shadow: none !important;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -282,6 +281,9 @@ div[data-baseweb="select"] > div,
     color: var(--echo-ink) !important;
     background-color: transparent !important;
     border-bottom: 2px solid var(--echo-gold) !important;
+}
+[data-baseweb="tab-highlight"] {
+    background-color: var(--echo-gold) !important;
 }
 
 /* ---- Muted/helper text ---- */

@@ -37,6 +37,7 @@ import requests
 
 from utils.auth import require_login
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 
 # ---------------------------------------------------------------------------
 # Page shell (native Echo conventions)
@@ -54,9 +55,9 @@ DOCUMENTS_PAGE_CSS = """
 <style>
 /* Documents page — custom classes styled with Project Echo tokens */
 .editor-card {
-    background-color: rgba(249, 250, 251, 0.95);
-    border: 2px solid #003366;
-    border-radius: 0;
+    background-color: #ffffff;
+    border: 1px solid rgba(0,51,102,0.12);
+    border-radius: 6px;
     padding: 1.25rem;
 }
 .section-header {
@@ -85,7 +86,7 @@ DOCUMENTS_PAGE_CSS = """
     margin: 0 0 0.5rem 0;
 }
 .saved-indicator {
-    background-color: #F9FAFB;
+    background-color: #ffffff;
     border-left: 3px solid #003366;
     color: #003366;
     font-family: 'Montserrat', sans-serif;
@@ -95,7 +96,7 @@ DOCUMENTS_PAGE_CSS = """
     margin-top: 0.4rem;
 }
 .local-only-note {
-    background-color: rgba(249, 250, 251, 0.9);
+    background-color: rgba(255,255,255,0.9);
     border: 1px solid rgba(0,51,102,0.15);
     border-left: 3px solid #003366;
     color: #1b1d1e;
@@ -122,6 +123,7 @@ hr {
 """
 
 st.markdown(DOCUMENTS_PAGE_CSS, unsafe_allow_html=True)
+inject_global_css()
 
 # --- CONTACTS DATABASE FOR CTA PRESETS ---
 contacts_database = {

@@ -174,12 +174,20 @@ def _expire_if_timed_out() -> bool:
 # -------------------------------------------------------------------
 LOGIN_CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&display=swap');
+
+html, body, [data-testid="stAppViewContainer"], .stApp {
+    background: #f4f1ec !important;
+    color: #1b1d1e !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
 div[data-testid="stVerticalBlockBorderWrapper"] {
     background: #FFFFFF !important;
     border: 1px solid rgba(0,51,102,0.12) !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
     border-top: 3px solid #003366 !important;
-    box-shadow: 0 10px 30px rgba(0,51,102,0.10) !important;
+    box-shadow: none !important;
     padding: 2rem !important;
     margin: 2rem auto !important;
     max-width: 450px !important;
@@ -204,7 +212,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .stTextInput input {
     background-color: #FFFFFF !important;
     border: 1px solid rgba(0,51,102,0.15) !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
     color: #1b1d1e !important;
@@ -219,12 +227,12 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     background-color: #0c0c0e !important;
     color: #ffffff !important;
     border: 1px solid #c9ab4c !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
     font-weight: 600 !important;
     font-size: 0.68rem !important;
     min-height: 26px !important;
     height: 26px !important;
-    width: auto !important;
+    width: 100% !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stFormSubmitButton > button:hover {
@@ -234,18 +242,18 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .login-error {
-    background: #FDF0EF;
-    border-left: 3px solid #E74C3C;
-    color: #9B1C1C;
+    background: rgba(197,58,63,0.08);
+    border-left: 3px solid #c53a3f;
+    color: #c53a3f;
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     font-size: 0.8rem;
     margin-top: 0.75rem;
 }
 .login-warning {
-    background: #FFFBEB;
-    border-left: 3px solid #F59E0B;
-    color: #92400E;
+    background: rgba(184,154,62,0.10);
+    border-left: 3px solid #b89a3e;
+    color: #8c6d23;
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     font-size: 0.8rem;

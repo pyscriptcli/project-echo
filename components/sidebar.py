@@ -8,8 +8,8 @@ Native Streamlit sidebar + custom branding & compact navigation.
 - Active page: gold left border + tinted background (via aria-current)
 - Footer pinned to bottom: user chip (initials + username) + small deep charcoal Sign Out with gold accent
 - Non-collapsible: collapse/expand controls are hidden AND the sidebar is force-locked open
-- Noticeable drop shadow for separation from main content
-- Subtle deep charcoal & gold gradient overlay (opacity 5%)
+- Hairline navy divider for separation from main content
+- Cream shell that matches the application canvas
 """
 
 import re
@@ -25,7 +25,7 @@ NAV_ITEMS = [(key, meta["path"], meta["label"], meta["icon"]) for key, meta in g
 
 SIDEBAR_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600;1,700&family=Montserrat:wght@400;500;600;700&display=swap');
 
 /* ---------------- Hide app chrome (header kept alive, zero-height) ---------------- */
 header[data-testid="stHeader"],
@@ -90,10 +90,10 @@ section[data-testid="stSidebar"] {
 
 /* ---------------- Sidebar shell ---------------- */
 section[data-testid="stSidebar"] {
-    /* Gray azure background, hairline navy border, subtle shadow */
+    /* Cream shell with a hairline navy divider. */
     background: #f4f1ec !important;
     border-right: 1px solid rgba(0, 51, 102, 0.15) !important;
-    box-shadow: 4px 0 14px rgba(0, 51, 102, 0.12), 2px 0 6px rgba(0, 51, 102, 0.05) !important;
+    box-shadow: none !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     height: 100%;
@@ -227,6 +227,7 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     font-size: 0.68rem !important;                /* small text */
     font-weight: 600 !important;
     box-shadow: none !important;
+    width: fit-content !important;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-footer-scope) button:hover {
@@ -254,7 +255,6 @@ section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(.sb-foot
     padding: 0.1rem 0.4rem !important;
     min-height: 26px !important;
     height: 26px !important;
-    width: auto !important;
     box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
@@ -280,7 +280,7 @@ def _initials(name: str) -> str:
 
 def setup_page_layout():
     from components.theme import inject_global_css
-    inject_global_css()  # flat & edgy shared theme + large gridlines
+    inject_global_css()  # shared light Prime theme
     st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
     with st.sidebar:

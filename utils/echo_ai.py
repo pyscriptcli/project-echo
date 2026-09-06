@@ -138,7 +138,7 @@ SVG_BRAIN_ICON = """
 """
 
 SVG_ALERT_ICON = """
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854D0E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8c6d23" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
     <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
     <line x1="12" y1="9" x2="12" y2="13"></line>
     <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -163,7 +163,7 @@ ALLOWED_ATTACHMENT_TYPES = ["png", "jpg", "jpeg", "webp", "pdf", "docx", "doc", 
 
 CHAT_COMPACT_ALIGNED_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Montserrat:wght@400;500;600&display=swap');
 
 html, body, [data-testid="stAppViewContainer"], .main, .block-container {
     overflow-y: auto !important;
@@ -190,8 +190,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]::-webkit-scrollbar,
 
 div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) {
     background-color: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
+    border: 1px solid rgba(0,51,102,0.12) !important;
+    border-radius: 6px !important;
     padding: 0 !important;
     box-shadow: none !important;
     overflow-y: auto !important;
@@ -226,7 +226,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-title {
-    font-family: 'Cormorant Garamond', Georgia, serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic !important;
     font-size: 1.15rem !important;
     font-weight: 600 !important;
@@ -268,10 +268,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 }
 
 .echo-chat-box-container div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0,51,102,0.12) !important;
     border-radius: 6px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -296,7 +294,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     color: #FFFFFF !important;
     border: 1px solid #c9ab4c;
     padding: 0.35rem 0.65rem;
-    border-radius: 10px 2px 10px 10px;
+    border-radius: 6px;
     max-width: 75%;
     font-size: 0.80rem;
     line-height: 1.4;
@@ -357,22 +355,22 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     font-family: 'Montserrat', sans-serif !important;
     font-size: 0.52rem;
     padding: 1px 4px;
-    border-radius: 2px;
-    background: #FEF3C7;
-    color: #92400E;
+    border-radius: 999px;
+    background: rgba(184,154,62,0.10);
+    color: #8c6d23;
     font-weight: 600;
-    border: 0.5px solid #FDE68A;
+    border: 1px solid rgba(184,154,62,0.32);
 }
 
 .echo-assistant-body {
     font-family: 'Montserrat', sans-serif !important;
     padding-left: 21px;
-    color: #374151;
+    color: #2A3441;
     font-size: 0.80rem;
     line-height: 1.45;
 }
 .echo-assistant-body strong {
-    color: #111827;
+    color: #003366;
 }
 
 .echo-sources-container {
@@ -388,7 +386,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     align-items: center;
     background: #0c0c0e;
     border: 1px solid #c9ab4c;
-    border-radius: 12px;
+    border-radius: 999px;
     padding: 1px 6px;
     font-size: 0.65rem;
     color: #c9ab4c !important;
@@ -399,7 +397,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
 .echo-source-pill:hover {
     border-color: #d9bc5d;
     color: #FFFFFF !important;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+    box-shadow: none;
 }
 
 .echo-assistant-body table {
@@ -410,21 +408,21 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     background: #FFFFFF;
     border-radius: 4px;
     overflow: hidden;
-    border: 1px solid #E2E8F0;
+    border: 1px solid rgba(0,51,102,0.15);
     font-family: 'Montserrat', sans-serif !important;
 }
 .echo-assistant-body th {
     background: #0c0c0e;
     color: #c9ab4c;
     font-weight: 600;
-    border: 1px solid #334155;
+    border: 1px solid rgba(201,171,76,0.42);
     padding: 3px 6px;
     text-align: left;
 }
 .echo-assistant-body td {
-    border: 1px solid #E2E8F0;
+    border: 1px solid rgba(0,51,102,0.15);
     padding: 3px 6px;
-    color: #374151;
+    color: #2A3441;
 }
 
 .echo-thinking-wrapper {
@@ -440,11 +438,11 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     align-items: center;
     gap: 4px;
     padding: 2px 6px;
-    border-radius: 12px;
-    background: #F8FAFC;
+    border-radius: 999px;
+    background: #FFFFFF;
     border: 1px solid rgba(212, 175, 55, 0.35);
     font-size: 0.68rem;
-    color: #854D0E;
+    color: #8c6d23;
     font-weight: 500;
 }
 .echo-pulse-dot {
@@ -465,7 +463,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.echo-main-card-scope) > div
     border-radius: 6px;
     padding: 0.4rem 0.6rem;
     margin-top: 0.3rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    box-shadow: none;
 }
 
 div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
@@ -482,15 +480,15 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 .echo-input-col-target div[data-testid="stChatInput"] > div {
     background: #FFFFFF !important;
     border: 1px solid rgba(212, 175, 55, 0.55) !important;
-    border-radius: 20px !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
     padding: 2px 8px !important;
     min-height: 40px !important;
 }
 
 .echo-input-col-target div[data-testid="stChatInput"] textarea {
     font-family: 'Montserrat', sans-serif !important;
-    color: #0F172A !important;
+    color: #2A3441 !important;
     font-size: 0.85rem !important;
 }
 
@@ -528,13 +526,13 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
     background: #0c0c0e !important;
     border: 1px solid #c9ab4c !important;
     color: #c9ab4c !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: none !important;
     margin: 0 !important;
 }
 
 .echo-attach-col-target div[data-testid="stPopover"] > button:hover {
     border-color: #d9bc5d !important;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+    box-shadow: none !important;
 }
 
 .echo-attached-tags {
@@ -547,10 +545,10 @@ div[data-testid="stHorizontalBlock"]:has(.echo-input-col-target) {
 
 .echo-attached-tag {
     font-size: 0.68rem;
-    color: #854D0E;
-    background: #FEF3C7;
-    border: 1px solid #FDE68A;
-    border-radius: 10px;
+    color: #8c6d23;
+    background: rgba(184,154,62,0.10);
+    border: 1px solid rgba(184,154,62,0.32);
+    border-radius: 999px;
     padding: 1px 7px;
     display: inline-flex;
     align-items: center;
@@ -699,7 +697,7 @@ def render_context_popup_dialog():
         st.session_state["clean_staged_rows"] = []
 
     if st.session_state["detected_conflicts"] is not None and len(st.session_state["detected_conflicts"]) > 0:
-        st.markdown(f"<p style='font-size:0.95rem; font-weight:600; color:#854D0E;'>{SVG_ALERT_ICON} Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:0.95rem; font-weight:600; color:#8c6d23;'>{SVG_ALERT_ICON} Duplicate Entries Flagged in Knowledge Base</p>", unsafe_allow_html=True)
         st.caption("The following items already exist in the database with different or identical values. Choose how each key should be resolved:")
 
         b_c1, b_c2, _ = st.columns([1, 1, 2])
@@ -721,10 +719,10 @@ def render_context_popup_dialog():
                     st.markdown(f"**Key:** `{item['key']}` | **Category:** `{item['category']}`")
                     v_col1, v_col2 = st.columns(2)
                     with v_col1:
-                        st.markdown("<span style='font-size:0.75rem; color:#64748B;'>Current Value:</span>", unsafe_allow_html=True)
+                        st.markdown("<span style='font-size:0.75rem; color:#69727d;'>Current Value:</span>", unsafe_allow_html=True)
                         st.code(item['current_value'][:200] + ("..." if len(item['current_value']) > 200 else ""), language="json")
                     with v_col2:
-                        st.markdown("<span style='font-size:0.75rem; color:#854D0E;'>New Incoming Value:</span>", unsafe_allow_html=True)
+                        st.markdown("<span style='font-size:0.75rem; color:#8c6d23;'>New Incoming Value:</span>", unsafe_allow_html=True)
                         st.code(item['new_value'][:200] + ("..." if len(item['new_value']) > 200 else ""), language="json")
                 with c_res:
                     res_choice = st.radio(
@@ -1078,7 +1076,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             c_settings, c_clr = st.columns(2)
             with c_settings:
                 with st.popover("⚙", help="Settings"):
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AI MODEL</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>AI MODEL</span>", unsafe_allow_html=True)
                     
                     model_options = [
                         "⚡ DeepSeek V4 Flash",
@@ -1097,13 +1095,13 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                     )
                     
                     st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>DATA SOURCES</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>DATA SOURCES</span>", unsafe_allow_html=True)
                     st.session_state["echo_source_archives"] = st.checkbox("Meeting Archives", value=st.session_state["echo_source_archives"])
                     st.session_state["echo_source_knowledge"] = st.checkbox("Echo Knowledge Base", value=st.session_state["echo_source_knowledge"])
                     st.session_state["echo_source_web"] = st.checkbox("Search Web", value=st.session_state["echo_source_web"])
 
                     st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>AGENT MODE</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>AGENT MODE</span>", unsafe_allow_html=True)
                     _agent_allowed = check_agent_access(_cur_user_id())
                     if _agent_allowed:
                         st.session_state["echo_agent_mode"] = st.checkbox(
@@ -1122,7 +1120,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                         st.caption(f"{len(TOOLS)} actions available · writes require your approval")
 
                     st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>TOKEN USAGE</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>TOKEN USAGE</span>", unsafe_allow_html=True)
                     _tb = token_balance(_cur_user_id())
                     st.markdown(
                         f"<div style='font-size:0.78rem; line-height:1.6; color:#333;'>"
@@ -1135,7 +1133,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
                     )
 
                     st.markdown("---")
-                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#854D0E;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:0.75rem; font-weight:600; color:#8c6d23;'>KNOWLEDGE MANAGEMENT</span>", unsafe_allow_html=True)
                     if st.button("Open Context Manager", key="btn_trigger_context_dialog", use_container_width=True):
                         render_context_popup_dialog()
 
@@ -1208,7 +1206,7 @@ def render_echo_chat(container=None, height=650, title="Ask Echo", caption=None,
             with st.container():
                 st.markdown(
                     f'<div class="echo-context-candidate-card">'
-                    f'<div style="font-size:0.75rem; font-weight:600; color:#854D0E; margin-bottom:2px;">'
+                    f'<div style="font-size:0.75rem; font-weight:600; color:#8c6d23; margin-bottom:2px;">'
                     f'{SVG_BRAIN_ICON} Knowledge Base Candidate Identified'
                     f'</div>'
                     f'<div style="font-size:0.78rem; color:#1F2937; margin-bottom:6px;">'

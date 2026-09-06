@@ -68,23 +68,6 @@ footer {
     gap: 1rem !important;
 }
 
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) {
-    background: transparent !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    height: calc(100vh - 80px) !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-}
-
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.sync-height-scope) > div[data-testid="stVerticalBlock"] {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    gap: 0.8rem !important;
-}
-
 .left-card {
     background: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(0, 51, 102, 0.12);
@@ -1124,7 +1107,6 @@ st.markdown(kpi_html, unsafe_allow_html=True)
 st.markdown(
     """
     <style>
-    .dashboard-report-panel { min-height: 19rem; }
     .dash-card { margin-bottom: 0.4rem !important; padding: 0.5rem 0.65rem !important; }
     .dash-card-title { font-size: 0.76rem !important; line-height: 1.25 !important; margin: 0.18rem 0 !important; }
     .dash-card-meta { font-size: 0.66rem !important; margin: 0 !important; }
@@ -1141,7 +1123,6 @@ st.markdown(
 left_col, right_col = st.columns([1.35, 1], gap="medium")
 
 with left_col:
-    st.markdown('<div class="dashboard-report-panel">', unsafe_allow_html=True)
     st.markdown('<p class="section-title">Needs attention</p>', unsafe_allow_html=True)
     st.caption("Items requiring follow-through.")
 
@@ -1190,10 +1171,8 @@ with left_col:
 
     if attention_count == 0:
         render_empty_state("Nothing needs attention in this period.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with right_col:
-    st.markdown('<div class="dashboard-report-panel">', unsafe_allow_html=True)
     st.markdown('<p class="section-title">Today and upcoming</p>', unsafe_allow_html=True)
     st.caption("Next seven days.")
 
@@ -1230,7 +1209,6 @@ with right_col:
             )
     else:
         render_empty_state("No meetings found in this period.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
 status_total = max(task_total, 1)
 meeting_total = max(total_range_meetings, 1)

@@ -18,6 +18,7 @@ import streamlit.components.v1 as components
 # Centralized DB & Components
 from utils.db import get_supabase_client, fetch_echo_context
 from components.sidebar import setup_page_layout
+from components.theme import inject_global_css
 from utils.auth import require_login, get_current_user
 from utils.skills import load_prompt
 from utils.minutes_memory import build_style_examples, store_approved_minutes
@@ -148,16 +149,16 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 .badge-confidence {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 600;
 }
-.badge-high { background-color: #DEF7EC; color: #03543F; }
-.badge-medium { background-color: #FEF08A; color: #713F12; }
-.badge-low { background-color: #FDE8E8; color: #9B1C1C; }
+.badge-high { background-color: rgba(92,184,92,0.12); color: #3f7d3f; }
+.badge-medium { background-color: rgba(184,154,62,0.10); color: #8c6d23; }
+.badge-low { background-color: rgba(197,58,63,0.08); color: #c53a3f; }
 
 .evidence-quote-box {
-    background-color: #F9FAFB;
+    background-color: #FFFFFF;
     border-left: 3px solid #003366;
     padding: 0.5rem 0.75rem;
     font-size: 0.82rem;
@@ -168,11 +169,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 }
 
 .guardrail-alert {
-    background-color: #FFFBEB;
-    border-left: 3px solid #F59E0B;
+    background-color: rgba(184,154,62,0.10);
+    border-left: 3px solid #b89a3e;
     padding: 0.35rem 0.6rem;
     font-size: 0.78rem;
-    color: #92400E;
+    color: #8c6d23;
     margin-top: 0.3rem;
     border-radius: 0 4px 4px 0;
 }
@@ -187,7 +188,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 /* Chat Styling */
 .chat-container { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; padding-bottom: 1rem; max-height: 360px; overflow-y: auto; }
-.chat-ai { align-self: flex-start; background-color: #F9FAFB; border: 1px solid rgba(0,51,102,0.12); color: #1b1d1e; padding: 0.6rem 0.85rem; border-radius: 4px; max-width: 92%; font-size: 0.85rem; line-height: 1.45; }
+.chat-ai { align-self: flex-start; background-color: #FFFFFF; border: 1px solid rgba(0,51,102,0.12); color: #1b1d1e; padding: 0.6rem 0.85rem; border-radius: 4px; max-width: 92%; font-size: 0.85rem; line-height: 1.45; }
 .chat-user-wrap { display: flex; justify-content: flex-end; width: 100%; margin-bottom: 0.2rem; }
 .chat-user { background-color: #0c0c0e; color: #FFFFFF; padding: 0.55rem 0.95rem; border-radius: 4px; max-width: 82%; font-size: 0.85rem; line-height: 1.45; }
 
@@ -246,6 +247,7 @@ GUARD_CLEANUP_JS = """
 """
 
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+inject_global_css()
 components.html(GUARD_CLEANUP_JS, height=0)
 
 # 5. Constants & Config
