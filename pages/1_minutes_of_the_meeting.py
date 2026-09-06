@@ -283,7 +283,6 @@ if "has_manual_edits" not in st.session_state: st.session_state["has_manual_edit
 if "tokens_used" not in st.session_state: st.session_state["tokens_used"] = 0
 if "last_api_call" not in st.session_state: st.session_state["last_api_call"] = None
 if "chat_history" not in st.session_state: st.session_state["chat_history"] = []
-if "review_view_mode" not in st.session_state: st.session_state["review_view_mode"] = "Executive Table"
 if "draft_last_saved" not in st.session_state: st.session_state["draft_last_saved"] = None
 if "draft_status_text" not in st.session_state: st.session_state["draft_status_text"] = "No draft yet"
 if "selected_tpl" not in st.session_state: st.session_state["selected_tpl"] = 1
@@ -478,6 +477,17 @@ def build_review_summary() -> dict:
         "missing_owner": missing_owner,
         "missing_due": missing_due,
     }
+
+def generate_minutes_draft(move_to_review: bool = True) -> None:
+    """Generate or regenerate the minutes draft from the current transcript."""
+    topics_suggested = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
+    st.session_state["user_topics_text"] = topics_suggested
+    items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], topics_suggested)
+    set_all_mom_items(items, mark_manual_edit=False)
+    st.session_state["other_discussions"] = other_disc
+    st.session_state["_topics_discovered"] = True
+    if move_to_review:
+        st.session_state["mom_stage"] = "review"
 
 # -------------------------------------------------------------
 # Entity & Guardrail Verification
@@ -686,7 +696,7 @@ def ask_deepseek_with_mutation(transcript: str, question: str, chat_history: lis
 # -------------------------------------------------------------
 def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript):
     client = get_supabase_client()
-    if not client: return False, "Supabase client uninitialized.", None
+    if not client: return False, "Meeting archive service is unavailable.", None
     _user = get_current_user()
     _uid = _user.get("id") if _user else None
     _uname = _user.get("username") if _user else None
@@ -726,7 +736,7 @@ def save_meeting_to_supabase(meeting_details, df, other_discussions, transcript)
 
 def push_action_items_to_tasks_board(df: pd.DataFrame, meeting_details: dict) -> tuple[int, str]:
     client = get_supabase_client()
-    if not client: return 0, "Supabase client not initialized."
+    if not client: return 0, "Task sync service is unavailable."
     inserted = 0
     company = meeting_details.get("company_name", "General Meeting")
     for _, row in df.iterrows():
@@ -785,8 +795,40 @@ def dispatch_action_items_webhook(webhook_url: str, df: pd.DataFrame, meeting_de
 @st.dialog("Recording Studio", width="large")
 def recording_studio_dialog():
     st.session_state["_dialog_active"] = True
-    if st.session_state.get("_dialog_recorded_bytes") is None and st.session_state["_recording_status"] == "RECORDING":
-        st.session_state["_recording_status"] = "IDLE"
+    if st.session_state.get("_dialog_recorded_bytes") is None and st.session_state["_recording_status"] == "IDLE":
+        st.session_state["_recording_status"] = "RECORDING"
+
+    is_capturing = st.session_state.get("_dialog_recorded_bytes") is None
+    if is_capturing and not st.session_state.get("_dialog_transcribing"):
+        st.markdown(
+            """
+            <style>
+            button[aria-label="Close"] {
+                display: none !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        components.html(
+            """
+            <script>
+            (function() {
+                var w = window.top;
+                if (!w) return;
+                var key = '__rec_studio_guard';
+                if (w[key]) return;
+                w[key] = function(e) {
+                    e.preventDefault();
+                    e.returnValue = 'Recording in progress. Finish the recording before leaving.';
+                    return e.returnValue;
+                };
+                w.addEventListener('beforeunload', w[key]);
+            })();
+            </script>
+            """,
+            height=0,
+        )
 
     if st.session_state["_dialog_transcribing"]:
         stored_bytes = st.session_state.get("_dialog_recorded_bytes")
@@ -794,6 +836,7 @@ def recording_studio_dialog():
         if stored_bytes is None:
             st.warning("No audio captured.")
             st.session_state["_dialog_transcribing"] = False
+            st.session_state["_recording_status"] = "RECORDING"
         else:
             p_bar = st.progress(0, text="Initializing audio pipeline...")
             p_status = st.empty()
@@ -812,10 +855,12 @@ def recording_studio_dialog():
                 st.session_state["_dialog_record_notes"] = ""
                 st.session_state["_dialog_transcribing"] = False
                 st.session_state["_dialog_active"] = False
+                st.session_state["_recording_status"] = "IDLE"
                 st.rerun()
             else:
                 st.error(f"Transcription failed: {tx_err}")
                 st.session_state["_dialog_transcribing"] = False
+                st.session_state["_recording_status"] = "RECORDED"
         return
 
     col_l, col_r = st.columns([0.6, 0.4])
@@ -831,31 +876,35 @@ def recording_studio_dialog():
         st.markdown("##### Microphone Input")
         stored = st.session_state.get("_dialog_recorded_bytes")
         if stored is not None:
+            st.session_state["_recording_status"] = "RECORDED"
             st.audio(stored, format="audio/wav")
             st.success(f"Audio recorded ({len(stored)//32000}s estimated).")
-            if st.button("Clear Audio & Re-record", use_container_width=True):
-                st.session_state["_dialog_recorded_bytes"] = None
-                st.rerun()
         else:
+            st.info("Keep this dialog open while recording. Navigation and close actions stay locked until audio is captured.")
             rec = st.audio_input("Record audio", label_visibility="collapsed")
             if rec:
                 st.session_state["_dialog_recorded_bytes"] = rec.read()
+                st.session_state["_recording_status"] = "RECORDED"
                 st.rerun()
 
-    st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
-    b1, b2 = st.columns(2)
-    with b1:
-        if st.button("Transcribe & Synthesize", type="primary", use_container_width=True):
-            if st.session_state.get("_dialog_recorded_bytes") is None:
-                st.warning("Record audio first.")
-            else:
+    if st.session_state.get("_dialog_recorded_bytes") is not None:
+        b1, b2, b3 = st.columns(3)
+        with b1:
+            if st.button("Transcribe recording", type="primary", use_container_width=True):
                 st.session_state["_dialog_transcribing"] = True
                 st.rerun()
-    with b2:
-        if st.button("Close Studio", use_container_width=True):
-            st.session_state["_dialog_active"] = False
-            st.session_state["_recording_status"] = "IDLE"
-            st.rerun()
+        with b2:
+            if st.button("Record again", use_container_width=True):
+                st.session_state["_dialog_recorded_bytes"] = None
+                st.session_state["_recording_status"] = "RECORDING"
+                st.rerun()
+        with b3:
+            if st.button("Close studio", use_container_width=True):
+                st.session_state["_dialog_active"] = False
+                st.session_state["_recording_status"] = "IDLE"
+                st.rerun()
+    else:
+        st.caption("Finish the recording with the microphone control above. Review actions will unlock once audio is captured.")
 
 # =============================================================
 # TOP HEADER & GUIDED STEPPER
@@ -866,13 +915,23 @@ with top_head_l:
     st.markdown('<div class="section-caption">Convert meeting transcripts and audio into verified, evidence-grounded corporate deliverables.</div>', unsafe_allow_html=True)
 
 with top_head_r:
-    # Token and Model Diagnostics
+    generate_label = "Generate minutes" if not st.session_state.get("mom_items") else "Regenerate minutes"
     if st.session_state["tokens_used"] > 0:
         st.markdown(
             f'<div style="text-align:right; font-size:0.75rem; color:#69727d; padding-top:0.4rem;">'
             f'Tokens: <b>{st.session_state["tokens_used"]:,}</b> | Engine: <b>DeepSeek</b></div>',
             unsafe_allow_html=True
         )
+    generate_clicked = st.button(
+        generate_label,
+        icon=":material/auto_awesome:",
+        use_container_width=True,
+        disabled=not st.session_state.get("transcript"),
+    )
+    if generate_clicked:
+        with st.spinner("Generating draft minutes..."):
+            generate_minutes_draft(move_to_review=True)
+        st.rerun()
 
 # Stepper Navigation
 stages_list = ["1. Input & Setup", "2. Review & Refine", "3. Finalize & Export"]
@@ -1047,27 +1106,16 @@ if st.session_state["mom_stage"] == "input":
                                 st.success("Metadata populated from transcript!")
                                 st.rerun()
 
-    # Step 1 Primary CTA Button
+    # Step 1 status
     st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
     if not st.session_state["transcript"]:
-        st.info("Upload an audio file, record audio, or paste transcript text to proceed to Review & Refine.")
+        st.info("Upload an audio file, record audio, or paste transcript text to unlock minutes generation.")
     else:
         st.markdown(
             f'<div class="workflow-status"><strong>Draft status:</strong> {st.session_state.get("draft_status_text", "No draft yet")}<br>'
-            f'<span style="color:#69727d; font-size:0.82rem;">Your transcript and meeting setup stay autosaved for this browser session while you work.</span></div>',
+            f'<span style="color:#69727d; font-size:0.82rem;">Generate minutes from the top-right action whenever the transcript and meeting details are ready.</span></div>',
             unsafe_allow_html=True
         )
-        if st.button("Generate Draft Minutes", type="primary", icon=":material/arrow_forward:", use_container_width=True):
-            if not st.session_state["mom_items"]:
-                with st.spinner("Extracting discussion topics and synthesizing evidence..."):
-                    topics_suggested = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
-                    st.session_state["user_topics_text"] = topics_suggested
-                    items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], topics_suggested)
-                    set_all_mom_items(items, mark_manual_edit=False)
-                    st.session_state["other_discussions"] = other_disc
-                    st.session_state["_topics_discovered"] = True
-            st.session_state["mom_stage"] = "review"
-            st.rerun()
 
 # =============================================================
 # STAGE 2: REVIEW & REFINE
@@ -1082,28 +1130,17 @@ elif st.session_state["mom_stage"] == "review":
         # Auto-synthesis on first arrival if empty
         if not st.session_state.get("_topics_discovered") and not st.session_state["mom_items"]:
             with st.spinner("Extracting discussion topics and matching evidence quotes..."):
-                topics_suggested = suggest_discussion_topics_from_transcript(st.session_state["transcript"])
-                st.session_state["user_topics_text"] = topics_suggested
-                items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], topics_suggested)
-                set_all_mom_items(items, mark_manual_edit=False)
-                st.session_state["other_discussions"] = other_disc
-                st.session_state["_topics_discovered"] = True
+                generate_minutes_draft(move_to_review=False)
                 st.rerun()
 
         # Review Header & Quick Controls
-        tb_col1, tb_col2, tb_col3 = st.columns([4, 3, 3])
+        tb_col1, tb_col2 = st.columns([7, 3])
         with tb_col1:
             item_count = len(st.session_state["mom_items"])
             approved_count = len([it for it in st.session_state["mom_items"] if it.get("approved", True)])
             st.markdown(f'<span class="section-title">Review Draft Minutes</span> &nbsp; <span style="font-size:0.85rem; color:#69727d;">({approved_count}/{item_count} Approved)</span>', unsafe_allow_html=True)
+            st.caption("Each row combines the source quote, summary, action, owner, and due date in one place.")
         with tb_col2:
-            st.session_state["review_view_mode"] = st.segmented_control(
-                "View Mode",
-                options=["Executive Table", "Evidence Cards"],
-                default=st.session_state["review_view_mode"],
-                label_visibility="collapsed"
-            )
-        with tb_col3:
             r_c1, r_c2 = st.columns(2)
             with r_c1:
                 if st.button("← Back", use_container_width=True):
@@ -1115,179 +1152,121 @@ elif st.session_state["mom_stage"] == "review":
                     st.rerun()
 
         review_summary = build_review_summary()
-        sum_col1, sum_col2, sum_col3, sum_col4 = st.columns(4)
-        with sum_col1:
-            st.markdown(
-                f'<div class="summary-tile"><div class="summary-label">Approved Items</div><div class="summary-value">{review_summary["approved_count"]}</div><div class="summary-note">Items included in export.</div></div>',
-                unsafe_allow_html=True,
-            )
-        with sum_col2:
-            st.markdown(
-                f'<div class="summary-tile"><div class="summary-label">Action Items</div><div class="summary-value">{review_summary["actionable_count"]}</div><div class="summary-note">Rows with a real deliverable.</div></div>',
-                unsafe_allow_html=True,
-            )
-        with sum_col3:
-            st.markdown(
-                f'<div class="summary-tile"><div class="summary-label">Missing Owners</div><div class="summary-value">{review_summary["missing_owner"]}</div><div class="summary-note">Assign these before export.</div></div>',
-                unsafe_allow_html=True,
-            )
-        with sum_col4:
-            st.markdown(
-                f'<div class="summary-tile"><div class="summary-label">Missing Due Dates</div><div class="summary-value">{review_summary["missing_due"]}</div><div class="summary-note">Use a date or keep as TBD.</div></div>',
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            f'<div class="workflow-status"><strong>Review status:</strong> '
+            f'{review_summary["approved_count"]} approved item(s), '
+            f'{review_summary["actionable_count"]} action item(s), '
+            f'{review_summary["missing_owner"]} missing owner(s), '
+            f'{review_summary["missing_due"]} missing due date(s).</div>',
+            unsafe_allow_html=True,
+        )
 
         if review_summary["missing_owner"] or review_summary["missing_due"]:
             st.warning("A few action items still need cleanup before final export. Review the missing owners and due dates shown above.")
         else:
             st.success("The draft looks export-ready. You can still refine wording, but the key action-tracking fields are complete.")
 
-        # Echo Teacher-in-the-Loop Missed Topics Chips
         missed = st.session_state.get("recommended_missed_points", []) or []
         if missed:
-            st.markdown(
-                '<div style="background:#F9FAFB; border-left:3px solid #C9AB4C; padding:0.5rem 0.8rem; border-radius:4px; margin:0.5rem 0 0.8rem 0;">'
-                '<span style="font-size:0.82rem; font-weight:600; color:#1b1d1e;">Echo spotted key discussion items not yet included:</span>'
-                '</div>',
-                unsafe_allow_html=True
-            )
-            chip_cols = st.columns(min(len(missed), 3))
-            for c_idx, rec in enumerate(missed):
-                col_target = chip_cols[c_idx % len(chip_cols)]
-                rec_title = rec.get("topic_title", "Unassigned Topic")
-                rec_quote = rec.get("evidence_quote", "")
-                with col_target:
-                    if st.button(f"+ Add '{rec_title[:28]}'", key=f"chip_add_{c_idx}", use_container_width=True):
-                        add_mom_item(topic=rec_title, dp=f"Discussion regarding {rec_title}.", ap="TBD", dd="TBD", pic="Unassigned", quote=rec_quote)
-                        st.session_state["recommended_missed_points"].pop(c_idx)
-                        st.rerun()
+            with st.expander(f"Suggested additional discussion points ({len(missed)})", expanded=False):
+                st.caption("Echo found a few topics that might be worth adding to the draft.")
+                chip_cols = st.columns(min(len(missed), 3))
+                for c_idx, rec in enumerate(missed):
+                    col_target = chip_cols[c_idx % len(chip_cols)]
+                    rec_title = rec.get("topic_title", "Unassigned Topic")
+                    rec_quote = rec.get("evidence_quote", "")
+                    with col_target:
+                        st.markdown(f"**{rec_title}**")
+                        if rec_quote:
+                            st.caption(rec_quote[:180] + ("..." if len(rec_quote) > 180 else ""))
+                        if st.button(f"Add topic", key=f"chip_add_{c_idx}", use_container_width=True):
+                            add_mom_item(topic=rec_title, dp=f"Discussion regarding {rec_title}.", ap="TBD", dd="TBD", pic="Unassigned", quote=rec_quote)
+                            st.session_state["recommended_missed_points"].pop(c_idx)
+                            st.rerun()
 
         all_attendees = st.session_state["meeting_selected_crd"] + [x.strip() for x in st.session_state["meeting_ext_attendees"].split(",") if x.strip()]
-
-        # VIEW 1: Executive Table View (Fast tabular editing)
-        if st.session_state["review_view_mode"] == "Executive Table":
-            with st.container(border=True):
-                # Build dataframe representation for data_editor
-                table_records = []
-                for it in st.session_state["mom_items"]:
-                    table_records.append({
-                        "Approved": bool(it.get("approved", True)),
-                        "Topic": str(it.get("topic_title", "")),
-                        "Discussion Points": str(it.get("discussion_point", "")),
-                        "Action Plan": str(it.get("action_plan", "")),
-                        "Person-in-charge": str(it.get("person_in_charge", "Unassigned")),
-                        "Indicative Delivery Date": str(it.get("indicative_delivery_date", "TBD")),
-                        "Confidence": str(it.get("confidence", "Medium"))
-                    })
-                edit_df = pd.DataFrame(table_records)
-
-                edited_df = st.data_editor(
-                    edit_df,
-                    use_container_width=True,
-                    num_rows="dynamic",
-                    column_config={
-                        "Approved": st.column_config.CheckboxColumn("Approved", default=True),
-                        "Topic": st.column_config.TextColumn("Topic", width="medium"),
-                        "Discussion Points": st.column_config.TextColumn("Discussion Points", width="large"),
-                        "Action Plan": st.column_config.TextColumn("Action Plan", width="large"),
-                        "Person-in-charge": st.column_config.SelectboxColumn("Person-in-charge", options=["Unassigned", "PRIME Philippines", "Client"] + all_attendees, width="medium"),
-                        "Indicative Delivery Date": st.column_config.TextColumn("Delivery Date", width="small"),
-                        "Confidence": st.column_config.TextColumn("Confidence", disabled=True, width="small")
-                    },
-                    key="mom_table_editor"
-                )
-                st.caption("Use Evidence Cards if you want the simpler guided editor for source quotes and structured due dates.")
-
-                # Sync any table edits back into canonical mom_items
-                if not edited_df.equals(edit_df):
-                    updated_items = []
-                    for idx, r in edited_df.iterrows():
-                        orig_quote = st.session_state["mom_items"][idx].get("evidence_quote", "") if idx < len(st.session_state["mom_items"]) else ""
-                        updated_items.append({
-                            "topic_title": str(r.get("Topic", "")),
-                            "discussion_point": str(r.get("Discussion Points", "")),
-                            "action_plan": str(r.get("Action Plan", "")),
-                            "person_in_charge": str(r.get("Person-in-charge", "Unassigned")),
-                            "indicative_delivery_date": str(r.get("Indicative Delivery Date", "TBD")),
-                            "evidence_quote": orig_quote,
-                            "confidence": str(r.get("Confidence", "Medium")),
-                            "approved": bool(r.get("Approved", True))
-                        })
-                    set_all_mom_items(updated_items, mark_manual_edit=True)
-                    st.rerun()
-
-        # VIEW 2: Evidence Inspection Cards (Deep dive into quotes & guardrails)
+        if not st.session_state["mom_items"]:
+            st.info("No items in review yet. Generate minutes from the top action to build the first draft.")
         else:
-            if not st.session_state["mom_items"]:
-                st.info("No items in review. Use '+ Add Item' below to create one.")
-            else:
-                for idx, item in enumerate(st.session_state["mom_items"]):
-                    with st.container(border=True):
-                        # Card Header Row
-                        ch1, ch2, ch3, ch4 = st.columns([4, 2, 1.5, 1])
-                        with ch1:
-                            new_title = st.text_input("Topic Title", value=item.get("topic_title", f"Point {idx+1}"), key=f"title_{idx}", label_visibility="collapsed")
-                            if new_title != item.get("topic_title"):
-                                update_mom_item(idx, "topic_title", new_title)
-                        with ch2:
-                            conf = item.get("confidence", "Medium")
-                            conf_cls = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
-                            st.markdown(f'<span class="badge-confidence {conf_cls}">{conf} Confidence</span>', unsafe_allow_html=True)
-                        with ch3:
-                            app_val = st.checkbox("Approved", value=item.get("approved", True), key=f"app_{idx}")
-                            if app_val != item.get("approved"):
-                                update_mom_item(idx, "approved", app_val)
-                        with ch4:
-                            if st.button("Delete", key=f"del_card_{idx}"):
-                                delete_mom_item(idx)
-                                st.rerun()
+            for idx, item in enumerate(st.session_state["mom_items"]):
+                with st.container(border=True):
+                    head_c1, head_c2, head_c3, head_c4 = st.columns([5, 1.2, 1.2, 1])
+                    with head_c1:
+                        new_title = st.text_input(
+                            f"Topic title {idx+1}",
+                            value=item.get("topic_title", f"Point {idx+1}"),
+                            key=f"title_{idx}",
+                        )
+                        if new_title != item.get("topic_title"):
+                            update_mom_item(idx, "topic_title", new_title)
+                    with head_c2:
+                        conf = item.get("confidence", "Medium")
+                        conf_cls = "badge-high" if conf.lower() == "high" else ("badge-low" if conf.lower() == "low" else "badge-medium")
+                        st.markdown(f'<span class="badge-confidence {conf_cls}">{conf}</span>', unsafe_allow_html=True)
+                    with head_c3:
+                        app_val = st.checkbox("Include", value=item.get("approved", True), key=f"app_{idx}")
+                        if app_val != item.get("approved"):
+                            update_mom_item(idx, "approved", app_val)
+                    with head_c4:
+                        if st.button("Delete", key=f"del_card_{idx}", use_container_width=True):
+                            delete_mom_item(idx)
+                            st.rerun()
 
-                        # Evidence Quote Box
-                        eq = item.get("evidence_quote", "").strip()
-                        if eq:
-                            with st.expander("View source evidence", expanded=False):
-                                st.markdown(f'<div class="evidence-quote-box"><b>Verbatim Quote:</b> "{eq}"</div>', unsafe_allow_html=True)
+                    body_c1, body_c2, body_c3, body_c4 = st.columns([2.5, 3.4, 3.4, 1.7])
+                    with body_c1:
+                        st.caption("Source evidence")
+                        eq = item.get("evidence_quote", "").strip() or "No quote attached to this row yet."
+                        st.markdown(f'<div class="evidence-quote-box">{eq}</div>', unsafe_allow_html=True)
+                    with body_c2:
+                        new_dp = st.text_area(
+                            "Discussion point",
+                            value=item.get("discussion_point", ""),
+                            height=170,
+                            key=f"dp_{idx}",
+                        )
+                        if new_dp != item.get("discussion_point"):
+                            update_mom_item(idx, "discussion_point", new_dp)
+                    with body_c3:
+                        new_ap = st.text_area(
+                            "Action plan",
+                            value=item.get("action_plan", ""),
+                            height=170,
+                            key=f"ap_{idx}",
+                        )
+                        if new_ap != item.get("action_plan"):
+                            update_mom_item(idx, "action_plan", new_ap)
+                    with body_c4:
+                        pic_opts = ["Unassigned", "PRIME Philippines", "Client"] + all_attendees
+                        curr_pic = item.get("person_in_charge", "Unassigned")
+                        if curr_pic not in pic_opts:
+                            pic_opts.append(curr_pic)
+                        new_pic = st.selectbox(
+                            "Owner",
+                            options=pic_opts,
+                            index=pic_opts.index(curr_pic) if curr_pic in pic_opts else 0,
+                            key=f"pic_{idx}",
+                        )
+                        if new_pic != item.get("person_in_charge"):
+                            update_mom_item(idx, "person_in_charge", new_pic)
 
-                        # Editable Fields
-                        cf1, cf2 = st.columns(2)
-                        with cf1:
-                            new_dp = st.text_area("Discussion Point", value=item.get("discussion_point", ""), height=75, key=f"dp_{idx}")
-                            if new_dp != item.get("discussion_point"):
-                                update_mom_item(idx, "discussion_point", new_dp)
-                        with cf2:
-                            new_ap = st.text_area("Action Plan", value=item.get("action_plan", ""), height=75, key=f"ap_{idx}")
-                            if new_ap != item.get("action_plan"):
-                                update_mom_item(idx, "action_plan", new_ap)
+                        current_due_date, is_tbd = parse_due_date_value(item.get("indicative_delivery_date", "TBD"))
+                        tbd_key = f"dd_tbd_{idx}"
+                        if tbd_key not in st.session_state:
+                            st.session_state[tbd_key] = is_tbd
+                        tbd_checked = st.checkbox("TBD", value=st.session_state[tbd_key], key=tbd_key)
+                        picked_date = st.date_input(
+                            "Due date",
+                            value=current_due_date,
+                            key=f"dd_{idx}",
+                            disabled=tbd_checked,
+                        )
+                        new_due_value = "TBD" if tbd_checked else picked_date.strftime("%Y-%m-%d")
+                        if new_due_value != item.get("indicative_delivery_date"):
+                            update_mom_item(idx, "indicative_delivery_date", new_due_value)
 
-                        # PIC & Delivery Date
-                        cd1, cd2 = st.columns(2)
-                        with cd1:
-                            pic_opts = ["Unassigned", "PRIME Philippines", "Client"] + all_attendees
-                            curr_pic = item.get("person_in_charge", "Unassigned")
-                            if curr_pic not in pic_opts: pic_opts.append(curr_pic)
-                            new_pic = st.selectbox("Person-in-charge", options=pic_opts, index=pic_opts.index(curr_pic) if curr_pic in pic_opts else 0, key=f"pic_{idx}")
-                            if new_pic != item.get("person_in_charge"):
-                                update_mom_item(idx, "person_in_charge", new_pic)
-                        with cd2:
-                            current_due_date, is_tbd = parse_due_date_value(item.get("indicative_delivery_date", "TBD"))
-                            tbd_key = f"dd_tbd_{idx}"
-                            if tbd_key not in st.session_state:
-                                st.session_state[tbd_key] = is_tbd
-                            tbd_checked = st.checkbox("Keep as TBD", value=st.session_state[tbd_key], key=tbd_key)
-                            picked_date = st.date_input(
-                                "Target Delivery Date",
-                                value=current_due_date,
-                                key=f"dd_{idx}",
-                                disabled=tbd_checked,
-                            )
-                            new_due_value = "TBD" if tbd_checked else picked_date.strftime("%Y-%m-%d")
-                            if new_due_value != item.get("indicative_delivery_date"):
-                                update_mom_item(idx, "indicative_delivery_date", new_due_value)
-
-                        # Guardrails Warning
-                        row_warnings = check_row_guardrails(item, all_attendees)
-                        for w in row_warnings:
-                            st.markdown(f'<div class="guardrail-alert">{w}</div>', unsafe_allow_html=True)
+                    row_warnings = check_row_guardrails(item, all_attendees)
+                    for warning_text in row_warnings:
+                        st.markdown(f'<div class="guardrail-alert">{warning_text}</div>', unsafe_allow_html=True)
 
         # Action Toolbar
         at1, at2 = st.columns([2, 8])
@@ -1316,12 +1295,9 @@ elif st.session_state["mom_stage"] == "review":
                 if st.session_state["has_manual_edits"]:
                     st.warning("You have manual edits. Re-running will overwrite the current draft.")
                 with st.spinner("Re-matching evidence with current transcript..."):
-                    items, other_disc = match_evidence_and_synthesize(st.session_state["transcript"], st.session_state.get("user_topics_text", ""))
-                    if items:
-                        set_all_mom_items(items, mark_manual_edit=False)
-                        st.session_state["other_discussions"] = other_disc
-                        st.success("Re-matched successfully!")
-                        st.rerun()
+                    generate_minutes_draft(move_to_review=False)
+                    st.success("Re-matched successfully!")
+                    st.rerun()
 
             st.markdown("<hr style='margin:0.8rem 0;'>", unsafe_allow_html=True)
             st.caption("Ask questions or issue natural commands like: 'Assign row 2 to Cedtrix', 'Set row 1 date to Friday', or 'Delete row 3'.")
@@ -1370,8 +1346,8 @@ elif st.session_state["mom_stage"] == "export":
     # Header & Back button
     ex_top1, ex_top2 = st.columns([8, 2])
     with ex_top1:
-        st.markdown('<div class="section-title">Finalize & Export Deliverables</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-caption">Select your preferred document format, download branded reports, or sync tasks across the suite.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Export minutes</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-caption">Choose a template and download the final minutes package.</div>', unsafe_allow_html=True)
     with ex_top2:
         if st.button("← Back to Review", use_container_width=True):
             st.session_state["mom_stage"] = "review"
@@ -1413,96 +1389,42 @@ elif st.session_state["mom_stage"] == "export":
         if export_summary["missing_owner"] or export_summary["missing_due"]:
             st.warning("You can still export now, but some action items are incomplete.")
 
-        # Layout: Template Selection & Previews
-        st.markdown('<span class="playfair-label">Select Report Template</span>', unsafe_allow_html=True)
-        t_col_sel1, t_col_sel2 = st.columns(2)
-        
-        with t_col_sel1:
-            with st.container(border=True):
-                st.markdown("##### Template 1: Standard Corporate (Combined Matrix)")
-                st.caption("Clean tabular layout presenting discussion points alongside deliverables, owners, and target dates in a single unified grid. Recommended for formal executive recaps and client signoffs.")
-                t1_active = st.button("Select Template 1", key="btn_pick_t1", use_container_width=True, type="primary" if st.session_state.get("selected_tpl", 1) == 1 else "secondary")
-                if t1_active:
-                    st.session_state["selected_tpl"] = 1
-                    st.rerun()
+        template_choice = st.segmented_control(
+            "Export template",
+            options=["Template 1", "Template 2"],
+            default="Template 1" if st.session_state.get("selected_tpl", 1) == 1 else "Template 2",
+        )
+        st.session_state["selected_tpl"] = 1 if template_choice == "Template 1" else 2
+        active_tpl = st.session_state["selected_tpl"]
 
-        with t_col_sel2:
-            with st.container(border=True):
-                st.markdown("##### Template 2: Detailed General (Sectional Breakdown)")
-                st.caption("Vertical sectional layout featuring structured narrative discussion points followed by a dedicated action plan register table. Recommended for technical alignments and comprehensive internal logs.")
-                t2_active = st.button("Select Template 2", key="btn_pick_t2", use_container_width=True, type="primary" if st.session_state.get("selected_tpl", 1) == 2 else "secondary")
-                if t2_active:
-                    st.session_state["selected_tpl"] = 2
-                    st.rerun()
+        if active_tpl == 1:
+            st.caption("Template 1 keeps the minutes in a single executive matrix.")
+            docx_bio = export_to_word_template_1(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
+            pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
+        else:
+            st.caption("Template 2 separates discussion notes from the action register.")
+            docx_bio = export_to_word_template_2(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
+            pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
 
-        active_tpl = st.session_state.get("selected_tpl", 1)
-
-        # Primary Actions Hub
-        st.markdown("<hr style='margin:1rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<span class="playfair-label">Export & Sync Actions</span>', unsafe_allow_html=True)
-
-        act_col1, act_col2, act_col3, act_col4 = st.columns(4)
-        
-        # Word (.docx)
-        with act_col1:
-            if active_tpl == 1:
-                docx_bio = export_to_word_template_1(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
-            else:
-                docx_bio = export_to_word_template_2(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
+        export_col1, export_col2 = st.columns(2)
+        with export_col1:
             st.download_button(
-                label="Download Word (.docx)",
+                label="Download Word",
                 icon=":material/description:",
                 data=docx_bio,
                 file_name=f"MOM_{client_display.replace(' ', '_')}_{datetime.date.today().strftime('%Y%m%d')}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
+                use_container_width=True,
             )
-
-        # PDF (.pdf)
-        with act_col2:
-            if active_tpl == 1:
-                pdf_bio = export_to_pdf_template_1(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
-            else:
-                pdf_bio = export_to_pdf_template_2(st.session_state["df"], meeting_details_payload, st.session_state["other_discussions"])
+        with export_col2:
             st.download_button(
-                label="Download PDF (.pdf)",
+                label="Download PDF",
                 icon=":material/picture_as_pdf:",
                 data=pdf_bio,
                 file_name=f"MOM_{client_display.replace(' ', '_')}_{datetime.date.today().strftime('%Y%m%d')}.pdf",
                 mime="application/pdf",
-                use_container_width=True
+                use_container_width=True,
             )
 
-        # Save to Supabase
-        with act_col3:
-            if st.button("Archive to Supabase", icon=":material/save:", use_container_width=True):
-                ok, msg, m_id = save_meeting_to_supabase(meeting_details_payload, st.session_state["df"], st.session_state["other_discussions"], st.session_state["transcript"])
-                if ok:
-                    st.success(f"{msg} ID: {m_id}")
-                    st.page_link("pages/2_meeting_details.py", label="View in Meeting Details", icon=":material/visibility:")
-                else:
-                    st.error(f"Archive failed: {msg}")
-
-        # Push to Task Board
-        with act_col4:
-            if st.button("Sync to Task Board", icon=":material/checklist:", use_container_width=True):
-                count, msg = push_action_items_to_tasks_board(st.session_state["df"], meeting_details_payload)
-                if count > 0:
-                    st.success(msg)
-                    st.page_link("pages/4_tasks.py", label="View in Task Board", icon=":material/task:")
-                else:
-                    st.info("No actionable deliverables found with assignees.")
-
-        # Optional Slack Webhook
-        with st.expander("Slack Webhook Notification", expanded=False):
-            st.caption("Dispatch an instant summary of action items to your company Slack channel.")
-            w_url = st.text_input("Webhook URL", value=SLACK_WEBHOOK_URL, placeholder="https://hooks.slack.com/services/...")
-            if st.button("Dispatch Webhook", use_container_width=True):
-                w_ok, w_msg = dispatch_action_items_webhook(w_url, st.session_state["df"], meeting_details_payload)
-                if w_ok: st.success(w_msg)
-                else: st.error(w_msg)
-
-        # Summary Preview Table
-        st.markdown("<hr style='margin:1rem 0 0.5rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<span class="playfair-label">Deliverables Preview</span>', unsafe_allow_html=True)
-        st.dataframe(st.session_state["df"], use_container_width=True, hide_index=True)
+        with st.expander("Preview exported rows", expanded=False):
+            st.dataframe(st.session_state["df"], use_container_width=True, hide_index=True)
