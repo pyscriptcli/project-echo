@@ -240,7 +240,7 @@ if "speaker_mappings" not in st.session_state: st.session_state["speaker_mapping
 # Auto-flow tracking
 if "last_processed_file" not in st.session_state: st.session_state["last_processed_file"] = None
 if "_topics_discovered" not in st.session_state: st.session_state["_topics_discovered"] = False
-if "_auto_processing" not in st.session_state: st.session_state["_auto_processing"] = False
+if "_recording_status" not in st.session_state: st.session_state["_recording_status"] = "IDLE"  # IDLE | RECORDING | TRANSCRIBING | MATCHING | READY
 if "user_notes" not in st.session_state: st.session_state["user_notes"] = ""
 # Dialog recording
 if "_dialog_recorded_bytes" not in st.session_state: st.session_state["_dialog_recorded_bytes"] = None
@@ -1443,7 +1443,9 @@ def recording_studio_dialog():
                 st.rerun()
     with act_c2:
         if st.button("Discard & Close", use_container_width=True):
-            st.session_state["_dialog_confirm_discard"] = True
+            st.session_state["_dialog_recorded_bytes"] = None
+            st.session_state["_dialog_record_notes"] = ""
+            st.session_state["_recording_status"] = "IDLE"
             st.rerun()
     with act_c3:
         if st.button("Clear & Re-record", use_container_width=True):
@@ -1460,11 +1462,11 @@ with col_upload:
         tab_upload, tab_record, tab_text = st.tabs(["Upload Audio", "Record Audio", "Upload Text"])
         with tab_upload:
             uploaded_file = st.file_uploader("Upload audio file (200MB limit supported)", type=["wav", "mp3", "m4a", "ogg", "flac", "mp4", "webm"], help="Audio uploads up to 200MB are supported.")
-            if uploaded_file and not st.session_state["_auto_processing"]:
+            if uploaded_file and st.session_state["_recording_status"] == "IDLE":
                 file_key = f"{uploaded_file.name}_{uploaded_file.size}"
                 if file_key != st.session_state.get("last_processed_file"):
                     st.session_state["last_processed_file"] = file_key
-                    st.session_state["_auto_processing"] = True
+                    st.session_state["_recording_status"] = "TRANSCRIBING"
                     p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                     p_status = st.empty()
                     raw_transcript, tx_err = transcribe_audio_pipeline(uploaded_file.read(), uploaded_file.name, p_bar, p_status)
@@ -1491,17 +1493,26 @@ with col_upload:
                             if meta.get("external_attendees"): st.session_state["meeting_ext_attendees"] = meta["external_attendees"]
                             if meta.get("prepared_by"): st.session_state["meeting_prep_name"] = meta["prepared_by"]
                             if meta.get("confirmed_by"): st.session_state["meeting_conf_name"] = meta["confirmed_by"]
-                        st.session_state["_auto_processing"] = False
+                        st.session_state["_recording_status"] = "READY"
                         st.rerun()
                     else:
                         st.session_state["last_processed_file"] = None
-                        st.session_state["_auto_processing"] = False
+                        st.session_state["_recording_status"] = "IDLE"
                         st.error(f"Transcription failed: {tx_err}")
         with tab_record:
-            # Open Recording Studio button
-            if st.button("Open Recording Studio", key="btn_open_rec_studio", use_container_width=True):
-                st.session_state["_dialog_active"] = True
-                recording_studio_dialog()
+            # Open Recording Studio button — locked while not IDLE
+            if st.session_state["_recording_status"] != "IDLE":
+                st.markdown(
+                    f'<p style="font-size:0.85rem; color:#69727d; text-align:center; padding:0.5rem;">'
+                    f'Status: {st.session_state["_recording_status"]}. '
+                    f'Clear or refresh to start new recording.</p>',
+                    unsafe_allow_html=True
+                )
+            else:
+                if st.button("Open Recording Studio", key="btn_open_rec_studio", use_container_width=True):
+                    st.session_state["_dialog_active"] = True
+                    st.session_state["_recording_status"] = "RECORDING"
+                    recording_studio_dialog()
             
             st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
             
@@ -1526,7 +1537,7 @@ with col_upload:
                 r_btn1, r_btn2, r_btn3 = st.columns([1.5, 1, 1])
                 with r_btn1:
                     if st.button("Transcribe Recording", key="btn_tx_dialog", use_container_width=True):
-                        st.session_state["_auto_processing"] = True
+                        st.session_state["_recording_status"] = "TRANSCRIBING"
                         p_bar = st.progress(0, text="Initializing audio pipeline (0%)...")
                         p_status = st.empty()
                         raw_transcript, tx_err = transcribe_audio_pipeline(stored_bytes, "recording.wav", p_bar, p_status)
@@ -1545,15 +1556,16 @@ with col_upload:
                             st.session_state["matched_evidence_items"] = []
                             st.session_state["user_topics_text"] = ""
                             st.session_state["_topics_discovered"] = False
-                            st.session_state["_auto_processing"] = False
+                            st.session_state["_recording_status"] = "READY"
                             st.rerun()
                         else:
-                            st.session_state["_auto_processing"] = False
+                            st.session_state["_recording_status"] = "IDLE"
                             st.error(f"Transcription failed: {tx_err}")
                 with r_btn2:
                     if st.button("Clear Recording", key="btn_clear_dialog", use_container_width=True):
                         st.session_state["_dialog_recorded_bytes"] = None
                         st.session_state["_dialog_record_notes"] = ""
+                        st.session_state["_recording_status"] = "IDLE"
                         st.rerun()
                 with r_btn3:
                     st.download_button(label="Download (.wav)", data=stored_bytes, file_name=f"Recording_{datetime.date.today().strftime('%Y%m%d')}.wav", mime="audio/wav", use_container_width=True)
@@ -1567,7 +1579,7 @@ with col_upload:
         with tab_text:
             uploaded_text_file = st.file_uploader("Upload Document (.txt, .docx, .pdf)", type=["txt", "docx", "pdf"])
             pasted_text = st.text_area("Or Paste Transcript Here", height=95, placeholder="Paste transcript text directly here...")
-            if st.button("Process Text", key="btn_tx_text"):
+            if st.button("Process Text", key="btn_tx_text", disabled=(st.session_state["_recording_status"] != "IDLE")):
                 p_bar = st.progress(0, text="Extracting document text (0%)...")
                 time.sleep(0.2)
                 p_bar.progress(50, text="Reading document stream (50%)...")
@@ -1587,6 +1599,7 @@ with col_upload:
                     st.session_state["matched_evidence_items"] = []
                     st.session_state["user_topics_text"] = ""
                     st.session_state["_topics_discovered"] = False
+                    st.session_state["_recording_status"] = "READY"
                     st.rerun()
                 else:
                     st.warning("Please upload a file or paste text to proceed.")
